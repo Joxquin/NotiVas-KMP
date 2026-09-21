@@ -19,6 +19,10 @@ compose.desktop {
     application {
         mainClass = "me.joxquin.notivas.MainKt"
 
+        buildTypes.release.proguard {
+            isEnabled.set(false)
+        }
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "me.joxquin.notivas"
