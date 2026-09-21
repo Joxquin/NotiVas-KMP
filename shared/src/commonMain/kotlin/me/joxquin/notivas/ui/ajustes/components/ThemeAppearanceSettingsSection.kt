@@ -54,8 +54,8 @@ fun ThemeAppearanceSettingsSection(
 ) {
     val themeOptions = remember {
         listOf(
-            AppThemeStyle.MATERIAL to "Material You (Monet)",
-            AppThemeStyle.MIUIX to "HyperOS Miuix (Squircle)"
+            AppThemeStyle.MATERIAL to "Material",
+            AppThemeStyle.MIUIX to "Miuix"
         )
     }
 
