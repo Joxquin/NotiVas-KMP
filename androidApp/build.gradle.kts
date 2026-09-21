@@ -35,6 +35,18 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    signingConfigs {
+        create("release") {
+            val keystoreFile = file("release.keystore")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEYSTORE_STORE_PASSWORD") ?: "notivasrelease"
+                keyAlias = System.getenv("KEYSTORE_KEY_ALIAS") ?: "releaseKey"
+                keyPassword = System.getenv("KEYSTORE_KEY_PASSWORD") ?: "notivasrelease"
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -42,6 +54,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.findByName("release")?.takeIf { file("release.keystore").exists() }
+                ?: signingConfigs.getByName("debug")
         }
     }
     compileOptions {
