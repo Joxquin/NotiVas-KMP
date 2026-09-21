@@ -26,3 +26,4 @@ actual fun dynamicColorSchemeOrDefault(
 actual fun isDynamicColorAvailable(): Boolean {
     return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 }
+

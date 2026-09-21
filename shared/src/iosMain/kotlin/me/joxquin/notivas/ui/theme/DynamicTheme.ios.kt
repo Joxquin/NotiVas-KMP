@@ -10,3 +10,4 @@ actual fun dynamicColorSchemeOrDefault(
 ): ColorScheme? = null
 
 actual fun isDynamicColorAvailable(): Boolean = false
+
