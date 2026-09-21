@@ -45,6 +45,9 @@ import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.repository.CanvasRepository
 import me.joxquin.notivas.data.repository.CopilotChatRepository
 import me.joxquin.notivas.data.repository.CopilotRepository
+import me.joxquin.notivas.data.model.UpdateInfo
+import me.joxquin.notivas.data.repository.UpdateRepository
+import me.joxquin.notivas.ui.components.UpdateDialog
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.components.miuix.FloatingNavigationBar
 import me.joxquin.notivas.ui.components.miuix.MiuixTopAppBar
@@ -177,6 +180,16 @@ fun MainAppShell(
     }
     val profileViewModel = remember {
         ProfileViewModel(canvasRepository, copilotRepository, preferencesManager)
+    }
+
+    val updateRepository = remember { UpdateRepository() }
+    var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+
+    LaunchedEffect(Unit) {
+        val info = updateRepository.checkForUpdates()
+        if (info.isUpdateAvailable) {
+            activeUpdateInfo = info
+        }
     }
 
     val inicioListState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -511,5 +524,12 @@ fun MainAppShell(
                 }
             }
         }
+    }
+
+    activeUpdateInfo?.let { info ->
+        UpdateDialog(
+            updateInfo = info,
+            onDismiss = { activeUpdateInfo = null }
+        )
     }
 }
