@@ -38,6 +38,11 @@ class CopilotRepository(
     private val preferencesManager: PreferencesManager
 ) {
     private val promptBuilder = CopilotPromptBuilder()
+    private val json = kotlinx.serialization.json.Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
+    }
 
     private val toolExecutor = CopilotToolExecutor(
         canvasAcademicToolsHandler = CanvasAcademicToolsHandler(canvasApiService, localStore, preferencesManager),
@@ -135,7 +140,7 @@ class CopilotRepository(
                 totalTokens += tTok
             }
 
-            // Si el modelo solicitó ejecutar herramientas
+            // 1. Si el modelo solicitó ejecutar herramientas nativas
             if (!toolCalls.isNullOrEmpty()) {
                 messages.add(
                     OpenRouterMessage(
@@ -170,11 +175,44 @@ class CopilotRepository(
                 continue
             }
 
-            // Respuesta textual final obtenida
-            if (!choiceMessage?.content.isNullOrBlank()) {
-                val content = choiceMessage?.content ?: ""
-                // Limpiar posibles pseudo-tags de tool_call en crudo si el modelo los imprimió en el texto
-                val cleanedContent = content.replace(Regex("(?s)<tool_call>.*?</tool_call>"), "").trim()
+            // 2. Si el modelo no tiene tools nativos y escribió pseudo-tags <tool_call> en el texto
+            val rawContent = choiceMessage?.content ?: ""
+            val textToolCalls = parseTextToolCalls(rawContent)
+            if (textToolCalls.isNotEmpty()) {
+                println("Copilot [Fallback] Detectadas ${textToolCalls.size} llamadas de herramientas en texto plano: ${textToolCalls.map { it.name }}")
+                messages.add(
+                    OpenRouterMessage(
+                        role = "assistant",
+                        content = rawContent
+                    )
+                )
+
+                val toolResultsSummary = StringBuilder()
+                for (call in textToolCalls) {
+                    val execution = toolExecutor.executeTool(call.name, call.argsJson, selectedCourseId)
+                    if (execution.source != null) {
+                        accumulatedSources.add(execution.source)
+                    }
+                    if (execution.actionFeedback != null) {
+                        accumulatedActionFeedback.add(execution.actionFeedback)
+                    }
+                    toolResultsSummary.append("\n[Resultado de ${call.name}]:\n${execution.resultJson}\n")
+                }
+
+                // Añadir los resultados como mensaje de usuario contextual para que el modelo sintetice la respuesta final
+                messages.add(
+                    OpenRouterMessage(
+                        role = "user",
+                        content = "Aquí tienes los datos solicitados de Canvas LMS para responder mi consulta previa:\n$toolResultsSummary\nPor favor, responde detalladamente al usuario en base a estos datos."
+                    )
+                )
+                continue
+            }
+
+            // 3. Respuesta textual final obtenida
+            if (rawContent.isNotBlank()) {
+                // Limpiar posibles pseudo-tags residuales de tool_call en crudo
+                val cleanedContent = rawContent.replace(Regex("(?s)<tool_call>.*?</tool_call>"), "").trim()
                 if (cleanedContent.isNotBlank()) {
                     finalReply = cleanedContent
                 }
@@ -242,4 +280,74 @@ class CopilotRepository(
             null
         }
     }
+
+    private data class ParsedTextToolCall(
+        val name: String,
+        val argsJson: String
+    )
+
+    private fun parseTextToolCalls(content: String): List<ParsedTextToolCall> {
+        val list = mutableListOf<ParsedTextToolCall>()
+        // Match <tool_call>...</tool_call> blocks
+        val toolRegex = Regex("(?s)<tool_call>(.*?)</tool_call>")
+        val matches = toolRegex.findAll(content)
+
+        for (match in matches) {
+            val inner = match.groupValues[1].trim()
+            if (inner.isBlank()) continue
+
+            // Strategy 1: JSON format inside <tool_call> {"name": "...", "arguments": {...}}
+            if (inner.startsWith("{") && inner.endsWith("}")) {
+                try {
+                    val jsonObj = json.decodeFromString(kotlinx.serialization.json.JsonObject.serializer(), inner)
+                    val name = jsonObj["name"]?.toString()?.replace("\"", "") ?: ""
+                    val args = jsonObj["arguments"]?.toString() ?: jsonObj["parameters"]?.toString() ?: "{}"
+                    if (name.isNotBlank()) {
+                        list.add(ParsedTextToolCall(name, args))
+                        continue
+                    }
+                } catch (_: Exception) { }
+            }
+
+            // Strategy 2: First line or token is function name, followed by xml tags or key-values
+            // Example:
+            // get_course_assignments\ncourse_id</arg_key>72693</arg_value>
+            // or get_course_assignments\n<arg_key>course_id</arg_key><arg_value>72693</arg_value>
+            val lines = inner.lines().map { it.trim() }.filter { it.isNotBlank() }
+            if (lines.isEmpty()) continue
+
+            val firstLine = lines.first()
+            val fnName = firstLine.substringBefore('<').substringBefore('(').substringBefore(' ').trim()
+
+            if (fnName.isNotBlank() && toolExecutor.tools.any { it.function.name.equals(fnName, ignoreCase = true) }) {
+                val realName = toolExecutor.tools.first { it.function.name.equals(fnName, ignoreCase = true) }.function.name
+                val argsMap = mutableMapOf<String, kotlinx.serialization.json.JsonPrimitive>()
+
+                // Match XML style: <arg_key>foo</arg_key><arg_value>bar</arg_value> or foo</arg_key>bar</arg_value>
+                val argRegex = Regex("(?s)(?:<arg_key>)?([a-zA-Z0-9_-]+)</arg_key>\\s*(?:<arg_value>)?(.*?)(?:</arg_value>|$)")
+                val argMatches = argRegex.findAll(inner)
+                for (am in argMatches) {
+                    val k = am.groupValues[1].trim()
+                    val v = am.groupValues[2].replace("</arg_value>", "").trim()
+                    if (k.isNotBlank()) {
+                        // Check if numeric or boolean
+                        v.toLongOrNull()?.let { num ->
+                            argsMap[k] = kotlinx.serialization.json.JsonPrimitive(num)
+                        } ?: v.toDoubleOrNull()?.let { num ->
+                            argsMap[k] = kotlinx.serialization.json.JsonPrimitive(num)
+                        } ?: v.toBooleanStrictOrNull()?.let { bool ->
+                            argsMap[k] = kotlinx.serialization.json.JsonPrimitive(bool)
+                        } ?: run {
+                            argsMap[k] = kotlinx.serialization.json.JsonPrimitive(v)
+                        }
+                    }
+                }
+
+                val argsJson = kotlinx.serialization.json.JsonObject(argsMap).toString()
+                list.add(ParsedTextToolCall(realName, argsJson))
+            }
+        }
+        return list
+    }
 }
+
