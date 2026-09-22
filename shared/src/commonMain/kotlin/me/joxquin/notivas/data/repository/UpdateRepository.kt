@@ -7,7 +7,7 @@ import me.joxquin.notivas.util.DeviceAbi
 
 class UpdateRepository(
     private val apiService: UpdateApiService = UpdateApiService(),
-    private val currentVersion: String = "1.0.0"
+    private val currentVersion: String = "1.0.1"
 ) {
     suspend fun checkForUpdates(): UpdateInfo {
         // Try fetching from GitHub Releases API first
