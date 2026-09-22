@@ -83,7 +83,8 @@ class CopilotRepository(
                         model = model,
                         messages = messages,
                         tools = toolExecutor.tools,
-                        temperature = 0.2
+                        temperature = 0.3,
+                        maxTokens = 4000
                     )
                 )
             } catch (e: Exception) {
@@ -101,7 +102,8 @@ class CopilotRepository(
                                 model = model,
                                 messages = messages,
                                 tools = null,
-                                temperature = 0.2
+                                temperature = 0.3,
+                                maxTokens = 4000
                             )
                         )
                     } catch (retryException: Exception) {
