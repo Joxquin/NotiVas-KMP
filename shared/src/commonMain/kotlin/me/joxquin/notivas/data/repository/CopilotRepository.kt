@@ -170,7 +170,12 @@ class CopilotRepository(
 
             // Respuesta textual final obtenida
             if (!choiceMessage?.content.isNullOrBlank()) {
-                finalReply = choiceMessage?.content
+                val content = choiceMessage?.content ?: ""
+                // Limpiar posibles pseudo-tags de tool_call en crudo si el modelo los imprimió en el texto
+                val cleanedContent = content.replace(Regex("(?s)<tool_call>.*?</tool_call>"), "").trim()
+                if (cleanedContent.isNotBlank()) {
+                    finalReply = cleanedContent
+                }
             }
             break
         }
