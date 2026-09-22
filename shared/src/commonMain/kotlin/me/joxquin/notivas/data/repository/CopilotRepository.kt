@@ -74,31 +74,35 @@ class CopilotRepository(
         var totalTokens = 0
 
         var currentAttempt = 0
-        val maxToolIterations = 4
+        val maxToolIterations = 5
+        var disableTools = false
         var finalReply: String? = null
 
         while (currentAttempt < maxToolIterations) {
             currentAttempt++
 
-            // Intentar primero con tools
+            // Intentar primero con tools (salvo que ya sepamos que este modelo/proveedor no las soporta)
             var response = try {
                 openRouterApiService.chatCompletion(
                     apiKey = apiKey,
                     request = OpenRouterChatRequest(
                         model = model,
                         messages = messages,
-                        tools = toolExecutor.tools,
+                        tools = if (disableTools) null else toolExecutor.tools,
                         temperature = 0.3,
                         maxTokens = 4000
                     )
                 )
             } catch (e: Exception) {
                 // Si el proveedor del modelo rechaza el parámetro 'tools' o arroja 400 Provider error
-                val isProviderToolError = e.message?.contains("Provider returned error", ignoreCase = true) == true ||
-                                          e.message?.contains("invalid_request_error", ignoreCase = true) == true ||
-                                          e.message?.contains("tools", ignoreCase = true) == true
+                val isProviderToolError = !disableTools && (
+                    e.message?.contains("Provider returned error", ignoreCase = true) == true ||
+                    e.message?.contains("invalid_request_error", ignoreCase = true) == true ||
+                    e.message?.contains("tools", ignoreCase = true) == true
+                )
 
                 if (isProviderToolError) {
+                    disableTools = true
                     println("Copilot [Aviso] El modelo '$model' no soporta function calling o el proveedor falló. Reintentando sin tools...")
                     try {
                         openRouterApiService.chatCompletion(

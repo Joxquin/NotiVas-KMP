@@ -2,6 +2,7 @@ package me.joxquin.notivas.data.remote
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
@@ -22,6 +23,11 @@ object KtorHttpClientProvider {
 
     fun createClient(): HttpClient {
         return HttpClient(CIO) {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 60_000L
+                connectTimeoutMillis = 20_000L
+                socketTimeoutMillis = 60_000L
+            }
             install(ContentNegotiation) {
                 json(jsonConfig)
             }
