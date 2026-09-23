@@ -280,21 +280,34 @@ private fun SingleGroupItemMiuix(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = groupModel.group.name,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MiuixTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = groupModel.group.name,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MiuixTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "(${groupModel.group.weightPercentage.roundToInt()}%)",
-                        fontSize = 12.sp,
+                        text = "Peso: ${groupModel.group.weightPercentage.roundToInt()}%",
+                        fontSize = 11.sp,
                         color = MiuixTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "•",
+                        fontSize = 11.sp,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                    )
+                    Text(
+                        text = "Prom: $avgScore (${groupModel.items.size} notas)",
+                        fontSize = 11.sp,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )
                     if (groupModel.group.dropLowest) {
                         Box(
@@ -303,22 +316,17 @@ private fun SingleGroupItemMiuix(
                                     color = Color(0xFFFFF3E0),
                                     cornerRadius = 6.dp
                                 )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
                         ) {
                             Text(
                                 text = "Descarta menor",
-                                fontSize = 10.sp,
+                                fontSize = 9.sp,
                                 color = Color(0xFFE65100),
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     }
                 }
-                Text(
-                    text = "Promedio: $avgScore • ${groupModel.items.size} notas",
-                    fontSize = 11.sp,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -507,19 +515,32 @@ private fun SingleGroupItemMaterial(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = groupModel.group.name,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = groupModel.group.name,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "(${groupModel.group.weightPercentage.roundToInt()}%)",
+                            text = "Peso: ${groupModel.group.weightPercentage.roundToInt()}%",
                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Prom: $avgScore (${groupModel.items.size} notas)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (groupModel.group.dropLowest) {
                             Surface(
@@ -535,11 +556,6 @@ private fun SingleGroupItemMaterial(
                             }
                         }
                     }
-                    Text(
-                        text = "Promedio grupo: $avgScore • ${groupModel.items.size} notas",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
