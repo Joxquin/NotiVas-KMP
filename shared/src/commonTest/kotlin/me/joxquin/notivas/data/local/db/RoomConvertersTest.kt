@@ -61,4 +61,46 @@ class RoomConvertersTest {
         assertEquals(assignment.dueAt, mappedBack.dueAt)
         assertEquals(assignment.submissionTypes, mappedBack.submissionTypes)
     }
+
+    @Test
+    fun testSimulationEntitiesDomainMapping() {
+        val group = me.joxquin.notivas.data.model.SimulationGroup(
+            id = 1L,
+            courseId = 12345L,
+            name = "Laboratorios Calificados",
+            weightPercentage = 40.0f,
+            targetAssessments = 8,
+            dropLowest = true,
+            minToDrop = 3,
+            calculationMode = "DROP_LOWEST",
+            orderIndex = 1
+        )
+        val groupEntity = me.joxquin.notivas.data.local.db.entities.SimulationGroupEntity.fromDomain(group)
+        assertEquals(8, groupEntity.targetAssessments)
+        assertEquals(true, groupEntity.dropLowest)
+        assertEquals("DROP_LOWEST", groupEntity.calculationMode)
+        assertEquals(group, groupEntity.toDomain())
+
+        val item = me.joxquin.notivas.data.model.SimulationItem(
+            id = 10L,
+            groupId = 1L,
+            canvasAssignmentId = 9876L,
+            name = "Lab 01",
+            isPlaceholder = false,
+            weekNumber = 3,
+            manualScore = 18.5f,
+            simulatedScore = 19.0f,
+            isSimulated = false,
+            maxScore = 20.0f,
+            internalWeight = 1.0f,
+            orderIndex = 1
+        )
+        val itemEntity = me.joxquin.notivas.data.local.db.entities.SimulationItemEntity.fromDomain(item)
+        assertEquals(3, itemEntity.weekNumber)
+        assertEquals(18.5f, itemEntity.manualScore)
+        assertEquals(19.0f, itemEntity.simulatedScore)
+        assertEquals(18.5f, item.effectiveScore)
+        assertEquals(item, itemEntity.toDomain())
+    }
 }
+

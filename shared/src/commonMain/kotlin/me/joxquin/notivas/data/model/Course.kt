@@ -8,5 +8,7 @@ data class Course(
     @SerialName("id") val id: Long,
     @SerialName("name") val name: String,
     @SerialName("course_code") val courseCode: String? = null,
-    @SerialName("enrollment_term_id") val enrollmentTermId: Long? = null
+    @SerialName("enrollment_term_id") val enrollmentTermId: Long? = null,
+    val totalWeeks: Int = 18,
+    val passingGrade: Float = 12.0f
 )

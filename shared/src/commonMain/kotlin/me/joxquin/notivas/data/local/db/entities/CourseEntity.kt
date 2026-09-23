@@ -15,13 +15,19 @@ data class CourseEntity(
     @ColumnInfo(name = "course_code")
     val courseCode: String? = null,
     @ColumnInfo(name = "enrollment_term_id")
-    val enrollmentTermId: Long? = null
+    val enrollmentTermId: Long? = null,
+    @ColumnInfo(name = "total_weeks", defaultValue = "18")
+    val totalWeeks: Int = 18,
+    @ColumnInfo(name = "passing_grade", defaultValue = "12.0")
+    val passingGrade: Float = 12.0f
 ) {
     fun toDomain(): Course = Course(
         id = id,
         name = name,
         courseCode = courseCode,
-        enrollmentTermId = enrollmentTermId
+        enrollmentTermId = enrollmentTermId,
+        totalWeeks = totalWeeks,
+        passingGrade = passingGrade
     )
 
     companion object {
@@ -29,7 +35,9 @@ data class CourseEntity(
             id = course.id,
             name = course.name,
             courseCode = course.courseCode,
-            enrollmentTermId = course.enrollmentTermId
+            enrollmentTermId = course.enrollmentTermId,
+            totalWeeks = course.totalWeeks,
+            passingGrade = course.passingGrade
         )
     }
 }

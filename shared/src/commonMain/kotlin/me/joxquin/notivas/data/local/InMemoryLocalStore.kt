@@ -236,15 +236,20 @@ class InMemoryLocalStore(
         }
     }
 
-    fun updateItemScore(itemId: Long, score: Float) {
+    fun updateItemScore(itemId: Long, score: Float, isSimulated: Boolean = true) {
         scope.launch {
             val allItems = database.simulationDao().getAllItems()
             val existing = allItems.find { it.id == itemId } ?: return@launch
-            database.simulationDao().updateItem(existing.copy(simulatedScore = score))
+            database.simulationDao().updateItem(
+                existing.copy(
+                    simulatedScore = score,
+                    isSimulated = isSimulated
+                )
+            )
         }
     }
 
-    fun linkItemWithCanvasAssignment(itemId: Long, canvasAssignmentId: Long, name: String) {
+    fun linkItemWithCanvasAssignment(itemId: Long, canvasAssignmentId: Long, name: String, manualScore: Float? = null) {
         scope.launch {
             val allItems = database.simulationDao().getAllItems()
             val existing = allItems.find { it.id == itemId } ?: return@launch
@@ -252,11 +257,13 @@ class InMemoryLocalStore(
                 existing.copy(
                     canvasAssignmentId = canvasAssignmentId,
                     isPlaceholder = false,
-                    name = name
+                    name = name,
+                    manualScore = manualScore ?: existing.manualScore
                 )
             )
         }
     }
+
 
     // ─── Copilot Chat (Room) ────────────────────────────────────────────────
     fun getAllSessions(): Flow<List<CopilotSession>> =

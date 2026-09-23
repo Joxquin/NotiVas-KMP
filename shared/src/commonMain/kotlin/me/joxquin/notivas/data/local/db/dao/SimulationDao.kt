@@ -15,22 +15,23 @@ import me.joxquin.notivas.data.local.db.entities.SimulationItemEntity
 @Dao
 interface SimulationDao {
     @Transaction
-    @Query("SELECT * FROM simulation_groups WHERE course_id = :courseId ORDER BY id ASC")
+    @Query("SELECT * FROM simulation_groups WHERE course_id = :courseId ORDER BY order_index ASC, id ASC")
     fun observeGroupsWithItems(courseId: Long): Flow<List<SimulationGroupWithItemsRelation>>
 
     @Transaction
-    @Query("SELECT * FROM simulation_groups WHERE course_id = :courseId ORDER BY id ASC")
+    @Query("SELECT * FROM simulation_groups WHERE course_id = :courseId ORDER BY order_index ASC, id ASC")
     suspend fun getGroupsWithItems(courseId: Long): List<SimulationGroupWithItemsRelation>
 
     @Transaction
-    @Query("SELECT * FROM simulation_groups ORDER BY id ASC")
+    @Query("SELECT * FROM simulation_groups ORDER BY order_index ASC, id ASC")
     suspend fun getAllGroupsWithItems(): List<SimulationGroupWithItemsRelation>
 
-    @Query("SELECT * FROM simulation_groups ORDER BY id ASC")
+    @Query("SELECT * FROM simulation_groups ORDER BY order_index ASC, id ASC")
     suspend fun getAllGroups(): List<SimulationGroupEntity>
 
-    @Query("SELECT * FROM simulation_items ORDER BY id ASC")
+    @Query("SELECT * FROM simulation_items ORDER BY order_index ASC, id ASC")
     suspend fun getAllItems(): List<SimulationItemEntity>
+
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGroup(group: SimulationGroupEntity): Long
