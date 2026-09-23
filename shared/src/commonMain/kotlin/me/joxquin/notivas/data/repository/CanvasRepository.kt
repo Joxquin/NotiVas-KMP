@@ -62,8 +62,22 @@ class CanvasRepository(
     suspend fun updateSimulationItemScore(itemId: Long, score: Float) =
         localStore.updateItemScore(itemId, score)
 
-    suspend fun linkSimulationItemWithCanvas(itemId: Long, assignmentId: Long, name: String) =
-        localStore.linkItemWithCanvasAssignment(itemId, assignmentId, name)
+    suspend fun applyTemplate(course: Course, template: me.joxquin.notivas.domain.template.CourseEvaluationTemplate) {
+        val assignments = localStore.getAssignmentsByCourse(course.id).first()
+        val (updatedCourse, groupsWithItems) = me.joxquin.notivas.domain.template.TemplateAssignmentMatcher.instantiateTemplate(
+            course = course,
+            template = template,
+            canvasAssignments = assignments
+        )
+        localStore.replaceCourseGroupsWithTemplate(updatedCourse, groupsWithItems)
+    }
+
+    suspend fun createGroupWithItems(group: SimulationGroup, items: List<SimulationItem>) {
+        localStore.createGroupWithItems(group, items)
+    }
+
+    suspend fun linkSimulationItemWithCanvas(itemId: Long, assignmentId: Long, name: String, manualScore: Float? = null) =
+        localStore.linkItemWithCanvasAssignment(itemId, assignmentId, name, manualScore)
 
     suspend fun fetchCourseModules(courseId: Long): List<CanvasModule> = withContext(Dispatchers.IO) {
         val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()

@@ -264,6 +264,36 @@ class InMemoryLocalStore(
         }
     }
 
+    fun replaceCourseGroupsWithTemplate(
+        course: Course,
+        groupsWithItems: List<SimulationGroupWithItems>
+    ) {
+        scope.launch {
+            database.courseDao().upsert(CourseEntity.fromDomain(course))
+            database.simulationDao().deleteGroupsForCourse(course.id)
+            groupsWithItems.forEach { g ->
+                val groupId = database.simulationDao().insertGroup(
+                    SimulationGroupEntity.fromDomain(g.group.copy(courseId = course.id))
+                )
+                val itemEntities = g.items.map { item ->
+                    SimulationItemEntity.fromDomain(item.copy(groupId = groupId))
+                }
+                database.simulationDao().upsertItems(itemEntities)
+            }
+        }
+    }
+
+    fun createGroupWithItems(
+        group: SimulationGroup,
+        items: List<SimulationItem>
+    ) {
+        scope.launch {
+            val groupId = database.simulationDao().insertGroup(SimulationGroupEntity.fromDomain(group))
+            val itemEntities = items.map { SimulationItemEntity.fromDomain(it.copy(groupId = groupId)) }
+            database.simulationDao().upsertItems(itemEntities)
+        }
+    }
+
 
     // ─── Copilot Chat (Room) ────────────────────────────────────────────────
     fun getAllSessions(): Flow<List<CopilotSession>> =

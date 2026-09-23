@@ -180,12 +180,101 @@ class NotasViewModel(
         _selectedCourse.value = course
     }
 
+    fun applyTemplate(template: me.joxquin.notivas.domain.template.CourseEvaluationTemplate) {
+        val course = _selectedCourse.value ?: return
+        viewModelScope.launch {
+            repository.applyTemplate(course, template)
+        }
+    }
+
     fun addSimulationGroup(name: String, weight: Float) {
         val courseId = _selectedCourse.value?.id ?: return
         viewModelScope.launch {
             repository.createSimulationGroup(
                 SimulationGroup(courseId = courseId, name = name, weightPercentage = weight)
             )
+        }
+    }
+
+    fun createGroupWithItems(
+        name: String,
+        weight: Float,
+        targetAssessments: Int,
+        dropLowest: Boolean,
+        minToDrop: Int
+    ) {
+        val courseId = _selectedCourse.value?.id ?: return
+        viewModelScope.launch {
+            val group = SimulationGroup(
+                courseId = courseId,
+                name = name,
+                weightPercentage = weight,
+                targetAssessments = targetAssessments,
+                dropLowest = dropLowest,
+                minToDrop = minToDrop
+            )
+            val items = (1..targetAssessments).map { i ->
+                SimulationItem(
+                    groupId = 0L,
+                    name = "$name $i",
+                    isPlaceholder = true,
+                    simulatedScore = 15f,
+                    isSimulated = false,
+                    maxScore = 20f,
+                    orderIndex = i - 1
+                )
+            }
+            repository.createGroupWithItems(group, items)
+        }
+    }
+
+    fun updateSimulationGroup(group: SimulationGroup) {
+        viewModelScope.launch {
+            repository.updateSimulationGroup(group)
+        }
+    }
+
+    fun addExistingAssignmentToGroup(groupId: Long, assignment: Assignment) {
+        viewModelScope.launch {
+            val rawScore = assignment.score?.toFloat() ?: assignment.submission?.score?.toFloat()
+            val maxPoints = (assignment.pointsPossible ?: 20.0).toFloat().coerceAtLeast(1f)
+            val normalizedScore = if (rawScore != null) (rawScore / maxPoints) * 20f else null
+
+            repository.addSimulationItem(
+                SimulationItem(
+                    groupId = groupId,
+                    canvasAssignmentId = assignment.id,
+                    name = assignment.name,
+                    isPlaceholder = false,
+                    manualScore = normalizedScore,
+                    simulatedScore = normalizedScore ?: 15f,
+                    isSimulated = false,
+                    maxScore = 20f
+                )
+            )
+        }
+    }
+
+    fun addPlaceholderItemToGroup(groupId: Long, name: String, estimatedScore: Float) {
+        viewModelScope.launch {
+            repository.addSimulationItem(
+                SimulationItem(
+                    groupId = groupId,
+                    canvasAssignmentId = null,
+                    name = name,
+                    isPlaceholder = true,
+                    manualScore = null,
+                    simulatedScore = estimatedScore,
+                    isSimulated = true,
+                    maxScore = 20f
+                )
+            )
+        }
+    }
+
+    fun linkSimulationItem(itemId: Long, assignmentId: Long, name: String, manualScore: Float? = null) {
+        viewModelScope.launch {
+            repository.linkSimulationItemWithCanvas(itemId, assignmentId, name, manualScore)
         }
     }
 
