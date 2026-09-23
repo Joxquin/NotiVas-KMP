@@ -1,0 +1,710 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "8a792f655196d333f21c78e4d6dd8338",
+    "entities": [
+      {
+        "tableName": "courses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `course_code` TEXT, `enrollment_term_id` INTEGER, `total_weeks` INTEGER NOT NULL DEFAULT 18, `passing_grade` REAL NOT NULL DEFAULT 12.0, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseCode",
+            "columnName": "course_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "enrollmentTermId",
+            "columnName": "enrollment_term_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "totalWeeks",
+            "columnName": "total_weeks",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "18"
+          },
+          {
+            "fieldPath": "passingGrade",
+            "columnName": "passing_grade",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "12.0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "assignments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `course_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `description` TEXT, `due_at` TEXT, `lock_at` TEXT, `points_possible` REAL, `html_url` TEXT, `submission_types` TEXT, `is_completed` INTEGER NOT NULL, `is_locked` INTEGER NOT NULL, `status` TEXT NOT NULL, `submitted_at` TEXT, `graded_at` TEXT, `score` REAL, `grade` TEXT, `submission_id` INTEGER, `submission_workflow_state` TEXT, `submission_late` INTEGER, `submission_missing` INTEGER, `notification_sent` INTEGER NOT NULL, `notified_24h` INTEGER NOT NULL, `notified_3h` INTEGER NOT NULL, `notified_30m` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dueAt",
+            "columnName": "due_at",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lockAt",
+            "columnName": "lock_at",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pointsPossible",
+            "columnName": "points_possible",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "htmlUrl",
+            "columnName": "html_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "submissionTypes",
+            "columnName": "submission_types",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "is_completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLocked",
+            "columnName": "is_locked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "submittedAt",
+            "columnName": "submitted_at",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "gradedAt",
+            "columnName": "graded_at",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "score",
+            "columnName": "score",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "submissionId",
+            "columnName": "submission_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "submissionWorkflowState",
+            "columnName": "submission_workflow_state",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "submissionLate",
+            "columnName": "submission_late",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "submissionMissing",
+            "columnName": "submission_missing",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "notificationSent",
+            "columnName": "notification_sent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notified24h",
+            "columnName": "notified_24h",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notified3h",
+            "columnName": "notified_3h",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notified30m",
+            "columnName": "notified_30m",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_assignments_course_id",
+            "unique": false,
+            "columnNames": [
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_assignments_course_id` ON `${TABLE_NAME}` (`course_id`)"
+          },
+          {
+            "name": "index_assignments_due_at",
+            "unique": false,
+            "columnNames": [
+              "due_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_assignments_due_at` ON `${TABLE_NAME}` (`due_at`)"
+          },
+          {
+            "name": "index_assignments_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_assignments_status` ON `${TABLE_NAME}` (`status`)"
+          }
+        ]
+      },
+      {
+        "tableName": "copilot_sessions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `course_id` INTEGER, `total_tokens` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "totalTokens",
+            "columnName": "total_tokens",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_copilot_sessions_updated_at",
+            "unique": false,
+            "columnNames": [
+              "updated_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_copilot_sessions_updated_at` ON `${TABLE_NAME}` (`updated_at`)"
+          }
+        ]
+      },
+      {
+        "tableName": "copilot_messages",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `session_id` TEXT NOT NULL, `role` TEXT NOT NULL, `text` TEXT NOT NULL, `sources_json` TEXT, `action_feedback` TEXT, `tokens` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`session_id`) REFERENCES `copilot_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "session_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "role",
+            "columnName": "role",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourcesJson",
+            "columnName": "sources_json",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "actionFeedback",
+            "columnName": "action_feedback",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tokens",
+            "columnName": "tokens",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_copilot_messages_session_id",
+            "unique": false,
+            "columnNames": [
+              "session_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_copilot_messages_session_id` ON `${TABLE_NAME}` (`session_id`)"
+          },
+          {
+            "name": "index_copilot_messages_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_copilot_messages_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "copilot_sessions",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "session_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "simulation_groups",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `course_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `weight_percentage` REAL NOT NULL, `target_assessments` INTEGER NOT NULL DEFAULT 1, `drop_lowest` INTEGER NOT NULL DEFAULT 0, `min_to_drop` INTEGER NOT NULL DEFAULT 3, `calculation_mode` TEXT NOT NULL DEFAULT 'SIMPLE', `order_index` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(`course_id`) REFERENCES `courses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weightPercentage",
+            "columnName": "weight_percentage",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetAssessments",
+            "columnName": "target_assessments",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "dropLowest",
+            "columnName": "drop_lowest",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "minToDrop",
+            "columnName": "min_to_drop",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "3"
+          },
+          {
+            "fieldPath": "calculationMode",
+            "columnName": "calculation_mode",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'SIMPLE'"
+          },
+          {
+            "fieldPath": "orderIndex",
+            "columnName": "order_index",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_simulation_groups_course_id",
+            "unique": false,
+            "columnNames": [
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_simulation_groups_course_id` ON `${TABLE_NAME}` (`course_id`)"
+          },
+          {
+            "name": "index_simulation_groups_order_index",
+            "unique": false,
+            "columnNames": [
+              "order_index"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_simulation_groups_order_index` ON `${TABLE_NAME}` (`order_index`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "courses",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "course_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "simulation_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `group_id` INTEGER NOT NULL, `canvas_assignment_id` INTEGER, `name` TEXT NOT NULL, `is_placeholder` INTEGER NOT NULL DEFAULT 0, `week_number` INTEGER, `manual_score` REAL, `simulated_score` REAL NOT NULL DEFAULT 0.0, `is_simulated` INTEGER NOT NULL DEFAULT 0, `max_score` REAL NOT NULL DEFAULT 20.0, `internal_weight` REAL NOT NULL DEFAULT 1.0, `order_index` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(`group_id`) REFERENCES `simulation_groups`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`canvas_assignment_id`) REFERENCES `assignments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "group_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canvasAssignmentId",
+            "columnName": "canvas_assignment_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPlaceholder",
+            "columnName": "is_placeholder",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "weekNumber",
+            "columnName": "week_number",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "manualScore",
+            "columnName": "manual_score",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "simulatedScore",
+            "columnName": "simulated_score",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "0.0"
+          },
+          {
+            "fieldPath": "isSimulated",
+            "columnName": "is_simulated",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "maxScore",
+            "columnName": "max_score",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "20.0"
+          },
+          {
+            "fieldPath": "internalWeight",
+            "columnName": "internal_weight",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "1.0"
+          },
+          {
+            "fieldPath": "orderIndex",
+            "columnName": "order_index",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_simulation_items_group_id",
+            "unique": false,
+            "columnNames": [
+              "group_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_simulation_items_group_id` ON `${TABLE_NAME}` (`group_id`)"
+          },
+          {
+            "name": "index_simulation_items_canvas_assignment_id",
+            "unique": false,
+            "columnNames": [
+              "canvas_assignment_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_simulation_items_canvas_assignment_id` ON `${TABLE_NAME}` (`canvas_assignment_id`)"
+          },
+          {
+            "name": "index_simulation_items_week_number",
+            "unique": false,
+            "columnNames": [
+              "week_number"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_simulation_items_week_number` ON `${TABLE_NAME}` (`week_number`)"
+          },
+          {
+            "name": "index_simulation_items_order_index",
+            "unique": false,
+            "columnNames": [
+              "order_index"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_simulation_items_order_index` ON `${TABLE_NAME}` (`order_index`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "simulation_groups",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "group_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "assignments",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "canvas_assignment_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "planner_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`plannable_id` INTEGER NOT NULL, `plannable_type` TEXT NOT NULL, `plannable_date` TEXT, `context_name` TEXT, `course_id` INTEGER, `html_url` TEXT, `plannable_title` TEXT NOT NULL, `plannable_sub_id` INTEGER NOT NULL, PRIMARY KEY(`plannable_id`))",
+        "fields": [
+          {
+            "fieldPath": "plannableId",
+            "columnName": "plannable_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plannableType",
+            "columnName": "plannable_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plannableDate",
+            "columnName": "plannable_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "contextName",
+            "columnName": "context_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "htmlUrl",
+            "columnName": "html_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "plannableTitle",
+            "columnName": "plannable_title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plannableSubId",
+            "columnName": "plannable_sub_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "plannable_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_planner_items_plannable_date",
+            "unique": false,
+            "columnNames": [
+              "plannable_date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_planner_items_plannable_date` ON `${TABLE_NAME}` (`plannable_date`)"
+          },
+          {
+            "name": "index_planner_items_course_id",
+            "unique": false,
+            "columnNames": [
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_planner_items_course_id` ON `${TABLE_NAME}` (`course_id`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8a792f655196d333f21c78e4d6dd8338')"
+    ]
+  }
+}
