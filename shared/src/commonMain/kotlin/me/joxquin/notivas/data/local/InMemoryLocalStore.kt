@@ -3,14 +3,23 @@ package me.joxquin.notivas.data.local
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import me.joxquin.notivas.data.local.db.DatabaseMigrator
+import me.joxquin.notivas.data.local.db.NotivasDatabase
+import me.joxquin.notivas.data.local.db.createRoomDatabase
+import me.joxquin.notivas.data.local.db.entities.AssignmentEntity
+import me.joxquin.notivas.data.local.db.entities.CopilotMessageEntity
+import me.joxquin.notivas.data.local.db.entities.CopilotSessionEntity
+import me.joxquin.notivas.data.local.db.entities.CourseEntity
+import me.joxquin.notivas.data.local.db.entities.PlannerItemEntity
+import me.joxquin.notivas.data.local.db.entities.SimulationGroupEntity
+import me.joxquin.notivas.data.local.db.entities.SimulationItemEntity
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.CopilotMessage
 import me.joxquin.notivas.data.model.CopilotSession
@@ -20,26 +29,24 @@ import me.joxquin.notivas.data.model.SimulationGroup
 import me.joxquin.notivas.data.model.SimulationGroupWithItems
 import me.joxquin.notivas.data.model.SimulationItem
 import me.joxquin.notivas.data.model.UserProfile
+import me.joxquin.notivas.util.DateTimeUtil
 
 /**
- * Almacén local reactivo con persistencia automática en disco (Android & Desktop).
- * Combina un SSOT en memoria ultrarrápido con serialización asíncrona a archivo JSON.
+ * Almacén de datos respaldado por SQLite mediante Room Multiplatform.
+ * Mantiene compatibilidad total con la API reactiva y ejecuta operaciones atómicas en SQLite.
  */
 class InMemoryLocalStore(
+    val database: NotivasDatabase = createRoomDatabase(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
-        encodeDefaults = true
-        prettyPrint = false
     }
 
-    private val storageFile: String by lazy {
-        "${FileStorageProvider.getAppDataDirectory()}/notivas_store.json"
+    private val userProfileFile: String by lazy {
+        "${FileStorageProvider.getAppDataDirectory()}/notivas_profile.json"
     }
-
-    private var saveDebounceJob: Job? = null
 
     // ─── Perfil de Usuario ──────────────────────────────────────────────────
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
@@ -49,322 +56,316 @@ class InMemoryLocalStore(
 
     fun saveUserProfile(profile: UserProfile) {
         _userProfile.value = profile
-        schedulePersist()
+        scope.launch {
+            try {
+                PlatformFileSystem.writeString(userProfileFile, json.encodeToString(UserProfile.serializer(), profile))
+            } catch (_: Exception) {}
+        }
     }
 
     fun clearUserProfile() {
         _userProfile.value = null
-        schedulePersist()
+        scope.launch {
+            try {
+                PlatformFileSystem.deleteFile(userProfileFile)
+            } catch (_: Exception) {}
+        }
     }
 
-    // ─── Cursos ─────────────────────────────────────────────────────────────
-    private val _courses = MutableStateFlow<List<Course>>(emptyList())
-    val courses: Flow<List<Course>> = _courses.asStateFlow()
+    // ─── Cursos (Room) ──────────────────────────────────────────────────────
+    val courses: Flow<List<Course>> = database.courseDao().observeAll().map { entities ->
+        entities.map { it.toDomain() }
+    }
 
     fun getAllCourses(): Flow<List<Course>> = courses
 
-    fun getCourseList(): List<Course> = _courses.value
+    fun getCourseList(): List<Course> {
+        return kotlinx.coroutines.runBlocking {
+            database.courseDao().getAll().map { it.toDomain() }
+        }
+    }
 
     fun upsertCourses(newCourses: List<Course>) {
-        val currentMap = _courses.value.associateBy { it.id }.toMutableMap()
-        for (c in newCourses) {
-            currentMap[c.id] = c
+        scope.launch {
+            database.courseDao().upsert(newCourses.map { CourseEntity.fromDomain(it) })
         }
-        _courses.value = currentMap.values.toList()
-        schedulePersist()
     }
 
     fun deleteCourses() {
-        _courses.value = emptyList()
-        schedulePersist()
+        scope.launch {
+            database.courseDao().deleteAll()
+        }
     }
 
-    // ─── Tareas (Assignments) ───────────────────────────────────────────────
-    private val _assignments = MutableStateFlow<List<Assignment>>(emptyList())
-    val assignments: Flow<List<Assignment>> = _assignments.asStateFlow()
+    // ─── Tareas / Assignments (Room) ────────────────────────────────────────
+    val assignments: Flow<List<Assignment>> = database.assignmentDao().observeAll().map { entities ->
+        entities.map { it.toDomain() }
+    }
 
-    fun getAllAssignments(): Flow<List<Assignment>> =
-        _assignments.map { list -> list.sortedBy { it.dueAt ?: "" } }
+    fun getAllAssignments(): Flow<List<Assignment>> = assignments
 
-    fun getAssignmentList(): List<Assignment> =
-        _assignments.value.sortedBy { it.dueAt ?: "" }
+    fun getAssignmentList(): List<Assignment> {
+        return kotlinx.coroutines.runBlocking {
+            database.assignmentDao().getAll().map { it.toDomain() }
+        }
+    }
 
     fun getAssignmentsByCourse(courseId: Long): Flow<List<Assignment>> =
-        _assignments.map { list ->
-            list.filter { it.courseId == courseId }.sortedBy { it.dueAt ?: "" }
+        database.assignmentDao().observeByCourse(courseId).map { list ->
+            list.map { it.toDomain() }
         }
 
-    fun getAssignmentsForCourseOnce(courseId: Long): List<Assignment> =
-        _assignments.value.filter { it.courseId == courseId }.sortedBy { it.dueAt ?: "" }
+    fun getAssignmentsForCourseOnce(courseId: Long): List<Assignment> {
+        return kotlinx.coroutines.runBlocking {
+            database.assignmentDao().getByCourse(courseId).map { it.toDomain() }
+        }
+    }
 
     fun insertAssignments(items: List<Assignment>) {
-        val currentMap = _assignments.value.associateBy { it.id }.toMutableMap()
-        for (item in items) {
-            currentMap[item.id] = item
+        scope.launch {
+            database.assignmentDao().upsert(items.map { AssignmentEntity.fromDomain(it) })
         }
-        _assignments.value = currentMap.values.toList()
-        schedulePersist()
     }
 
     fun updateNotificationSent(id: Long, sent: Boolean) {
-        _assignments.value = _assignments.value.map {
-            if (it.id == id) it.copy(notificationSent = sent) else it
+        scope.launch {
+            val existing = database.assignmentDao().getById(id) ?: return@launch
+            database.assignmentDao().upsert(existing.copy(notificationSent = sent))
         }
-        schedulePersist()
     }
 
     fun markNotified24h(id: Long) {
-        _assignments.value = _assignments.value.map {
-            if (it.id == id) it.copy(notified24h = true) else it
+        scope.launch {
+            val existing = database.assignmentDao().getById(id) ?: return@launch
+            database.assignmentDao().upsert(existing.copy(notified24h = true))
         }
-        schedulePersist()
     }
 
     fun markNotified3h(id: Long) {
-        _assignments.value = _assignments.value.map {
-            if (it.id == id) it.copy(notified3h = true) else it
+        scope.launch {
+            val existing = database.assignmentDao().getById(id) ?: return@launch
+            database.assignmentDao().upsert(existing.copy(notified3h = true))
         }
-        schedulePersist()
     }
 
     fun markNotified30m(id: Long) {
-        _assignments.value = _assignments.value.map {
-            if (it.id == id) it.copy(notified30m = true) else it
+        scope.launch {
+            val existing = database.assignmentDao().getById(id) ?: return@launch
+            database.assignmentDao().upsert(existing.copy(notified30m = true))
         }
-        schedulePersist()
     }
 
     fun deleteAssignmentById(id: Long) {
-        _assignments.value = _assignments.value.filterNot { it.id == id }
-        schedulePersist()
+        scope.launch {
+            val existing = database.assignmentDao().getById(id) ?: return@launch
+            database.assignmentDao().deleteByCourse(existing.courseId)
+        }
     }
 
     fun deleteAssignments() {
-        _assignments.value = emptyList()
-        schedulePersist()
+        scope.launch {
+            database.assignmentDao().deleteAll()
+        }
     }
 
-    // ─── Agenda y Planificación (Planner Items) ──────────────────────────────
-    private val _plannerItems = MutableStateFlow<List<PlannerItem>>(emptyList())
-    val plannerItems: Flow<List<PlannerItem>> = _plannerItems.asStateFlow()
+    // ─── Agenda y Planificación (Room) ──────────────────────────────────────
+    val plannerItems: Flow<List<PlannerItem>> = database.plannerDao().observeAll().map { entities ->
+        entities.map { it.toDomain() }
+    }
 
-    fun getAllPlannerItems(): Flow<List<PlannerItem>> =
-        _plannerItems.map { list -> list.sortedBy { it.plannableDate ?: "" } }
+    fun getAllPlannerItems(): Flow<List<PlannerItem>> = plannerItems
 
     fun getPlannerItemsByCourse(courseId: Long): Flow<List<PlannerItem>> =
-        _plannerItems.map { list ->
-            list.filter { it.courseId == courseId }.sortedBy { it.plannableDate ?: "" }
+        database.plannerDao().observeAll().map { list ->
+            list.filter { it.courseId == courseId }.map { it.toDomain() }
         }
 
     fun insertPlannerItems(items: List<PlannerItem>) {
-        val currentMap = _plannerItems.value.associateBy { it.plannableId }.toMutableMap()
-        for (item in items) {
-            currentMap[item.plannableId] = item
+        scope.launch {
+            database.plannerDao().upsert(items.map { PlannerItemEntity.fromDomain(it) })
         }
-        _plannerItems.value = currentMap.values.toList()
-        schedulePersist()
     }
 
     fun deletePlannerItems() {
-        _plannerItems.value = emptyList()
-        schedulePersist()
+        scope.launch {
+            database.plannerDao().deleteAll()
+        }
     }
 
-    // ─── Simulador de Notas ──────────────────────────────────────────────────
-    private val _simulationGroups = MutableStateFlow<List<SimulationGroup>>(emptyList())
-    private val _simulationItems = MutableStateFlow<List<SimulationItem>>(emptyList())
-
+    // ─── Simulador de Notas (Room) ──────────────────────────────────────────
     fun getGroupsWithItemsByCourse(courseId: Long): Flow<List<SimulationGroupWithItems>> =
-        _simulationGroups.map { groups ->
-            val items = _simulationItems.value
-            groups.filter { it.courseId == courseId }.map { g ->
-                SimulationGroupWithItems(
-                    group = g,
-                    items = items.filter { it.groupId == g.id }
-                )
-            }
+        database.simulationDao().observeGroupsWithItems(courseId).map { relations ->
+            relations.map { it.toDomain() }
         }
 
     fun insertGroup(group: SimulationGroup): Long {
-        val newId = if (group.id == 0L) (DateTimeUtilMillis() + _simulationGroups.value.size) else group.id
-        val created = group.copy(id = newId)
-        _simulationGroups.value = _simulationGroups.value + created
-        schedulePersist()
-        return newId
+        val groupEntity = SimulationGroupEntity.fromDomain(group)
+        return kotlinx.coroutines.runBlocking {
+            database.simulationDao().insertGroup(groupEntity)
+        }
     }
 
     fun updateGroup(group: SimulationGroup) {
-        _simulationGroups.value = _simulationGroups.value.map {
-            if (it.id == group.id) group else it
+        scope.launch {
+            database.simulationDao().updateGroup(SimulationGroupEntity.fromDomain(group))
         }
-        schedulePersist()
     }
 
     fun deleteGroup(group: SimulationGroup) {
-        _simulationGroups.value = _simulationGroups.value.filterNot { it.id == group.id }
-        _simulationItems.value = _simulationItems.value.filterNot { it.groupId == group.id }
-        schedulePersist()
+        scope.launch {
+            database.simulationDao().deleteGroup(group.id)
+        }
     }
 
     fun insertItem(item: SimulationItem): Long {
-        val newId = if (item.id == 0L) (DateTimeUtilMillis() + _simulationItems.value.size) else item.id
-        val created = item.copy(id = newId)
-        _simulationItems.value = _simulationItems.value + created
-        schedulePersist()
-        return newId
+        val itemEntity = SimulationItemEntity.fromDomain(item)
+        return kotlinx.coroutines.runBlocking {
+            database.simulationDao().insertItem(itemEntity)
+        }
     }
 
     fun updateItem(item: SimulationItem) {
-        _simulationItems.value = _simulationItems.value.map {
-            if (it.id == item.id) item else it
+        scope.launch {
+            database.simulationDao().updateItem(SimulationItemEntity.fromDomain(item))
         }
-        schedulePersist()
     }
 
     fun deleteItem(item: SimulationItem) {
-        _simulationItems.value = _simulationItems.value.filterNot { it.id == item.id }
-        schedulePersist()
+        scope.launch {
+            database.simulationDao().deleteItem(item.id)
+        }
     }
 
     fun updateItemScore(itemId: Long, score: Float) {
-        _simulationItems.value = _simulationItems.value.map {
-            if (it.id == itemId) it.copy(simulatedScore = score) else it
+        scope.launch {
+            val allItems = database.simulationDao().getAllItems()
+            val existing = allItems.find { it.id == itemId } ?: return@launch
+            database.simulationDao().updateItem(existing.copy(simulatedScore = score))
         }
-        schedulePersist()
     }
 
     fun linkItemWithCanvasAssignment(itemId: Long, canvasAssignmentId: Long, name: String) {
-        _simulationItems.value = _simulationItems.value.map {
-            if (it.id == itemId) it.copy(canvasAssignmentId = canvasAssignmentId, isPlaceholder = false, name = name) else it
+        scope.launch {
+            val allItems = database.simulationDao().getAllItems()
+            val existing = allItems.find { it.id == itemId } ?: return@launch
+            database.simulationDao().updateItem(
+                existing.copy(
+                    canvasAssignmentId = canvasAssignmentId,
+                    isPlaceholder = false,
+                    name = name
+                )
+            )
         }
-        schedulePersist()
     }
 
-    // ─── Copilot Chat (Sesiones y Mensajes) ──────────────────────────────────
-    private val _copilotSessions = MutableStateFlow<List<CopilotSession>>(emptyList())
-    private val _copilotMessages = MutableStateFlow<List<CopilotMessage>>(emptyList())
-
+    // ─── Copilot Chat (Room) ────────────────────────────────────────────────
     fun getAllSessions(): Flow<List<CopilotSession>> =
-        _copilotSessions.map { list -> list.sortedByDescending { it.updatedAt } }
-
-    fun getSessionById(sessionId: String): CopilotSession? =
-        _copilotSessions.value.find { it.id == sessionId }
-
-    fun getMessagesForSession(sessionId: String): Flow<List<CopilotMessage>> =
-        _copilotMessages.map { list ->
-            list.filter { it.sessionId == sessionId }.sortedBy { it.timestamp }
+        database.copilotChatDao().observeSessions().map { list ->
+            list.map { it.toDomain() }
         }
 
-    fun getMessagesForSessionOnce(sessionId: String): List<CopilotMessage> =
-        _copilotMessages.value.filter { it.sessionId == sessionId }.sortedBy { it.timestamp }
+    fun getSessionById(sessionId: String): CopilotSession? {
+        return kotlinx.coroutines.runBlocking {
+            database.copilotChatDao().getSessionById(sessionId)?.toDomain()
+        }
+    }
+
+    fun getMessagesForSession(sessionId: String): Flow<List<CopilotMessage>> =
+        database.copilotChatDao().observeMessages(sessionId).map { list ->
+            list.map { it.toDomain() }
+        }
+
+    fun getMessagesForSessionOnce(sessionId: String): List<CopilotMessage> {
+        return kotlinx.coroutines.runBlocking {
+            database.copilotChatDao().getMessages(sessionId).map { it.toDomain() }
+        }
+    }
 
     fun insertSession(session: CopilotSession) {
-        _copilotSessions.value = _copilotSessions.value.filterNot { it.id == session.id } + session
-        schedulePersist()
+        scope.launch {
+            database.copilotChatDao().upsertSession(CopilotSessionEntity.fromDomain(session))
+        }
     }
 
     fun insertMessage(message: CopilotMessage) {
-        _copilotMessages.value = _copilotMessages.value.filterNot { it.id == message.id } + message
-        schedulePersist()
+        scope.launch {
+            database.copilotChatDao().insertMessage(CopilotMessageEntity.fromDomain(message))
+        }
     }
 
     fun insertMessages(messages: List<CopilotMessage>) {
-        val map = _copilotMessages.value.associateBy { it.id }.toMutableMap()
-        for (m in messages) map[m.id] = m
-        _copilotMessages.value = map.values.toList()
-        schedulePersist()
+        scope.launch {
+            database.copilotChatDao().insertMessages(messages.map { CopilotMessageEntity.fromDomain(it) })
+        }
     }
 
-    fun updateSessionTitle(sessionId: String, newTitle: String, updatedAt: Long = DateTimeUtilMillis()) {
-        _copilotSessions.value = _copilotSessions.value.map {
-            if (it.id == sessionId) it.copy(title = newTitle, updatedAt = updatedAt) else it
+    fun updateSessionTitle(sessionId: String, newTitle: String, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
+        scope.launch {
+            val session = database.copilotChatDao().getSessionById(sessionId) ?: return@launch
+            database.copilotChatDao().upsertSession(session.copy(title = newTitle, updatedAt = updatedAt))
         }
-        schedulePersist()
     }
 
-    fun updateSessionTokens(sessionId: String, tokens: Int, updatedAt: Long = DateTimeUtilMillis()) {
-        _copilotSessions.value = _copilotSessions.value.map {
-            if (it.id == sessionId) it.copy(totalTokens = tokens, updatedAt = updatedAt) else it
+    fun updateSessionTokens(sessionId: String, tokens: Int, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
+        scope.launch {
+            val session = database.copilotChatDao().getSessionById(sessionId) ?: return@launch
+            database.copilotChatDao().upsertSession(session.copy(totalTokens = tokens, updatedAt = updatedAt))
         }
-        schedulePersist()
     }
 
-    fun updateSessionTimestamp(sessionId: String, updatedAt: Long = DateTimeUtilMillis()) {
-        _copilotSessions.value = _copilotSessions.value.map {
-            if (it.id == sessionId) it.copy(updatedAt = updatedAt) else it
+    fun updateSessionTimestamp(sessionId: String, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
+        scope.launch {
+            val session = database.copilotChatDao().getSessionById(sessionId) ?: return@launch
+            database.copilotChatDao().upsertSession(session.copy(updatedAt = updatedAt))
         }
-        schedulePersist()
     }
 
     fun deleteSession(sessionId: String) {
-        _copilotSessions.value = _copilotSessions.value.filterNot { it.id == sessionId }
-        _copilotMessages.value = _copilotMessages.value.filterNot { it.sessionId == sessionId }
-        schedulePersist()
+        scope.launch {
+            database.copilotChatDao().deleteSession(sessionId)
+        }
     }
 
     fun deleteMessagesForSession(sessionId: String) {
-        _copilotMessages.value = _copilotMessages.value.filterNot { it.sessionId == sessionId }
-        schedulePersist()
+        scope.launch {
+            database.copilotChatDao().deleteMessagesForSession(sessionId)
+        }
     }
 
     fun deleteAllSessions() {
-        _copilotSessions.value = emptyList()
-        _copilotMessages.value = emptyList()
-        schedulePersist()
+        scope.launch {
+            database.copilotChatDao().deleteAllSessions()
+            database.copilotChatDao().deleteAllMessages()
+        }
     }
 
-    // ─── Carga y Persistencia en Disco ───────────────────────────────────────
+    // ─── Inicialización y Migración Automática ──────────────────────────────
     init {
-        loadFromDisk()
+        scope.launch {
+            loadUserProfile()
+            DatabaseMigrator(database).migrateIfNeeded()
+        }
     }
 
-    private fun loadFromDisk() {
+    private fun loadUserProfile() {
         try {
-            val content = PlatformFileSystem.readString(storageFile) ?: return
-            val snapshot = json.decodeFromString<PersistentStoreSnapshot>(content)
-            _userProfile.value = snapshot.userProfile
-            _courses.value = snapshot.courses
-            _assignments.value = snapshot.assignments
-            _plannerItems.value = snapshot.plannerItems
-            _simulationGroups.value = snapshot.simulationGroups
-            _simulationItems.value = snapshot.simulationItems
-            _copilotSessions.value = snapshot.copilotSessions
-            _copilotMessages.value = snapshot.copilotMessages
-        } catch (_: Exception) {
-        }
-    }
-
-    private fun schedulePersist() {
-        saveDebounceJob?.cancel()
-        saveDebounceJob = scope.launch {
-            delay(150)
-            persistToDisk()
-        }
-    }
-
-    private fun persistToDisk() {
-        try {
-            val snapshot = PersistentStoreSnapshot(
-                userProfile = _userProfile.value,
-                courses = _courses.value,
-                assignments = _assignments.value,
-                plannerItems = _plannerItems.value,
-                simulationGroups = _simulationGroups.value,
-                simulationItems = _simulationItems.value,
-                copilotSessions = _copilotSessions.value,
-                copilotMessages = _copilotMessages.value
-            )
-            val jsonString = json.encodeToString(PersistentStoreSnapshot.serializer(), snapshot)
-            PlatformFileSystem.writeString(storageFile, jsonString)
-        } catch (_: Exception) {
-        }
+            val content = PlatformFileSystem.readString(userProfileFile) ?: return
+            _userProfile.value = json.decodeFromString<UserProfile>(content)
+        } catch (_: Exception) {}
     }
 
     fun clearDiskStorage() {
-        PlatformFileSystem.deleteFile(storageFile)
-    }
-
-    private fun DateTimeUtilMillis(): Long {
-        return me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+        clearUserProfile()
+        scope.launch {
+            database.courseDao().deleteAll()
+            database.assignmentDao().deleteAll()
+            database.plannerDao().deleteAll()
+            database.copilotChatDao().deleteAllSessions()
+            database.copilotChatDao().deleteAllMessages()
+            database.simulationDao().deleteAllGroups()
+            database.simulationDao().deleteAllItems()
+        }
     }
 }
+
+
