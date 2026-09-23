@@ -40,5 +40,7 @@ data class PersistentPreferencesSnapshot(
     val copilotEnabled: Boolean = true,
     val totalCopilotTokens: Long = 0L,
     val dynamicColorEnabled: Boolean = true,
-    val themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
+    val themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    val unconfiguredCoursesBannerDismissedUntil: Long = 0L
 )
+

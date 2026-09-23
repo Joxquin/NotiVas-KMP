@@ -293,9 +293,15 @@ fun MainAppShell(
                                 onNavigateToAjustes = {
                                     showingNotasDetail = false
                                     mainPagerState.animateToPage(3)
+                                },
+                                onNavigateToCourseProgreso = { course ->
+                                    notasViewModel.selectCourse(course)
+                                    showingNotasDetail = true
+                                    mainPagerState.animateToPage(1)
                                 }
                             )
                         }
+
 
                         MainDestination.Herramientas -> {
                             me.joxquin.notivas.ui.herramientas.HerramientasScreen(
@@ -490,8 +496,14 @@ fun MainAppShell(
                             onNavigateToAjustes = {
                                 showingNotasDetail = false
                                 navigateToMaterial(MainDestination.Ajustes)
+                            },
+                            onNavigateToCourseProgreso = { course ->
+                                notasViewModel.selectCourse(course)
+                                showingNotasDetail = true
+                                navigateToMaterial(MainDestination.Herramientas)
                             }
                         )
+
                     }
 
                     MainDestination.Herramientas -> {

@@ -10,10 +10,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import me.joxquin.notivas.data.local.PreferencesManager
+import me.joxquin.notivas.data.local.db.dao.SimulationDao
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
+import me.joxquin.notivas.data.model.GradePerformanceLevel
 import me.joxquin.notivas.data.model.UserProfile
 import me.joxquin.notivas.data.repository.CanvasRepository
+import me.joxquin.notivas.di.AppModule
+import me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase
 import me.joxquin.notivas.util.DateComponents
 import me.joxquin.notivas.util.DateTimeUtil
 
@@ -33,7 +38,10 @@ data class CourseStat(
     val pendingCount: Int,
     val completedCount: Int,
     val missingCount: Int,
-    val averageScore: Double?
+    val averageScore: Double?,
+    val hasConfiguredGroups: Boolean = false,
+    val evaluatedProgressPercentage: Float = 0f,
+    val performanceLevel: GradePerformanceLevel = GradePerformanceLevel.AT_RISK
 )
 
 data class DaySchedule(
@@ -55,11 +63,17 @@ data class DashboardUiState(
     val weeklySchedule: List<DaySchedule> = emptyList(),
     val selectedDate: DateComponents? = null,
     val selectedDateAssignments: List<AssignmentUiModel> = emptyList(),
-    val inspectedCourse: Course? = null
+    val inspectedCourse: Course? = null,
+    val unconfiguredCoursesCount: Int = 0,
+    val firstUnconfiguredCourse: Course? = null,
+    val isUnconfiguredBannerVisible: Boolean = false
 )
 
 class DashboardViewModel(
-    private val repository: CanvasRepository
+    private val repository: CanvasRepository = AppModule.canvasRepository,
+    private val preferencesManager: PreferencesManager = AppModule.preferencesManager,
+    private val simulationDao: SimulationDao = AppModule.simulationDao,
+    private val academicCalculatorUseCase: AcademicCalculatorUseCase = AppModule.academicCalculatorUseCase
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -150,26 +164,74 @@ class DashboardViewModel(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // ─── Estadísticas de Cursos con Motor Académico (3 Estados) ─────────────
     val courseStats: StateFlow<List<CourseStat>> =
-        combine(courses, repository.allAssignments) { courseList, assignmentList ->
+        combine(
+            courses,
+            repository.allAssignments,
+            simulationDao.observeAllGroupsWithItems()
+        ) { courseList, assignmentList, allGroupRelations ->
+            val relationsByCourse = allGroupRelations.groupBy { it.group.courseId }
+
             courseList.map { course ->
                 val courseAssignments = assignmentList.filter { it.courseId == course.id }
                 val pending = courseAssignments.count { it.status == "upcoming" }
                 val completed = courseAssignments.count { it.status == "completed" }
                 val missing = courseAssignments.count { it.status == "missing" }
 
-                val scores = courseAssignments.mapNotNull { it.score }
-                val avg = if (scores.isNotEmpty()) scores.average() else null
+                val groups = relationsByCourse[course.id]?.map { it.toDomain() } ?: emptyList()
 
-                CourseStat(
-                    course = course,
-                    pendingCount = pending,
-                    completedCount = completed,
-                    missingCount = missing,
-                    averageScore = avg
-                )
+                if (groups.isEmpty()) {
+                    // Estado A: Sin grupos configurados
+                    CourseStat(
+                        course = course,
+                        pendingCount = pending,
+                        completedCount = completed,
+                        missingCount = missing,
+                        averageScore = null,
+                        hasConfiguredGroups = false,
+                        evaluatedProgressPercentage = 0f,
+                        performanceLevel = GradePerformanceLevel.AT_RISK
+                    )
+                } else {
+                    // Calcular con motor académico estricto
+                    val summary = academicCalculatorUseCase.calculateCourseSummary(course, groups)
+                    CourseStat(
+                        course = course,
+                        pendingCount = pending,
+                        completedCount = completed,
+                        missingCount = missing,
+                        averageScore = summary.currentAverage?.toDouble(),
+                        hasConfiguredGroups = true,
+                        evaluatedProgressPercentage = summary.evaluatedProgressPercentage,
+                        performanceLevel = summary.performanceLevel
+                    )
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // ─── Banner Contextual de Cursos sin Configurar ─────────────────────────
+    private val _bannerDismissedLocally = MutableStateFlow(false)
+
+    val unconfiguredBannerState: StateFlow<Triple<Int, Course?, Boolean>> =
+        combine(
+            courses,
+            simulationDao.observeAllGroupsWithItems(),
+            preferencesManager.unconfiguredCoursesBannerDismissedUntil,
+            _bannerDismissedLocally
+        ) { courseList, allGroupRelations, dismissedUntil, locallyDismissed ->
+            if (locallyDismissed) {
+                Triple(0, null, false)
+            } else {
+                val relationsByCourse = allGroupRelations.groupBy { it.group.courseId }
+                val unconfigured = courseList.filter { relationsByCourse[it.id].isNullOrEmpty() }
+                val count = unconfigured.size
+                val first = unconfigured.firstOrNull()
+                val isSnoozed = DateTimeUtil.nowEpochMillis() < dismissedUntil
+                val isVisible = count > 0 && !isSnoozed
+                Triple(count, first, isVisible)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Triple(0, null, false))
 
     val institutionName: StateFlow<String> = repository.universityUrl.map { url ->
         if (url.isNullOrBlank()) "CANVAS"
@@ -194,6 +256,13 @@ class DashboardViewModel(
             } catch (e: Exception) {
                 _syncStatus.value = SyncStatus.FAILED
             }
+        }
+    }
+
+    fun dismissUnconfiguredBanner() {
+        _bannerDismissedLocally.value = true
+        viewModelScope.launch {
+            preferencesManager.dismissUnconfiguredCoursesBannerFor7Days()
         }
     }
 

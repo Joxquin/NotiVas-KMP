@@ -24,7 +24,12 @@ interface SimulationDao {
 
     @Transaction
     @Query("SELECT * FROM simulation_groups ORDER BY order_index ASC, id ASC")
+    fun observeAllGroupsWithItems(): Flow<List<SimulationGroupWithItemsRelation>>
+
+    @Transaction
+    @Query("SELECT * FROM simulation_groups ORDER BY order_index ASC, id ASC")
     suspend fun getAllGroupsWithItems(): List<SimulationGroupWithItemsRelation>
+
 
     @Query("SELECT * FROM simulation_groups ORDER BY order_index ASC, id ASC")
     suspend fun getAllGroups(): List<SimulationGroupEntity>

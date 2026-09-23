@@ -86,6 +86,11 @@ class PreferencesManager(
     val themeStyle: Flow<AppThemeStyle> = _themeStyle.asStateFlow()
     fun getThemeStyle(): AppThemeStyle = _themeStyle.value
 
+    private val _unconfiguredCoursesBannerDismissedUntil = MutableStateFlow(0L)
+    val unconfiguredCoursesBannerDismissedUntil: Flow<Long> = _unconfiguredCoursesBannerDismissedUntil.asStateFlow()
+    fun getUnconfiguredCoursesBannerDismissedUntil(): Long = _unconfiguredCoursesBannerDismissedUntil.value
+
+
     init {
         loadFromDisk()
     }
@@ -111,6 +116,7 @@ class PreferencesManager(
             _totalCopilotTokens.value = snapshot.totalCopilotTokens
             _dynamicColorEnabled.value = snapshot.dynamicColorEnabled
             _themeStyle.value = snapshot.themeStyle
+            _unconfiguredCoursesBannerDismissedUntil.value = snapshot.unconfiguredCoursesBannerDismissedUntil
         } catch (_: Exception) {
         } finally {
             _isLoaded.value = true
@@ -144,13 +150,15 @@ class PreferencesManager(
                 copilotEnabled = _copilotEnabled.value,
                 totalCopilotTokens = _totalCopilotTokens.value,
                 dynamicColorEnabled = _dynamicColorEnabled.value,
-                themeStyle = _themeStyle.value
+                themeStyle = _themeStyle.value,
+                unconfiguredCoursesBannerDismissedUntil = _unconfiguredCoursesBannerDismissedUntil.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)
             PlatformFileSystem.writeString(prefsFile, jsonString)
         } catch (_: Exception) {
         }
     }
+
 
     suspend fun saveUniversityUrl(url: String) {
         _universityUrl.value = url
@@ -238,7 +246,14 @@ class PreferencesManager(
         schedulePersist()
     }
 
+    suspend fun dismissUnconfiguredCoursesBannerFor7Days() {
+        val sevenDaysMs = 7L * 24L * 60L * 60L * 1000L
+        _unconfiguredCoursesBannerDismissedUntil.value = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + sevenDaysMs
+        schedulePersist()
+    }
+
     suspend fun clear() {
+
         _accessToken.value = null
         _universityUrl.value = null
         _isOnboardingCompleted.value = false

@@ -45,12 +45,14 @@ fun InicioMiuixContent(
         bottom = 100.dp
     ),
     onNavigateToAjustes: () -> Unit = {},
+    onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
     val courses by viewModel.courses.collectAsState()
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
     val courseStats by viewModel.courseStats.collectAsState()
+    val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
     val weeklySchedule by viewModel.weeklySchedule.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
@@ -118,12 +120,26 @@ fun InicioMiuixContent(
                 )
             }
 
+            // 1.1 Banner Contextual de Cursos sin Configurar
+            item {
+                me.joxquin.notivas.ui.dashboard.components.UnconfiguredCoursesBanner(
+                    unconfiguredCount = unconfiguredBannerState.first,
+                    firstUnconfiguredCourse = unconfiguredBannerState.second,
+                    visible = unconfiguredBannerState.third,
+                    onDismiss = { viewModel.dismissUnconfiguredBanner() },
+                    onConfigureClick = { course ->
+                        onNavigateToCourseProgreso(course)
+                    }
+                )
+            }
+
             // 2. Urgent Tasks Horizontal Snap Carousel (<12h, 12-48h, upcoming)
             item {
                 MiuixUrgentTasksCarousel(
                     urgentAssignments = urgentAssignments
                 )
             }
+
 
             // 3. Weekly 7-Day Scheduler Strip
             item {
