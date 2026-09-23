@@ -50,4 +50,9 @@ object AppModule {
     val calculateWhatIfGradeUseCase: CalculateWhatIfGradeUseCase by lazy {
         CalculateWhatIfGradeUseCase()
     }
+
+    val academicCalculatorUseCase: me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase by lazy {
+        me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase()
+    }
 }
+
