@@ -41,6 +41,9 @@ interface SimulationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGroup(group: SimulationGroupEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertGroups(groups: List<SimulationGroupEntity>): List<Long>
+
     @Update
     suspend fun updateGroup(group: SimulationGroupEntity)
 
@@ -52,6 +55,9 @@ interface SimulationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: SimulationItemEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertItems(items: List<SimulationItemEntity>): List<Long>
 
     @Update
     suspend fun updateItem(item: SimulationItemEntity)

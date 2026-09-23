@@ -272,13 +272,12 @@ class InMemoryLocalStore(
             database.courseDao().upsert(CourseEntity.fromDomain(course))
             database.simulationDao().deleteGroupsForCourse(course.id)
             groupsWithItems.forEach { g ->
-                val groupId = database.simulationDao().insertGroup(
-                    SimulationGroupEntity.fromDomain(g.group.copy(courseId = course.id))
-                )
+                val groupEntity = SimulationGroupEntity.fromDomain(g.group.copy(id = 0L, courseId = course.id))
+                val groupId = database.simulationDao().insertGroup(groupEntity)
                 val itemEntities = g.items.map { item ->
-                    SimulationItemEntity.fromDomain(item.copy(groupId = groupId))
+                    SimulationItemEntity.fromDomain(item.copy(id = 0L, groupId = groupId))
                 }
-                database.simulationDao().upsertItems(itemEntities)
+                database.simulationDao().insertItems(itemEntities)
             }
         }
     }
@@ -288,9 +287,10 @@ class InMemoryLocalStore(
         items: List<SimulationItem>
     ) {
         scope.launch {
-            val groupId = database.simulationDao().insertGroup(SimulationGroupEntity.fromDomain(group))
-            val itemEntities = items.map { SimulationItemEntity.fromDomain(it.copy(groupId = groupId)) }
-            database.simulationDao().upsertItems(itemEntities)
+            val groupEntity = SimulationGroupEntity.fromDomain(group.copy(id = 0L))
+            val groupId = database.simulationDao().insertGroup(groupEntity)
+            val itemEntities = items.map { SimulationItemEntity.fromDomain(it.copy(id = 0L, groupId = groupId)) }
+            database.simulationDao().insertItems(itemEntities)
         }
     }
 
