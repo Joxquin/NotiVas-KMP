@@ -23,21 +23,13 @@ import me.joxquin.notivas.ui.theme.AppTheme
 
 @Composable
 fun App() {
-    // Contenedor compartido de dependencias en memoria
-    val preferencesManager = remember { PreferencesManager() }
-    val localStore = remember { InMemoryLocalStore() }
-    val httpClient = remember { KtorHttpClientProvider.createClient() }
-    val canvasApiService = remember { CanvasApiService(httpClient) }
-    val canvasRepository = remember {
-        CanvasRepository(canvasApiService, localStore, preferencesManager)
-    }
-    val openRouterApiService = remember { me.joxquin.notivas.data.remote.OpenRouterApiService(httpClient) }
-    val copilotRepository = remember {
-        me.joxquin.notivas.data.repository.CopilotRepository(openRouterApiService, canvasApiService, localStore, preferencesManager)
-    }
-    val chatRepository = remember {
-        me.joxquin.notivas.data.repository.CopilotChatRepository(localStore)
-    }
+    // Contenedor compartido de dependencias de la aplicación
+    val preferencesManager = remember { me.joxquin.notivas.di.AppModule.preferencesManager }
+    val localStore = remember { me.joxquin.notivas.di.AppModule.localStore }
+    val canvasRepository = remember { me.joxquin.notivas.di.AppModule.canvasRepository }
+    val copilotRepository = remember { me.joxquin.notivas.di.AppModule.copilotRepository }
+    val chatRepository = remember { me.joxquin.notivas.di.AppModule.copilotChatRepository }
+
 
     val onboardingViewModel = remember { OnboardingViewModel(canvasRepository) }
     val isPreferencesLoaded by preferencesManager.isLoaded.collectAsState(initial = false)
