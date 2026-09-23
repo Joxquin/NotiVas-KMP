@@ -17,16 +17,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.GroupWork
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -42,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,7 +55,6 @@ import me.joxquin.notivas.data.model.SimulationGroup
 import me.joxquin.notivas.data.model.SimulationItem
 import me.joxquin.notivas.ui.notas.SimulationGroupUiModel
 import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -62,9 +66,12 @@ fun GruposPorcentajeCard(
     totalConfiguredWeight: Float,
     onAddGroup: () -> Unit,
     onAddItem: (Long) -> Unit,
+    onEditGroup: (SimulationGroup) -> Unit,
     onUpdateItemScore: (Long, Float) -> Unit,
     onDeleteGroup: (SimulationGroup) -> Unit,
     onDeleteItem: (SimulationItem) -> Unit,
+    onLinkPlaceholder: (SimulationItem) -> Unit = {},
+    onImportTemplateClick: () -> Unit = {},
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
 ) {
@@ -129,44 +136,21 @@ fun GruposPorcentajeCard(
             }
 
             if (simulationGroups.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .squircleSurface(
-                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                            cornerRadius = 16.dp
-                        )
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "No hay grupos de evaluación configurados",
-                            fontSize = 13.sp,
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                        )
-                        TextButton(onClick = onAddGroup) {
-                            Text(
-                                text = "+ Crear primer grupo",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MiuixTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
+                EmptyGruposState(
+                    onImportTemplateClick = onImportTemplateClick,
+                    onCreateManualGroupClick = onAddGroup
+                )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     simulationGroups.forEach { groupModel ->
                         SingleGroupItemMiuix(
                             groupModel = groupModel,
                             onAddItem = { onAddItem(groupModel.group.id) },
+                            onEditGroup = { onEditGroup(groupModel.group) },
                             onUpdateScore = onUpdateItemScore,
                             onDeleteGroup = { onDeleteGroup(groupModel.group) },
-                            onDeleteItem = onDeleteItem
+                            onDeleteItem = onDeleteItem,
+                            onLinkPlaceholder = onLinkPlaceholder
                         )
                     }
 
@@ -232,38 +216,21 @@ fun GruposPorcentajeCard(
                 }
 
                 if (simulationGroups.isEmpty()) {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = "No hay grupos de evaluación configurados",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            TextButton(onClick = onAddGroup) {
-                                Text(
-                                    text = "+ Crear primer grupo",
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                                )
-                            }
-                        }
-                    }
+                    EmptyGruposState(
+                        onImportTemplateClick = onImportTemplateClick,
+                        onCreateManualGroupClick = onAddGroup
+                    )
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         simulationGroups.forEach { groupModel ->
                             SingleGroupItemMaterial(
                                 groupModel = groupModel,
                                 onAddItem = { onAddItem(groupModel.group.id) },
+                                onEditGroup = { onEditGroup(groupModel.group) },
                                 onUpdateScore = onUpdateItemScore,
                                 onDeleteGroup = { onDeleteGroup(groupModel.group) },
-                                onDeleteItem = onDeleteItem
+                                onDeleteItem = onDeleteItem,
+                                onLinkPlaceholder = onLinkPlaceholder
                             )
                         }
 
@@ -287,9 +254,11 @@ fun GruposPorcentajeCard(
 private fun SingleGroupItemMiuix(
     groupModel: SimulationGroupUiModel,
     onAddItem: () -> Unit,
+    onEditGroup: () -> Unit,
     onUpdateScore: (Long, Float) -> Unit,
     onDeleteGroup: () -> Unit,
-    onDeleteItem: (SimulationItem) -> Unit
+    onDeleteItem: (SimulationItem) -> Unit,
+    onLinkPlaceholder: (SimulationItem) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val avgScore = ((groupModel.groupAverage * 10f).roundToInt() / 10f).toString()
@@ -327,16 +296,49 @@ private fun SingleGroupItemMiuix(
                         color = MiuixTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
                     )
+                    if (groupModel.group.dropLowest) {
+                        Box(
+                            modifier = Modifier
+                                .squircleSurface(
+                                    color = Color(0xFFFFF3E0),
+                                    cornerRadius = 6.dp
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Descarta menor",
+                                fontSize = 10.sp,
+                                color = Color(0xFFE65100),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
                 Text(
-                    text = "Promedio grupo: $avgScore • ${groupModel.items.size} evaluaciones",
+                    text = "Promedio: $avgScore • ${groupModel.items.size} notas",
                     fontSize = 11.sp,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                 )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDeleteGroup) {
+                IconButton(onClick = onAddItem, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Añadir evaluación",
+                        tint = MiuixTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                IconButton(onClick = onEditGroup, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar grupo",
+                        tint = MiuixTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                IconButton(onClick = onDeleteGroup, modifier = Modifier.size(32.dp)) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
                         contentDescription = "Eliminar grupo",
@@ -360,46 +362,105 @@ private fun SingleGroupItemMiuix(
                     .padding(top = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                groupModel.items.forEach { item ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .squircleSurface(
-                                color = MiuixTheme.colorScheme.surface,
-                                cornerRadius = 10.dp
+                if (groupModel.items.isEmpty()) {
+                    Text(
+                        text = "Sin evaluaciones. Pulsa + para agregar desde Canvas o manual.",
+                        fontSize = 12.sp,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        modifier = Modifier.padding(vertical = 6.dp)
+                    )
+                } else {
+                    groupModel.items.forEach { item ->
+                        val isManualOrSimulated = item.isPlaceholder || item.isSimulated
+                        val isGraded = item.manualScore != null
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .squircleSurface(
+                                    color = MiuixTheme.colorScheme.surface,
+                                    cornerRadius = 10.dp
+                                )
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    if (item.isPlaceholder) {
+                                        Box(
+                                            modifier = Modifier
+                                                .squircleSurface(
+                                                    color = Color(0xFFEDE7F6),
+                                                    cornerRadius = 4.dp
+                                                )
+                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        ) {
+                                            Text("Vacío", fontSize = 9.sp, color = Color(0xFF512DA8), fontWeight = FontWeight.Bold)
+                                        }
+                                    } else if (isGraded) {
+                                        Box(
+                                            modifier = Modifier
+                                                .squircleSurface(
+                                                    color = Color(0xFFE8F5E9),
+                                                    cornerRadius = 4.dp
+                                                )
+                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        ) {
+                                            Text("Calificada", fontSize = 9.sp, color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                    Text(
+                                        text = item.name,
+                                        fontSize = 12.sp,
+                                        color = MiuixTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            Slider(
+                                value = item.simulatedScore,
+                                onValueChange = { onUpdateScore(item.id, it) },
+                                enabled = !isGraded,
+                                valueRange = 0f..20f,
+                                steps = 39,
+                                modifier = Modifier.width(110.dp)
                             )
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = item.name,
-                            fontSize = 12.sp,
-                            color = MiuixTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Slider(
-                            value = item.simulatedScore,
-                            onValueChange = { onUpdateScore(item.id, it) },
-                            valueRange = 0f..20f,
-                            steps = 39,
-                            modifier = Modifier.width(130.dp)
-                        )
-                        Text(
-                            text = "${((item.simulatedScore * 10f).roundToInt() / 10f)}",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MiuixTheme.colorScheme.primary,
-                            modifier = Modifier.width(36.dp)
-                        )
-                        IconButton(onClick = { onDeleteItem(item) }) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = "Eliminar",
-                                tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                modifier = Modifier.size(16.dp)
+                            Text(
+                                text = "${((item.simulatedScore * 10f).roundToInt() / 10f)}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isGraded) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.primary,
+                                modifier = Modifier.width(36.dp)
                             )
+                            if (item.isPlaceholder) {
+                                IconButton(
+                                    onClick = { onLinkPlaceholder(item) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Link,
+                                        contentDescription = "Vincular",
+                                        tint = MiuixTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = { onDeleteItem(item) },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Eliminar",
+                                    tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -423,9 +484,11 @@ private fun SingleGroupItemMiuix(
 private fun SingleGroupItemMaterial(
     groupModel: SimulationGroupUiModel,
     onAddItem: () -> Unit,
+    onEditGroup: () -> Unit,
     onUpdateScore: (Long, Float) -> Unit,
     onDeleteGroup: () -> Unit,
-    onDeleteItem: (SimulationItem) -> Unit
+    onDeleteItem: (SimulationItem) -> Unit,
+    onLinkPlaceholder: (SimulationItem) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val avgScore = ((groupModel.groupAverage * 10f).roundToInt() / 10f).toString()
@@ -458,16 +521,45 @@ private fun SingleGroupItemMaterial(
                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.primary
                         )
+                        if (groupModel.group.dropLowest) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.tertiaryContainer
+                            ) {
+                                Text(
+                                    text = "Descarta peor",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                     }
                     Text(
-                        text = "Promedio grupo: $avgScore • ${groupModel.items.size} evaluaciones",
+                        text = "Promedio grupo: $avgScore • ${groupModel.items.size} notas",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onDeleteGroup) {
+                    IconButton(onClick = onAddItem, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Añadir evaluación",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(onClick = onEditGroup, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar grupo",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    IconButton(onClick = onDeleteGroup, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
                             contentDescription = "Eliminar grupo",
@@ -491,44 +583,104 @@ private fun SingleGroupItemMaterial(
                         .padding(top = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    groupModel.items.forEach { item ->
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.surface,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                    if (groupModel.items.isEmpty()) {
+                        Text(
+                            text = "Sin evaluaciones en este grupo. Pulsa + para añadir.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    } else {
+                        groupModel.items.forEach { item ->
+                            val isGraded = item.manualScore != null
+
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = item.name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.weight(1f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Slider(
-                                    value = item.simulatedScore,
-                                    onValueChange = { onUpdateScore(item.id, it) },
-                                    valueRange = 0f..20f,
-                                    steps = 39,
-                                    modifier = Modifier.width(130.dp)
-                                )
-                                Text(
-                                    text = "${((item.simulatedScore * 10f).roundToInt() / 10f)}",
-                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.width(36.dp)
-                                )
-                                IconButton(onClick = { onDeleteItem(item) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.DeleteOutline,
-                                        contentDescription = "Eliminar",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
+                                Row(
+                                    modifier = Modifier.padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            if (item.isPlaceholder) {
+                                                Surface(
+                                                    shape = CircleShape,
+                                                    color = MaterialTheme.colorScheme.tertiaryContainer
+                                                ) {
+                                                    Text(
+                                                        text = "Vacío",
+                                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
+                                                    )
+                                                }
+                                            } else if (isGraded) {
+                                                Surface(
+                                                    shape = CircleShape,
+                                                    color = MaterialTheme.colorScheme.primaryContainer
+                                                ) {
+                                                    Text(
+                                                        text = "Calificada",
+                                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
+                                                    )
+                                                }
+                                            }
+                                            Text(
+                                                text = item.name,
+                                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+
+                                    Slider(
+                                        value = item.simulatedScore,
+                                        onValueChange = { onUpdateScore(item.id, it) },
+                                        enabled = !isGraded,
+                                        valueRange = 0f..20f,
+                                        steps = 39,
+                                        modifier = Modifier.width(110.dp)
                                     )
+                                    Text(
+                                        text = "${((item.simulatedScore * 10f).roundToInt() / 10f)}",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                        color = if (isGraded) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.width(36.dp)
+                                    )
+                                    if (item.isPlaceholder) {
+                                        IconButton(
+                                            onClick = { onLinkPlaceholder(item) },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Link,
+                                                contentDescription = "Vincular",
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = { onDeleteItem(item) },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Eliminar",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

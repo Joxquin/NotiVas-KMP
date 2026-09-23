@@ -50,11 +50,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.data.model.SimulationGroup
+import me.joxquin.notivas.data.model.SimulationItem
 import me.joxquin.notivas.ui.components.BackHandler
-import me.joxquin.notivas.ui.notas.components.AddGroupDialog
-import me.joxquin.notivas.ui.notas.components.AddItemDialog
+import me.joxquin.notivas.ui.notas.components.AddAssignmentDialog
+import me.joxquin.notivas.ui.notas.components.CreateGroupBottomSheet
+import me.joxquin.notivas.ui.notas.components.EditGroupDialog
 import me.joxquin.notivas.ui.notas.components.GruposPorcentajeCard
 import me.joxquin.notivas.ui.notas.components.HeroSummaryCard
+import me.joxquin.notivas.ui.notas.components.ImportTemplateDialog
+import me.joxquin.notivas.ui.notas.components.LinkPlaceholderDialog
 import me.joxquin.notivas.ui.notas.components.NotasHeaderSection
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -70,8 +75,11 @@ fun NotasScreen(
     BackHandler(onBack = onBack)
 
     val uiState by viewModel.uiState.collectAsState()
-    var showAddGroupDialog by remember { mutableStateOf(false) }
-    var selectedGroupIdForNewItem by remember { mutableStateOf<Long?>(null) }
+    var showImportTemplateDialog by remember { mutableStateOf(false) }
+    var showCreateGroupBottomSheet by remember { mutableStateOf(false) }
+    var selectedGroupForAddAssignment by remember { mutableStateOf<SimulationGroup?>(null) }
+    var selectedGroupForEdit by remember { mutableStateOf<SimulationGroup?>(null) }
+    var selectedItemForLink by remember { mutableStateOf<SimulationItem?>(null) }
 
     val isScrolled by remember {
         derivedStateOf {
@@ -123,11 +131,16 @@ fun NotasScreen(
                     GruposPorcentajeCard(
                         simulationGroups = uiState.simulationGroups,
                         totalConfiguredWeight = uiState.totalConfiguredWeight,
-                        onAddGroup = { showAddGroupDialog = true },
-                        onAddItem = { groupId -> selectedGroupIdForNewItem = groupId },
+                        onAddGroup = { showCreateGroupBottomSheet = true },
+                        onAddItem = { groupId ->
+                            selectedGroupForAddAssignment = uiState.simulationGroups.find { it.group.id == groupId }?.group
+                        },
+                        onEditGroup = { group -> selectedGroupForEdit = group },
                         onUpdateItemScore = { id, score -> viewModel.updateSimulationItemScore(id, score) },
                         onDeleteGroup = { viewModel.deleteSimulationGroup(it) },
                         onDeleteItem = { viewModel.deleteSimulationItem(it) },
+                        onLinkPlaceholder = { item -> selectedItemForLink = item },
+                        onImportTemplateClick = { showImportTemplateDialog = true },
                         themeStyle = themeStyle
                     )
                 }
@@ -241,11 +254,16 @@ fun NotasScreen(
                     GruposPorcentajeCard(
                         simulationGroups = uiState.simulationGroups,
                         totalConfiguredWeight = uiState.totalConfiguredWeight,
-                        onAddGroup = { showAddGroupDialog = true },
-                        onAddItem = { groupId -> selectedGroupIdForNewItem = groupId },
+                        onAddGroup = { showCreateGroupBottomSheet = true },
+                        onAddItem = { groupId ->
+                            selectedGroupForAddAssignment = uiState.simulationGroups.find { it.group.id == groupId }?.group
+                        },
+                        onEditGroup = { group -> selectedGroupForEdit = group },
                         onUpdateItemScore = { id, score -> viewModel.updateSimulationItemScore(id, score) },
                         onDeleteGroup = { viewModel.deleteSimulationGroup(it) },
                         onDeleteItem = { viewModel.deleteSimulationItem(it) },
+                        onLinkPlaceholder = { item -> selectedItemForLink = item },
+                        onImportTemplateClick = { showImportTemplateDialog = true },
                         themeStyle = themeStyle
                     )
                 }
@@ -257,23 +275,65 @@ fun NotasScreen(
         }
     }
 
-    if (showAddGroupDialog) {
-        AddGroupDialog(
-            onDismiss = { showAddGroupDialog = false },
-            onConfirm = { name, weight ->
-                viewModel.addSimulationGroup(name, weight)
-                showAddGroupDialog = false
+    // ─── Modals and Dialogs ──────────────────────────────────────────────────
+
+    if (showImportTemplateDialog) {
+        ImportTemplateDialog(
+            onDismiss = { showImportTemplateDialog = false },
+            onApplyTemplate = { template ->
+                viewModel.applyTemplate(template)
+                showImportTemplateDialog = false
             }
         )
     }
 
-    selectedGroupIdForNewItem?.let { groupId ->
-        AddItemDialog(
-            groupId = groupId,
-            onDismiss = { selectedGroupIdForNewItem = null },
-            onConfirm = { gId, name, score, maxScore ->
-                viewModel.addSimulationItem(gId, name, score, maxScore)
-                selectedGroupIdForNewItem = null
+    if (showCreateGroupBottomSheet) {
+        CreateGroupBottomSheet(
+            currentTotalWeight = uiState.totalConfiguredWeight,
+            onDismiss = { showCreateGroupBottomSheet = false },
+            onSave = { name, weight, target, drop, minDrop ->
+                viewModel.createGroupWithItems(name, weight, target, drop, minDrop)
+                showCreateGroupBottomSheet = false
+            }
+        )
+    }
+
+    selectedGroupForAddAssignment?.let { group ->
+        AddAssignmentDialog(
+            groupName = group.name,
+            availableAssignments = uiState.availableCourseAssignments,
+            onDismiss = { selectedGroupForAddAssignment = null },
+            onAddExisting = { assignment ->
+                viewModel.addExistingAssignmentToGroup(group.id, assignment)
+                selectedGroupForAddAssignment = null
+            },
+            onAddPlaceholder = { name, score ->
+                viewModel.addPlaceholderItemToGroup(group.id, name, score)
+                selectedGroupForAddAssignment = null
+            }
+        )
+    }
+
+    selectedGroupForEdit?.let { group ->
+        EditGroupDialog(
+            group = group,
+            onDismiss = { selectedGroupForEdit = null },
+            onConfirm = { updated ->
+                viewModel.updateSimulationGroup(updated)
+                selectedGroupForEdit = null
+            }
+        )
+    }
+
+    selectedItemForLink?.let { item ->
+        LinkPlaceholderDialog(
+            placeholderItem = item,
+            availableAssignments = uiState.availableCourseAssignments,
+            onDismiss = { selectedItemForLink = null },
+            onLink = { assignment ->
+                val rawScore = assignment.score?.toFloat() ?: assignment.submission?.score?.toFloat()
+                viewModel.linkSimulationItem(item.id, assignment.id, assignment.name, rawScore)
+                selectedItemForLink = null
             }
         )
     }
