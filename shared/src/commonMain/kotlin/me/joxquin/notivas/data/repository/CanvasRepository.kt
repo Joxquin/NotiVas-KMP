@@ -407,6 +407,22 @@ class CanvasRepository(
         }
     }
 
+    suspend fun getDiscussionEntries(courseId: Long, topicId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(Dispatchers.IO) {
+        val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()
+        val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
+        val token = "Bearer $rawToken"
+        try {
+            apiService.getDiscussionEntries(
+                baseUrl = baseUrl,
+                token = token,
+                courseId = courseId,
+                topicId = topicId
+            )
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun logout() {
         preferencesManager.clear()
         localStore.deleteCourses()

@@ -252,12 +252,20 @@ fun MainAppShell(
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
+    val forosUiState by forosViewModel.uiState.collectAsState()
+
     if (themeStyle == AppThemeStyle.MIUIX) {
-        // En Miuix: Interceptar botón Atrás físico para volver al Hub de Herramientas o a Inicio
+        // En Miuix: Interceptar botón Atrás físico para volver al Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
         BackHandler(enabled = showingNotasDetail || showingForosDetail || currentDestination != MainDestination.Inicio) {
-            if ((showingNotasDetail || showingForosDetail) && currentDestination == MainDestination.Herramientas) {
-                showingNotasDetail = false
-                showingForosDetail = false
+            if (currentDestination == MainDestination.Herramientas) {
+                if (showingForosDetail && forosUiState.selectedDiscussion != null) {
+                    forosViewModel.clearSelectedDiscussion()
+                } else if (showingNotasDetail || showingForosDetail) {
+                    showingNotasDetail = false
+                    showingForosDetail = false
+                } else {
+                    mainPagerState.animateToPage(0)
+                }
             } else if (currentDestination != MainDestination.Inicio) {
                 mainPagerState.animateToPage(0)
             }
@@ -367,7 +375,9 @@ fun MainAppShell(
             MiuixTopAppBar(
                 title = when {
                     currentDestination == MainDestination.Herramientas && showingNotasDetail -> "Progreso"
-                    currentDestination == MainDestination.Herramientas && showingForosDetail -> "Foros Académicos"
+                    currentDestination == MainDestination.Herramientas && showingForosDetail -> {
+                        if (forosUiState.selectedDiscussion != null) "Detalle del Foro" else "Foros Académicos"
+                    }
                     currentDestination == MainDestination.Inicio -> "NotiVas"
                     currentDestination == MainDestination.Herramientas -> "Herramientas"
                     currentDestination == MainDestination.Copilot -> "Copilot IA"
@@ -399,7 +409,13 @@ fun MainAppShell(
                     currentDestination == MainDestination.Herramientas && showingForosDetail -> {
                         {
                             me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
-                                onClick = { showingForosDetail = false }
+                                onClick = {
+                                    if (forosUiState.selectedDiscussion != null) {
+                                        forosViewModel.clearSelectedDiscussion()
+                                    } else {
+                                        showingForosDetail = false
+                                    }
+                                }
                             )
                         }
                     }
@@ -506,9 +522,15 @@ fun MainAppShell(
 
         // Interceptar gesto/botón Atrás del sistema para Material 3:
         BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingNotasDetail || showingForosDetail || materialDestination != MainDestination.Inicio)) {
-            if ((showingNotasDetail || showingForosDetail) && materialDestination == MainDestination.Herramientas) {
-                showingNotasDetail = false
-                showingForosDetail = false
+            if (materialDestination == MainDestination.Herramientas) {
+                if (showingForosDetail && forosUiState.selectedDiscussion != null) {
+                    forosViewModel.clearSelectedDiscussion()
+                } else if (showingNotasDetail || showingForosDetail) {
+                    showingNotasDetail = false
+                    showingForosDetail = false
+                } else {
+                    materialDestination = MainDestination.Inicio
+                }
             } else {
                 materialDestination = MainDestination.Inicio
             }

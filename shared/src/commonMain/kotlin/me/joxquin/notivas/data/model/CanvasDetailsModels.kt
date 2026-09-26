@@ -146,3 +146,21 @@ data class CanvasDiscussionSubmission(
     @SerialName("workflow_state") val workflowState: String? = null
 )
 
+@Serializable
+data class CanvasDiscussionEntry(
+    @SerialName("id") val id: Long,
+    @SerialName("user_id") val userId: Long? = null,
+    @SerialName("user_name") val userName: String? = null,
+    @SerialName("message") val message: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+    @SerialName("rating_sum") val ratingSum: Int? = null,
+    @SerialName("user") val user: CanvasDiscussionAuthor? = null
+)
+
+@Serializable
+data class CanvasDiscussionViewResponse(
+    @SerialName("view") val view: List<CanvasDiscussionEntry> = emptyList(),
+    @SerialName("unread_entries") val unreadEntries: List<Long> = emptyList()
+)
+

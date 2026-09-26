@@ -9,6 +9,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.herramientas.material.HerramientasMaterialContent
@@ -74,12 +76,22 @@ fun HerramientasScreen(
             }
             HerramientasSubDestination.FOROS_DETAIL -> {
                 if (forosViewModel != null) {
-                    ForosScreen(
-                        viewModel = forosViewModel,
-                        themeStyle = themeStyle,
-                        lazyListState = lazyListState,
-                        onBack = onBack
-                    )
+                    val forosUiState by forosViewModel.uiState.collectAsState()
+                    if (forosUiState.selectedDiscussion != null) {
+                        me.joxquin.notivas.ui.foros.detail.ForoDetailScreen(
+                            viewModel = forosViewModel,
+                            themeStyle = themeStyle,
+                            lazyListState = lazyListState,
+                            onBack = { forosViewModel.clearSelectedDiscussion() }
+                        )
+                    } else {
+                        ForosScreen(
+                            viewModel = forosViewModel,
+                            themeStyle = themeStyle,
+                            lazyListState = lazyListState,
+                            onBack = onBack
+                        )
+                    }
                 }
             }
             HerramientasSubDestination.HUB -> {

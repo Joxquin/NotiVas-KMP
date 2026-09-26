@@ -42,7 +42,12 @@ data class ForosUiState(
     val withPointsCount: Int = 0,
     val withoutPointsCount: Int = 0,
     val expiredCount: Int = 0,
-    val pendingCount: Int = 0
+    val pendingCount: Int = 0,
+    val selectedDiscussion: CanvasDiscussionTopic? = null,
+    val selectedDiscussionReplies: List<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = emptyList(),
+    val isLoadingReplies: Boolean = false,
+    val currentDraft: String = "",
+    val isDraftSavedMessage: Boolean = false
 )
 
 class ForosViewModel(
@@ -56,24 +61,41 @@ class ForosViewModel(
     private val _searchQuery = MutableStateFlow("")
     private val _isLoading = MutableStateFlow(false)
 
+    private val _selectedDiscussion = MutableStateFlow<CanvasDiscussionTopic?>(null)
+    private val _selectedDiscussionReplies = MutableStateFlow<List<me.joxquin.notivas.data.model.CanvasDiscussionEntry>>(emptyList())
+    private val _isLoadingReplies = MutableStateFlow(false)
+    private val _currentDraft = MutableStateFlow("")
+    private val _isDraftSavedMessage = MutableStateFlow(false)
+
+    // Almacenamiento local de borradores por ID de foro en memoria del ViewModel
+    private val _draftsMemory = mutableMapOf<Long, String>()
+
     val uiState: StateFlow<ForosUiState> = combine(
-        _rawDiscussions,
-        canvasRepository.allCourses,
-        _selectedCourseId,
-        _selectedFilterTab,
-        _sortOption,
-        _searchQuery,
-        _isLoading
-    ) { args ->
-        @Suppress("UNCHECKED_CAST")
-        val raw = args[0] as List<CanvasDiscussionTopic>
-        @Suppress("UNCHECKED_CAST")
-        val courses = args[1] as List<Course>
-        val courseId = args[2] as Long?
-        val tab = args[3] as DiscussionFilterTab
-        val sort = args[4] as DiscussionSortOption
-        val query = (args[5] as String).trim().lowercase()
-        val loading = args[6] as Boolean
+        combine(
+            _rawDiscussions,
+            canvasRepository.allCourses,
+            _selectedCourseId,
+            _selectedFilterTab,
+            _sortOption
+        ) { raw, courses, courseId, tab, sort ->
+            Tuple5(raw, courses, courseId, tab, sort)
+        },
+        combine(
+            _searchQuery,
+            _isLoading,
+            _selectedDiscussion,
+            _selectedDiscussionReplies,
+            _isLoadingReplies
+        ) { query, loading, selDiscussion, replies, loadingReplies ->
+            Tuple5(query, loading, selDiscussion, replies, loadingReplies)
+        },
+        combine(
+            _currentDraft,
+            _isDraftSavedMessage
+        ) { draft, savedMsg ->
+            Pair(draft, savedMsg)
+        }
+    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg) ->
 
         val now = ZonedDateTime.now()
 
@@ -114,13 +136,14 @@ class ForosViewModel(
         }
 
         // 4. Filtrado por query de búsqueda
-        if (query.isNotBlank()) {
+        val trimmedQuery = query.trim().lowercase()
+        if (trimmedQuery.isNotBlank()) {
             list = list.filter { topic ->
-                topic.title.lowercase().contains(query) ||
-                        (topic.message?.lowercase()?.contains(query) == true) ||
-                        (topic.userName?.lowercase()?.contains(query) == true) ||
-                        (topic.author?.displayName?.lowercase()?.contains(query) == true) ||
-                        (topic.courseName?.lowercase()?.contains(query) == true)
+                topic.title.lowercase().contains(trimmedQuery) ||
+                        (topic.message?.lowercase()?.contains(trimmedQuery) == true) ||
+                        (topic.userName?.lowercase()?.contains(trimmedQuery) == true) ||
+                        (topic.author?.displayName?.lowercase()?.contains(trimmedQuery) == true) ||
+                        (topic.courseName?.lowercase()?.contains(trimmedQuery) == true)
             }
         }
 
@@ -146,7 +169,12 @@ class ForosViewModel(
             withPointsCount = withPoints,
             withoutPointsCount = withoutPoints,
             expiredCount = expired,
-            pendingCount = pending
+            pendingCount = pending,
+            selectedDiscussion = selDiscussion,
+            selectedDiscussionReplies = replies,
+            isLoadingReplies = loadingReplies,
+            currentDraft = draft,
+            isDraftSavedMessage = savedMsg
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ForosUiState())
 
@@ -164,6 +192,60 @@ class ForosViewModel(
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    fun selectDiscussion(topic: CanvasDiscussionTopic) {
+        _selectedDiscussion.value = topic
+        _currentDraft.value = _draftsMemory[topic.id] ?: ""
+        _isDraftSavedMessage.value = false
+        loadDiscussionEntries(topic)
+    }
+
+    fun clearSelectedDiscussion() {
+        _selectedDiscussion.value = null
+        _selectedDiscussionReplies.value = emptyList()
+        _currentDraft.value = ""
+        _isDraftSavedMessage.value = false
+    }
+
+    private fun loadDiscussionEntries(topic: CanvasDiscussionTopic) {
+        val courseId = topic.courseId ?: return
+        viewModelScope.launch {
+            _isLoadingReplies.value = true
+            try {
+                val entries = canvasRepository.getDiscussionEntries(courseId, topic.id)
+                _selectedDiscussionReplies.value = entries
+            } catch (_: Exception) {
+                _selectedDiscussionReplies.value = emptyList()
+            } finally {
+                _isLoadingReplies.value = false
+            }
+        }
+    }
+
+    fun updateDraft(text: String) {
+        _currentDraft.value = text
+        _selectedDiscussion.value?.let { topic ->
+            _draftsMemory[topic.id] = text
+        }
+    }
+
+    fun saveDraft() {
+        _selectedDiscussion.value?.let { topic ->
+            _draftsMemory[topic.id] = _currentDraft.value
+            _isDraftSavedMessage.value = true
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(2000)
+                _isDraftSavedMessage.value = false
+            }
+        }
+    }
+
+    fun applyCopilotSuggestion(suggestion: String) {
+        _currentDraft.value = suggestion
+        _selectedDiscussion.value?.let { topic ->
+            _draftsMemory[topic.id] = suggestion
         }
     }
 
@@ -199,3 +281,11 @@ class ForosViewModel(
         return topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
     }
 }
+
+private data class Tuple5<A, B, C, D, E>(
+    val a: A,
+    val b: B,
+    val c: C,
+    val d: D,
+    val e: E
+)

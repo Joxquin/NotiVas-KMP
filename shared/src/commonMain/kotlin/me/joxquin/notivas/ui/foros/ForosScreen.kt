@@ -199,7 +199,7 @@ fun ForosScreen(
                         Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                             ForosCardItem(
                                 topic = topic,
-                                onClick = { /* Detalle o apertura de foro */ },
+                                onClick = { viewModel.selectDiscussion(topic) },
                                 themeStyle = themeStyle
                             )
                         }
@@ -396,7 +396,7 @@ fun ForosScreen(
                         Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                             ForosCardItem(
                                 topic = topic,
-                                onClick = { /* Detalle o apertura de foro */ },
+                                onClick = { viewModel.selectDiscussion(topic) },
                                 themeStyle = themeStyle
                             )
                         }

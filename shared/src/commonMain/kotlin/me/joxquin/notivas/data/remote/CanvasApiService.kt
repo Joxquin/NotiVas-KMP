@@ -7,6 +7,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.CanvasAssignmentDetailResponse
+import me.joxquin.notivas.data.model.CanvasDiscussionEntry
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.data.model.CanvasFileDetail
 import me.joxquin.notivas.data.model.CanvasModule
@@ -198,5 +199,22 @@ class CanvasApiService(
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/discussion_topics/$topicId")) {
             header("Authorization", token)
         }.body()
+    }
+
+    suspend fun getDiscussionEntries(
+        baseUrl: String,
+        token: String,
+        courseId: Long,
+        topicId: Long,
+        perPage: Int = 30
+    ): List<CanvasDiscussionEntry> {
+        return try {
+            client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/discussion_topics/$topicId/entries")) {
+                header("Authorization", token)
+                parameter("per_page", perPage)
+            }.body()
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 }
