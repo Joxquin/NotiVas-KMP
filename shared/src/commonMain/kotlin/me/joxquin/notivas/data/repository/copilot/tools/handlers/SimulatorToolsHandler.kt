@@ -58,7 +58,11 @@ class SimulatorToolsHandler(
                 val groupName = args["group_name"]?.jsonPrimitive?.content ?: "Simulación Copilot"
                 val weight = args["weight"]?.jsonPrimitive?.doubleOrNull ?: 100.0
                 val assignmentsArray = args["assignments"]?.jsonArray
-                val courseId = selectedCourseId ?: 0L
+                val courseId = selectedCourseId
+
+                if (courseId == null || courseId <= 0L) {
+                    return ToolExecutionResult("""{"error": "Debes tener un curso seleccionado para poder agregar grupos de simulación en tus notas."}""")
+                }
 
                 if (assignmentsArray == null || assignmentsArray.isEmpty()) {
                     ToolExecutionResult("""{"error": "'assignments' debe ser una lista no vacía de evaluaciones."}""")

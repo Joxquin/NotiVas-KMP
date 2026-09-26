@@ -293,14 +293,18 @@ class CopilotViewModel(
     fun renameSession(sessionId: String, newTitle: String) {
         val trimmed = newTitle.trim()
         if (trimmed.isNotBlank()) {
-            chatRepository.updateSessionTitle(sessionId, trimmed)
+            viewModelScope.launch {
+                chatRepository.updateSessionTitle(sessionId, trimmed)
+            }
         }
     }
 
     fun deleteSession(sessionId: String) {
-        chatRepository.deleteSession(sessionId)
-        if (_currentSessionId.value == sessionId) {
-            startNewSession()
+        viewModelScope.launch {
+            chatRepository.deleteSession(sessionId)
+            if (_currentSessionId.value == sessionId) {
+                startNewSession()
+            }
         }
     }
 

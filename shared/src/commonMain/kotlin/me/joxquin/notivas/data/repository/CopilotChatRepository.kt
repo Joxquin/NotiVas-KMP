@@ -36,11 +36,11 @@ class CopilotChatRepository(
 
     val allSessions: Flow<List<CopilotSession>> = localStore.getAllSessions()
 
-    fun getSessionById(sessionId: String): CopilotSession? {
+    suspend fun getSessionById(sessionId: String): CopilotSession? {
         return localStore.getSessionById(sessionId)
     }
 
-    fun getMessagesForSession(sessionId: String): List<CopilotMessageItem> {
+    suspend fun getMessagesForSession(sessionId: String): List<CopilotMessageItem> {
         val entities = localStore.getMessagesForSessionOnce(sessionId)
         return entities.map { entity ->
             val sources = if (!entity.sourcesJson.isNullOrBlank()) {
@@ -65,7 +65,7 @@ class CopilotChatRepository(
         }
     }
 
-    fun createOrUpdateSession(
+    suspend fun createOrUpdateSession(
         sessionId: String,
         title: String,
         courseId: Long?,
@@ -88,7 +88,7 @@ class CopilotChatRepository(
         }
     }
 
-    fun saveMessage(
+    suspend fun saveMessage(
         sessionId: String,
         message: CopilotMessageItem
     ) {
@@ -112,19 +112,19 @@ class CopilotChatRepository(
         localStore.updateSessionTimestamp(sessionId)
     }
 
-    fun updateSessionTitle(sessionId: String, newTitle: String) {
+    suspend fun updateSessionTitle(sessionId: String, newTitle: String) {
         localStore.updateSessionTitle(sessionId, newTitle)
     }
 
-    fun updateSessionTokens(sessionId: String, totalTokens: Int) {
+    suspend fun updateSessionTokens(sessionId: String, totalTokens: Int) {
         localStore.updateSessionTokens(sessionId, totalTokens)
     }
 
-    fun deleteSession(sessionId: String) {
+    suspend fun deleteSession(sessionId: String) {
         localStore.deleteSession(sessionId)
     }
 
-    fun clearMessages(sessionId: String) {
+    suspend fun clearMessages(sessionId: String) {
         localStore.deleteMessagesForSession(sessionId)
     }
 }
