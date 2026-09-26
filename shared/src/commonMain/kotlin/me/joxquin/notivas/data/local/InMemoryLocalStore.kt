@@ -122,35 +122,48 @@ class InMemoryLocalStore(
 
     fun insertAssignments(items: List<Assignment>) {
         scope.launch {
-            database.assignmentDao().upsert(items.map { AssignmentEntity.fromDomain(it) })
+            val existingList = database.assignmentDao().getAll()
+            val existingMap = existingList.associateBy { it.id }
+
+            val entitiesToUpsert = items.map { item ->
+                val baseEntity = AssignmentEntity.fromDomain(item)
+                val existing = existingMap[item.id]
+                if (existing != null) {
+                    baseEntity.copy(
+                        notificationSent = existing.notificationSent || item.notificationSent,
+                        notified24h = existing.notified24h || item.notified24h,
+                        notified3h = existing.notified3h || item.notified3h,
+                        notified30m = existing.notified30m || item.notified30m
+                    )
+                } else {
+                    baseEntity
+                }
+            }
+            database.assignmentDao().upsert(entitiesToUpsert)
         }
     }
 
     fun updateNotificationSent(id: Long, sent: Boolean) {
         scope.launch {
-            val existing = database.assignmentDao().getById(id) ?: return@launch
-            database.assignmentDao().upsert(existing.copy(notificationSent = sent))
+            database.assignmentDao().updateNotificationSent(id, sent)
         }
     }
 
     fun markNotified24h(id: Long) {
         scope.launch {
-            val existing = database.assignmentDao().getById(id) ?: return@launch
-            database.assignmentDao().upsert(existing.copy(notified24h = true))
+            database.assignmentDao().markNotified24h(id)
         }
     }
 
     fun markNotified3h(id: Long) {
         scope.launch {
-            val existing = database.assignmentDao().getById(id) ?: return@launch
-            database.assignmentDao().upsert(existing.copy(notified3h = true))
+            database.assignmentDao().markNotified3h(id)
         }
     }
 
     fun markNotified30m(id: Long) {
         scope.launch {
-            val existing = database.assignmentDao().getById(id) ?: return@launch
-            database.assignmentDao().upsert(existing.copy(notified30m = true))
+            database.assignmentDao().markNotified30m(id)
         }
     }
 

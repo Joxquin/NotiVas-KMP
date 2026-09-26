@@ -32,6 +32,18 @@ interface AssignmentDao {
     @Query("UPDATE assignments SET notified_24h = :notif24h, notified_3h = :notif3h, notified_30m = :notif30m WHERE id = :id")
     suspend fun updateNotificationFlags(id: Long, notif24h: Boolean, notif3h: Boolean, notif30m: Boolean)
 
+    @Query("UPDATE assignments SET notified_24h = 1 WHERE id = :id")
+    suspend fun markNotified24h(id: Long)
+
+    @Query("UPDATE assignments SET notified_3h = 1 WHERE id = :id")
+    suspend fun markNotified3h(id: Long)
+
+    @Query("UPDATE assignments SET notified_30m = 1 WHERE id = :id")
+    suspend fun markNotified30m(id: Long)
+
+    @Query("UPDATE assignments SET notification_sent = :sent WHERE id = :id")
+    suspend fun updateNotificationSent(id: Long, sent: Boolean)
+
     @Query("DELETE FROM assignments WHERE course_id = :courseId")
     suspend fun deleteByCourse(courseId: Long)
 
