@@ -377,6 +377,36 @@ class CanvasRepository(
         localStore.markNotified30m(assignmentId)
     }
 
+    suspend fun getDiscussionsForCourses(): List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = withContext(Dispatchers.IO) {
+        val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()
+        val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
+        val courses = localStore.getAllCourses().first()
+        val token = "Bearer $rawToken"
+
+        coroutineScope {
+            courses.map { course ->
+                async {
+                    try {
+                        val topics = apiService.getDiscussionTopics(
+                            baseUrl = baseUrl,
+                            token = token,
+                            courseId = course.id,
+                            perPage = 50
+                        )
+                        topics.map { topic ->
+                            topic.copy(
+                                courseId = course.id,
+                                courseName = course.name
+                            )
+                        }
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                }
+            }.awaitAll().flatten()
+        }
+    }
+
     suspend fun logout() {
         preferencesManager.clear()
         localStore.deleteCourses()

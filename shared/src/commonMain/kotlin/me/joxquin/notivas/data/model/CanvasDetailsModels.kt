@@ -106,7 +106,43 @@ data class CanvasDiscussionTopic(
     @SerialName("message") val message: String? = null,
     @SerialName("html_url") val htmlUrl: String? = null,
     @SerialName("posted_at") val postedAt: String? = null,
+    @SerialName("last_reply_at") val lastReplyAt: String? = null,
     @SerialName("user_name") val userName: String? = null,
     @SerialName("discussion_type") val discussionType: String? = null,
-    @SerialName("discussion_subentry_count") val discussionSubentryCount: Int? = null
+    @SerialName("discussion_subentry_count") val discussionSubentryCount: Int? = null,
+    @SerialName("unread_count") val unreadCount: Int? = null,
+    @SerialName("assignment_id") val assignmentId: Long? = null,
+    @SerialName("assignment") val assignment: CanvasDiscussionAssignment? = null,
+    @SerialName("locked") val locked: Boolean? = null,
+    @SerialName("lock_at") val lockAt: String? = null,
+    @SerialName("author") val author: CanvasDiscussionAuthor? = null,
+    // Contextual fields added during local processing
+    val courseId: Long? = null,
+    val courseName: String? = null
 )
+
+@Serializable
+data class CanvasDiscussionAuthor(
+    @SerialName("id") val id: Long? = null,
+    @SerialName("display_name") val displayName: String? = null,
+    @SerialName("avatar_image_url") val avatarImageUrl: String? = null,
+    @SerialName("html_url") val htmlUrl: String? = null
+)
+
+@Serializable
+data class CanvasDiscussionAssignment(
+    @SerialName("id") val id: Long? = null,
+    @SerialName("points_possible") val pointsPossible: Double? = null,
+    @SerialName("due_at") val dueAt: String? = null,
+    @SerialName("lock_at") val lockAt: String? = null,
+    @SerialName("has_submitted_submissions") val isCompleted: Boolean? = null,
+    @SerialName("submission") val submission: CanvasDiscussionSubmission? = null
+)
+
+@Serializable
+data class CanvasDiscussionSubmission(
+    @SerialName("score") val score: Double? = null,
+    @SerialName("grade") val grade: String? = null,
+    @SerialName("workflow_state") val workflowState: String? = null
+)
+
