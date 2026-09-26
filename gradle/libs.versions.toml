@@ -20,6 +20,7 @@ ktor = "3.1.1"
 miuix = "0.9.4-rc01"
 androidx-room = "2.8.5"
 androidx-sqlite = "2.7.1"
+androidx-work = "2.10.0"
 ksp = "2.3.12"
 
 
@@ -57,6 +58,7 @@ compose-material-icons = { module = "org.jetbrains.compose.material:material-ico
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
