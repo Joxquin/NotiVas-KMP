@@ -3,11 +3,12 @@ package me.joxquin.notivas.data.repository
 import me.joxquin.notivas.data.model.GitHubReleaseAsset
 import me.joxquin.notivas.data.model.UpdateInfo
 import me.joxquin.notivas.data.remote.UpdateApiService
+import me.joxquin.notivas.util.AppVersion
 import me.joxquin.notivas.util.DeviceAbi
 
 class UpdateRepository(
     private val apiService: UpdateApiService = UpdateApiService(),
-    private val currentVersion: String = "1.0.1"
+    private val currentVersion: String = AppVersion.get().versionName
 ) {
     suspend fun checkForUpdates(): UpdateInfo {
         // Try fetching from GitHub Releases API first

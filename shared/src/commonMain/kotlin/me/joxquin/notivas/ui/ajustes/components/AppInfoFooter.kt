@@ -31,13 +31,15 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+import me.joxquin.notivas.util.AppVersion
+
 private const val TAP_TARGET = 8
 private const val TAP_RESET_WINDOW_MS = 3_000L
 
 @Composable
 fun AjustesAppInfoFooter(
-    versionName: String = "2.1.0",
-    versionCode: Int = 4,
+    versionName: String = remember { AppVersion.get().versionName },
+    versionCode: Long = remember { AppVersion.get().versionCode },
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     onNavigateToDebug: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -100,14 +102,18 @@ fun AjustesAppInfoFooter(
             )
             Text(
                 text = "NotiVas v$versionName ($versionCode)",
-                style = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.textStyles.footnote1.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                style = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.textStyles.footnote1.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
                 color = primaryTextColor,
                 textAlign = TextAlign.Center
             )
         }
         Text(
-            text = "Canvas REST API v1 · Compose Multiplatform (Android/JVM/iOS)",
-            style = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.textStyles.footnote2 else MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+            text = "Compose Multiplatform (Android/JVM/iOS)",
+            style = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.textStyles.footnote2 else MaterialTheme.typography.bodySmall.copy(
+                fontSize = 11.sp
+            ),
             color = secondaryTextColor,
             textAlign = TextAlign.Center
         )
