@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.model.UpdateInfo
 
+import me.joxquin.notivas.ui.copilot.components.formatMarkdown
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateDialog(
@@ -105,11 +107,11 @@ fun UpdateDialog(
                     color = MaterialTheme.colorScheme.surfaceContainerLowest,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(140.dp)
+                        .height(200.dp)
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(12.dp)
+                            .padding(14.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
                         Text(
@@ -117,11 +119,14 @@ fun UpdateDialog(
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val notesText = updateInfo.releaseNotes.ifEmpty { "Se han realizado mejoras de rendimiento y estabilidad." }
+                        val formattedNotes = formatMarkdown(notesText)
                         Text(
-                            text = updateInfo.releaseNotes.ifEmpty { "Se han realizado mejoras de rendimiento y estabilidad." },
+                            text = formattedNotes,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 20.sp
                         )
                     }
                 }
