@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "app": "NotiVas",
+  "defaultTemplate": {
+    "id": "tecsup_lab16_16w",
+    "name": "Tecsup - 16 Labs Semanales (70% Lab / 30% Prácticas)",
+    "institution": "Tecsup",
+    "description": "Fórmula: 30% Prácticas (elimina la menor de 4 evaluaciones) + 70% Laboratorio (16 laboratorios semanales continuos).",
+    "totalWeeks": 16,
+    "passingGrade": 13.0,
+    "groups": [
+      {
+        "name": "Promedio de Prácticas (PP)",
+        "weightPercentage": 30.0,
+        "targetAssessments": 4,
+        "dropLowest": true,
+        "minToDrop": 3,
+        "calculationMode": "DROP_LOWEST",
+        "items": [
+          { "name": "Evaluación 1", "weekNumber": 4, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test).*0?1.*" ] },
+          { "name": "Evaluación 2", "weekNumber": 8, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test).*0?2.*" ] },
+          { "name": "Evaluación 3", "weekNumber": 12, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test).*0?3.*" ] },
+          { "name": "Evaluación 4", "weekNumber": 16, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test).*0?4.*" ] }
+        ]
+      },
+      {
+        "name": "Promedio de Laboratorio (PL)",
+        "weightPercentage": 70.0,
+        "targetAssessments": 16,
+        "dropLowest": false,
+        "minToDrop": 3,
+        "calculationMode": "SIMPLE",
+        "items": [
+          { "name": "Laboratorio 01", "weekNumber": 1, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?1.*" ] },
+          { "name": "Laboratorio 02", "weekNumber": 2, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?2.*" ] },
+          { "name": "Laboratorio 03", "weekNumber": 3, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?3.*" ] },
+          { "name": "Laboratorio 04", "weekNumber": 4, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?4.*" ] },
+          { "name": "Laboratorio 05", "weekNumber": 5, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?5.*" ] },
+          { "name": "Laboratorio 06", "weekNumber": 6, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?6.*" ] },
+          { "name": "Laboratorio 07", "weekNumber": 7, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?7.*" ] },
+          { "name": "Laboratorio 08", "weekNumber": 8, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?8.*" ] },
+          { "name": "Laboratorio 09", "weekNumber": 9, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?9.*" ] },
+          { "name": "Laboratorio 10", "weekNumber": 10, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*10.*" ] },
+          { "name": "Laboratorio 11", "weekNumber": 11, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*11.*" ] },
+          { "name": "Laboratorio 12", "weekNumber": 12, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*12.*" ] },
+          { "name": "Laboratorio 13", "weekNumber": 13, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*13.*" ] },
+          { "name": "Laboratorio 14", "weekNumber": 14, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*14.*" ] },
+          { "name": "Laboratorio 15", "weekNumber": 15, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*15.*" ] },
+          { "name": "Laboratorio 16", "weekNumber": 16, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*16.*" ] }
+        ]
+      }
+    ]
+  }
+}

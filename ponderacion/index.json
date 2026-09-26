@@ -2,8 +2,36 @@
   "version": 1,
   "templates": [
     {
+      "id": "tecsup_lab8_proyecto_16w",
+      "name": "Tecsup - 8 Labs + Proyecto (70% Lab / 30% Teoría)",
+      "institution": "Tecsup",
+      "description": "Fórmula: 30% Prácticas (elimina la menor de 4 evaluaciones) + 70% Laboratorio (8 laboratorios quincenales y proyecto final).",
+      "file": "tecsup_lab8_proyecto_16w.json"
+    },
+    {
+      "id": "tecsup_lab16_16w",
+      "name": "Tecsup - 16 Labs Semanales (70% Lab / 30% Prácticas)",
+      "institution": "Tecsup",
+      "description": "Fórmula: 30% Prácticas (elimina la menor de 4 evaluaciones) + 70% Laboratorio (16 laboratorios semanales continuos).",
+      "file": "tecsup_lab16_16w.json"
+    },
+    {
+      "id": "tecsup_lab6_16w",
+      "name": "Tecsup - 6 Labs Espaciados (70% Lab / 30% Aula)",
+      "institution": "Tecsup",
+      "description": "Fórmula: 30% Promedio de Aula (elimina la menor de 4) + 70% Laboratorio (6 labs no eliminables en sem 3, 7, 10, 11, 13, 14).",
+      "file": "tecsup_lab6_16w.json"
+    },
+    {
+      "id": "tecsup_lab_dividido_aula_casa_16w",
+      "name": "Tecsup - Lab Dividido (35% Clase + 35% Casa/Doc + 30% Teoría)",
+      "institution": "Tecsup",
+      "description": "Fórmula: 30% Teoría/Prácticas (elimina la menor) + 35% Laboratorio Presencial en Clase + 35% Informes/Guías en Casa.",
+      "file": "tecsup_lab_dividido_aula_casa_16w.json"
+    },
+    {
       "id": "tecsup_standard_16w",
-      "name": "Tecsup - Laboratorio y Proyecto",
+      "name": "Tecsup - Laboratorio y Proyecto Estándar",
       "institution": "Tecsup",
       "description": "Estructura estándar de 16 semanas con 8 laboratorios (descarte de peor nota), 4 pruebas de avance y proyecto final.",
       "file": "tecsup_standard_16w.json"

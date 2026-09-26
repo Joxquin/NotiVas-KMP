@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "app": "NotiVas",
+  "defaultTemplate": {
+    "id": "tecsup_lab8_proyecto_16w",
+    "name": "Tecsup - 8 Labs + Proyecto (70% Lab / 30% Teoría)",
+    "institution": "Tecsup",
+    "description": "Fórmula: 30% Prácticas (elimina la menor de 4 evaluaciones) + 70% Laboratorio (8 laboratorios quincenales y proyecto final).",
+    "totalWeeks": 16,
+    "passingGrade": 13.0,
+    "groups": [
+      {
+        "name": "Promedio de Prácticas / Teoría (PA)",
+        "weightPercentage": 30.0,
+        "targetAssessments": 4,
+        "dropLowest": true,
+        "minToDrop": 3,
+        "calculationMode": "DROP_LOWEST",
+        "items": [
+          { "name": "Evaluación 1", "weekNumber": 5, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test|teor[ií]a).*0?1.*" ] },
+          { "name": "Evaluación 2", "weekNumber": 9, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test|teor[ií]a).*0?2.*" ] },
+          { "name": "Evaluación 3", "weekNumber": 13, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test|teor[ií]a).*0?3.*" ] },
+          { "name": "Evaluación 4", "weekNumber": 16, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test|teor[ií]a).*0?4.*" ] }
+        ]
+      },
+      {
+        "name": "Promedio de Laboratorios (PB)",
+        "weightPercentage": 70.0,
+        "targetAssessments": 9,
+        "dropLowest": false,
+        "minToDrop": 3,
+        "calculationMode": "SIMPLE",
+        "items": [
+          { "name": "Laboratorio 1", "weekNumber": 2, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a|taller).*0?1.*" ] },
+          { "name": "Laboratorio 2", "weekNumber": 4, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a|taller).*0?2.*" ] },
+          { "name": "Laboratorio 3", "weekNumber": 6, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a|taller).*0?3.*" ] },
+          { "name": "Laboratorio 4", "weekNumber": 8, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a|taller).*0?4.*" ] },
+          { "name": "Laboratorio 5", "weekNumber": 10, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a|taller).*0?5.*" ] },
+          { "name": "Laboratorio 6", "weekNumber": 12, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a|taller).*0?6.*" ] },
+          { "name": "Laboratorio 7", "weekNumber": 14, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a|taller).*0?7.*" ] },
+          { "name": "Laboratorio 8", "weekNumber": 16, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a|taller).*0?8.*" ] },
+          { "name": "Proyecto Final", "weekNumber": 16, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(proyecto|final|sustentaci[oó]n|integrador).*" ] }
+        ]
+      }
+    ]
+  }
+}

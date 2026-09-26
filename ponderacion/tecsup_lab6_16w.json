@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "app": "NotiVas",
+  "defaultTemplate": {
+    "id": "tecsup_lab6_16w",
+    "name": "Tecsup - 6 Labs Espaciados (70% Lab / 30% Aula)",
+    "institution": "Tecsup",
+    "description": "Fórmula: 30% Promedio de Aula (elimina la menor de 4 evaluaciones) + 70% Promedio de Laboratorio (6 laboratorios no eliminables en sem 3, 7, 10, 11, 13, 14).",
+    "totalWeeks": 16,
+    "passingGrade": 13.0,
+    "groups": [
+      {
+        "name": "Promedio de Aula / Teoría (PA)",
+        "weightPercentage": 30.0,
+        "targetAssessments": 4,
+        "dropLowest": true,
+        "minToDrop": 3,
+        "calculationMode": "DROP_LOWEST",
+        "items": [
+          { "name": "Evaluación 1", "weekNumber": 4, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test).*0?1.*" ] },
+          { "name": "Evaluación 2", "weekNumber": 9, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test).*0?2.*" ] },
+          { "name": "Evaluación 3", "weekNumber": 12, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test).*0?3.*" ] },
+          { "name": "Evaluación 4", "weekNumber": 16, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(evaluaci[oó]n|prueba|pc|test).*0?4.*" ] }
+        ]
+      },
+      {
+        "name": "Promedio de Laboratorio (PT)",
+        "weightPercentage": 70.0,
+        "targetAssessments": 6,
+        "dropLowest": false,
+        "minToDrop": 3,
+        "calculationMode": "SIMPLE",
+        "items": [
+          { "name": "Laboratorio 1", "weekNumber": 3, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?1.*" ] },
+          { "name": "Laboratorio 2", "weekNumber": 7, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?2.*" ] },
+          { "name": "Laboratorio 3", "weekNumber": 10, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?3.*" ] },
+          { "name": "Laboratorio 4", "weekNumber": 11, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?4.*" ] },
+          { "name": "Laboratorio 5", "weekNumber": 13, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?5.*" ] },
+          { "name": "Laboratorio 6", "weekNumber": 14, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|gu[ií]a).*0?6.*" ] }
+        ]
+      }
+    ]
+  }
+}
