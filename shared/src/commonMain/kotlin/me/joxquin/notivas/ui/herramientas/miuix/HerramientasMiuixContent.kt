@@ -115,21 +115,14 @@ fun HerramientasMiuixContent(
                 )
             }
 
-            // ─── ROW ASIMÉTRICO: What-If & Fórmulas (2 Columnas) ────
+            // ─── CARD 2: Simulador What-If ──────────────────────────
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    WhatIfBentoCard(
-                        modifier = Modifier.weight(1f)
-                    )
-                    FormulasBentoCard(
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                WhatIfBentoCard()
+            }
+
+            // ─── CARD 3: Foros de Discusión ─────────────────────────
+            item {
+                ForosBentoCard()
             }
 
 

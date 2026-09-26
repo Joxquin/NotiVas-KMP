@@ -185,17 +185,18 @@ fun HerramientasMaterialContent(
                 )
             }
 
-            // ─── ROW ASIMÉTRICO: What-If & Fórmulas (2 Columnas) ──────────────
+            // ─── CARD 2: Simulador What-If ───────────────────────────────────
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    MaterialWhatIfCard(modifier = Modifier.weight(1f))
-                    MaterialFormulasCard(modifier = Modifier.weight(1f))
-                }
+                MaterialWhatIfCard(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            // ─── CARD 3: Foros de Discusión ─────────────────────────────────
+            item {
+                MaterialForosCard(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
 
             // ─── CARD 3: Historial & Archivo de Tareas ────────────────────────

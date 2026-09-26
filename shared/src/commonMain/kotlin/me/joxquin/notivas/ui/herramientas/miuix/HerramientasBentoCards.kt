@@ -19,9 +19,9 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Assignment
-import androidx.compose.material.icons.outlined.Functions
 import androidx.compose.material.icons.outlined.Grading
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Sync
@@ -278,7 +278,7 @@ fun PlannerHeroBentoCard(
     }
 }
 
-// ─── CARD 2: Simulador What-If (Columna Izquierda Asimétrica) ─────────────────
+// ─── CARD 2: Simulador What-If ───────────────────────────────────────────────
 @Composable
 fun WhatIfBentoCard(
     modifier: Modifier = Modifier,
@@ -286,6 +286,8 @@ fun WhatIfBentoCard(
 ) {
     Box(
         modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
             .squircleSurface(
                 color = MiuixTheme.colorScheme.surfaceContainer,
                 cornerRadius = 22.dp
@@ -296,7 +298,7 @@ fun WhatIfBentoCard(
                 cornerRadius = 22.dp
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(14.dp)
+            .padding(16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -414,14 +416,16 @@ fun WhatIfBentoCard(
     }
 }
 
-// ─── CARD 3: Fórmulas & Ponderaciones (Columna Derecha Asimétrica) ────────────
+// ─── CARD: Foros de Discusión ───────────────────────────────────────────────
 @Composable
-fun FormulasBentoCard(
+fun ForosBentoCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
     Box(
         modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
             .squircleSurface(
                 color = MiuixTheme.colorScheme.surfaceContainer,
                 cornerRadius = 22.dp
@@ -432,103 +436,71 @@ fun FormulasBentoCard(
                 cornerRadius = 22.dp
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(14.dp)
+            .padding(16.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .squircleSurface(
-                                color = MiuixPurple.copy(alpha = 0.15f),
-                                cornerRadius = 10.dp
-                            )
-                            .squircleBorder(
-                                width = 0.5.dp,
-                                color = MiuixPurple.copy(alpha = 0.3f),
-                                cornerRadius = 10.dp
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        M3Icon(
-                            imageVector = Icons.Outlined.Functions,
-                            contentDescription = null,
-                            tint = MiuixPurple,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .squircleSurface(
-                                color = MiuixPurple.copy(alpha = 0.12f),
-                                cornerRadius = 9999.dp
-                            )
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "2026-I",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MiuixPurple
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    text = "Fórmulas & Ponderaciones",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MiuixTheme.colorScheme.onSurface
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = "Sílabos oficiales y pesos configurables",
-                    fontSize = 11.sp,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                    lineHeight = 14.sp
-                )
-            }
-
-            Spacer(Modifier.height(14.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp)
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .size(38.dp)
                         .squircleSurface(
-                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                            cornerRadius = 8.dp
+                            color = MiuixPurple.copy(alpha = 0.15f),
+                            cornerRadius = 10.dp
                         )
-                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                        .squircleBorder(
+                            width = 0.5.dp,
+                            color = MiuixPurple.copy(alpha = 0.3f),
+                            cornerRadius = 10.dp
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
+                    M3Icon(
+                        imageVector = Icons.Default.Forum,
+                        contentDescription = null,
+                        tint = MiuixPurple,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Column {
                     Text(
-                        text = "PF = 0.3(PC) + 0.3(LAB)...",
-                        fontSize = 9.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = MiuixTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                        text = "Foros",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MiuixTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = "Debates, consultas y temas de discusión de tus cursos",
+                        fontSize = 11.sp,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                Spacer(Modifier.height(8.dp))
+            }
+
+            Box(
+                modifier = Modifier
+                    .squircleSurface(
+                        color = MiuixPurple.copy(alpha = 0.12f),
+                        cornerRadius = 9999.dp
+                    )
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            ) {
                 Text(
-                    text = "Pesos oficiales sincronizados",
+                    text = "Canvas",
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                    fontWeight = FontWeight.SemiBold,
+                    color = MiuixPurple
                 )
             }
         }
