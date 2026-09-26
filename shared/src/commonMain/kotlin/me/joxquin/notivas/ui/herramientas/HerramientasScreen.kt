@@ -25,6 +25,7 @@ fun HerramientasScreen(
     viewModel: NotasViewModel? = null,
     showingNotasDetail: Boolean = false,
     onOpenProgreso: () -> Unit = {},
+    onOpenTuneSettings: () -> Unit = {},
     onBack: () -> Unit = {},
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     lazyListState: LazyListState = rememberLazyListState(),
@@ -54,12 +55,14 @@ fun HerramientasScreen(
                 HerramientasMiuixContent(
                     viewModel = viewModel,
                     onOpenProgreso = onOpenProgreso,
+                    onOpenTuneSettings = onOpenTuneSettings,
                     lazyListState = lazyListState
                 )
             } else {
                 HerramientasMaterialContent(
                     viewModel = viewModel,
                     onOpenProgreso = onOpenProgreso,
+                    onOpenTuneSettings = onOpenTuneSettings,
                     lazyListState = lazyListState
                 )
             }

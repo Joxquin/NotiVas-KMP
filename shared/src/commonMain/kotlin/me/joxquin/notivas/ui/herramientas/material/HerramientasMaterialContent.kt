@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +49,7 @@ import me.joxquin.notivas.ui.notas.NotasViewModel
 fun HerramientasMaterialContent(
     viewModel: NotasViewModel? = null,
     onOpenProgreso: () -> Unit = {},
+    onOpenTuneSettings: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
@@ -109,6 +111,15 @@ fun HerramientasMaterialContent(
                                 )
                             }
                         }
+                    }
+                },
+                actions = {
+                    androidx.compose.material3.IconButton(onClick = onOpenTuneSettings) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Outlined.Tune,
+                            contentDescription = "Ajustes de Ponderación",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

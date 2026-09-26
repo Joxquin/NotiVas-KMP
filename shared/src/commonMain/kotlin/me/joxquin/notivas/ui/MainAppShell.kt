@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddComment
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -246,6 +247,9 @@ fun MainAppShell(
 
     val contentBackdrop = rememberLayerBackdrop()
     var showingNotasDetail by remember { mutableStateOf(false) }
+    var showHerramientasTuneSheet by remember { mutableStateOf(false) }
+    var showCatalogImportDialog by remember { mutableStateOf(false) }
+    var exportedJsonContent by remember { mutableStateOf<String?>(null) }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         // En Miuix: Interceptar botón Atrás físico para volver al Hub de Herramientas o a Inicio
@@ -308,6 +312,7 @@ fun MainAppShell(
                                 viewModel = notasViewModel,
                                 showingNotasDetail = showingNotasDetail,
                                 onOpenProgreso = { showingNotasDetail = true },
+                                onOpenTuneSettings = { showHerramientasTuneSheet = true },
                                 onBack = { showingNotasDetail = false },
                                 themeStyle = AppThemeStyle.MIUIX,
                                 lazyListState = herramientasListState
@@ -415,6 +420,21 @@ fun MainAppShell(
                             }
                         }
 
+                        MainDestination.Herramientas -> {
+                            if (!showingNotasDetail) {
+                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                    onClick = { showHerramientasTuneSheet = true }
+                                ) {
+                                    androidx.compose.material3.Icon(
+                                        imageVector = androidx.compose.material.icons.Icons.Outlined.Tune,
+                                        contentDescription = "Ajustes de Ponderación",
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+
                         else -> {}
                     }
                 },
@@ -511,6 +531,7 @@ fun MainAppShell(
                             viewModel = notasViewModel,
                             showingNotasDetail = showingNotasDetail,
                             onOpenProgreso = { showingNotasDetail = true },
+                            onOpenTuneSettings = { showHerramientasTuneSheet = true },
                             onBack = { showingNotasDetail = false },
                             themeStyle = AppThemeStyle.MATERIAL,
                             lazyListState = herramientasListState
@@ -542,6 +563,43 @@ fun MainAppShell(
         UpdateDialog(
             updateInfo = info,
             onDismiss = { activeUpdateInfo = null }
+        )
+    }
+
+    if (showHerramientasTuneSheet) {
+        me.joxquin.notivas.ui.herramientas.components.GroupsSettingsBottomSheet(
+            onDismiss = { showHerramientasTuneSheet = false },
+            onOpenCatalogImport = { showCatalogImportDialog = true },
+            onImportJson = { json ->
+                notasViewModel.importGlobalGroupsFromJson(json) { result ->
+                    // Result handling
+                }
+            },
+            onExportJson = {
+                notasViewModel.exportGlobalGroups { json ->
+                    exportedJsonContent = json
+                }
+            },
+            onResetGroups = {
+                notasViewModel.resetAllSimulationGroups()
+            },
+            exportedJson = exportedJsonContent,
+            themeStyle = themeStyle
+        )
+    }
+
+    if (showCatalogImportDialog) {
+        me.joxquin.notivas.ui.notas.components.ImportTemplateDialog(
+            onDismiss = { showCatalogImportDialog = false },
+            showApplyToAllToggle = true,
+            onApplyTemplate = { template, applyToAll ->
+                if (applyToAll) {
+                    notasViewModel.applyTemplateToAllCourses(template)
+                } else {
+                    notasViewModel.applyTemplate(template)
+                }
+                showCatalogImportDialog = false
+            }
         )
     }
 }
