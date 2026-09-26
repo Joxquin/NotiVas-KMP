@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import me.joxquin.notivas.data.local.db.DatabaseMigrator
 import me.joxquin.notivas.data.local.db.NotivasDatabase
 import me.joxquin.notivas.data.local.db.createRoomDatabase
 import me.joxquin.notivas.data.local.db.entities.AssignmentEntity
@@ -264,6 +263,32 @@ class InMemoryLocalStore(
         }
     }
 
+    suspend fun getAllGroupsWithItemsList(): List<SimulationGroupWithItems> {
+        return database.simulationDao().getAllGroupsWithItems().map { it.toDomain() }
+    }
+
+    suspend fun deleteAllSimulationGroups() {
+        database.simulationDao().deleteAllGroups()
+        database.simulationDao().deleteAllItems()
+    }
+
+    suspend fun replaceMultipleCourseGroups(
+        courseUpdates: List<Pair<Course, List<SimulationGroupWithItems>>>
+    ) {
+        courseUpdates.forEach { (course, groupsWithItems) ->
+            database.courseDao().upsert(CourseEntity.fromDomain(course))
+            database.simulationDao().deleteGroupsForCourse(course.id)
+            groupsWithItems.forEach { g ->
+                val groupEntity = SimulationGroupEntity.fromDomain(g.group.copy(id = 0L, courseId = course.id))
+                val groupId = database.simulationDao().insertGroup(groupEntity)
+                val itemEntities = g.items.map { item ->
+                    SimulationItemEntity.fromDomain(item.copy(id = 0L, groupId = groupId))
+                }
+                database.simulationDao().insertItems(itemEntities)
+            }
+        }
+    }
+
     fun replaceCourseGroupsWithTemplate(
         course: Course,
         groupsWithItems: List<SimulationGroupWithItems>
@@ -301,10 +326,8 @@ class InMemoryLocalStore(
             list.map { it.toDomain() }
         }
 
-    fun getSessionById(sessionId: String): CopilotSession? {
-        return kotlinx.coroutines.runBlocking {
-            database.copilotChatDao().getSessionById(sessionId)?.toDomain()
-        }
+    suspend fun getSessionById(sessionId: String): CopilotSession? {
+        return database.copilotChatDao().getSessionById(sessionId)?.toDomain()
     }
 
     fun getMessagesForSession(sessionId: String): Flow<List<CopilotMessage>> =
@@ -312,75 +335,54 @@ class InMemoryLocalStore(
             list.map { it.toDomain() }
         }
 
-    fun getMessagesForSessionOnce(sessionId: String): List<CopilotMessage> {
-        return kotlinx.coroutines.runBlocking {
-            database.copilotChatDao().getMessages(sessionId).map { it.toDomain() }
-        }
+    suspend fun getMessagesForSessionOnce(sessionId: String): List<CopilotMessage> {
+        return database.copilotChatDao().getMessages(sessionId).map { it.toDomain() }
     }
 
-    fun insertSession(session: CopilotSession) {
-        scope.launch {
-            database.copilotChatDao().upsertSession(CopilotSessionEntity.fromDomain(session))
-        }
+    suspend fun insertSession(session: CopilotSession) {
+        database.copilotChatDao().upsertSession(CopilotSessionEntity.fromDomain(session))
     }
 
-    fun insertMessage(message: CopilotMessage) {
-        scope.launch {
-            database.copilotChatDao().insertMessage(CopilotMessageEntity.fromDomain(message))
-        }
+    suspend fun insertMessage(message: CopilotMessage) {
+        database.copilotChatDao().insertMessage(CopilotMessageEntity.fromDomain(message))
     }
 
-    fun insertMessages(messages: List<CopilotMessage>) {
-        scope.launch {
-            database.copilotChatDao().insertMessages(messages.map { CopilotMessageEntity.fromDomain(it) })
-        }
+    suspend fun insertMessages(messages: List<CopilotMessage>) {
+        database.copilotChatDao().insertMessages(messages.map { CopilotMessageEntity.fromDomain(it) })
     }
 
-    fun updateSessionTitle(sessionId: String, newTitle: String, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
-        scope.launch {
-            val session = database.copilotChatDao().getSessionById(sessionId) ?: return@launch
-            database.copilotChatDao().upsertSession(session.copy(title = newTitle, updatedAt = updatedAt))
-        }
+    suspend fun updateSessionTitle(sessionId: String, newTitle: String, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
+        val session = database.copilotChatDao().getSessionById(sessionId) ?: return
+        database.copilotChatDao().upsertSession(session.copy(title = newTitle, updatedAt = updatedAt))
     }
 
-    fun updateSessionTokens(sessionId: String, tokens: Int, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
-        scope.launch {
-            val session = database.copilotChatDao().getSessionById(sessionId) ?: return@launch
-            database.copilotChatDao().upsertSession(session.copy(totalTokens = tokens, updatedAt = updatedAt))
-        }
+    suspend fun updateSessionTokens(sessionId: String, tokens: Int, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
+        val session = database.copilotChatDao().getSessionById(sessionId) ?: return
+        database.copilotChatDao().upsertSession(session.copy(totalTokens = tokens, updatedAt = updatedAt))
     }
 
-    fun updateSessionTimestamp(sessionId: String, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
-        scope.launch {
-            val session = database.copilotChatDao().getSessionById(sessionId) ?: return@launch
-            database.copilotChatDao().upsertSession(session.copy(updatedAt = updatedAt))
-        }
+    suspend fun updateSessionTimestamp(sessionId: String, updatedAt: Long = DateTimeUtil.nowEpochMillis()) {
+        val session = database.copilotChatDao().getSessionById(sessionId) ?: return
+        database.copilotChatDao().upsertSession(session.copy(updatedAt = updatedAt))
     }
 
-    fun deleteSession(sessionId: String) {
-        scope.launch {
-            database.copilotChatDao().deleteSession(sessionId)
-        }
+    suspend fun deleteSession(sessionId: String) {
+        database.copilotChatDao().deleteSession(sessionId)
     }
 
-    fun deleteMessagesForSession(sessionId: String) {
-        scope.launch {
-            database.copilotChatDao().deleteMessagesForSession(sessionId)
-        }
+    suspend fun deleteMessagesForSession(sessionId: String) {
+        database.copilotChatDao().deleteMessagesForSession(sessionId)
     }
 
-    fun deleteAllSessions() {
-        scope.launch {
-            database.copilotChatDao().deleteAllSessions()
-            database.copilotChatDao().deleteAllMessages()
-        }
+    suspend fun deleteAllSessions() {
+        database.copilotChatDao().deleteAllSessions()
+        database.copilotChatDao().deleteAllMessages()
     }
 
-    // ─── Inicialización y Migración Automática ──────────────────────────────
+    // ─── Inicialización ─────────────────────────────────────────────────────
     init {
         scope.launch {
             loadUserProfile()
-            DatabaseMigrator(database).migrateIfNeeded()
         }
     }
 

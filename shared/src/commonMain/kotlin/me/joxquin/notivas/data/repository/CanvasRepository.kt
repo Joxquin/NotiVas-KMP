@@ -72,6 +72,144 @@ class CanvasRepository(
         localStore.replaceCourseGroupsWithTemplate(updatedCourse, groupsWithItems)
     }
 
+    suspend fun applyTemplateToAllCourses(template: me.joxquin.notivas.domain.template.CourseEvaluationTemplate): Int = withContext(Dispatchers.IO) {
+        val courses = localStore.getAllCourses().first()
+        val updates = courses.map { course ->
+            val assignments = localStore.getAssignmentsByCourse(course.id).first()
+            me.joxquin.notivas.domain.template.TemplateAssignmentMatcher.instantiateTemplate(
+                course = course,
+                template = template,
+                canvasAssignments = assignments
+            )
+        }
+        localStore.replaceMultipleCourseGroups(updates)
+        courses.size
+    }
+
+    suspend fun exportGlobalGroupsToJson(): String = withContext(Dispatchers.IO) {
+        val courses = localStore.getAllCourses().first()
+        val allGroupsWithItems = localStore.getAllGroupsWithItemsList()
+
+        val courseExports = courses.map { course ->
+            val courseGroups = allGroupsWithItems.filter { it.group.courseId == course.id }
+            me.joxquin.notivas.domain.template.CourseGroupsExport(
+                courseId = course.id,
+                courseCode = course.courseCode,
+                courseName = course.name,
+                passingGrade = course.passingGrade,
+                totalWeeks = course.totalWeeks,
+                groups = courseGroups.map { g ->
+                    me.joxquin.notivas.domain.template.GlobalGroupExportGroup(
+                        name = g.group.name,
+                        weightPercentage = g.group.weightPercentage,
+                        targetAssessments = g.group.targetAssessments,
+                        dropLowest = g.group.dropLowest,
+                        minToDrop = g.group.minToDrop,
+                        calculationMode = g.group.calculationMode,
+                        items = g.items.map { item ->
+                            me.joxquin.notivas.domain.template.GlobalGroupExportItem(
+                                name = item.name,
+                                weekNumber = item.weekNumber,
+                                maxScore = item.maxScore,
+                                internalWeight = item.internalWeight
+                            )
+                        }
+                    )
+                }
+            )
+        }
+
+        val exportFile = me.joxquin.notivas.domain.template.GlobalGroupsExportFile(
+            version = 1,
+            courses = courseExports
+        )
+
+        val json = kotlinx.serialization.json.Json { prettyPrint = true; ignoreUnknownKeys = true }
+        json.encodeToString(me.joxquin.notivas.domain.template.GlobalGroupsExportFile.serializer(), exportFile)
+    }
+
+    suspend fun importGlobalGroupsFromJson(jsonContent: String): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+            val exportFile = json.decodeFromString(me.joxquin.notivas.domain.template.GlobalGroupsExportFile.serializer(), jsonContent)
+            val currentCourses = localStore.getAllCourses().first()
+
+            val updates = mutableListOf<Pair<Course, List<SimulationGroupWithItems>>>()
+
+            if (exportFile.defaultTemplate != null) {
+                // Aplicar la plantilla por defecto a todos los cursos
+                currentCourses.forEach { course ->
+                    val assignments = localStore.getAssignmentsByCourse(course.id).first()
+                    val result = me.joxquin.notivas.domain.template.TemplateAssignmentMatcher.instantiateTemplate(
+                        course = course,
+                        template = exportFile.defaultTemplate,
+                        canvasAssignments = assignments
+                    )
+                    updates.add(result)
+                }
+            } else {
+                // Mapear por courseCode o courseId o nombre
+                currentCourses.forEach { course ->
+                    val matchedExport = exportFile.courses.firstOrNull { exp ->
+                        (exp.courseId != null && exp.courseId == course.id) ||
+                        (!exp.courseCode.isNullOrBlank() && exp.courseCode.equals(course.courseCode, ignoreCase = true)) ||
+                        (!exp.courseName.isNullOrBlank() && exp.courseName.equals(course.name, ignoreCase = true))
+                    } ?: exportFile.courses.firstOrNull() // Si sólo hay 1 configuración genérica
+
+                    if (matchedExport != null && matchedExport.groups.isNotEmpty()) {
+                        val template = me.joxquin.notivas.domain.template.CourseEvaluationTemplate(
+                            id = "imported_${course.id}",
+                            name = matchedExport.courseName ?: course.name,
+                            institution = "Importado",
+                            description = "Configuración importada desde archivo",
+                            totalWeeks = matchedExport.totalWeeks,
+                            passingGrade = matchedExport.passingGrade,
+                            groups = matchedExport.groups.map { g ->
+                                me.joxquin.notivas.domain.template.GroupTemplate(
+                                    name = g.name,
+                                    weightPercentage = g.weightPercentage,
+                                    targetAssessments = g.targetAssessments,
+                                    dropLowest = g.dropLowest,
+                                    minToDrop = g.minToDrop,
+                                    calculationMode = g.calculationMode,
+                                    items = g.items.map { item ->
+                                        me.joxquin.notivas.domain.template.ItemTemplate(
+                                            name = item.name,
+                                            weekNumber = item.weekNumber,
+                                            maxScore = item.maxScore,
+                                            internalWeight = item.internalWeight,
+                                            matchingPatterns = item.matchingPatterns
+                                        )
+                                    }
+                                )
+                            }
+                        )
+                        val assignments = localStore.getAssignmentsByCourse(course.id).first()
+                        val result = me.joxquin.notivas.domain.template.TemplateAssignmentMatcher.instantiateTemplate(
+                            course = course,
+                            template = template,
+                            canvasAssignments = assignments
+                        )
+                        updates.add(result)
+                    }
+                }
+            }
+
+            if (updates.isNotEmpty()) {
+                localStore.replaceMultipleCourseGroups(updates)
+                Result.success(updates.size)
+            } else {
+                Result.failure(Exception("No se encontraron cursos coincidentes en el archivo JSON."))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun resetAllSimulationGroups() = withContext(Dispatchers.IO) {
+        localStore.deleteAllSimulationGroups()
+    }
+
     suspend fun createGroupWithItems(group: SimulationGroup, items: List<SimulationItem>) {
         localStore.createGroupWithItems(group, items)
     }
