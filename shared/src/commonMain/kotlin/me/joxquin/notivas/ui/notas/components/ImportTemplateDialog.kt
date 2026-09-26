@@ -46,6 +46,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import me.joxquin.notivas.data.remote.PonderacionApiService
 import me.joxquin.notivas.domain.template.CourseEvaluationTemplate
 import me.joxquin.notivas.domain.template.EvaluationTemplatesCatalog
 
@@ -56,9 +58,23 @@ fun ImportTemplateDialog(
     showApplyToAllToggle: Boolean = false,
     onApplyTemplate: (template: CourseEvaluationTemplate, applyToAll: Boolean) -> Unit
 ) {
-    val templates = remember { EvaluationTemplatesCatalog.templates }
-    var selectedTemplate by remember { mutableStateOf<CourseEvaluationTemplate?>(templates.firstOrNull()) }
+    var templates by remember { mutableStateOf(EvaluationTemplatesCatalog.templates) }
+    var selectedTemplate by remember { mutableStateOf<CourseEvaluationTemplate?>(EvaluationTemplatesCatalog.templates.firstOrNull()) }
     var applyToAllCourses by remember { mutableStateOf(showApplyToAllToggle) }
+    var isLoadingRemote by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        val service = PonderacionApiService()
+        service.getRemoteTemplates().onSuccess { fetched ->
+            if (fetched.isNotEmpty()) {
+                templates = fetched
+                if (selectedTemplate == null || !fetched.any { it.id == selectedTemplate?.id }) {
+                    selectedTemplate = fetched.firstOrNull()
+                }
+            }
+        }
+        isLoadingRemote = false
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,

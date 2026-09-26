@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "app": "NotiVas",
+  "defaultTemplate": {
+    "id": "utp_pregrado_18w",
+    "name": "UTP - Prácticas Calificadas y Tareas",
+    "institution": "UTP",
+    "description": "Ciclo regular de 18 semanas con 4 Prácticas Calificadas (descarte de peor PC), 4 Tareas Académicas y Examen Final.",
+    "totalWeeks": 18,
+    "passingGrade": 13.0,
+    "groups": [
+      {
+        "name": "Prácticas Calificadas (PC)",
+        "weightPercentage": 40.0,
+        "targetAssessments": 4,
+        "dropLowest": true,
+        "minToDrop": 3,
+        "calculationMode": "DROP_LOWEST",
+        "items": [
+          { "name": "PC 01", "weekNumber": 4, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(pc|pr[aá]ctica\\s*calificada).*0?1.*" ] },
+          { "name": "PC 02", "weekNumber": 8, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(pc|pr[aá]ctica\\s*calificada).*0?2.*" ] },
+          { "name": "PC 03", "weekNumber": 12, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(pc|pr[aá]ctica\\s*calificada).*0?3.*" ] },
+          { "name": "PC 04", "weekNumber": 16, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(pc|pr[aá]ctica\\s*calificada).*0?4.*" ] }
+        ]
+      },
+      {
+        "name": "Tareas Académicas (TA)",
+        "weightPercentage": 30.0,
+        "targetAssessments": 4,
+        "dropLowest": false,
+        "minToDrop": 3,
+        "calculationMode": "SIMPLE",
+        "items": [
+          { "name": "Tarea Académica 1", "weekNumber": 3, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(ta|tarea\\s*acad[eé]mica).*0?1.*" ] },
+          { "name": "Tarea Académica 2", "weekNumber": 7, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(ta|tarea\\s*acad[eé]mica).*0?2.*" ] },
+          { "name": "Tarea Académica 3", "weekNumber": 11, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(ta|tarea\\s*acad[eé]mica).*0?3.*" ] },
+          { "name": "Tarea Académica 4", "weekNumber": 15, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(ta|tarea\\s*acad[eé]mica).*0?4.*" ] }
+        ]
+      },
+      {
+        "name": "Examen Individual Final (EF)",
+        "weightPercentage": 30.0,
+        "targetAssessments": 1,
+        "dropLowest": false,
+        "minToDrop": 3,
+        "calculationMode": "SIMPLE",
+        "items": [
+          { "name": "Examen Final", "weekNumber": 18, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(examen\\s*final|ef|evaluaci[oó]n\\s*final).*" ] }
+        ]
+      }
+    ]
+  }
+}

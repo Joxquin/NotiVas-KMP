@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "app": "NotiVas",
+  "defaultTemplate": {
+    "id": "tecsup_standard_16w",
+    "name": "Tecsup - Laboratorio y Proyecto",
+    "institution": "Tecsup",
+    "description": "Estructura estándar de 16 semanas con 8 laboratorios (descarte de peor nota), 4 pruebas de avance y proyecto final.",
+    "totalWeeks": 16,
+    "passingGrade": 13.0,
+    "groups": [
+      {
+        "name": "Laboratorios y Talleres",
+        "weightPercentage": 40.0,
+        "targetAssessments": 8,
+        "dropLowest": true,
+        "minToDrop": 3,
+        "calculationMode": "DROP_LOWEST",
+        "items": [
+          { "name": "Lab 01", "weekNumber": 1, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?1.*" ] },
+          { "name": "Lab 02", "weekNumber": 3, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?2.*" ] },
+          { "name": "Lab 03", "weekNumber": 5, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?3.*" ] },
+          { "name": "Lab 04", "weekNumber": 7, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?4.*" ] },
+          { "name": "Lab 05", "weekNumber": 9, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?5.*" ] },
+          { "name": "Lab 06", "weekNumber": 11, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?6.*" ] },
+          { "name": "Lab 07", "weekNumber": 13, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?7.*" ] },
+          { "name": "Lab 08", "weekNumber": 15, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?8.*" ] }
+        ]
+      },
+      {
+        "name": "Pruebas de Avance / PCs",
+        "weightPercentage": 30.0,
+        "targetAssessments": 4,
+        "dropLowest": false,
+        "minToDrop": 3,
+        "calculationMode": "SIMPLE",
+        "items": [
+          { "name": "Prueba de Avance 1", "weekNumber": 3, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(prueba|avance|pc|evaluaci[oó]n|test).*0?1.*" ] },
+          { "name": "Prueba de Avance 2", "weekNumber": 7, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(prueba|avance|pc|evaluaci[oó]n|test).*0?2.*" ] },
+          { "name": "Prueba de Avance 3", "weekNumber": 11, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(prueba|avance|pc|evaluaci[oó]n|test).*0?3.*" ] },
+          { "name": "Prueba de Avance 4", "weekNumber": 15, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(prueba|avance|pc|evaluaci[oó]n|test).*0?4.*" ] }
+        ]
+      },
+      {
+        "name": "Proyecto Integrador Final",
+        "weightPercentage": 30.0,
+        "targetAssessments": 1,
+        "dropLowest": false,
+        "minToDrop": 3,
+        "calculationMode": "SIMPLE",
+        "items": [
+          { "name": "Entrega y Sustentación Final", "weekNumber": 16, "maxScore": 20.0, "internalWeight": 1.0, "matchingPatterns": [ "(?i).*(proyecto|sustentaci[oó]n|final|integrador).*" ] }
+        ]
+      }
+    ]
+  }
+}

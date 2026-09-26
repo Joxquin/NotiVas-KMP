@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "tecsup_standard_16w",
+      "name": "Tecsup - Laboratorio y Proyecto",
+      "institution": "Tecsup",
+      "description": "Estructura estándar de 16 semanas con 8 laboratorios (descarte de peor nota), 4 pruebas de avance y proyecto final.",
+      "file": "tecsup_standard_16w.json"
+    },
+    {
+      "id": "utp_pregrado_18w",
+      "name": "UTP - Prácticas Calificadas y Tareas",
+      "institution": "UTP",
+      "description": "Ciclo regular de 18 semanas con 4 Prácticas Calificadas (descarte de peor PC), 4 Tareas Académicas y Examen Final.",
+      "file": "utp_pregrado_18w.json"
+    }
+  ]
+}
