@@ -176,6 +176,7 @@ fun MainAppShell(
 
     val dashboardViewModel = remember { DashboardViewModel(canvasRepository) }
     val notasViewModel = remember { NotasViewModel(canvasRepository) }
+    val forosViewModel = remember { me.joxquin.notivas.ui.foros.ForosViewModel(canvasRepository) }
     val copilotViewModel = remember {
         CopilotViewModel(canvasRepository, copilotRepository, chatRepository, preferencesManager)
     }
@@ -247,14 +248,16 @@ fun MainAppShell(
 
     val contentBackdrop = rememberLayerBackdrop()
     var showingNotasDetail by remember { mutableStateOf(false) }
+    var showingForosDetail by remember { mutableStateOf(false) }
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         // En Miuix: Interceptar botón Atrás físico para volver al Hub de Herramientas o a Inicio
-        BackHandler(enabled = showingNotasDetail || currentDestination != MainDestination.Inicio) {
-            if (showingNotasDetail && currentDestination == MainDestination.Herramientas) {
+        BackHandler(enabled = showingNotasDetail || showingForosDetail || currentDestination != MainDestination.Inicio) {
+            if ((showingNotasDetail || showingForosDetail) && currentDestination == MainDestination.Herramientas) {
                 showingNotasDetail = false
+                showingForosDetail = false
             } else if (currentDestination != MainDestination.Inicio) {
                 mainPagerState.animateToPage(0)
             }
@@ -287,18 +290,22 @@ fun MainAppShell(
                                 listState = inicioListState,
                                 onNavigateToCopilot = {
                                     showingNotasDetail = false
+                                    showingForosDetail = false
                                     mainPagerState.animateToPage(2)
                                 },
                                 onNavigateToHerramientas = {
                                     showingNotasDetail = false
+                                    showingForosDetail = false
                                     mainPagerState.animateToPage(1)
                                 },
                                 onNavigateToAjustes = {
                                     showingNotasDetail = false
+                                    showingForosDetail = false
                                     mainPagerState.animateToPage(3)
                                 },
                                 onNavigateToCourseProgreso = { course ->
                                     notasViewModel.selectCourse(course)
+                                    showingForosDetail = false
                                     showingNotasDetail = true
                                     mainPagerState.animateToPage(1)
                                 }
@@ -309,10 +316,22 @@ fun MainAppShell(
                         MainDestination.Herramientas -> {
                             me.joxquin.notivas.ui.herramientas.HerramientasScreen(
                                 viewModel = notasViewModel,
+                                forosViewModel = forosViewModel,
                                 showingNotasDetail = showingNotasDetail,
-                                onOpenProgreso = { showingNotasDetail = true },
+                                showingForosDetail = showingForosDetail,
+                                onOpenProgreso = {
+                                    showingForosDetail = false
+                                    showingNotasDetail = true
+                                },
+                                onOpenForos = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = true
+                                },
                                 onOpenTuneSettings = { showHerramientasTuneSheet = true },
-                                onBack = { showingNotasDetail = false },
+                                onBack = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = false
+                                },
                                 themeStyle = AppThemeStyle.MIUIX,
                                 lazyListState = herramientasListState
                             )
@@ -325,6 +344,7 @@ fun MainAppShell(
                                 lazyListState = copilotListState,
                                 onNavigateToSettings = {
                                     showingNotasDetail = false
+                                    showingForosDetail = false
                                     mainPagerState.animateToPage(3)
                                 }
                             )
@@ -347,6 +367,7 @@ fun MainAppShell(
             MiuixTopAppBar(
                 title = when {
                     currentDestination == MainDestination.Herramientas && showingNotasDetail -> "Progreso"
+                    currentDestination == MainDestination.Herramientas && showingForosDetail -> "Foros Académicos"
                     currentDestination == MainDestination.Inicio -> "NotiVas"
                     currentDestination == MainDestination.Herramientas -> "Herramientas"
                     currentDestination == MainDestination.Copilot -> "Copilot IA"
@@ -366,12 +387,19 @@ fun MainAppShell(
                     MainDestination.Copilot -> if (isCopilotScrolled) copilotScrollOffset else 64f
                 },
                 backdrop = contentBackdrop,
-                titleAlwaysVisible = currentDestination == MainDestination.Herramientas && showingNotasDetail,
+                titleAlwaysVisible = currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail),
                 navigationIcon = when {
                     currentDestination == MainDestination.Herramientas && showingNotasDetail -> {
                         {
                             me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
                                 onClick = { showingNotasDetail = false }
+                            )
+                        }
+                    }
+                    currentDestination == MainDestination.Herramientas && showingForosDetail -> {
+                        {
+                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
+                                onClick = { showingForosDetail = false }
                             )
                         }
                     }
@@ -420,7 +448,18 @@ fun MainAppShell(
                         }
 
                         MainDestination.Herramientas -> {
-                            if (!showingNotasDetail) {
+                            if (showingForosDetail) {
+                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                    onClick = { forosViewModel.loadDiscussions(forceRefresh = true) }
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Refresh,
+                                        contentDescription = "Recargar",
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            } else if (!showingNotasDetail) {
                                 me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
                                     onClick = { showHerramientasTuneSheet = true }
                                 ) {
@@ -448,6 +487,7 @@ fun MainAppShell(
                 currentDestination = currentDestination,
                 onNavigate = { destination ->
                     showingNotasDetail = false
+                    showingForosDetail = false
                     val targetIndex = destinations.indexOf(destination)
                     if (targetIndex != -1) {
                         mainPagerState.animateToPage(targetIndex)
@@ -465,9 +505,10 @@ fun MainAppShell(
         }
 
         // Interceptar gesto/botón Atrás del sistema para Material 3:
-        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingNotasDetail || materialDestination != MainDestination.Inicio)) {
-            if (showingNotasDetail && materialDestination == MainDestination.Herramientas) {
+        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingNotasDetail || showingForosDetail || materialDestination != MainDestination.Inicio)) {
+            if ((showingNotasDetail || showingForosDetail) && materialDestination == MainDestination.Herramientas) {
                 showingNotasDetail = false
+                showingForosDetail = false
             } else {
                 materialDestination = MainDestination.Inicio
             }
@@ -482,6 +523,7 @@ fun MainAppShell(
                     isVisible = !isImeVisible,
                     onNavigate = { destination ->
                         showingNotasDetail = false
+                        showingForosDetail = false
                         materialDestination = destination
                     }
                 )
@@ -506,18 +548,22 @@ fun MainAppShell(
                             themeStyle = AppThemeStyle.MATERIAL,
                             onNavigateToCopilot = {
                                 showingNotasDetail = false
+                                showingForosDetail = false
                                 navigateToMaterial(MainDestination.Copilot)
                             },
                             onNavigateToHerramientas = {
                                 showingNotasDetail = false
+                                showingForosDetail = false
                                 navigateToMaterial(MainDestination.Herramientas)
                             },
                             onNavigateToAjustes = {
                                 showingNotasDetail = false
+                                showingForosDetail = false
                                 navigateToMaterial(MainDestination.Ajustes)
                             },
                             onNavigateToCourseProgreso = { course ->
                                 notasViewModel.selectCourse(course)
+                                showingForosDetail = false
                                 showingNotasDetail = true
                                 navigateToMaterial(MainDestination.Herramientas)
                             }
@@ -528,10 +574,22 @@ fun MainAppShell(
                     MainDestination.Herramientas -> {
                         me.joxquin.notivas.ui.herramientas.HerramientasScreen(
                             viewModel = notasViewModel,
+                            forosViewModel = forosViewModel,
                             showingNotasDetail = showingNotasDetail,
-                            onOpenProgreso = { showingNotasDetail = true },
+                            showingForosDetail = showingForosDetail,
+                            onOpenProgreso = {
+                                showingForosDetail = false
+                                showingNotasDetail = true
+                            },
+                            onOpenForos = {
+                                showingNotasDetail = false
+                                showingForosDetail = true
+                            },
                             onOpenTuneSettings = { showHerramientasTuneSheet = true },
-                            onBack = { showingNotasDetail = false },
+                            onBack = {
+                                showingNotasDetail = false
+                                showingForosDetail = false
+                            },
                             themeStyle = AppThemeStyle.MATERIAL,
                             lazyListState = herramientasListState
                         )
@@ -543,6 +601,7 @@ fun MainAppShell(
                             themeStyle = AppThemeStyle.MATERIAL,
                             onNavigateToSettings = {
                                 showingNotasDetail = false
+                                showingForosDetail = false
                                 navigateToMaterial(MainDestination.Ajustes)
                             }
                         )

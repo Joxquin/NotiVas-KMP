@@ -49,6 +49,7 @@ import me.joxquin.notivas.ui.notas.NotasViewModel
 fun HerramientasMaterialContent(
     viewModel: NotasViewModel? = null,
     onOpenProgreso: () -> Unit = {},
+    onOpenForos: () -> Unit = {},
     onOpenTuneSettings: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
@@ -195,6 +196,7 @@ fun HerramientasMaterialContent(
             // ─── CARD 3: Foros de Discusión ─────────────────────────────────
             item {
                 MaterialForosCard(
+                    onClick = onOpenForos,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }

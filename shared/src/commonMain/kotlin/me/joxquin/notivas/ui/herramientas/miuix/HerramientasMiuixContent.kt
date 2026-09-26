@@ -37,6 +37,7 @@ import me.joxquin.notivas.ui.notas.NotasViewModel
 fun HerramientasMiuixContent(
     viewModel: NotasViewModel? = null,
     onOpenProgreso: () -> Unit = {},
+    onOpenForos: () -> Unit = {},
     onOpenTuneSettings: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
@@ -122,7 +123,7 @@ fun HerramientasMiuixContent(
 
             // ─── CARD 3: Foros de Discusión ─────────────────────────
             item {
-                ForosBentoCard()
+                ForosBentoCard(onClick = onOpenForos)
             }
 
 
