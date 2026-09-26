@@ -124,8 +124,9 @@ fun ForoDetailConsignaCard(
                     color = MiuixTheme.colorScheme.onSurface
                 )
 
-                // Rúbrica de Evaluación Acordeón (Si el tema tiene puntos posibles)
-                if (points != null && points > 0) {
+                // Rúbrica de Evaluación Acordeón (Solo si Canvas incluye rúbrica real)
+                val realRubric = topic.assignment?.rubric
+                if (!realRubric.isNullOrEmpty()) {
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = MiuixTheme.colorScheme.surfaceContainerHigh,
@@ -153,7 +154,7 @@ fun ForoDetailConsignaCard(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
-                                        text = "Rúbrica de Evaluación (${points.toInt()} pts max)",
+                                        text = "Rúbrica de Evaluación (${points?.toInt() ?: 0} pts max)",
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold
@@ -183,27 +184,15 @@ fun ForoDetailConsignaCard(
                                         .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    RubricItem(
-                                        number = "1.",
-                                        title = "Rigor conceptual y justificación teórica",
-                                        subtitle = "Dominio de los conceptos expuestos en la consigna",
-                                        score = "${(points * 0.5).toInt()} pts",
-                                        themeStyle = themeStyle
-                                    )
-                                    RubricItem(
-                                        number = "2.",
-                                        title = "Calidad de ejemplos y contraejemplos",
-                                        subtitle = "Demostración clara de casos límites y aplicaciones",
-                                        score = "${(points * 0.25).toInt()} pts",
-                                        themeStyle = themeStyle
-                                    )
-                                    RubricItem(
-                                        number = "3.",
-                                        title = "Claridad, ortografía y aporte constructivo",
-                                        subtitle = "Estructura académica formal con réplica de valor",
-                                        score = "${(points * 0.25).toInt()} pts",
-                                        themeStyle = themeStyle
-                                    )
+                                    realRubric.forEachIndexed { index, criterion ->
+                                        RubricItem(
+                                            number = "${index + 1}.",
+                                            title = criterion.description ?: "Criterio de evaluación",
+                                            subtitle = criterion.longDescription ?: "Criterio oficial establecido en Canvas",
+                                            score = "${criterion.points?.toInt() ?: 0} pts",
+                                            themeStyle = themeStyle
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -272,7 +261,8 @@ fun ForoDetailConsignaCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                if (points != null && points > 0) {
+                val realRubric = topic.assignment?.rubric
+                if (!realRubric.isNullOrEmpty()) {
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -300,7 +290,7 @@ fun ForoDetailConsignaCard(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
-                                        text = "Rúbrica de Evaluación (${points.toInt()} pts max)",
+                                        text = "Rúbrica de Evaluación (${points?.toInt() ?: 0} pts max)",
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold
@@ -330,27 +320,15 @@ fun ForoDetailConsignaCard(
                                         .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    RubricItem(
-                                        number = "1.",
-                                        title = "Rigor conceptual y justificación teórica",
-                                        subtitle = "Dominio de los conceptos expuestos en la consigna",
-                                        score = "${(points * 0.5).toInt()} pts",
-                                        themeStyle = themeStyle
-                                    )
-                                    RubricItem(
-                                        number = "2.",
-                                        title = "Calidad de ejemplos y contraejemplos",
-                                        subtitle = "Demostración clara de casos límites y aplicaciones",
-                                        score = "${(points * 0.25).toInt()} pts",
-                                        themeStyle = themeStyle
-                                    )
-                                    RubricItem(
-                                        number = "3.",
-                                        title = "Claridad, ortografía y aporte constructivo",
-                                        subtitle = "Estructura académica formal con réplica de valor",
-                                        score = "${(points * 0.25).toInt()} pts",
-                                        themeStyle = themeStyle
-                                    )
+                                    realRubric.forEachIndexed { index, criterion ->
+                                        RubricItem(
+                                            number = "${index + 1}.",
+                                            title = criterion.description ?: "Criterio de evaluación",
+                                            subtitle = criterion.longDescription ?: "Criterio oficial establecido en Canvas",
+                                            score = "${criterion.points?.toInt() ?: 0} pts",
+                                            themeStyle = themeStyle
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -29,6 +29,22 @@ enum class DiscussionSortOption(val displayName: String) {
     TITLE_ASC("Nombre del tema (A - Z)")
 }
 
+data class CopilotForoStrategy(
+    val learningObjective: String,
+    val technicalRigor: String,
+    val counterExample: String,
+    val activeInteraction: String,
+    val phase1Title: String,
+    val phase1Desc: String,
+    val phase2Title: String,
+    val phase2Desc: String,
+    val phase3Title: String,
+    val phase3Desc: String,
+    val suggestedDraft: String,
+    val wordCount: Int,
+    val activeModelName: String
+)
+
 data class ForosUiState(
     val discussions: List<CanvasDiscussionTopic> = emptyList(),
     val filteredDiscussions: List<CanvasDiscussionTopic> = emptyList(),
@@ -47,11 +63,17 @@ data class ForosUiState(
     val selectedDiscussionReplies: List<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = emptyList(),
     val isLoadingReplies: Boolean = false,
     val currentDraft: String = "",
-    val isDraftSavedMessage: Boolean = false
+    val isDraftSavedMessage: Boolean = false,
+    val isGeneratingCopilot: Boolean = false,
+    val copilotStrategy: CopilotForoStrategy? = null,
+    val copilotErrorMessage: String? = null,
+    val activeCopilotModel: String = "google/gemini-2.5-flash"
 )
 
 class ForosViewModel(
-    private val canvasRepository: CanvasRepository
+    private val canvasRepository: CanvasRepository,
+    private val copilotRepository: me.joxquin.notivas.data.repository.CopilotRepository? = null,
+    private val preferencesManager: me.joxquin.notivas.data.local.PreferencesManager? = null
 ) : ViewModel() {
 
     private val _rawDiscussions = MutableStateFlow<List<CanvasDiscussionTopic>>(emptyList())
@@ -67,8 +89,23 @@ class ForosViewModel(
     private val _currentDraft = MutableStateFlow("")
     private val _isDraftSavedMessage = MutableStateFlow(false)
 
+    private val _isGeneratingCopilot = MutableStateFlow(false)
+    private val _copilotStrategy = MutableStateFlow<CopilotForoStrategy?>(null)
+    private val _copilotErrorMessage = MutableStateFlow<String?>(null)
+    private val _activeCopilotModel = MutableStateFlow("google/gemini-2.5-flash")
+
     // Almacenamiento local de borradores por ID de foro en memoria del ViewModel
     private val _draftsMemory = mutableMapOf<Long, String>()
+
+    init {
+        preferencesManager?.openRouterModel?.let { modelFlow ->
+            viewModelScope.launch {
+                modelFlow.collect { modelName ->
+                    _activeCopilotModel.value = modelName
+                }
+            }
+        }
+    }
 
     val uiState: StateFlow<ForosUiState> = combine(
         combine(
@@ -91,11 +128,15 @@ class ForosViewModel(
         },
         combine(
             _currentDraft,
-            _isDraftSavedMessage
-        ) { draft, savedMsg ->
-            Pair(draft, savedMsg)
-        }
-    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg) ->
+            _isDraftSavedMessage,
+            _isGeneratingCopilot,
+            _copilotStrategy,
+            _copilotErrorMessage
+        ) { draft, savedMsg, generating, strategy, errorMsg ->
+            Tuple5(draft, savedMsg, generating, strategy, errorMsg)
+        },
+        _activeCopilotModel
+    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, generating, strategy, errorMsg), activeModel ->
 
         val now = ZonedDateTime.now()
 
@@ -174,7 +215,11 @@ class ForosViewModel(
             selectedDiscussionReplies = replies,
             isLoadingReplies = loadingReplies,
             currentDraft = draft,
-            isDraftSavedMessage = savedMsg
+            isDraftSavedMessage = savedMsg,
+            isGeneratingCopilot = generating,
+            copilotStrategy = strategy,
+            copilotErrorMessage = errorMsg,
+            activeCopilotModel = activeModel
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ForosUiState())
 
@@ -246,6 +291,139 @@ class ForosViewModel(
         _currentDraft.value = suggestion
         _selectedDiscussion.value?.let { topic ->
             _draftsMemory[topic.id] = suggestion
+        }
+    }
+
+    fun clearCopilotStrategy() {
+        _copilotStrategy.value = null
+        _copilotErrorMessage.value = null
+    }
+
+    fun generateCopilotStrategy(
+        topic: CanvasDiscussionTopic,
+        toneInstruction: String? = null
+    ) {
+        if (copilotRepository == null) {
+            _copilotErrorMessage.value = "CopilotRepository no está disponible."
+            return
+        }
+
+        viewModelScope.launch {
+            _isGeneratingCopilot.value = true
+            _copilotErrorMessage.value = null
+
+            val cleanMessage = topic.message
+                ?.replace(Regex("<[^>]*>"), "")
+                ?.replace("&nbsp;", " ")
+                ?.trim() ?: "Sin descripción"
+
+            val repliesSummary = _selectedDiscussionReplies.value.take(4).mapIndexed { i, r ->
+                val author = r.user?.displayName ?: r.userName ?: "Compañero $i"
+                val cleanReply = r.message?.replace(Regex("<[^>]*>"), "")?.trim() ?: ""
+                "Aporte de $author: $cleanReply"
+            }.joinToString("\n")
+
+            val rubricInfo = topic.assignment?.rubric?.map {
+                "- ${it.description ?: "Criterio"}: ${it.longDescription ?: ""} (${it.points ?: 0} pts)"
+            }?.joinToString("\n") ?: "Sin rúbrica específica adjunta."
+
+            val prompt = buildString {
+                appendLine("Actúa como un asistente académico universitario de élite para foros de debate en Canvas LMS.")
+                appendLine("Curso: ${topic.courseName ?: "General"}")
+                appendLine("Título del Foro: ${topic.title}")
+                appendLine("Consigna del Profesor:\n$cleanMessage")
+                appendLine("Rúbrica oficial Canvas:\n$rubricInfo")
+                if (repliesSummary.isNotBlank()) {
+                    appendLine("Intervenciones previas de compañeros:\n$repliesSummary")
+                }
+                if (!toneInstruction.isNullOrBlank()) {
+                    appendLine("Instrucción de estilo o tono solicitado por el estudiante: $toneInstruction")
+                }
+                appendLine()
+                appendLine("Genera una respuesta en formato JSON EXACTO sin bloques markdown adicionales:")
+                appendLine("""
+{
+  "learningObjective": "Resumen conciso en una o dos frases del objetivo conceptual clave que evalúa el profesor",
+  "technicalRigor": "Nivel de profundidad teórica (ej. 100% • Alto)",
+  "counterExample": "Breve mención del contraejemplo o caso límite (ej. Incluido o No requerido)",
+  "activeInteraction": "Tipo de pregunta de cierre (ej. Pregunta Abierta de Debate)",
+  "phase1Title": "Título de la fase 1 (ej. Tesis Técnica)",
+  "phase1Desc": "Explicación concisa de lo que se sustenta en esta fase",
+  "phase2Title": "Título de la fase 2 (ej. Demostración y Caso)",
+  "phase2Desc": "Explicación concisa del caso práctico o contraejemplo",
+  "phase3Title": "Título de la fase 3 (ej. Pregunta de Debate)",
+  "phase3Desc": "Explicación de la pregunta constructiva hacia el aula",
+  "suggestedDraft": "El texto formal completo y riguroso listo para publicar en el foro (incluye saludo, desarrollo de los puntos solicitados con solidez, fórmulas o complejidades si aplica, y una pregunta de cierre formal para los compañeros)."
+}
+                """.trimIndent())
+            }
+
+            try {
+                val result = copilotRepository.queryCopilot(
+                    history = emptyList(),
+                    userPrompt = prompt,
+                    selectedCourseId = topic.courseId
+                )
+
+                result.onSuccess { copilotRes ->
+                    val text = copilotRes.reply.trim()
+                    val jsonString = if (text.contains("{") && text.contains("}")) {
+                        text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1)
+                    } else {
+                        text
+                    }
+
+                    try {
+                        val parsed = kotlinx.serialization.json.Json {
+                            ignoreUnknownKeys = true
+                            isLenient = true
+                        }.decodeFromString<kotlinx.serialization.json.JsonObject>(jsonString)
+
+                        val draft = parsed["suggestedDraft"]?.toString()?.trim('"')?.replace("\\n", "\n") ?: text
+                        val words = draft.split(Regex("\\s+")).filter { it.isNotBlank() }.size
+
+                        _copilotStrategy.value = CopilotForoStrategy(
+                            learningObjective = parsed["learningObjective"]?.toString()?.trim('"') ?: "Análisis y fundamentación académica rigurosa",
+                            technicalRigor = parsed["technicalRigor"]?.toString()?.trim('"') ?: "100% • Alto",
+                            counterExample = parsed["counterExample"]?.toString()?.trim('"') ?: "Incluido",
+                            activeInteraction = parsed["activeInteraction"]?.toString()?.trim('"') ?: "Pregunta Activa",
+                            phase1Title = parsed["phase1Title"]?.toString()?.trim('"') ?: "Tesis Técnica",
+                            phase1Desc = parsed["phase1Desc"]?.toString()?.trim('"') ?: "Fundamentación y conceptos teóricos esenciales",
+                            phase2Title = parsed["phase2Title"]?.toString()?.trim('"') ?: "Demostración y Caso",
+                            phase2Desc = parsed["phase2Desc"]?.toString()?.trim('"') ?: "Ejemplificación contextual y análisis de casos límite",
+                            phase3Title = parsed["phase3Title"]?.toString()?.trim('"') ?: "Pregunta de Debate",
+                            phase3Desc = parsed["phase3Desc"]?.toString()?.trim('"') ?: "Cuestionamiento constructivo para la discusión con los compañeros",
+                            suggestedDraft = draft,
+                            wordCount = words,
+                            activeModelName = _activeCopilotModel.value
+                        )
+                    } catch (_: Exception) {
+                        // Fallback si el modelo devolvió texto plano
+                        val words = text.split(Regex("\\s+")).filter { it.isNotBlank() }.size
+                        _copilotStrategy.value = CopilotForoStrategy(
+                            learningObjective = "Fundamentación y respuesta a la consigna",
+                            technicalRigor = "Alto",
+                            counterExample = "Considerado",
+                            activeInteraction = "Intercambio constructivo",
+                            phase1Title = "Planteamiento Inicial",
+                            phase1Desc = "Desarrollo de los conceptos de la consigna",
+                            phase2Title = "Desarrollo del Argumento",
+                            phase2Desc = "Exposición de ideas y sustento",
+                            phase3Title = "Cierre y Debate",
+                            phase3Desc = "Pregunta constructiva para el aula",
+                            suggestedDraft = text,
+                            wordCount = words,
+                            activeModelName = _activeCopilotModel.value
+                        )
+                    }
+                }.onFailure { ex ->
+                    _copilotErrorMessage.value = ex.message ?: "Error al conectar con la IA de OpenRouter."
+                }
+            } catch (e: Exception) {
+                _copilotErrorMessage.value = e.message ?: "Error inesperado al generar la asistencia."
+            } finally {
+                _isGeneratingCopilot.value = false
+            }
         }
     }
 

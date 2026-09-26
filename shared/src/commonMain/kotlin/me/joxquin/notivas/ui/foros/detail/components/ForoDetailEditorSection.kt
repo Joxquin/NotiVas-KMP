@@ -57,6 +57,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
+import androidx.compose.material.icons.filled.Lock
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -67,12 +68,12 @@ fun ForoDetailEditorSection(
     onDraftChange: (String) -> Unit,
     onSaveDraft: () -> Unit,
     isDraftSaved: Boolean,
-    onApplyCopilotSuggestion: (String) -> Unit,
+    isExpired: Boolean = false,
+    onOpenCopilotAssistant: () -> Unit,
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var isGeneratingCopilot by remember { mutableStateOf(false) }
 
     val wordCount = remember(draftText) {
         val trimmed = draftText.trim()
@@ -184,61 +185,26 @@ fun ForoDetailEditorSection(
                                     )
                                 )
                             )
-                            .clickable(enabled = !isGeneratingCopilot) {
-                                isGeneratingCopilot = true
-                                coroutineScope.launch {
-                                    delay(900)
-                                    val suggestedStructure = """
-En relación a los puntos solicitados en la consigna del tema:
-
-1. Fundamento Teórico y Análisis Asintótico:
-En el desarrollo del problema planteado, es crucial contrastar el comportamiento y optimalidad de la solución...
-
-2. Ejemplificación y Casos Límites:
-Considerando los parámetros clave establecidos...
-
-3. Conclusión y Aporte:
-De este modo, se demuestra la aplicabilidad directa del método.
-                                    """.trimIndent()
-                                    onApplyCopilotSuggestion(suggestedStructure)
-                                    isGeneratingCopilot = false
-                                }
+                            .clickable {
+                                onOpenCopilotAssistant()
                             }
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            if (isGeneratingCopilot) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary,
-                                        strokeWidth = 2.dp
-                                    )
-                                    Text(
-                                        text = "Analizando rúbrica Canvas...",
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AutoAwesome,
-                                        contentDescription = null,
-                                        tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = "Estructurar respuesta con Copilot",
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Estructurar respuesta con Copilot",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
+                                )
                             }
                         }
                     }
@@ -394,14 +360,25 @@ De este modo, se demuestra la aplicabilidad directa del método.
                 }
             }
 
+            val publishBtnBg = if (isExpired) {
+                if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHigh
+            } else {
+                primaryColor
+            }
+            val publishBtnTextColor = if (isExpired) {
+                onSurfaceVariant
+            } else {
+                if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
+            }
+
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = primaryColor,
+                color = publishBtnBg,
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable {
+                    .clickable(enabled = !isExpired) {
                         onSaveDraft()
                     }
             ) {
@@ -411,15 +388,15 @@ De este modo, se demuestra la aplicabilidad directa del método.
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Publicar en Canvas",
+                        text = if (isExpired) "Foro Cerrado" else "Publicar en Canvas",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
+                        color = publishBtnTextColor
                     )
                     Spacer(Modifier.size(6.dp))
                     Icon(
-                        imageVector = Icons.Default.Send,
+                        imageVector = if (isExpired) Icons.Default.Lock else Icons.Default.Send,
                         contentDescription = null,
-                        tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary,
+                        tint = publishBtnTextColor,
                         modifier = Modifier.size(16.dp)
                     )
                 }

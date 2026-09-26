@@ -176,7 +176,9 @@ fun MainAppShell(
 
     val dashboardViewModel = remember { DashboardViewModel(canvasRepository) }
     val notasViewModel = remember { NotasViewModel(canvasRepository) }
-    val forosViewModel = remember { me.joxquin.notivas.ui.foros.ForosViewModel(canvasRepository) }
+    val forosViewModel = remember {
+        me.joxquin.notivas.ui.foros.ForosViewModel(canvasRepository, copilotRepository, preferencesManager)
+    }
     val copilotViewModel = remember {
         CopilotViewModel(canvasRepository, copilotRepository, chatRepository, preferencesManager)
     }

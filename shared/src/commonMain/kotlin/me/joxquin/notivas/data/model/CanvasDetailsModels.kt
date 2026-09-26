@@ -136,6 +136,7 @@ data class CanvasDiscussionAssignment(
     @SerialName("due_at") val dueAt: String? = null,
     @SerialName("lock_at") val lockAt: String? = null,
     @SerialName("has_submitted_submissions") val isCompleted: Boolean? = null,
+    @SerialName("rubric") val rubric: List<CanvasRubricCriterion>? = null,
     @SerialName("submission") val submission: CanvasDiscussionSubmission? = null
 )
 

@@ -43,9 +43,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import java.time.ZonedDateTime
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.foros.ForosViewModel
+import me.joxquin.notivas.ui.foros.detail.components.ForoCopilotAssistantSheet
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailConsignaCard
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailEditorSection
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailHeroCard
@@ -65,6 +69,25 @@ fun ForoDetailScreen(
 
     val uiState by viewModel.uiState.collectAsState()
     val topic = uiState.selectedDiscussion ?: return
+
+    var showCopilotAssistant by remember { mutableStateOf(false) }
+
+    val isExpired = remember(topic) {
+        val now = ZonedDateTime.now()
+        val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
+        if (topic.locked == true) {
+            true
+        } else if (dueStr != null) {
+            try {
+                val dueDate = ZonedDateTime.parse(dueStr)
+                now.isAfter(dueDate)
+            } catch (e: Exception) {
+                false
+            }
+        } else {
+            false
+        }
+    }
 
     val isScrolled by remember {
         derivedStateOf {
@@ -123,7 +146,8 @@ fun ForoDetailScreen(
                         onDraftChange = { viewModel.updateDraft(it) },
                         onSaveDraft = { viewModel.saveDraft() },
                         isDraftSaved = uiState.isDraftSavedMessage,
-                        onApplyCopilotSuggestion = { viewModel.applyCopilotSuggestion(it) },
+                        isExpired = isExpired,
+                        onOpenCopilotAssistant = { showCopilotAssistant = true },
                         themeStyle = themeStyle
                     )
                 }
@@ -245,7 +269,8 @@ fun ForoDetailScreen(
                         onDraftChange = { viewModel.updateDraft(it) },
                         onSaveDraft = { viewModel.saveDraft() },
                         isDraftSaved = uiState.isDraftSavedMessage,
-                        onApplyCopilotSuggestion = { viewModel.applyCopilotSuggestion(it) },
+                        isExpired = isExpired,
+                        onOpenCopilotAssistant = { showCopilotAssistant = true },
                         themeStyle = themeStyle
                     )
                 }
@@ -255,5 +280,25 @@ fun ForoDetailScreen(
                 }
             }
         }
+    }
+
+    // Modal Bottom Sheet de Copilot IA
+    if (showCopilotAssistant) {
+        ForoCopilotAssistantSheet(
+            topic = topic,
+            strategy = uiState.copilotStrategy,
+            isGenerating = uiState.isGeneratingCopilot,
+            errorMessage = uiState.copilotErrorMessage,
+            activeModelName = uiState.activeCopilotModel,
+            onDismiss = { showCopilotAssistant = false },
+            onGenerate = { toneModifier ->
+                viewModel.generateCopilotStrategy(topic, toneModifier)
+            },
+            onInsertDraft = { suggestion ->
+                viewModel.applyCopilotSuggestion(suggestion)
+                showCopilotAssistant = false
+            },
+            themeStyle = themeStyle
+        )
     }
 }
