@@ -187,6 +187,40 @@ class NotasViewModel(
         }
     }
 
+    fun applyTemplateToAllCourses(
+        template: me.joxquin.notivas.domain.template.CourseEvaluationTemplate,
+        onResult: (count: Int) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val count = repository.applyTemplateToAllCourses(template)
+            onResult(count)
+        }
+    }
+
+    fun exportGlobalGroups(onExportReady: (json: String) -> Unit) {
+        viewModelScope.launch {
+            val json = repository.exportGlobalGroupsToJson()
+            onExportReady(json)
+        }
+    }
+
+    fun importGlobalGroupsFromJson(
+        jsonContent: String,
+        onResult: (Result<Int>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val result = repository.importGlobalGroupsFromJson(jsonContent)
+            onResult(result)
+        }
+    }
+
+    fun resetAllSimulationGroups(onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            repository.resetAllSimulationGroups()
+            onComplete()
+        }
+    }
+
     fun addSimulationGroup(name: String, weight: Float) {
         val courseId = _selectedCourse.value?.id ?: return
         viewModelScope.launch {

@@ -280,8 +280,13 @@ fun NotasScreen(
     if (showImportTemplateDialog) {
         ImportTemplateDialog(
             onDismiss = { showImportTemplateDialog = false },
-            onApplyTemplate = { template ->
-                viewModel.applyTemplate(template)
+            showApplyToAllToggle = true,
+            onApplyTemplate = { template, applyToAll ->
+                if (applyToAll) {
+                    viewModel.applyTemplateToAllCourses(template)
+                } else {
+                    viewModel.applyTemplate(template)
+                }
                 showImportTemplateDialog = false
             }
         )

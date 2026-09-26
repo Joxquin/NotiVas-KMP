@@ -53,10 +53,12 @@ import me.joxquin.notivas.domain.template.EvaluationTemplatesCatalog
 @Composable
 fun ImportTemplateDialog(
     onDismiss: () -> Unit,
-    onApplyTemplate: (CourseEvaluationTemplate) -> Unit
+    showApplyToAllToggle: Boolean = false,
+    onApplyTemplate: (template: CourseEvaluationTemplate, applyToAll: Boolean) -> Unit
 ) {
     val templates = remember { EvaluationTemplatesCatalog.templates }
     var selectedTemplate by remember { mutableStateOf<CourseEvaluationTemplate?>(templates.firstOrNull()) }
+    var applyToAllCourses by remember { mutableStateOf(showApplyToAllToggle) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -211,16 +213,51 @@ fun ImportTemplateDialog(
                         }
                     }
                 }
+
+                if (showApplyToAllToggle) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { applyToAllCourses = !applyToAllCourses }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Aplicar a todos los cursos",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Reemplaza los grupos de evaluación en todos tus cursos activos",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            androidx.compose.material3.Switch(
+                                checked = applyToAllCourses,
+                                onCheckedChange = { applyToAllCourses = it }
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    selectedTemplate?.let { onApplyTemplate(it) }
+                    selectedTemplate?.let { onApplyTemplate(it, applyToAllCourses) }
                 },
                 enabled = selectedTemplate != null
             ) {
-                Text("Aplicar Sílabo")
+                Text(if (applyToAllCourses) "Aplicar a Todos" else "Aplicar Sílabo")
             }
         },
         dismissButton = {
