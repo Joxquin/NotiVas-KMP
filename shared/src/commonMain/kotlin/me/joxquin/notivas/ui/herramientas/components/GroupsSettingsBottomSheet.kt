@@ -59,23 +59,34 @@ import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+import me.joxquin.notivas.util.rememberFilePickerLauncher
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsSettingsBottomSheet(
     onDismiss: () -> Unit,
     onOpenCatalogImport: () -> Unit,
     onImportJson: (json: String) -> Unit,
-    onExportJson: () -> Unit,
+    onRequestExportContent: (onContentReady: (String) -> Unit) -> Unit,
     onResetGroups: () -> Unit,
-    exportedJson: String? = null,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showJsonInputDialog by remember { mutableStateOf(false) }
-    var inputJsonText by remember { mutableStateOf("") }
-    var jsonError by remember { mutableStateOf<String?>(null) }
-    val clipboardManager = LocalClipboardManager.current
-    var copiedToClipboard by remember { mutableStateOf(false) }
+
+    val filePicker = rememberFilePickerLauncher(
+        onFileSelected = { content ->
+            if (content.isNotBlank()) {
+                onImportJson(content.trim())
+                onDismiss()
+            }
+        },
+        onRequestSaveContent = { onReadyToWrite ->
+            onRequestExportContent { jsonContent ->
+                onReadyToWrite(jsonContent)
+                onDismiss()
+            }
+        }
+    )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -145,8 +156,8 @@ fun GroupsSettingsBottomSheet(
 
             SettingActionTile(
                 icon = Icons.Default.LibraryBooks,
-                title = "Desde Repositorio / Catálogo",
-                subtitle = "Plantillas oficiales preconfiguradas (ej. Tecsup)",
+                title = "Desde Repositorio Oficial",
+                subtitle = "Descarga plantillas oficiales desde GitHub (ej. Tecsup, UTP)",
                 themeStyle = themeStyle,
                 onClick = {
                     onDismiss()
@@ -155,12 +166,12 @@ fun GroupsSettingsBottomSheet(
             )
 
             SettingActionTile(
-                icon = Icons.Default.Upload,
-                title = "Desde Archivo / Código JSON",
-                subtitle = "Importa una configuración global de pesos y reglas",
+                icon = Icons.Default.FolderOpen,
+                title = "Desde Archivo JSON (Storage)",
+                subtitle = "Selecciona un archivo JSON del almacenamiento con SAF",
                 themeStyle = themeStyle,
                 onClick = {
-                    showJsonInputDialog = true
+                    filePicker.launchFilePicker()
                 }
             )
 
@@ -174,56 +185,13 @@ fun GroupsSettingsBottomSheet(
 
             SettingActionTile(
                 icon = Icons.Default.Download,
-                title = "Exportar Grupos de Todos los Cursos",
-                subtitle = "Genera un archivo JSON con los grupos actuales",
+                title = "Guardar Archivo JSON (Storage)",
+                subtitle = "Guarda las ponderaciones en tu dispositivo con SAF",
                 themeStyle = themeStyle,
                 onClick = {
-                    onExportJson()
+                    filePicker.launchFileCreator("notivas_ponderacion.json")
                 }
             )
-
-            // Vista previa del JSON Exportado si existe
-            if (exportedJson != null) {
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "JSON Generado",
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            IconButton(
-                                onClick = {
-                                    clipboardManager.setText(AnnotatedString(exportedJson))
-                                    copiedToClipboard = true
-                                },
-                                modifier = Modifier.size(28.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (copiedToClipboard) Icons.Default.Check else Icons.Default.ContentCopy,
-                                    contentDescription = "Copiar",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                        Text(
-                            text = exportedJson.take(180) + if (exportedJson.length > 180) "\n..." else "",
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 4
-                        )
-                    }
-                }
-            }
 
             // Sección 3: RESTABLECER
             Spacer(Modifier.height(4.dp))
@@ -239,68 +207,6 @@ fun GroupsSettingsBottomSheet(
                 }
             )
         }
-    }
-
-    // Diálogo para pegar JSON de importación
-    if (showJsonInputDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showJsonInputDialog = false },
-            title = {
-                Text(
-                    text = "Importar Configuración JSON",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "Pega el código JSON exportado de grupos para aplicarlo globalmente a tus cursos:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    OutlinedTextField(
-                        value = inputJsonText,
-                        onValueChange = {
-                            inputJsonText = it
-                            jsonError = null
-                        },
-                        placeholder = { Text("{ \"version\": 1, \"courses\": [...] }") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 120.dp, max = 220.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        isError = jsonError != null
-                    )
-                    if (jsonError != null) {
-                        Text(
-                            text = jsonError ?: "",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (inputJsonText.isNotBlank()) {
-                            onImportJson(inputJsonText.trim())
-                            showJsonInputDialog = false
-                            onDismiss()
-                        }
-                    },
-                    enabled = inputJsonText.isNotBlank()
-                ) {
-                    Text("Importar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showJsonInputDialog = false }) {
-                    Text("Cancelar")
-                }
-            },
-            shape = RoundedCornerShape(20.dp)
-        )
     }
 }
 

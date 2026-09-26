@@ -249,7 +249,6 @@ fun MainAppShell(
     var showingNotasDetail by remember { mutableStateOf(false) }
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
-    var exportedJsonContent by remember { mutableStateOf<String?>(null) }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         // En Miuix: Interceptar botón Atrás físico para volver al Hub de Herramientas o a Inicio
@@ -575,15 +574,14 @@ fun MainAppShell(
                     // Result handling
                 }
             },
-            onExportJson = {
+            onRequestExportContent = { callback ->
                 notasViewModel.exportGlobalGroups { json ->
-                    exportedJsonContent = json
+                    callback(json)
                 }
             },
             onResetGroups = {
                 notasViewModel.resetAllSimulationGroups()
             },
-            exportedJson = exportedJsonContent,
             themeStyle = themeStyle
         )
     }
