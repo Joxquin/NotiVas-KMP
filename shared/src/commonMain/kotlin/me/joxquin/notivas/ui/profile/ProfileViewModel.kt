@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import me.joxquin.notivas.background.BackgroundSyncScheduler
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.model.UserProfile
@@ -164,7 +165,10 @@ class ProfileViewModel(
     }
 
     fun setSyncIntervalMinutes(minutes: Long) {
-        viewModelScope.launch { preferencesManager.setSyncIntervalMinutes(minutes) }
+        viewModelScope.launch {
+            preferencesManager.setSyncIntervalMinutes(minutes)
+            BackgroundSyncScheduler.schedulePeriodicSync(minutes)
+        }
     }
 
     fun setAutoFocusMode(enabled: Boolean) {
@@ -196,6 +200,7 @@ class ProfileViewModel(
 
     fun logout() {
         viewModelScope.launch {
+            BackgroundSyncScheduler.cancelPeriodicSync()
             canvasRepository.logout()
             _isLoggedOut.value = true
         }
