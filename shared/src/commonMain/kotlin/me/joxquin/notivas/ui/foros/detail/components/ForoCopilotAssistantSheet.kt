@@ -59,6 +59,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -85,6 +87,7 @@ fun ForoCopilotAssistantSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
     var isCopied by remember { mutableStateOf(false) }
     var selectedTone by remember { mutableStateOf<String?>(null) }
 
@@ -636,6 +639,7 @@ fun ForoCopilotAssistantSheet(
                                         .height(42.dp)
                                         .clip(RoundedCornerShape(10.dp))
                                         .clickable {
+                                            clipboardManager.setText(AnnotatedString(strategy.suggestedDraft))
                                             isCopied = true
                                             coroutineScope.launch {
                                                 delay(2000)

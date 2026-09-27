@@ -2,6 +2,7 @@ package me.joxquin.notivas.ui.foros
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -94,8 +95,10 @@ class ForosViewModel(
     private val _copilotErrorMessage = MutableStateFlow<String?>(null)
     private val _activeCopilotModel = MutableStateFlow("google/gemini-2.5-flash")
 
-    // Almacenamiento local de borradores por ID de foro en memoria del ViewModel
+    // Almacenamiento local de borradores y estrategias por ID de foro en memoria del ViewModel
     private val _draftsMemory = mutableMapOf<Long, String>()
+    private val _copilotStrategiesMemory = mutableMapOf<Long, CopilotForoStrategy>()
+    private var copilotGenerationJob: Job? = null
 
     init {
         preferencesManager?.openRouterModel?.let { modelFlow ->
@@ -241,6 +244,12 @@ class ForosViewModel(
     }
 
     fun selectDiscussion(topic: CanvasDiscussionTopic) {
+        copilotGenerationJob?.cancel()
+        copilotGenerationJob = null
+        _isGeneratingCopilot.value = false
+        _copilotErrorMessage.value = null
+        _copilotStrategy.value = _copilotStrategiesMemory[topic.id]
+
         _selectedDiscussion.value = topic
         _currentDraft.value = _draftsMemory[topic.id] ?: ""
         _isDraftSavedMessage.value = false
@@ -248,6 +257,12 @@ class ForosViewModel(
     }
 
     fun clearSelectedDiscussion() {
+        copilotGenerationJob?.cancel()
+        copilotGenerationJob = null
+        _isGeneratingCopilot.value = false
+        _copilotErrorMessage.value = null
+        _copilotStrategy.value = null
+
         _selectedDiscussion.value = null
         _selectedDiscussionReplies.value = emptyList()
         _currentDraft.value = ""
@@ -295,8 +310,14 @@ class ForosViewModel(
     }
 
     fun clearCopilotStrategy() {
+        copilotGenerationJob?.cancel()
+        copilotGenerationJob = null
+        _isGeneratingCopilot.value = false
         _copilotStrategy.value = null
         _copilotErrorMessage.value = null
+        _selectedDiscussion.value?.let { topic ->
+            _copilotStrategiesMemory.remove(topic.id)
+        }
     }
 
     fun generateCopilotStrategy(
@@ -308,7 +329,8 @@ class ForosViewModel(
             return
         }
 
-        viewModelScope.launch {
+        copilotGenerationJob?.cancel()
+        copilotGenerationJob = viewModelScope.launch {
             _isGeneratingCopilot.value = true
             _copilotErrorMessage.value = null
 
@@ -340,20 +362,26 @@ class ForosViewModel(
                     appendLine("Instrucción de estilo o tono solicitado por el estudiante: $toneInstruction")
                 }
                 appendLine()
+                appendLine("REGLAS ESTRICTAS DE RESPUESTA (suggestedDraft):")
+                appendLine("1. PROHIBIDO incluir saludos o frases de cortesía iniciales (NO 'Estimado docente', 'Hola profesor', 'Buenas tardes', etc.).")
+                appendLine("2. PROHIBIDO incluir despedidas o firmas al final (NO 'Saludos cordiales', 'Atentamente', 'Espero sus comentarios', etc.).")
+                appendLine("3. PROHIBIDO incluir preguntas de cierre conversacionales al usuario o compañeros.")
+                appendLine("4. 'suggestedDraft' debe ser EXCLUSIVAMENTE el desarrollo analítico, directo, sustantivo y estructurado que responde con el mayor rigor a la consigna académica y los criterios de evaluación.")
+                appendLine()
                 appendLine("Genera una respuesta en formato JSON EXACTO sin bloques markdown adicionales:")
                 appendLine("""
 {
   "learningObjective": "Resumen conciso en una o dos frases del objetivo conceptual clave que evalúa el profesor",
   "technicalRigor": "Nivel de profundidad teórica (ej. 100% • Alto)",
-  "counterExample": "Breve mención del contraejemplo o caso límite (ej. Incluido o No requerido)",
-  "activeInteraction": "Tipo de pregunta de cierre (ej. Pregunta Abierta de Debate)",
-  "phase1Title": "Título de la fase 1 (ej. Tesis Técnica)",
-  "phase1Desc": "Explicación concisa de lo que se sustenta en esta fase",
-  "phase2Title": "Título de la fase 2 (ej. Demostración y Caso)",
-  "phase2Desc": "Explicación concisa del caso práctico o contraejemplo",
-  "phase3Title": "Título de la fase 3 (ej. Pregunta de Debate)",
-  "phase3Desc": "Explicación de la pregunta constructiva hacia el aula",
-  "suggestedDraft": "El texto formal completo y riguroso listo para publicar en el foro (incluye saludo, desarrollo de los puntos solicitados con solidez, fórmulas o complejidades si aplica, y una pregunta de cierre formal para los compañeros)."
+  "counterExample": "Breve mención del contraejemplo o caso analizado",
+  "activeInteraction": "Enfoque argumental desarrollado",
+  "phase1Title": "Título de la fase 1 (ej. Marco Teórico / Premisa)",
+  "phase1Desc": "Explicación concisa de la tesis o premisa principal",
+  "phase2Title": "Título de la fase 2 (ej. Demostración y Análisis)",
+  "phase2Desc": "Explicación concisa del desarrollo o caso analizado",
+  "phase3Title": "Título de la fase 3 (ej. Síntesis y Conclusión)",
+  "phase3Desc": "Explicación concisa del cierre o conclusión técnica",
+  "suggestedDraft": "Texto académico directo, argumentado y riguroso para publicar en el foro. Cero saludos, cero despedidas, cero preguntas de cierre. Solo el argumento sustancial."
 }
                 """.trimIndent())
             }
@@ -373,7 +401,7 @@ class ForosViewModel(
                         text
                     }
 
-                    try {
+                    val strategy = try {
                         val parsed = kotlinx.serialization.json.Json {
                             ignoreUnknownKeys = true
                             isLenient = true
@@ -382,17 +410,17 @@ class ForosViewModel(
                         val draft = parsed["suggestedDraft"]?.toString()?.trim('"')?.replace("\\n", "\n") ?: text
                         val words = draft.split(Regex("\\s+")).filter { it.isNotBlank() }.size
 
-                        _copilotStrategy.value = CopilotForoStrategy(
+                        CopilotForoStrategy(
                             learningObjective = parsed["learningObjective"]?.toString()?.trim('"') ?: "Análisis y fundamentación académica rigurosa",
                             technicalRigor = parsed["technicalRigor"]?.toString()?.trim('"') ?: "100% • Alto",
                             counterExample = parsed["counterExample"]?.toString()?.trim('"') ?: "Incluido",
-                            activeInteraction = parsed["activeInteraction"]?.toString()?.trim('"') ?: "Pregunta Activa",
-                            phase1Title = parsed["phase1Title"]?.toString()?.trim('"') ?: "Tesis Técnica",
+                            activeInteraction = parsed["activeInteraction"]?.toString()?.trim('"') ?: "Enfoque Riguroso",
+                            phase1Title = parsed["phase1Title"]?.toString()?.trim('"') ?: "Marco Teórico",
                             phase1Desc = parsed["phase1Desc"]?.toString()?.trim('"') ?: "Fundamentación y conceptos teóricos esenciales",
-                            phase2Title = parsed["phase2Title"]?.toString()?.trim('"') ?: "Demostración y Caso",
-                            phase2Desc = parsed["phase2Desc"]?.toString()?.trim('"') ?: "Ejemplificación contextual y análisis de casos límite",
-                            phase3Title = parsed["phase3Title"]?.toString()?.trim('"') ?: "Pregunta de Debate",
-                            phase3Desc = parsed["phase3Desc"]?.toString()?.trim('"') ?: "Cuestionamiento constructivo para la discusión con los compañeros",
+                            phase2Title = parsed["phase2Title"]?.toString()?.trim('"') ?: "Análisis y Desarrollo",
+                            phase2Desc = parsed["phase2Desc"]?.toString()?.trim('"') ?: "Ejemplificación contextual y análisis sustantivo",
+                            phase3Title = parsed["phase3Title"]?.toString()?.trim('"') ?: "Síntesis y Conclusión",
+                            phase3Desc = parsed["phase3Desc"]?.toString()?.trim('"') ?: "Resolución analítica y conclusión técnica",
                             suggestedDraft = draft,
                             wordCount = words,
                             activeModelName = _activeCopilotModel.value
@@ -400,29 +428,40 @@ class ForosViewModel(
                     } catch (_: Exception) {
                         // Fallback si el modelo devolvió texto plano
                         val words = text.split(Regex("\\s+")).filter { it.isNotBlank() }.size
-                        _copilotStrategy.value = CopilotForoStrategy(
+                        CopilotForoStrategy(
                             learningObjective = "Fundamentación y respuesta a la consigna",
                             technicalRigor = "Alto",
                             counterExample = "Considerado",
-                            activeInteraction = "Intercambio constructivo",
-                            phase1Title = "Planteamiento Inicial",
+                            activeInteraction = "Análisis Directo",
+                            phase1Title = "Marco Teórico",
                             phase1Desc = "Desarrollo de los conceptos de la consigna",
                             phase2Title = "Desarrollo del Argumento",
                             phase2Desc = "Exposición de ideas y sustento",
-                            phase3Title = "Cierre y Debate",
-                            phase3Desc = "Pregunta constructiva para el aula",
+                            phase3Title = "Síntesis y Conclusión",
+                            phase3Desc = "Resolución y cierre analítico",
                             suggestedDraft = text,
                             wordCount = words,
                             activeModelName = _activeCopilotModel.value
                         )
                     }
+
+                    _copilotStrategiesMemory[topic.id] = strategy
+                    if (_selectedDiscussion.value?.id == topic.id) {
+                        _copilotStrategy.value = strategy
+                    }
                 }.onFailure { ex ->
-                    _copilotErrorMessage.value = ex.message ?: "Error al conectar con la IA de OpenRouter."
+                    if (_selectedDiscussion.value?.id == topic.id) {
+                        _copilotErrorMessage.value = ex.message ?: "Error al conectar con la IA de OpenRouter."
+                    }
                 }
             } catch (e: Exception) {
-                _copilotErrorMessage.value = e.message ?: "Error inesperado al generar la asistencia."
+                if (_selectedDiscussion.value?.id == topic.id) {
+                    _copilotErrorMessage.value = e.message ?: "Error inesperado al generar la asistencia."
+                }
             } finally {
-                _isGeneratingCopilot.value = false
+                if (_selectedDiscussion.value?.id == topic.id) {
+                    _isGeneratingCopilot.value = false
+                }
             }
         }
     }
