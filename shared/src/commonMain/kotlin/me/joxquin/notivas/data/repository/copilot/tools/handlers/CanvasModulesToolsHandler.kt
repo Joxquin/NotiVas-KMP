@@ -86,12 +86,16 @@ class CanvasModulesToolsHandler(
         return when (toolName) {
             "get_course_modules" -> {
                 val cid = args["course_id"]?.jsonPrimitive?.longOrNull ?: selectedCourseId ?: 0L
-                val rawToken = preferencesManager.accessToken.first()
+                val authCred = preferencesManager.getAuthCredential()
                 val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
 
-                if (!rawToken.isNullOrBlank() && cid != 0L) {
+                if (authCred != null && cid != 0L) {
                     try {
-                        val modules = canvasApiService.getModulesWithItems(domain, "Bearer $rawToken", cid)
+                        val token = when (authCred) {
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken -> "Bearer ${authCred.token}"
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.SessionCookies -> "Cookie: ${authCred.cookies}"
+                        }
+                        val modules = canvasApiService.getModulesWithItems(domain, token, cid)
                         val courseName = courses.find { it.id == cid }?.name ?: "Curso $cid"
                         val source = CopilotSource(
                             title = "Módulos de $courseName",
@@ -117,7 +121,7 @@ class CanvasModulesToolsHandler(
                         ToolExecutionResult("""{"error": "No se pudieron obtener los módulos de Canvas: ${e.message}"}""")
                     }
                 } else {
-                    ToolExecutionResult("""{"error": "No hay token o course_id no válido."}""")
+                    ToolExecutionResult("""{"error": "No hay credenciales de Canvas o course_id no válido."}""")
                 }
             }
 
@@ -125,13 +129,16 @@ class CanvasModulesToolsHandler(
                 val cid = args["course_id"]?.jsonPrimitive?.longOrNull ?: selectedCourseId ?: 0L
                 val resourceNameQuery = args["resource_name"]?.jsonPrimitive?.content?.trim() ?: ""
                 val explicitPageUrl = args["page_url"]?.jsonPrimitive?.content?.trim()
-                val rawToken = preferencesManager.accessToken.first()
+                val authCred = preferencesManager.getAuthCredential()
                 val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
 
-                if (!rawToken.isNullOrBlank() && cid != 0L) {
+                if (authCred != null && cid != 0L) {
                     try {
                         val courseName = courses.find { it.id == cid }?.name ?: "Curso $cid"
-                        val token = "Bearer $rawToken"
+                        val token = when (authCred) {
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken -> "Bearer ${authCred.token}"
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.SessionCookies -> "Cookie: ${authCred.cookies}"
+                        }
 
                         if (!explicitPageUrl.isNullOrBlank()) {
                             val pageDetail = canvasApiService.getPageDetails(domain, token, cid, explicitPageUrl)

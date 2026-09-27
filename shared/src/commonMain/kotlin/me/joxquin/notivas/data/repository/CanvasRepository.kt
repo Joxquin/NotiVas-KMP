@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
-import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.CanvasAuthCredential
 import me.joxquin.notivas.data.model.CanvasModule
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.model.PlannerItem
@@ -34,6 +34,14 @@ class CanvasRepository(
     val allAssignments: Flow<List<Assignment>> = localStore.getAllAssignments()
     val allPlannerItems: Flow<List<PlannerItem>> = localStore.getAllPlannerItems()
     val universityUrl: Flow<String?> = preferencesManager.universityUrl
+
+    private fun getAuthToken(): String? {
+        val credential = preferencesManager.getAuthCredential() ?: return null
+        return when (credential) {
+            is CanvasAuthCredential.BearerToken -> "Bearer ${credential.token}"
+            is CanvasAuthCredential.SessionCookies -> "Cookie: ${credential.cookies}"
+        }
+    }
 
     fun getAssignmentsForCourse(courseId: Long): Flow<List<Assignment>> =
         localStore.getAssignmentsByCourse(courseId)
@@ -218,12 +226,12 @@ class CanvasRepository(
         localStore.linkItemWithCanvasAssignment(itemId, assignmentId, name, manualScore)
 
     suspend fun fetchCourseModules(courseId: Long): List<CanvasModule> = withContext(Dispatchers.IO) {
-        val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()
+        val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         return@withContext try {
             apiService.getModulesWithItems(
                 baseUrl = baseUrl,
-                token = "Bearer $rawToken",
+                token = token,
                 courseId = courseId
             )
         } catch (e: Exception) {
@@ -232,9 +240,8 @@ class CanvasRepository(
     }
 
     suspend fun fetchAndSaveData() = withContext(Dispatchers.IO) {
-        val rawToken = preferencesManager.accessToken.first() ?: return@withContext
+        val token = getAuthToken() ?: return@withContext
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext
-        val token = "Bearer $rawToken"
 
         try {
             // 1. Fetch Planner Items
@@ -337,13 +344,26 @@ class CanvasRepository(
         }
     }
 
+    suspend fun verifyAndSaveSession(url: String, cookies: String, csrfToken: String? = null): Boolean = withContext(Dispatchers.IO) {
+        try {
+            apiService.verifyToken(url, "Cookie: $cookies")
+            preferencesManager.saveUniversityUrl(url)
+            preferencesManager.saveSessionCookies(cookies, csrfToken)
+            true
+        } catch (e: Exception) {
+            println("CanvasRepository: verifyAndSaveSession failed for url='$url': ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+
     suspend fun completeOnboarding() {
         preferencesManager.setOnboardingCompleted(true)
     }
 
     suspend fun getProfile(): UserProfile = withContext(Dispatchers.IO) {
         val baseUrl = preferencesManager.universityUrl.first() ?: ""
-        val token = "Bearer ${preferencesManager.accessToken.first()}"
+        val token = getAuthToken() ?: throw IllegalStateException("No auth credential found")
         try {
             val remoteProfile = apiService.getProfile(baseUrl, token)
             localStore.saveUserProfile(remoteProfile)
@@ -378,10 +398,9 @@ class CanvasRepository(
     }
 
     suspend fun getDiscussionsForCourses(): List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = withContext(Dispatchers.IO) {
-        val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()
+        val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         val courses = localStore.getAllCourses().first()
-        val token = "Bearer $rawToken"
 
         coroutineScope {
             courses.map { course ->
@@ -408,9 +427,8 @@ class CanvasRepository(
     }
 
     suspend fun getDiscussionEntries(courseId: Long, topicId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(Dispatchers.IO) {
-        val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()
+        val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
-        val token = "Bearer $rawToken"
         try {
             apiService.getDiscussionEntries(
                 baseUrl = baseUrl,

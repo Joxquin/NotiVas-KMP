@@ -159,7 +159,7 @@ class CanvasAcademicToolsHandler(
                 if (aid == null) {
                     ToolExecutionResult("""{"error": "Falta el parámetro 'assignment_id'."}""")
                 } else {
-                    val rawToken = preferencesManager.accessToken.first()
+                    val authCred = preferencesManager.getAuthCredential()
                     val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
 
                     var resolvedCid = args["course_id"]?.jsonPrimitive?.longOrNull ?: selectedCourseId
@@ -170,7 +170,7 @@ class CanvasAcademicToolsHandler(
                         }
                     }
 
-                    if (rawToken.isNullOrBlank() || resolvedCid == null) {
+                    if (authCred == null || resolvedCid == null) {
                         // Fallback a almacenamiento local
                         val localMatch = allAssignments.find { it.id == aid }
                         if (localMatch != null) {
@@ -194,7 +194,10 @@ class CanvasAcademicToolsHandler(
                     } else {
                         val course = courses.find { it.id == resolvedCid }
                         val courseName = course?.name ?: "Curso $resolvedCid"
-                        val token = "Bearer $rawToken"
+                        val token = when (authCred) {
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken -> "Bearer ${authCred.token}"
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.SessionCookies -> "Cookie: ${authCred.cookies}"
+                        }
 
                         try {
                             val details = canvasApiService.getAssignmentDetails(domain, token, resolvedCid, aid)
