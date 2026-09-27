@@ -69,6 +69,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
+import me.joxquin.notivas.ui.copilot.components.formatMarkdown
 import me.joxquin.notivas.ui.foros.CopilotForoStrategy
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -350,8 +351,11 @@ fun ForoCopilotAssistantSheet(
                                             }
                                         }
 
+                                        val formattedObjective = remember(strategy.learningObjective) {
+                                            formatMarkdown(strategy.learningObjective)
+                                        }
                                         Text(
-                                            text = strategy.learningObjective,
+                                            text = formattedObjective,
                                             style = MaterialTheme.typography.bodyMedium.copy(
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.Medium,
@@ -610,8 +614,11 @@ fun ForoCopilotAssistantSheet(
                                     color = chipBg,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
+                                    val formattedDraft = remember(strategy.suggestedDraft) {
+                                        formatMarkdown(strategy.suggestedDraft)
+                                    }
                                     Text(
-                                        text = strategy.suggestedDraft,
+                                        text = formattedDraft,
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             fontSize = 13.sp,
                                             lineHeight = 20.sp
@@ -844,13 +851,15 @@ private fun StructurePhaseItem(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
+            val formattedTitle = remember(title) { formatMarkdown(title) }
+            val formattedDesc = remember(description) { formatMarkdown(description) }
             Text(
-                text = title,
+                text = formattedTitle,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
                 color = onSurface
             )
             Text(
-                text = description,
+                text = formattedDesc,
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 16.sp),
                 color = onSurfaceVariant
             )
