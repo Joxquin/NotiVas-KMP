@@ -336,9 +336,64 @@ fun MaterialWhatIfCard(
 // ─── CARD 3: Foros de Discusión ─────────────────────────────────────────────
 @Composable
 fun MaterialForosCard(
+    forosUiState: me.joxquin.notivas.ui.foros.ForosUiState? = null,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    onOpenTopic: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null
 ) {
+    val discussions = forosUiState?.discussions ?: emptyList()
+    val now = java.time.ZonedDateTime.now()
+
+    // Encontrar el foro activo más próximo a cerrar
+    val nextClosingForum = discussions
+        .filter { topic ->
+            if (topic.locked == true) return@filter false
+            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: return@filter false
+            try {
+                val dueDate = java.time.ZonedDateTime.parse(dueStr)
+                dueDate.isAfter(now)
+            } catch (_: Exception) {
+                false
+            }
+        }
+        .minByOrNull { topic ->
+            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt!!
+            java.time.ZonedDateTime.parse(dueStr).toInstant().toEpochMilli()
+        } ?: discussions.firstOrNull()
+
+    val pendingCount = forosUiState?.pendingCount ?: discussions.size
+    val activeBadgesText = if (pendingCount > 0) "$pendingCount activos" else "Al día"
+
+    var dueBadgeText = "Sin fecha de cierre"
+    var isUrgent = false
+
+    if (nextClosingForum != null) {
+        val dueStr = nextClosingForum.assignment?.dueAt ?: nextClosingForum.lockAt ?: nextClosingForum.assignment?.lockAt
+        if (dueStr != null) {
+            try {
+                val dueDate = java.time.ZonedDateTime.parse(dueStr)
+                val duration = java.time.Duration.between(now, dueDate)
+                if (now.isAfter(dueDate) || nextClosingForum.locked == true) {
+                    dueBadgeText = "Cerrado"
+                } else {
+                    val hours = duration.toHours()
+                    val days = duration.toDays()
+                    if (hours in 0..24) {
+                        isUrgent = true
+                        val minutes = duration.toMinutes()
+                        dueBadgeText = if (hours > 0) "Hoy (~$hours h)" else "Hoy (~$minutes min)"
+                    } else if (days > 0) {
+                        dueBadgeText = "En $days días"
+                    } else {
+                        dueBadgeText = "Pronto"
+                    }
+                }
+            } catch (_: Exception) {
+                dueBadgeText = "Fecha fijada"
+            }
+        }
+    }
+
     Card(
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -346,60 +401,186 @@ fun MaterialForosCard(
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Fila Superior
             Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.tertiaryContainer),
-                    contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.weight(1f, fill = false),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Forum,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Forum,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "Foros Académicos",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(1.dp))
+                        Text(
+                            text = "Debates y respuestas con asistencia Copilot IA",
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
 
-                Column {
+                Surface(
+                    shape = RoundedCornerShape(9999.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ) {
                     Text(
-                        text = "Foros",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "Debates, consultas y temas de discusión de tus cursos",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        text = activeBadgesText,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
             }
 
-            Surface(
-                shape = RoundedCornerShape(9999.dp),
-                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-            ) {
-                Text(
-                    text = "Canvas",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                )
+            // Sub-tarjeta de Previsualización
+            if (nextClosingForum != null) {
+                val onForumTopicClick = {
+                    if (onOpenTopic != null) {
+                        onOpenTopic(nextClosingForum)
+                    } else if (onClick != null) {
+                        onClick()
+                    }
+                }
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onForumTopicClick)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                                )
+                                Text(
+                                    text = nextClosingForum.title,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Text(
+                                text = dueBadgeText,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                modifier = Modifier.padding(start = 6.dp)
+                            )
+                        }
+
+                        // Banner Copilot
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val points = nextClosingForum.assignment?.pointsPossible
+                                val rubricInfo = if (points != null && points > 0) "Rúbrica: ${points.toInt()} pts" else "Participación activa"
+                                Text(
+                                    text = "✨ Copilot: $rubricInfo",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.tertiary
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = nextClosingForum.courseName ?: "Canvas LMS",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 9.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        // Footer informativo
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val repliesCount = nextClosingForum.discussionSubentryCount ?: 0
+                            Text(
+                                text = "$repliesCount aportes registrados",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+
+                            Text(
+                                text = "Ir al debate →",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
     }

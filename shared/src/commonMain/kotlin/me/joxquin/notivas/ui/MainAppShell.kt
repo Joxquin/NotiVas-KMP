@@ -3,6 +3,7 @@ package me.joxquin.notivas.ui
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -292,7 +293,7 @@ fun MainAppShell(
                     userScrollEnabled = false,
                     modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.Top,
-                    beyondViewportPageCount = 3
+                    beyondViewportPageCount = 1
                 ) { page ->
                     when (destinations[page]) {
                         MainDestination.Inicio -> {
@@ -581,76 +582,101 @@ fun MainAppShell(
                     .fillMaxSize()
                     .padding(bottom = animatedBottomPadding)
             ) {
-                when (materialDestination) {
-                    MainDestination.Inicio -> {
-                        InicioScreen(
-                            viewModel = dashboardViewModel,
-                            themeStyle = AppThemeStyle.MATERIAL,
-                            onNavigateToCopilot = {
-                                showingNotasDetail = false
-                                showingForosDetail = false
-                                navigateToMaterial(MainDestination.Copilot)
-                            },
-                            onNavigateToHerramientas = {
-                                showingNotasDetail = false
-                                showingForosDetail = false
-                                navigateToMaterial(MainDestination.Herramientas)
-                            },
-                            onNavigateToAjustes = {
-                                showingNotasDetail = false
-                                showingForosDetail = false
-                                navigateToMaterial(MainDestination.Ajustes)
-                            },
-                            onNavigateToCourseProgreso = { course ->
-                                notasViewModel.selectCourse(course)
-                                showingForosDetail = false
-                                showingNotasDetail = true
-                                navigateToMaterial(MainDestination.Herramientas)
-                            }
-                        )
+                androidx.compose.animation.AnimatedContent(
+                    targetState = materialDestination,
+                    transitionSpec = {
+                        val targetIndex = destinations.indexOf(targetState)
+                        val initialIndex = destinations.indexOf(initialState)
+                        val isForward = targetIndex >= initialIndex
+                        if (isForward) {
+                            (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it } +
+                                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
+                                .togetherWith(
+                                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it / 3 } +
+                                            androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
+                                )
+                        } else {
+                            (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it } +
+                                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
+                                .togetherWith(
+                                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it / 3 } +
+                                            androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
+                                )
+                        }
+                    },
+                    label = "materialDestinationTransition"
+                ) { currentScreen ->
+                    when (currentScreen) {
+                        MainDestination.Inicio -> {
+                            InicioScreen(
+                                viewModel = dashboardViewModel,
+                                themeStyle = AppThemeStyle.MATERIAL,
+                                onNavigateToCopilot = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = false
+                                    navigateToMaterial(MainDestination.Copilot)
+                                },
+                                onNavigateToHerramientas = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = false
+                                    navigateToMaterial(MainDestination.Herramientas)
+                                },
+                                onNavigateToAjustes = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = false
+                                    navigateToMaterial(MainDestination.Ajustes)
+                                },
+                                onNavigateToCourseProgreso = { course ->
+                                    notasViewModel.selectCourse(course)
+                                    showingForosDetail = false
+                                    showingNotasDetail = true
+                                    navigateToMaterial(MainDestination.Herramientas)
+                                }
+                            )
 
-                    }
+                        }
 
-                    MainDestination.Herramientas -> {
-                        me.joxquin.notivas.ui.herramientas.HerramientasScreen(
-                            viewModel = notasViewModel,
-                            forosViewModel = forosViewModel,
-                            showingNotasDetail = showingNotasDetail,
-                            showingForosDetail = showingForosDetail,
-                            onOpenProgreso = {
-                                showingForosDetail = false
-                                showingNotasDetail = true
-                            },
-                            onOpenForos = {
-                                showingNotasDetail = false
-                                showingForosDetail = true
-                            },
-                            onOpenTuneSettings = { showHerramientasTuneSheet = true },
-                            onBack = {
-                                showingNotasDetail = false
-                                showingForosDetail = false
-                            },
-                            themeStyle = AppThemeStyle.MATERIAL,
-                            lazyListState = herramientasListState
-                        )
-                    }
+                        MainDestination.Herramientas -> {
+                            me.joxquin.notivas.ui.herramientas.HerramientasScreen(
+                                viewModel = notasViewModel,
+                                forosViewModel = forosViewModel,
+                                showingNotasDetail = showingNotasDetail,
+                                showingForosDetail = showingForosDetail,
+                                onOpenProgreso = {
+                                    showingForosDetail = false
+                                    showingNotasDetail = true
+                                },
+                                onOpenForos = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = true
+                                },
+                                onOpenTuneSettings = { showHerramientasTuneSheet = true },
+                                onBack = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = false
+                                },
+                                themeStyle = AppThemeStyle.MATERIAL,
+                                lazyListState = herramientasListState
+                            )
+                        }
 
-                    MainDestination.Copilot -> {
-                        me.joxquin.notivas.ui.copilot.CopilotScreen(
-                            viewModel = copilotViewModel,
-                            themeStyle = AppThemeStyle.MATERIAL,
-                            onNavigateToSettings = {
-                                showingNotasDetail = false
-                                showingForosDetail = false
-                                navigateToMaterial(MainDestination.Ajustes)
-                            }
-                        )
-                    }
+                        MainDestination.Copilot -> {
+                            me.joxquin.notivas.ui.copilot.CopilotScreen(
+                                viewModel = copilotViewModel,
+                                themeStyle = AppThemeStyle.MATERIAL,
+                                onNavigateToSettings = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = false
+                                    navigateToMaterial(MainDestination.Ajustes)
+                                }
+                            )
+                        }
 
-                    MainDestination.Ajustes -> {
-                        me.joxquin.notivas.ui.ajustes.AjustesScreen(
-                            viewModel = profileViewModel
-                        )
+                        MainDestination.Ajustes -> {
+                            me.joxquin.notivas.ui.ajustes.AjustesScreen(
+                                viewModel = profileViewModel
+                            )
+                        }
                     }
                 }
             }

@@ -4,7 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,19 +44,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import me.joxquin.notivas.ui.foros.ForosViewModel
 import me.joxquin.notivas.ui.notas.NotasViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HerramientasMaterialContent(
     viewModel: NotasViewModel? = null,
+    forosViewModel: ForosViewModel? = null,
     onOpenProgreso: () -> Unit = {},
     onOpenForos: () -> Unit = {},
+    onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenTuneSettings: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
     val uiState = viewModel?.uiState?.collectAsState()?.value
+    val forosUiState = forosViewModel?.uiState?.collectAsState()?.value
 
     val isScrolled by remember {
         derivedStateOf {
@@ -79,7 +85,9 @@ fun HerramientasMaterialContent(
                     AnimatedVisibility(
                         visible = isScrolled,
                         enter = fadeIn(animationSpec = tween(220, delayMillis = 40)) +
-                                slideInVertically(animationSpec = tween(250)) { it / 2 }
+                                slideInVertically(animationSpec = tween(250)) { it / 2 },
+                        exit = fadeOut(animationSpec = tween(150)) +
+                                slideOutVertically(animationSpec = tween(180)) { it / 2 }
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -196,7 +204,9 @@ fun HerramientasMaterialContent(
             // ─── CARD 3: Foros de Discusión ─────────────────────────────────
             item {
                 MaterialForosCard(
+                    forosUiState = forosUiState,
                     onClick = onOpenForos,
+                    onOpenTopic = onOpenForoDetail,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }

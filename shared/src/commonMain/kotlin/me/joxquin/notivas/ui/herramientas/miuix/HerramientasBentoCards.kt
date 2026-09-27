@@ -416,9 +416,64 @@ fun WhatIfBentoCard(
 // ─── CARD: Foros de Discusión ───────────────────────────────────────────────
 @Composable
 fun ForosBentoCard(
+    forosUiState: me.joxquin.notivas.ui.foros.ForosUiState? = null,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    onOpenTopic: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null
 ) {
+    val discussions = forosUiState?.discussions ?: emptyList()
+    val now = java.time.ZonedDateTime.now()
+
+    // Encontrar el foro activo más próximo a cerrar
+    val nextClosingForum = discussions
+        .filter { topic ->
+            if (topic.locked == true) return@filter false
+            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: return@filter false
+            try {
+                val dueDate = java.time.ZonedDateTime.parse(dueStr)
+                dueDate.isAfter(now)
+            } catch (_: Exception) {
+                false
+            }
+        }
+        .minByOrNull { topic ->
+            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt!!
+            java.time.ZonedDateTime.parse(dueStr).toInstant().toEpochMilli()
+        } ?: discussions.firstOrNull()
+
+    val pendingCount = forosUiState?.pendingCount ?: discussions.size
+    val activeBadgesText = if (pendingCount > 0) "$pendingCount activos" else "Al día"
+
+    var dueBadgeText = "Sin fecha de cierre"
+    var isUrgent = false
+
+    if (nextClosingForum != null) {
+        val dueStr = nextClosingForum.assignment?.dueAt ?: nextClosingForum.lockAt ?: nextClosingForum.assignment?.lockAt
+        if (dueStr != null) {
+            try {
+                val dueDate = java.time.ZonedDateTime.parse(dueStr)
+                val duration = java.time.Duration.between(now, dueDate)
+                if (now.isAfter(dueDate) || nextClosingForum.locked == true) {
+                    dueBadgeText = "Cerrado"
+                } else {
+                    val hours = duration.toHours()
+                    val days = duration.toDays()
+                    if (hours in 0..24) {
+                        isUrgent = true
+                        val minutes = duration.toMinutes()
+                        dueBadgeText = if (hours > 0) "Hoy (~$hours h)" else "Hoy (~$minutes min)"
+                    } else if (days > 0) {
+                        dueBadgeText = "En $days días"
+                    } else {
+                        dueBadgeText = "Pronto"
+                    }
+                }
+            } catch (_: Exception) {
+                dueBadgeText = "Fecha fijada"
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -435,70 +490,198 @@ fun ForosBentoCard(
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Fila Superior: Icono, Título y Badge de Estado Activo
             Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Row(
+                    modifier = Modifier.weight(1f, fill = false),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .squircleSurface(
+                                color = MiuixBlue.copy(alpha = 0.15f),
+                                cornerRadius = 11.dp
+                            )
+                            .squircleBorder(
+                                width = 0.5.dp,
+                                color = MiuixBlue.copy(alpha = 0.35f),
+                                cornerRadius = 11.dp
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        M3Icon(
+                            imageVector = Icons.Default.Forum,
+                            contentDescription = null,
+                            tint = MiuixBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "Foros Académicos",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MiuixTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(1.dp))
+                        Text(
+                            text = "Debates y respuestas con asistencia Copilot IA",
+                            fontSize = 11.sp,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
                         .squircleSurface(
-                            color = MiuixPurple.copy(alpha = 0.15f),
-                            cornerRadius = 10.dp
+                            color = MiuixBlue.copy(alpha = 0.12f),
+                            cornerRadius = 9999.dp
                         )
                         .squircleBorder(
                             width = 0.5.dp,
-                            color = MiuixPurple.copy(alpha = 0.3f),
-                            cornerRadius = 10.dp
-                        ),
-                    contentAlignment = Alignment.Center
+                            color = MiuixBlue.copy(alpha = 0.25f),
+                            cornerRadius = 9999.dp
+                        )
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
-                    M3Icon(
-                        imageVector = Icons.Default.Forum,
-                        contentDescription = null,
-                        tint = MiuixPurple,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Column {
                     Text(
-                        text = "Foros",
-                        fontSize = 14.sp,
+                        text = activeBadgesText,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = MiuixTheme.colorScheme.onSurface
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "Debates, consultas y temas de discusión de tus cursos",
-                        fontSize = 11.sp,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        color = MiuixBlue
                     )
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .squircleSurface(
-                        color = MiuixPurple.copy(alpha = 0.12f),
-                        cornerRadius = 9999.dp
-                    )
-                    .padding(horizontal = 8.dp, vertical = 3.dp)
-            ) {
-                Text(
-                    text = "Canvas",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MiuixPurple
-                )
+            // Sub-tarjeta de Previsualización: Foro más próximo a cerrar
+            if (nextClosingForum != null) {
+                val onForumTopicClick = {
+                    if (onOpenTopic != null) {
+                        onOpenTopic(nextClosingForum)
+                    } else if (onClick != null) {
+                        onClick()
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .squircleSurface(
+                            color = MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f),
+                            cornerRadius = 14.dp
+                        )
+                        .squircleBorder(
+                            width = 0.5.dp,
+                            color = MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.4f),
+                            cornerRadius = 14.dp
+                        )
+                        .clickable(onClick = onForumTopicClick)
+                        .padding(12.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Título del tema y estado de urgencia/tiempo
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isUrgent) MiuixRed else MiuixBlue)
+                                )
+                                Text(
+                                    text = nextClosingForum.title,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MiuixTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Text(
+                                text = dueBadgeText,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isUrgent) MiuixRed else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                modifier = Modifier.padding(start = 6.dp)
+                            )
+                        }
+
+                        // Banner sutil Copilot IA
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MiuixPurple.copy(alpha = 0.10f))
+                                .border(0.5.dp, MiuixPurple.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 5.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val points = nextClosingForum.assignment?.pointsPossible
+                                val rubricInfo = if (points != null && points > 0) "Rúbrica: ${points.toInt()} pts" else "Participación activa"
+                                Text(
+                                    text = "✨ Copilot: $rubricInfo",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MiuixPurple,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = nextClosingForum.courseName ?: "Canvas LMS",
+                                    fontSize = 9.sp,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        // Footer informativo y Call to Action
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val repliesCount = nextClosingForum.discussionSubentryCount ?: 0
+                            Text(
+                                text = "$repliesCount aportes registrados",
+                                fontSize = 10.sp,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                            )
+
+                            Text(
+                                text = "Ir al debate →",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MiuixBlue
+                            )
+                        }
+                    }
+                }
             }
         }
     }

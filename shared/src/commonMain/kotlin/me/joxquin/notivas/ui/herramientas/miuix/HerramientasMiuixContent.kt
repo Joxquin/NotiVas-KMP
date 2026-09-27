@@ -31,18 +31,22 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import me.joxquin.notivas.ui.foros.ForosViewModel
 import me.joxquin.notivas.ui.notas.NotasViewModel
 
 @Composable
 fun HerramientasMiuixContent(
     viewModel: NotasViewModel? = null,
+    forosViewModel: ForosViewModel? = null,
     onOpenProgreso: () -> Unit = {},
     onOpenForos: () -> Unit = {},
+    onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenTuneSettings: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
     val uiState by (viewModel?.uiState?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(null) })
+    val forosUiState by (forosViewModel?.uiState?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(null) })
 
     Box(
         modifier = modifier
@@ -123,7 +127,11 @@ fun HerramientasMiuixContent(
 
             // ─── CARD 3: Foros de Discusión ─────────────────────────
             item {
-                ForosBentoCard(onClick = onOpenForos)
+                ForosBentoCard(
+                    forosUiState = forosUiState,
+                    onClick = onOpenForos,
+                    onOpenTopic = onOpenForoDetail
+                )
             }
 
 
