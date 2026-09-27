@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import me.joxquin.notivas.background.BackgroundSyncScheduler
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.local.PreferencesManager
+import me.joxquin.notivas.data.model.AuthMode
 import me.joxquin.notivas.data.model.UserProfile
 import me.joxquin.notivas.data.repository.CanvasRepository
 import me.joxquin.notivas.data.repository.CopilotRepository
@@ -20,6 +21,7 @@ import me.joxquin.notivas.data.repository.OpenRouterAccountBalance
 data class ProfileUiState(
     val profile: UserProfile? = null,
     val universityHost: String = "Canvas LMS",
+    val authMode: AuthMode = AuthMode.COOKIE_SESSION,
     val notif24h: Boolean = true,
     val notif3h: Boolean = true,
     val notif30m: Boolean = false,
@@ -109,7 +111,8 @@ class ProfileViewModel(
         _isLoadingBalance,
         _isVerifyingToken,
         preferencesManager.dynamicColorEnabled,
-        preferencesManager.themeStyle
+        preferencesManager.themeStyle,
+        preferencesManager.authMode
     ) { args: Array<Any?> ->
         val url = args[1] as String?
         val host = if (url.isNullOrBlank()) "Canvas LMS" else {
@@ -136,7 +139,8 @@ class ProfileViewModel(
             isLoadingBalance = args[15] as Boolean,
             isVerifyingToken = args[16] as Boolean,
             dynamicColorEnabled = args[17] as Boolean,
-            themeStyle = args[18] as AppThemeStyle
+            themeStyle = args[18] as AppThemeStyle,
+            authMode = args[19] as AuthMode
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
 

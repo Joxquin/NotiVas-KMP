@@ -216,7 +216,7 @@ private fun MaterialStudentIdentityCard(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = uiState.universityHost,
+                            text = "${uiState.universityHost} • ${if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) "Sesión Web" else "Token API"}",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Medium
                             ),
@@ -399,7 +399,7 @@ private fun MiuixStudentIdentityCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = uiState.universityHost,
+                            text = "${uiState.universityHost} • ${if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) "Sesión Web" else "Token API"}",
                             style = MiuixTheme.textStyles.footnote1,
                             color = MiuixTheme.colorScheme.onSurfaceSecondary,
                             maxLines = 1,
