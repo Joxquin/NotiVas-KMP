@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
+import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.CanvasAuthCredential
 import me.joxquin.notivas.data.model.CanvasModule
 import me.joxquin.notivas.data.model.Course
