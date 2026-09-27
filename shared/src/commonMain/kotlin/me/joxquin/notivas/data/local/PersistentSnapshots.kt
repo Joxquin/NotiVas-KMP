@@ -21,6 +21,9 @@ data class PersistentPreferencesSnapshot(
     val totalCopilotTokens: Long = 0L,
     val dynamicColorEnabled: Boolean = true,
     val themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
-    val unconfiguredCoursesBannerDismissedUntil: Long = 0L
+    val unconfiguredCoursesBannerDismissedUntil: Long = 0L,
+    val authMode: me.joxquin.notivas.data.model.AuthMode = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION,
+    val sessionCookies: String? = null,
+    val csrfToken: String? = null
 )
 

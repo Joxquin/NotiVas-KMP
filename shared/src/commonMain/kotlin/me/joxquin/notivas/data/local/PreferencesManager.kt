@@ -39,6 +39,31 @@ class PreferencesManager(
     val accessToken: Flow<String?> = _accessToken.asStateFlow()
     fun getAccessToken(): String? = _accessToken.value
 
+    private val _authMode = MutableStateFlow(me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION)
+    val authMode: Flow<me.joxquin.notivas.data.model.AuthMode> = _authMode.asStateFlow()
+    fun getAuthMode(): me.joxquin.notivas.data.model.AuthMode = _authMode.value
+
+    private val _sessionCookies = MutableStateFlow<String?>(null)
+    val sessionCookies: Flow<String?> = _sessionCookies.asStateFlow()
+    fun getSessionCookies(): String? = _sessionCookies.value
+
+    private val _csrfToken = MutableStateFlow<String?>(null)
+    val csrfToken: Flow<String?> = _csrfToken.asStateFlow()
+    fun getCsrfToken(): String? = _csrfToken.value
+
+    fun getAuthCredential(): me.joxquin.notivas.data.model.CanvasAuthCredential? {
+        return when (_authMode.value) {
+            me.joxquin.notivas.data.model.AuthMode.TOKEN -> {
+                _accessToken.value?.takeIf { it.isNotBlank() }?.let { me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken(it) }
+            }
+            me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION -> {
+                _sessionCookies.value?.takeIf { it.isNotBlank() }?.let {
+                    me.joxquin.notivas.data.model.CanvasAuthCredential.SessionCookies(it, _csrfToken.value)
+                } ?: _accessToken.value?.takeIf { it.isNotBlank() }?.let { me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken(it) }
+            }
+        }
+    }
+
     private val _isOnboardingCompleted = MutableStateFlow(false)
     val isOnboardingCompleted: Flow<Boolean> = _isOnboardingCompleted.asStateFlow()
     fun getIsOnboardingCompleted(): Boolean = _isOnboardingCompleted.value
@@ -101,6 +126,9 @@ class PreferencesManager(
             val snapshot = json.decodeFromString<PersistentPreferencesSnapshot>(content)
             _universityUrl.value = snapshot.universityUrl
             _accessToken.value = snapshot.accessToken
+            _authMode.value = snapshot.authMode
+            _sessionCookies.value = snapshot.sessionCookies
+            _csrfToken.value = snapshot.csrfToken
             _isOnboardingCompleted.value = snapshot.isOnboardingCompleted
             _syncIntervalMinutes.value = snapshot.syncIntervalMinutes
             _notif24h.value = snapshot.notif24h
@@ -136,6 +164,9 @@ class PreferencesManager(
             val snapshot = PersistentPreferencesSnapshot(
                 universityUrl = _universityUrl.value,
                 accessToken = _accessToken.value,
+                authMode = _authMode.value,
+                sessionCookies = _sessionCookies.value,
+                csrfToken = _csrfToken.value,
                 isOnboardingCompleted = _isOnboardingCompleted.value,
                 syncIntervalMinutes = _syncIntervalMinutes.value,
                 notif24h = _notif24h.value,
@@ -159,7 +190,6 @@ class PreferencesManager(
         }
     }
 
-
     suspend fun saveUniversityUrl(url: String) {
         _universityUrl.value = url
         schedulePersist()
@@ -167,6 +197,19 @@ class PreferencesManager(
 
     suspend fun saveAccessToken(token: String) {
         _accessToken.value = token
+        _authMode.value = me.joxquin.notivas.data.model.AuthMode.TOKEN
+        schedulePersist()
+    }
+
+    suspend fun saveSessionCookies(cookies: String, csrfToken: String? = null) {
+        _sessionCookies.value = cookies
+        _csrfToken.value = csrfToken
+        _authMode.value = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION
+        schedulePersist()
+    }
+
+    suspend fun setAuthMode(mode: me.joxquin.notivas.data.model.AuthMode) {
+        _authMode.value = mode
         schedulePersist()
     }
 
@@ -253,8 +296,10 @@ class PreferencesManager(
     }
 
     suspend fun clear() {
-
         _accessToken.value = null
+        _sessionCookies.value = null
+        _csrfToken.value = null
+        _authMode.value = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION
         _universityUrl.value = null
         _isOnboardingCompleted.value = false
         PlatformFileSystem.deleteFile(prefsFile)
