@@ -3,10 +3,12 @@ package me.joxquin.notivas.data.remote
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.CanvasAssignmentDetailResponse
+import me.joxquin.notivas.data.model.CanvasAuthCredential
 import me.joxquin.notivas.data.model.CanvasDiscussionEntry
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.data.model.CanvasFileDetail
@@ -32,6 +34,30 @@ class CanvasApiService(
         return "$cleanBase/$cleanPath"
     }
 
+    private fun HttpRequestBuilder.applyAuth(credentialOrToken: String, csrfToken: String? = null) {
+        if (credentialOrToken.startsWith("Cookie: ") || credentialOrToken.contains("canvas_session") || credentialOrToken.contains("_csrf_token")) {
+            val cookies = credentialOrToken.removePrefix("Cookie: ")
+            header("Cookie", cookies)
+            csrfToken?.let { header("X-CSRF-Token", it) }
+        } else {
+            val bearer = if (credentialOrToken.startsWith("Bearer ")) credentialOrToken else "Bearer $credentialOrToken"
+            header("Authorization", bearer)
+        }
+    }
+
+    fun HttpRequestBuilder.applyCredential(credential: CanvasAuthCredential) {
+        when (credential) {
+            is CanvasAuthCredential.BearerToken -> {
+                val bearer = if (credential.token.startsWith("Bearer ")) credential.token else "Bearer ${credential.token}"
+                header("Authorization", bearer)
+            }
+            is CanvasAuthCredential.SessionCookies -> {
+                header("Cookie", credential.cookies)
+                credential.csrfToken?.let { header("X-CSRF-Token", it) }
+            }
+        }
+    }
+
     suspend fun getCourses(
         baseUrl: String,
         token: String,
@@ -39,7 +65,7 @@ class CanvasApiService(
         perPage: Int = 100
     ): List<Course> {
         return client.get(formatUrl(baseUrl, "api/v1/courses")) {
-            header("Authorization", token)
+            applyAuth(token)
             parameter("enrollment_state", state)
             parameter("per_page", perPage)
         }.body()
@@ -50,7 +76,7 @@ class CanvasApiService(
         token: String
     ): List<Assignment> {
         return client.get(formatUrl(baseUrl, "api/v1/users/self/upcoming_assignments")) {
-            header("Authorization", token)
+            applyAuth(token)
         }.body()
     }
 
@@ -63,7 +89,7 @@ class CanvasApiService(
         perPage: Int = 100
     ): List<Assignment> {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/assignments")) {
-            header("Authorization", token)
+            applyAuth(token)
             if (include != null) parameter("include[]", include)
             if (orderBy != null) parameter("order_by", orderBy)
             parameter("per_page", perPage)
@@ -77,7 +103,7 @@ class CanvasApiService(
         assignmentId: Long
     ): SubmissionDetails {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/assignments/$assignmentId/submissions/self")) {
-            header("Authorization", token)
+            applyAuth(token)
         }.body()
     }
 
@@ -87,7 +113,7 @@ class CanvasApiService(
         perPage: Int = 100
     ): List<Assignment> {
         return client.get(formatUrl(baseUrl, "api/v1/users/self/missing_submissions")) {
-            header("Authorization", token)
+            applyAuth(token)
             parameter("per_page", perPage)
         }.body()
     }
@@ -98,7 +124,7 @@ class CanvasApiService(
     ): UserProfile {
         val url = formatUrl(baseUrl, "api/v1/users/self/profile")
         val response = client.get(url) {
-            header("Authorization", token)
+            applyAuth(token)
         }
         val text = response.body<String>()
         println("CanvasApiService: getProfile response from $url: $text")
@@ -119,7 +145,7 @@ class CanvasApiService(
         perPage: Int = 100
     ): List<PlannerItem> {
         return client.get(formatUrl(baseUrl, "api/v1/planner/items")) {
-            header("Authorization", token)
+            applyAuth(token)
             parameter("start_date", startDate)
             parameter("per_page", perPage)
         }.body()
@@ -133,7 +159,7 @@ class CanvasApiService(
         include: List<String> = listOf("rubric", "submission", "submission_comments", "rubric_assessment")
     ): CanvasAssignmentDetailResponse {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/assignments/$assignmentId")) {
-            header("Authorization", token)
+            applyAuth(token)
             include.forEach { inc ->
                 parameter("include[]", inc)
             }
@@ -148,7 +174,7 @@ class CanvasApiService(
         perPage: Int = 50
     ): List<CanvasModule> {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/modules")) {
-            header("Authorization", token)
+            applyAuth(token)
             include.forEach { inc ->
                 parameter("include[]", inc)
             }
@@ -163,7 +189,7 @@ class CanvasApiService(
         pageUrl: String
     ): CanvasPageDetail {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/pages/$pageUrl")) {
-            header("Authorization", token)
+            applyAuth(token)
         }.body()
     }
 
@@ -174,7 +200,7 @@ class CanvasApiService(
         fileId: Long
     ): CanvasFileDetail {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/files/$fileId")) {
-            header("Authorization", token)
+            applyAuth(token)
         }.body()
     }
 
@@ -185,7 +211,7 @@ class CanvasApiService(
         perPage: Int = 50
     ): List<CanvasDiscussionTopic> {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/discussion_topics")) {
-            header("Authorization", token)
+            applyAuth(token)
             parameter("per_page", perPage)
         }.body()
     }
@@ -197,7 +223,7 @@ class CanvasApiService(
         topicId: Long
     ): CanvasDiscussionTopic {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/discussion_topics/$topicId")) {
-            header("Authorization", token)
+            applyAuth(token)
         }.body()
     }
 
@@ -210,7 +236,7 @@ class CanvasApiService(
     ): List<CanvasDiscussionEntry> {
         return try {
             client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/discussion_topics/$topicId/entries")) {
-                header("Authorization", token)
+                applyAuth(token)
                 parameter("per_page", perPage)
             }.body()
         } catch (_: Exception) {
