@@ -61,24 +61,10 @@ fun CopilotEmptyHeroSection(
                 modifier = Modifier
                     .size(68.dp)
                     .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                MiuixTheme.colorScheme.primary.copy(alpha = 0.35f),
-                                Color(0xFFA855F7).copy(alpha = 0.25f),
-                                MiuixTheme.colorScheme.surfaceVariant
-                            )
-                        )
-                    )
+                    .background(MiuixTheme.colorScheme.primary.copy(alpha = 0.12f))
                     .border(
                         1.5.dp,
-                        Brush.linearGradient(
-                            colors = listOf(
-                                MiuixTheme.colorScheme.primary,
-                                Color(0xFFC084FC),
-                                Color(0xFFF472B6)
-                            )
-                        ),
+                        MiuixTheme.colorScheme.primary.copy(alpha = 0.35f),
                         CircleShape
                     ),
                 contentAlignment = Alignment.Center

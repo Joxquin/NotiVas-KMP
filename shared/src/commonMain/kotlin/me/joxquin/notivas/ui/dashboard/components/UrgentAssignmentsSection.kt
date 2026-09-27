@@ -175,14 +175,6 @@ fun HeroUrgentCardMock(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
-                )
                 .padding(18.dp)
         ) {
             Column(

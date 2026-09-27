@@ -9,6 +9,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -93,6 +94,7 @@ fun MiuixTopAppBar(
     onNavigationClick: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
+    bottomContent: @Composable (ColumnScope.() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // Opacidad de blur progresivo clamp(deltaY / threshold, 0.0, 1.0)
@@ -198,6 +200,10 @@ fun MiuixTopAppBar(
                 ) {
                     actions()
                 }
+            }
+
+            if (bottomContent != null) {
+                bottomContent()
             }
         }
     }

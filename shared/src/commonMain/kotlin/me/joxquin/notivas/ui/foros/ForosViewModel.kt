@@ -100,6 +100,34 @@ class ForosViewModel(
     private val _copilotStrategiesMemory = mutableMapOf<Long, CopilotForoStrategy>()
     private var copilotGenerationJob: Job? = null
 
+    private val _isFiltersExpanded = MutableStateFlow(true)
+    val isFiltersExpanded: StateFlow<Boolean> = _isFiltersExpanded.asStateFlow()
+
+    fun setFiltersExpanded(expanded: Boolean) {
+        _isFiltersExpanded.value = expanded
+    }
+
+    private val _showFilterBottomSheet = MutableStateFlow(false)
+    val showFilterBottomSheet: StateFlow<Boolean> = _showFilterBottomSheet.asStateFlow()
+
+    fun setShowFilterBottomSheet(show: Boolean) {
+        _showFilterBottomSheet.value = show
+    }
+
+    private val _showCourseDialog = MutableStateFlow(false)
+    val showCourseDialog: StateFlow<Boolean> = _showCourseDialog.asStateFlow()
+
+    fun setShowCourseDialog(show: Boolean) {
+        _showCourseDialog.value = show
+    }
+
+    private val _showSortDialog = MutableStateFlow(false)
+    val showSortDialog: StateFlow<Boolean> = _showSortDialog.asStateFlow()
+
+    fun setShowSortDialog(show: Boolean) {
+        _showSortDialog.value = show
+    }
+
     init {
         preferencesManager?.openRouterModel?.let { modelFlow ->
             viewModelScope.launch {
@@ -395,51 +423,106 @@ class ForosViewModel(
 
                 result.onSuccess { copilotRes ->
                     val text = copilotRes.reply.trim()
-                    val jsonString = if (text.contains("{") && text.contains("}")) {
-                        text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1)
+                    
+                    // Función auxiliar para extraer valores de campos con regex si falla el parser estricto
+                    fun extractField(fieldName: String, default: String): String {
+                        val pattern = Regex("\"$fieldName\"\\s*:\\s*\"((?:\\\\\"|[^\"])*)\"", RegexOption.DOT_MATCHES_ALL)
+                        val match = pattern.find(text)
+                        return if (match != null) {
+                            match.groupValues[1]
+                                .replace("\\\"", "\"")
+                                .replace("\\n", "\n")
+                                .replace("\\r", "")
+                                .replace("\\t", "\t")
+                                .trim()
+                        } else {
+                            // Intento con comillas simples o bloques de texto
+                            val fallbackPattern = Regex("\"$fieldName\"\\s*:\\s*`([^`]*)`", RegexOption.DOT_MATCHES_ALL)
+                            fallbackPattern.find(text)?.groupValues?.get(1)?.trim() ?: default
+                        }
+                    }
+
+                    // Limpieza previa del JSON
+                    val cleanedJson = text
+                        .replace(Regex("^```(?:json)?", RegexOption.MULTILINE), "")
+                        .replace(Regex("```$", RegexOption.MULTILINE), "")
+                        .trim()
+
+                    val jsonString = if (cleanedJson.contains("{") && cleanedJson.contains("}")) {
+                        cleanedJson.substring(cleanedJson.indexOf("{"), cleanedJson.lastIndexOf("}") + 1)
                     } else {
-                        text
+                        cleanedJson
                     }
 
                     val strategy = try {
                         val parsed = kotlinx.serialization.json.Json {
                             ignoreUnknownKeys = true
                             isLenient = true
+                            coerceInputValues = true
                         }.decodeFromString<kotlinx.serialization.json.JsonObject>(jsonString)
 
-                        val draft = parsed["suggestedDraft"]?.toString()?.trim('"')?.replace("\\n", "\n") ?: text
+                        fun getCleanString(key: String, fallback: String): String {
+                            val element = parsed[key] ?: return fallback
+                            val raw = element.toString()
+                            return if (raw.startsWith("\"") && raw.endsWith("\"") && raw.length >= 2) {
+                                raw.substring(1, raw.length - 1)
+                                    .replace("\\\"", "\"")
+                                    .replace("\\n", "\n")
+                                    .replace("\\r", "")
+                                    .replace("\\t", "\t")
+                            } else {
+                                raw.trim('"')
+                            }
+                        }
+
+                        val draft = getCleanString("suggestedDraft", extractField("suggestedDraft", text))
                         val words = draft.split(Regex("\\s+")).filter { it.isNotBlank() }.size
 
                         CopilotForoStrategy(
-                            learningObjective = parsed["learningObjective"]?.toString()?.trim('"') ?: "Análisis y fundamentación académica rigurosa",
-                            technicalRigor = parsed["technicalRigor"]?.toString()?.trim('"') ?: "100% • Alto",
-                            counterExample = parsed["counterExample"]?.toString()?.trim('"') ?: "Incluido",
-                            activeInteraction = parsed["activeInteraction"]?.toString()?.trim('"') ?: "Enfoque Riguroso",
-                            phase1Title = parsed["phase1Title"]?.toString()?.trim('"') ?: "Marco Teórico",
-                            phase1Desc = parsed["phase1Desc"]?.toString()?.trim('"') ?: "Fundamentación y conceptos teóricos esenciales",
-                            phase2Title = parsed["phase2Title"]?.toString()?.trim('"') ?: "Análisis y Desarrollo",
-                            phase2Desc = parsed["phase2Desc"]?.toString()?.trim('"') ?: "Ejemplificación contextual y análisis sustantivo",
-                            phase3Title = parsed["phase3Title"]?.toString()?.trim('"') ?: "Síntesis y Conclusión",
-                            phase3Desc = parsed["phase3Desc"]?.toString()?.trim('"') ?: "Resolución analítica y conclusión técnica",
+                            learningObjective = getCleanString("learningObjective", extractField("learningObjective", "Análisis y fundamentación académica")),
+                            technicalRigor = getCleanString("technicalRigor", extractField("technicalRigor", "100% • Alto")),
+                            counterExample = getCleanString("counterExample", extractField("counterExample", "Análisis de caso")),
+                            activeInteraction = getCleanString("activeInteraction", extractField("activeInteraction", "Enfoque Riguroso")),
+                            phase1Title = getCleanString("phase1Title", extractField("phase1Title", "Marco Teórico")),
+                            phase1Desc = getCleanString("phase1Desc", extractField("phase1Desc", "Fundamentación y conceptos teóricos")),
+                            phase2Title = getCleanString("phase2Title", extractField("phase2Title", "Análisis y Demostración")),
+                            phase2Desc = getCleanString("phase2Desc", extractField("phase2Desc", "Desarrollo y contrastación")),
+                            phase3Title = getCleanString("phase3Title", extractField("phase3Title", "Síntesis y Conclusión")),
+                            phase3Desc = getCleanString("phase3Desc", extractField("phase3Desc", "Cierre analítico y resolución técnica")),
                             suggestedDraft = draft,
                             wordCount = words,
                             activeModelName = _activeCopilotModel.value
                         )
                     } catch (_: Exception) {
-                        // Fallback si el modelo devolvió texto plano
-                        val words = text.split(Regex("\\s+")).filter { it.isNotBlank() }.size
+                        // Fallback 1: Extraer cada campo con Expresiones Regulares
+                        val regexDraft = extractField("suggestedDraft", "")
+                        val isJsonLooking = text.trimStart().startsWith("{")
+
+                        val cleanDraft = if (regexDraft.isNotBlank()) {
+                            regexDraft
+                        } else if (isJsonLooking) {
+                            // Si parece un JSON pero no se pudo extraer suggestedDraft, extraer cualquier texto sustancial
+                            text.replace(Regex("\"[a-zA-Z0-9_]+\"\\s*:\\s*"), "")
+                                .replace(Regex("[{}\",]"), "")
+                                .trim()
+                        } else {
+                            text
+                        }
+
+                        val words = cleanDraft.split(Regex("\\s+")).filter { it.isNotBlank() }.size
+
                         CopilotForoStrategy(
-                            learningObjective = "Fundamentación y respuesta a la consigna",
-                            technicalRigor = "Alto",
-                            counterExample = "Considerado",
-                            activeInteraction = "Análisis Directo",
-                            phase1Title = "Marco Teórico",
-                            phase1Desc = "Desarrollo de los conceptos de la consigna",
-                            phase2Title = "Desarrollo del Argumento",
-                            phase2Desc = "Exposición de ideas y sustento",
-                            phase3Title = "Síntesis y Conclusión",
-                            phase3Desc = "Resolución y cierre analítico",
-                            suggestedDraft = text,
+                            learningObjective = extractField("learningObjective", "Fundamentación y respuesta a la consigna académica"),
+                            technicalRigor = extractField("technicalRigor", "100% • Alto"),
+                            counterExample = extractField("counterExample", "Análisis de caso"),
+                            activeInteraction = extractField("activeInteraction", "Análisis Directo"),
+                            phase1Title = extractField("phase1Title", "Marco Teórico"),
+                            phase1Desc = extractField("phase1Desc", "Desarrollo de los conceptos principales"),
+                            phase2Title = extractField("phase2Title", "Desarrollo del Argumento"),
+                            phase2Desc = extractField("phase2Desc", "Exposición de ideas y sustento técnico"),
+                            phase3Title = extractField("phase3Title", "Síntesis y Conclusión"),
+                            phase3Desc = extractField("phase3Desc", "Resolución y cierre analítico"),
+                            suggestedDraft = cleanDraft,
                             wordCount = words,
                             activeModelName = _activeCopilotModel.value
                         )

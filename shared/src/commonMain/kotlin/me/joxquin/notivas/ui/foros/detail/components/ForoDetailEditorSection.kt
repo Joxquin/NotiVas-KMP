@@ -172,19 +172,11 @@ fun ForoDetailEditorSection(
                     // Botón Protagónico Preguntar a Copilot
                     Surface(
                         shape = RoundedCornerShape(9999.dp),
-                        color = Color.Transparent,
+                        color = primaryColor,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp)
                             .clip(RoundedCornerShape(9999.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        primaryColor,
-                                        primaryColor.copy(alpha = 0.75f)
-                                    )
-                                )
-                            )
                             .clickable {
                                 onOpenCopilotAssistant()
                             }

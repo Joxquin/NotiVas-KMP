@@ -236,16 +236,13 @@ fun PlannerHeroBentoCard(
                             .clip(RoundedCornerShape(9999.dp))
                             .background(MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.4f))
                     ) {
+                        val progressColor = if (currentAvg >= 12f) Color(0xFF4CAF50) else MiuixRed
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(progressRatio.coerceIn(0.05f, 1f))
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(9999.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(MiuixBlue, if (currentAvg >= 12f) Color(0xFF4CAF50) else MiuixRed)
-                                    )
-                                )
+                                .background(progressColor)
                         )
                     }
 

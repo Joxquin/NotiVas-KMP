@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -62,6 +63,7 @@ import me.joxquin.notivas.ui.profile.ProfileViewModel
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Filter
 import top.yukonga.miuix.kmp.icon.extended.Refresh
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
@@ -467,15 +469,17 @@ fun MainAppShell(
 
                         MainDestination.Herramientas -> {
                             if (showingForosDetail) {
-                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                    onClick = { forosViewModel.loadDiscussions(forceRefresh = true) }
-                                ) {
-                                    top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Refresh,
-                                        contentDescription = "Recargar",
-                                        tint = MiuixTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                if (forosUiState.selectedDiscussion == null) {
+                                    me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                        onClick = { forosViewModel.setShowFilterBottomSheet(true) }
+                                    ) {
+                                        top.yukonga.miuix.kmp.basic.Icon(
+                                            imageVector = MiuixIcons.Filter,
+                                            contentDescription = "Filtros y Ordenamiento",
+                                            tint = MiuixTheme.colorScheme.onSurface,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             } else if (!showingNotasDetail) {
                                 me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
@@ -494,6 +498,18 @@ fun MainAppShell(
                         else -> {}
                     }
                 },
+                bottomContent = if (currentDestination == MainDestination.Herramientas && showingForosDetail && forosUiState.selectedDiscussion == null) {
+                    {
+                        me.joxquin.notivas.ui.foros.components.ForosSearchAndFilters(
+                            searchQuery = forosUiState.searchQuery,
+                            onSearchQueryChange = { query: String -> forosViewModel.onSearchQueryChange(query) },
+                            themeStyle = AppThemeStyle.MIUIX,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 6.dp)
+                        )
+                    }
+                } else null,
                 onNavigationClick = if (currentDestination == MainDestination.Inicio) {
                     { /* Notificaciones */ }
                 } else null,

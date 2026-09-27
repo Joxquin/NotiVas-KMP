@@ -105,11 +105,6 @@ fun MiuixStudentHeader(
                                 color = Color.White.copy(alpha = 0.15f),
                                 cornerRadius = 18.dp
                             )
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(Color(0xFF1E293B), MiuixBlue.copy(alpha = 0.35f))
-                                )
-                            )
                             .clickable(onClick = onAvatarClick),
                         contentAlignment = Alignment.Center
                     ) {
