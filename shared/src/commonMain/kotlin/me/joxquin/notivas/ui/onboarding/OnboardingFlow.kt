@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 
 enum class OnboardingStep {
     Domain,
+    WebLogin,
     Token,
     Verifying,
     Success,
@@ -50,9 +51,21 @@ fun OnboardingFlow(
                     currentUrl = universityUrl,
                     onContinue = { url ->
                         viewModel.updateUniversityUrl(url)
-                        currentStep = OnboardingStep.Token
+                        currentStep = OnboardingStep.WebLogin
                     },
                     onBack = { /* Primer paso */ }
+                )
+            }
+            OnboardingStep.WebLogin -> {
+                OnboardingWebLoginScreen(
+                    universityUrl = universityUrl,
+                    onLoginSuccess = { cookies, csrfToken ->
+                        viewModel.verifySessionConnection(cookies, csrfToken)
+                    },
+                    onUseManualToken = {
+                        currentStep = OnboardingStep.Token
+                    },
+                    onBack = { currentStep = OnboardingStep.Domain }
                 )
             }
             OnboardingStep.Token -> {
@@ -62,7 +75,7 @@ fun OnboardingFlow(
                         viewModel.updateAccessToken(token)
                         viewModel.verifyConnection()
                     },
-                    onBack = { currentStep = OnboardingStep.Domain }
+                    onBack = { currentStep = OnboardingStep.WebLogin }
                 )
             }
             OnboardingStep.Verifying -> {
