@@ -40,8 +40,7 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import java.time.Duration
-import java.time.ZonedDateTime
+import me.joxquin.notivas.util.DateTimeUtil
 
 @Composable
 fun ForosCardItem(
@@ -50,33 +49,31 @@ fun ForosCardItem(
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
-    val now = ZonedDateTime.now()
+    val nowMs = DateTimeUtil.nowEpochMillis()
     val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
     var isExpired = topic.locked == true
     var dueText = "Sin fecha de cierre"
     var isUrgent = false
 
     if (dueStr != null) {
-        try {
-            val dueDate = ZonedDateTime.parse(dueStr)
-            if (now.isAfter(dueDate)) {
+        val dueComponents = DateTimeUtil.parseIsoToComponents(dueStr)
+        if (dueComponents != null) {
+            val diffMs = dueComponents.epochMillis - nowMs
+            if (diffMs <= 0) {
                 isExpired = true
                 dueText = "Cerrado"
             } else {
-                val duration = Duration.between(now, dueDate)
-                val hours = duration.toHours()
-                val days = duration.toDays()
+                val hours = diffMs / (1000 * 60 * 60)
+                val days = hours / 24
 
                 if (hours <= 24) {
                     isUrgent = true
-                    val minutes = duration.toMinutes()
+                    val minutes = diffMs / (1000 * 60)
                     dueText = if (hours > 0) "Vence hoy (~$hours h)" else "Vence hoy (~$minutes min)"
                 } else {
                     dueText = "Vence en $days días"
                 }
             }
-        } catch (_: Exception) {
-            dueText = "Fecha de entrega indicada"
         }
     }
 

@@ -45,7 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.time.ZonedDateTime
+import me.joxquin.notivas.util.DateTimeUtil
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.foros.ForosViewModel
@@ -73,17 +73,13 @@ fun ForoDetailScreen(
     var showCopilotAssistant by remember { mutableStateOf(false) }
 
     val isExpired = remember(topic) {
-        val now = ZonedDateTime.now()
+        val nowMs = DateTimeUtil.nowEpochMillis()
         val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
         if (topic.locked == true) {
             true
         } else if (dueStr != null) {
-            try {
-                val dueDate = ZonedDateTime.parse(dueStr)
-                now.isAfter(dueDate)
-            } catch (e: Exception) {
-                false
-            }
+            val epochMs = DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis
+            if (epochMs != null) nowMs > epochMs else false
         } else {
             false
         }

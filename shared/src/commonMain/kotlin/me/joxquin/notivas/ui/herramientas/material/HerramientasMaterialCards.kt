@@ -342,23 +342,19 @@ fun MaterialForosCard(
     onOpenTopic: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null
 ) {
     val discussions = forosUiState?.discussions ?: emptyList()
-    val now = java.time.ZonedDateTime.now()
+    val nowMs = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
 
     // Encontrar el foro activo más próximo a cerrar
     val nextClosingForum = discussions
         .filter { topic ->
             if (topic.locked == true) return@filter false
             val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: return@filter false
-            try {
-                val dueDate = java.time.ZonedDateTime.parse(dueStr)
-                dueDate.isAfter(now)
-            } catch (_: Exception) {
-                false
-            }
+            val epochMs = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis ?: return@filter false
+            epochMs > nowMs
         }
         .minByOrNull { topic ->
-            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt!!
-            java.time.ZonedDateTime.parse(dueStr).toInstant().toEpochMilli()
+            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: ""
+            me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis ?: Long.MAX_VALUE
         } ?: discussions.firstOrNull()
 
     val pendingCount = forosUiState?.pendingCount ?: discussions.size
@@ -370,17 +366,17 @@ fun MaterialForosCard(
     if (nextClosingForum != null) {
         val dueStr = nextClosingForum.assignment?.dueAt ?: nextClosingForum.lockAt ?: nextClosingForum.assignment?.lockAt
         if (dueStr != null) {
-            try {
-                val dueDate = java.time.ZonedDateTime.parse(dueStr)
-                val duration = java.time.Duration.between(now, dueDate)
-                if (now.isAfter(dueDate) || nextClosingForum.locked == true) {
+            val dueComponents = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)
+            if (dueComponents != null) {
+                val diffMs = dueComponents.epochMillis - nowMs
+                if (diffMs <= 0 || nextClosingForum.locked == true) {
                     dueBadgeText = "Cerrado"
                 } else {
-                    val hours = duration.toHours()
-                    val days = duration.toDays()
+                    val hours = diffMs / (1000 * 60 * 60)
+                    val days = hours / 24
                     if (hours in 0..24) {
                         isUrgent = true
-                        val minutes = duration.toMinutes()
+                        val minutes = diffMs / (1000 * 60)
                         dueBadgeText = if (hours > 0) "Hoy (~$hours h)" else "Hoy (~$minutes min)"
                     } else if (days > 0) {
                         dueBadgeText = "En $days días"
@@ -388,8 +384,6 @@ fun MaterialForosCard(
                         dueBadgeText = "Pronto"
                     }
                 }
-            } catch (_: Exception) {
-                dueBadgeText = "Fecha fijada"
             }
         }
     }

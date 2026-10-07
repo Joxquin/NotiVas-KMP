@@ -13,7 +13,8 @@ import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.repository.CanvasRepository
-import java.time.ZonedDateTime
+import me.joxquin.notivas.util.DateTimeUtil
+import kotlin.text.RegexOption
 
 enum class DiscussionFilterTab {
     TODOS,
@@ -169,7 +170,7 @@ class ForosViewModel(
         _activeCopilotModel
     ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, generating, strategy, errorMsg), activeModel ->
 
-        val now = ZonedDateTime.now()
+        val nowMs = DateTimeUtil.nowEpochMillis()
 
         // 1. Conteo global antes de filtrar
         var total = 0
@@ -184,7 +185,7 @@ class ForosViewModel(
             val isGraded = points != null && points > 0
             if (isGraded) withPoints++ else withoutPoints++
 
-            val isExpired = isTopicExpired(topic, now)
+            val isExpired = isTopicExpired(topic, nowMs)
             if (isExpired) expired++ else pending++
         }
 
@@ -204,7 +205,7 @@ class ForosViewModel(
             DiscussionFilterTab.SIN_PUNTOS -> list.filter {
                 (it.assignment?.pointsPossible ?: 0.0) == 0.0 && it.assignmentId == null
             }
-            DiscussionFilterTab.VENCIDOS -> list.filter { isTopicExpired(it, now) }
+            DiscussionFilterTab.VENCIDOS -> list.filter { isTopicExpired(it, nowMs) }
         }
 
         // 4. Filtrado por query de búsqueda
@@ -426,7 +427,7 @@ class ForosViewModel(
                     
                     // Función auxiliar para extraer valores de campos con regex si falla el parser estricto
                     fun extractField(fieldName: String, default: String): String {
-                        val pattern = Regex("\"$fieldName\"\\s*:\\s*\"((?:\\\\\"|[^\"])*)\"", RegexOption.DOT_MATCHES_ALL)
+                        val pattern = Regex("(?s)\"$fieldName\"\\s*:\\s*\"((?:\\\\\"|[^\"])*)\"")
                         val match = pattern.find(text)
                         return if (match != null) {
                             match.groupValues[1]
@@ -437,15 +438,15 @@ class ForosViewModel(
                                 .trim()
                         } else {
                             // Intento con comillas simples o bloques de texto
-                            val fallbackPattern = Regex("\"$fieldName\"\\s*:\\s*`([^`]*)`", RegexOption.DOT_MATCHES_ALL)
+                            val fallbackPattern = Regex("(?s)\"$fieldName\"\\s*:\\s*`([^`]*)`")
                             fallbackPattern.find(text)?.groupValues?.get(1)?.trim() ?: default
                         }
                     }
 
                     // Limpieza previa del JSON
                     val cleanedJson = text
-                        .replace(Regex("^```(?:json)?", RegexOption.MULTILINE), "")
-                        .replace(Regex("```$", RegexOption.MULTILINE), "")
+                        .replace(Regex("(?m)^```(?:json)?"), "")
+                        .replace(Regex("(?m)```$"), "")
                         .trim()
 
                     val jsonString = if (cleanedJson.contains("{") && cleanedJson.contains("}")) {
@@ -565,14 +566,14 @@ class ForosViewModel(
         _sortOption.value = option
     }
 
-    private fun isTopicExpired(topic: CanvasDiscussionTopic, now: ZonedDateTime): Boolean {
+    private fun isTopicExpired(topic: CanvasDiscussionTopic, nowMs: Long): Boolean {
         if (topic.locked == true) return true
         val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
         if (dueStr != null) {
-            try {
-                val dueDate = ZonedDateTime.parse(dueStr)
-                return now.isAfter(dueDate)
-            } catch (_: Exception) {}
+            val epochMs = DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis
+            if (epochMs != null) {
+                return nowMs > epochMs
+            }
         }
         return false
     }

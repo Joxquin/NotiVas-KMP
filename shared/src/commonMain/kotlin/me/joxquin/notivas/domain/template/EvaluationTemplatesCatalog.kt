@@ -52,8 +52,9 @@ object EvaluationTemplatesCatalog {
                     minToDrop = 3,
                     calculationMode = "DROP_LOWEST",
                     items = (1..8).map { i ->
+                        val padded = if (i < 10) "0$i" else "$i"
                         ItemTemplate(
-                            name = "Lab %02d".format(i),
+                            name = "Lab $padded",
                             weekNumber = i * 2 - 1,
                             matchingPatterns = listOf("(?i).*(lab|laboratorio|plab|taller|gu[ií]a).*0?$i.*")
                         )
