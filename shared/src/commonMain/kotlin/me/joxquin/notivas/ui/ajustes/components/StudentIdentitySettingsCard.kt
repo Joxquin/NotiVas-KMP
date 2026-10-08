@@ -44,6 +44,13 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 import me.joxquin.notivas.ui.components.AsyncAvatarImage
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.student_unlinked
+import me.joxquin.notivas.shared.resources.student_avatar_cd
+import me.joxquin.notivas.shared.resources.student_auth_mode_cookies
+import me.joxquin.notivas.shared.resources.student_auth_mode_token
+
 @Composable
 fun StudentIdentitySettingsCard(
     uiState: ProfileUiState,
@@ -80,6 +87,8 @@ private fun MaterialStudentIdentityCard(
         .map { it.first().uppercase() }
         .joinToString("")
 
+    val defaultStudentLabel = stringResource(Res.string.student_unlinked)
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -115,7 +124,7 @@ private fun MaterialStudentIdentityCard(
                     ) {
                         AsyncAvatarImage(
                             url = profile?.avatarUrl,
-                            contentDescription = "Foto de perfil",
+                            contentDescription = stringResource(Res.string.student_avatar_cd),
                             modifier = Modifier.fillMaxSize(),
                             shape = CircleShape
                         ) {
@@ -166,7 +175,7 @@ private fun MaterialStudentIdentityCard(
                 // Student Info
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (rawName.isNotBlank()) rawName else "Estudiante Canvas",
+                        text = if (rawName.isNotBlank()) rawName else defaultStudentLabel,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -179,7 +188,7 @@ private fun MaterialStudentIdentityCard(
                             ?.replace(Regex("<[^>]*>"), "")
                             ?.trim()
                             ?.takeIf { it.isNotBlank() }
-                        ?: "Canvas Student"
+                        ?: defaultStudentLabel
                     Text(
                         text = emailOrBio,
                         style = MaterialTheme.typography.bodyMedium,
@@ -191,6 +200,12 @@ private fun MaterialStudentIdentityCard(
             }
 
             // Connection Badge & Sync Action
+            val authModeLabel = if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
+                stringResource(Res.string.student_auth_mode_cookies)
+            } else {
+                stringResource(Res.string.student_auth_mode_token)
+            }
+
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -216,7 +231,7 @@ private fun MaterialStudentIdentityCard(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = "${uiState.universityHost} • ${if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) "Sesión Web" else "Token API"}",
+                            text = "${uiState.universityHost} • $authModeLabel",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Medium
                             ),
@@ -253,6 +268,8 @@ private fun MiuixStudentIdentityCard(
         .map { it.first().uppercase() }
         .joinToString("")
 
+    val defaultStudentLabel = stringResource(Res.string.student_unlinked)
+
     MiuixCard(
         modifier = modifier
             .fillMaxWidth()
@@ -288,7 +305,7 @@ private fun MiuixStudentIdentityCard(
                     ) {
                         AsyncAvatarImage(
                             url = profile?.avatarUrl,
-                            contentDescription = "Foto de perfil",
+                            contentDescription = stringResource(Res.string.student_avatar_cd),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .squircleSurface(
@@ -341,7 +358,7 @@ private fun MiuixStudentIdentityCard(
                 // Info estudiante
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (rawName.isNotBlank()) rawName else "Estudiante Canvas",
+                        text = if (rawName.isNotBlank()) rawName else defaultStudentLabel,
                         style = MiuixTheme.textStyles.title1.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
@@ -356,7 +373,7 @@ private fun MiuixStudentIdentityCard(
                             ?.replace(Regex("<[^>]*>"), "")
                             ?.trim()
                             ?.takeIf { it.isNotBlank() }
-                        ?: "Canvas Student"
+                        ?: defaultStudentLabel
                     Text(
                         text = emailOrBio,
                         style = MiuixTheme.textStyles.subtitle,
@@ -368,6 +385,12 @@ private fun MiuixStudentIdentityCard(
             }
 
             // Barra de estado de conexión API
+            val authModeLabel = if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
+                stringResource(Res.string.student_auth_mode_cookies)
+            } else {
+                stringResource(Res.string.student_auth_mode_token)
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -399,7 +422,7 @@ private fun MiuixStudentIdentityCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "${uiState.universityHost} • ${if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) "Sesión Web" else "Token API"}",
+                            text = "${uiState.universityHost} • $authModeLabel",
                             style = MiuixTheme.textStyles.footnote1,
                             color = MiuixTheme.colorScheme.onSurfaceSecondary,
                             maxLines = 1,

@@ -61,6 +61,15 @@ import me.joxquin.notivas.ui.navigation.MainDestination
 import me.joxquin.notivas.ui.navigation.NotiVasNavigationBar
 import me.joxquin.notivas.ui.notas.NotasViewModel
 import me.joxquin.notivas.ui.profile.ProfileViewModel
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.app_name
+import me.joxquin.notivas.shared.resources.grades_progreso_title
+import me.joxquin.notivas.shared.resources.foro_detail_title
+import me.joxquin.notivas.shared.resources.foros_hub_title
+import me.joxquin.notivas.shared.resources.herramientas_title
+import me.joxquin.notivas.shared.resources.copilot_title
+import me.joxquin.notivas.shared.resources.settings_title
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
@@ -379,15 +388,15 @@ fun MainAppShell(
             // Capa 2: Barra Superior Canónica Unificada (Top Overlay)
             MiuixTopAppBar(
                 title = when {
-                    currentDestination == MainDestination.Herramientas && showingNotasDetail -> "Progreso"
+                    currentDestination == MainDestination.Herramientas && showingNotasDetail -> stringResource(Res.string.grades_progreso_title)
                     currentDestination == MainDestination.Herramientas && showingForosDetail -> {
-                        if (forosUiState.selectedDiscussion != null) "Detalle del Foro" else "Foros Académicos"
+                        if (forosUiState.selectedDiscussion != null) stringResource(Res.string.foro_detail_title) else stringResource(Res.string.foros_hub_title)
                     }
-                    currentDestination == MainDestination.Inicio -> "NotiVas"
-                    currentDestination == MainDestination.Herramientas -> "Herramientas"
-                    currentDestination == MainDestination.Copilot -> "Copilot IA"
-                    currentDestination == MainDestination.Ajustes -> "Ajustes & Perfil"
-                    else -> "NotiVas"
+                    currentDestination == MainDestination.Inicio -> stringResource(Res.string.app_name)
+                    currentDestination == MainDestination.Herramientas -> stringResource(Res.string.herramientas_title)
+                    currentDestination == MainDestination.Copilot -> stringResource(Res.string.copilot_title)
+                    currentDestination == MainDestination.Ajustes -> stringResource(Res.string.settings_title)
+                    else -> stringResource(Res.string.app_name)
                 },
                 isScrolled = when (currentDestination) {
                     MainDestination.Inicio -> isInicioScrolled

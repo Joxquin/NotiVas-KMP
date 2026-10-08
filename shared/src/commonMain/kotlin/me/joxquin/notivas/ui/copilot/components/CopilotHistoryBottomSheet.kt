@@ -50,6 +50,8 @@ import me.joxquin.notivas.data.model.CopilotSession
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * BottomSheet para ver, cargar, renombrar y eliminar sesiones anteriores de chat.
@@ -76,7 +78,7 @@ fun CopilotHistoryBottomSheet(
     if (sessionToRename != null) {
         AlertDialog(
             onDismissRequest = { sessionToRename = null },
-            title = { Text("Renombrar Consulta") },
+            title = { Text(stringResource(Res.string.copilot_rename_query_title)) },
             text = {
                 OutlinedTextField(
                     value = renameText,
@@ -95,12 +97,12 @@ fun CopilotHistoryBottomSheet(
                         sessionToRename = null
                     }
                 ) {
-                    Text("Guardar")
+                    Text(stringResource(Res.string.copilot_btn_save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { sessionToRename = null }) {
-                    Text("Cancelar")
+                    Text(stringResource(Res.string.copilot_btn_cancel))
                 }
             }
         )
@@ -137,7 +139,7 @@ fun CopilotHistoryBottomSheet(
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "Historial de Consultas",
+                        text = stringResource(Res.string.copilot_history_title),
                         style = if (themeStyle == AppThemeStyle.MIUIX) {
                             MiuixTheme.textStyles.title2.copy(fontWeight = FontWeight.Bold)
                         } else {
@@ -150,7 +152,7 @@ fun CopilotHistoryBottomSheet(
                 IconButton(onClick = onDismiss) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cerrar",
+                        contentDescription = null,
                         tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceSecondary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -185,7 +187,7 @@ fun CopilotHistoryBottomSheet(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = "Nueva consulta",
+                            text = stringResource(Res.string.copilot_btn_new_query),
                             style = MiuixTheme.textStyles.body2.copy(fontWeight = FontWeight.Bold),
                             color = MiuixTheme.colorScheme.primary
                         )
@@ -215,7 +217,7 @@ fun CopilotHistoryBottomSheet(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Nueva consulta",
+                            text = stringResource(Res.string.copilot_btn_new_query),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -233,7 +235,7 @@ fun CopilotHistoryBottomSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No tienes consultas anteriores",
+                        text = stringResource(Res.string.copilot_no_past_queries),
                         style = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.textStyles.footnote1 else MaterialTheme.typography.bodyMedium,
                         color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceSecondary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -323,7 +325,7 @@ private fun SessionItemRow(
                         )
                         if (session.totalTokens > 0) {
                             Text(
-                                text = "${session.totalTokens} tokens",
+                                text = stringResource(Res.string.copilot_tokens_count, session.totalTokens),
                                 style = MiuixTheme.textStyles.footnote2,
                                 color = MiuixTheme.colorScheme.onSurfaceSecondary
                             )
@@ -335,7 +337,7 @@ private fun SessionItemRow(
                     IconButton(onClick = onRename, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Renombrar",
+                            contentDescription = stringResource(Res.string.copilot_action_rename),
                             tint = MiuixTheme.colorScheme.onSurfaceSecondary,
                             modifier = Modifier.size(16.dp)
                         )
@@ -343,7 +345,7 @@ private fun SessionItemRow(
                     IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Eliminar",
+                            contentDescription = stringResource(Res.string.copilot_action_delete),
                             tint = MiuixTheme.colorScheme.error,
                             modifier = Modifier.size(16.dp)
                         )
@@ -390,7 +392,7 @@ private fun SessionItemRow(
                         )
                         if (session.totalTokens > 0) {
                             Text(
-                                text = "${session.totalTokens} tokens",
+                                text = stringResource(Res.string.copilot_tokens_count, session.totalTokens),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -402,7 +404,7 @@ private fun SessionItemRow(
                     IconButton(onClick = onRename, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Renombrar",
+                            contentDescription = stringResource(Res.string.copilot_action_rename),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(16.dp)
                         )
@@ -410,7 +412,7 @@ private fun SessionItemRow(
                     IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Eliminar",
+                            contentDescription = stringResource(Res.string.copilot_action_delete),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(16.dp)
                         )

@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.ui.foros.ForosViewModel
 import me.joxquin.notivas.ui.notas.NotasViewModel
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -157,7 +159,7 @@ fun HerramientasMaterialContent(
                         .padding(horizontal = 20.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "Herramientas",
+                        text = stringResource(Res.string.herramientas_title),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 28.sp
@@ -166,7 +168,7 @@ fun HerramientasMaterialContent(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Utilidades y módulos NotiVas",
+                        text = stringResource(Res.string.herramientas_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -175,7 +177,7 @@ fun HerramientasMaterialContent(
 
             item {
                 Text(
-                    text = "MÓDULOS ACTIVOS",
+                    text = stringResource(Res.string.herramientas_modules_header),
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp

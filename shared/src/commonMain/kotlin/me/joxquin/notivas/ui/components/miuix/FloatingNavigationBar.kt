@@ -400,7 +400,7 @@ fun FloatingNavigationBar(
                     )
                 }
                 Text(
-                    text = item.label,
+                    text = org.jetbrains.compose.resources.stringResource(item.destination.titleRes),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Normal,
                     maxLines = 1,

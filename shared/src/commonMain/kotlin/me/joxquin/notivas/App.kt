@@ -21,6 +21,8 @@ import me.joxquin.notivas.ui.onboarding.OnboardingFlow
 import me.joxquin.notivas.ui.onboarding.OnboardingViewModel
 import me.joxquin.notivas.ui.theme.AppTheme
 
+import me.joxquin.notivas.util.ProvideAppLocale
+
 @Composable
 fun App() {
     // Contenedor compartido de dependencias de la aplicación
@@ -29,7 +31,6 @@ fun App() {
     val canvasRepository = remember { me.joxquin.notivas.di.AppModule.canvasRepository }
     val copilotRepository = remember { me.joxquin.notivas.di.AppModule.copilotRepository }
     val chatRepository = remember { me.joxquin.notivas.di.AppModule.copilotChatRepository }
-
 
     val onboardingViewModel = remember { OnboardingViewModel(canvasRepository) }
     val isPreferencesLoaded by preferencesManager.isLoaded.collectAsState(initial = false)
@@ -40,29 +41,34 @@ fun App() {
     val themeStyle by preferencesManager.themeStyle.collectAsState(
         initial = preferencesManager.getThemeStyle()
     )
+    val appLanguage by preferencesManager.appLanguage.collectAsState(
+        initial = preferencesManager.getAppLanguage()
+    )
 
-    AppTheme(
-        dynamicColor = isDynamicColorEnabled,
-        themeStyle = themeStyle
-    ) {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            if (!isPreferencesLoaded) {
-                // Estado de carga inicial mientras se lee el almacenamiento en disco (evita el parpadeo de onboarding)
-                Box(modifier = Modifier.fillMaxSize())
-            } else if (!isOnboardingCompleted) {
-                OnboardingFlow(
-                    viewModel = onboardingViewModel,
-                    onComplete = {
-                        onboardingViewModel.finishOnboarding()
-                    }
-                )
-            } else {
-                me.joxquin.notivas.ui.MainAppShell(
-                    canvasRepository = canvasRepository,
-                    copilotRepository = copilotRepository,
-                    chatRepository = chatRepository,
-                    preferencesManager = preferencesManager
-                )
+    ProvideAppLocale(language = appLanguage) {
+        AppTheme(
+            dynamicColor = isDynamicColorEnabled,
+            themeStyle = themeStyle
+        ) {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                if (!isPreferencesLoaded) {
+                    // Estado de carga inicial mientras se lee el almacenamiento en disco (evita el parpadeo de onboarding)
+                    Box(modifier = Modifier.fillMaxSize())
+                } else if (!isOnboardingCompleted) {
+                    OnboardingFlow(
+                        viewModel = onboardingViewModel,
+                        onComplete = {
+                            onboardingViewModel.finishOnboarding()
+                        }
+                    )
+                } else {
+                    me.joxquin.notivas.ui.MainAppShell(
+                        canvasRepository = canvasRepository,
+                        copilotRepository = copilotRepository,
+                        chatRepository = chatRepository,
+                        preferencesManager = preferencesManager
+                    )
+                }
             }
         }
     }

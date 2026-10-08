@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App & General -->
+    <string name="app_name">NotiVas</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="close">Cerrar</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="change">Cambiar</string>
+    <string name="retry">Reintentar</string>
+    <string name="sync">Sincronizar</string>
+    <string name="apply">Aplicar</string>
+    <string name="back">Atrás</string>
+    <string name="search">Buscar</string>
+    <string name="clear">Limpiar</string>
+    <string name="selected">Seleccionado</string>
+    <string name="manage">Gestionar</string>
+    <string name="view_all">Ver todo</string>
+    <string name="pending_badge">Pendiente</string>
+    <string name="unknown_error">Error desconocido</string>
+
+    <!-- Navigation -->
+    <string name="nav_inicio">Inicio</string>
+    <string name="nav_herramientas">Herramientas</string>
+    <string name="nav_copilot">Copilot IA</string>
+    <string name="nav_ajustes">Ajustes</string>
+
+    <!-- Settings / Ajustes -->
+    <string name="settings_title">Ajustes &amp; Perfil</string>
+    <string name="settings_subtitle">Gestión de cuenta Canvas LMS y preferencias del sistema</string>
+    
+    <!-- Language Settings -->
+    <string name="settings_language_section_title">IDIOMA Y REGIÓN</string>
+    <string name="settings_language_title">Idioma de la aplicación</string>
+    <string name="settings_language_dialog_title">Seleccionar Idioma</string>
+    <string name="settings_language_dialog_desc">Selecciona el idioma para toda la interfaz:</string>
+    <string name="language_system">Predeterminado del sistema</string>
+    <string name="language_system_summary">Seguir el idioma del dispositivo (Español / Inglés)</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_spanish_summary">Forzar interfaz en español</string>
+    <string name="language_english">English (Inglés)</string>
+    <string name="language_english_summary">Forzar interfaz en inglés</string>
+
+    <!-- Visual System & Themes -->
+    <string name="settings_theme_section_title">SISTEMA VISUAL Y TEMAS</string>
+    <string name="settings_theme_title">Estilo de Diseño</string>
+    <string name="settings_theme_summary">Experiencia visual activa</string>
+    <string name="settings_theme_dialog_title">Estilo de Diseño</string>
+    <string name="settings_theme_dialog_desc">Selecciona el motor de interfaz visual y tokens para la aplicación:</string>
+    <string name="theme_material">Material Design 3</string>
+    <string name="theme_material_desc">Tokens Material 3 Expressive &amp; paleta dinámica Monet</string>
+    <string name="theme_miuix">HyperOS Miuix</string>
+    <string name="theme_miuix_desc">Componentes Xiaomi HyperOS Miuix, Squircle &amp; Glass</string>
+    <string name="dynamic_color_title">Color dinámico (Monet)</string>
+    <string name="dynamic_color_summary_on">Extraer paleta del fondo de pantalla</string>
+    <string name="dynamic_color_summary_off">Paleta predeterminada</string>
+
+    <!-- Notifications -->
+    <string name="settings_notif_section_title">NOTIFICACIONES Y RECORDATORIOS</string>
+    <string name="notif_24h_title">24 horas antes</string>
+    <string name="notif_24h_desc">Recordatorio de tareas para mañana</string>
+    <string name="notif_3h_title">3 horas antes</string>
+    <string name="notif_3h_desc">Alerta de entrega próxima urgente</string>
+    <string name="notif_30m_title">30 minutos antes</string>
+    <string name="notif_30m_desc">Alerta de cuenta regresiva final</string>
+    <string name="notif_morning_title">Resumen Matutino Diario</string>
+    <string name="notif_morning_desc">Resumen de tareas del día a las 8:00 AM</string>
+    <string name="sync_interval_title">Frecuencia de Sincronización</string>
+    <string name="sync_interval_desc">Intervalo para comprobar novedades de Canvas en segundo plano</string>
+    <string name="sync_interval_dialog_title">Frecuencia de sincronización</string>
+    <string name="sync_interval_dialog_desc">Elige el intervalo de sincronización periódica en segundo plano para tareas, anuncios y notas:</string>
+    <string name="sync_interval_15m">Cada 15 minutos (Recomendado)</string>
+    <string name="sync_interval_30m">Cada 30 minutos</string>
+    <string name="sync_interval_1h">Cada 1 hora</string>
+    <string name="sync_interval_3h">Cada 3 horas</string>
+    <string name="sync_interval_6h">Cada 6 horas (Ahorro de batería)</string>
+    <string name="sync_interval_custom_format">Cada %1$d minutos</string>
+
+    <!-- AI Copilot Settings -->
+    <string name="settings_copilot_section_title">INTELIGENCIA Y COPILOT IA</string>
+    <string name="copilot_enable_title">Activar Asistente Copilot</string>
+    <string name="copilot_enable_desc">Sugerencias contextuales, análisis en chat y tutoría</string>
+    <string name="openrouter_api_key_title">Clave de API OpenRouter</string>
+    <string name="openrouter_api_key_desc_not_set">Sin configurar (requerido)</string>
+    <string name="openrouter_api_key_dialog_title">Clave de API OpenRouter</string>
+    <string name="openrouter_api_key_dialog_desc">Ingresa tu clave de OpenRouter para dotar al asistente con modelos de frontera (Gemini, Claude, GPT, Llama):</string>
+    <string name="openrouter_api_key_placeholder">sk-or-v1-...</string>
+    <string name="openrouter_api_key_get_key">Obtener clave gratuita en OpenRouter</string>
+    <string name="openrouter_model_title">Modelo de IA</string>
+    <string name="openrouter_model_dialog_title">Seleccionar Modelo IA</string>
+    <string name="openrouter_model_dialog_desc">Selecciona el modelo LLM para procesar tus consultas:</string>
+    <string name="openrouter_balance_title">Saldo de la Cuenta</string>
+    <string name="openrouter_balance_subtitle">Consumo total y créditos disponibles</string>
+    <string name="openrouter_balance_usage">Uso: $%1$s / $%2$s USD</string>
+    <string name="tokens_used_format">Total tokens usados: %1$d</string>
+
+    <!-- Security and Session -->
+    <string name="settings_security_section_title">SEGURIDAD Y ZONA CRÍTICA</string>
+    <string name="biometric_lock_title">Bloqueo Biométrico</string>
+    <string name="biometric_lock_desc">Solicitar huella o rostro al abrir la app</string>
+    <string name="api_diagnostics_title">Diagnóstico de API Canvas</string>
+    <string name="api_diagnostics_summary">Sync %1$s · Latencia: %2$d ms</string>
+    <string name="last_sync_label">Última sinc.: %1$s</string>
+    <string name="api_latency_label">Latencia API: %1$d ms</string>
+    <string name="logout_button">Desvincular Cuenta Canvas</string>
+    <string name="logout_button_desc">Elimina token y datos en caché local</string>
+    <string name="logout_dialog_title">¿Desvincular cuenta?</string>
+    <string name="logout_dialog_text">Se cerrará tu sesión, se limpiará la base de datos local y se destruirá el token de acceso seguro.</string>
+    <string name="logout_confirm">Confirmar y salir</string>
+
+    <!-- Student Identity -->
+    <string name="student_id_title">IDENTIDAD ESTUDIANTIL</string>
+    <string name="student_unlinked">Estudiante Canvas</string>
+    <string name="student_avatar_cd">Foto de perfil</string>
+    <string name="student_verify_token">Verificar Sesión</string>
+    <string name="student_verifying">Verificando…</string>
+    <string name="student_auth_mode_cookies">Sesión Web</string>
+    <string name="student_auth_mode_token">Token API</string>
+
+    <!-- Focus & Habits Section -->
+    <string name="focus_section_title">Enfoque &amp; Hábitos de Estudio</string>
+    <string name="focus_section_desc">Automatización vinculada al calendario</string>
+    <string name="focus_mode_title">Modo Enfoque automático</string>
+    <string name="focus_mode_desc">Activar perfil \"No Molestar\" si una entrega vence en menos de 4h</string>
+
+    <!-- App Info Footer -->
+    <string name="app_version_format">NotiVas v%1$s (%2$d)</string>
+    <string name="app_build_desc">Cliente Nativo Canvas LMS • Offline-First</string>
+
+    <!-- Dashboard / Inicio -->
+    <string name="greeting_hello">Hola</string>
+    <string name="greeting_hello_name">Hola, %1$s</string>
+    <string name="greeting_morning">Buenos días</string>
+    <string name="greeting_afternoon">Buenas tardes</string>
+    <string name="greeting_evening">Buenas noches</string>
+    <string name="greeting_night">Buenas noches</string>
+    <string name="sync_status_syncing">Sincronizando...</string>
+    <string name="sync_status_synced">Sincronizado</string>
+    <string name="sync_status_offline">Sin conexión</string>
+    <string name="urgent_tasks_title">Para Hoy y Mañana</string>
+    <string name="urgent_badge_count">%1$d urgentes</string>
+    <string name="no_urgent_tasks">¡No tienes entregas pendientes!</string>
+    <string name="urgent_due_today">Vence hoy</string>
+    <string name="urgent_due_tomorrow">Vence mañana</string>
+    <string name="urgent_due_days_format">Vence en %1$d días</string>
+    <string name="courses_section_title">Cursos Activos</string>
+    <string name="courses_enrolled_format">%1$d inscritos</string>
+    <string name="weekly_schedule_title">Cronograma Semanal</string>
+    <string name="no_tasks_for_selected_day">Sin entregas para este día</string>
+
+    <!-- Tools / Herramientas & Grades -->
+    <string name="herramientas_title">Herramientas</string>
+    <string name="herramientas_subtitle">Utilidades y módulos NotiVas</string>
+    <string name="herramientas_modules_header">MÓDULOS ACTIVOS</string>
+    <string name="grades_progreso_title">Progreso Académico</string>
+    <string name="grades_progreso_desc">Evaluaciones continuas, notas y proyecciones</string>
+    <string name="foros_hub_title">Foros Académicos</string>
+    <string name="foros_hub_desc">Consulta dudas, colabora y redacta respuestas</string>
+    <string name="grades_simulation_title">Simulador de Notas (What-If)</string>
+    <string name="grades_simulation_desc">Simula notas finales y escenarios de aprobación</string>
+    <string name="current_average_label">Promedio Actual</string>
+    <string name="desired_grade_label">Nota Objetivo</string>
+    <string name="needed_score_label">Puntaje Necesario</string>
+    <string name="status_good_performance">Buen rendimiento</string>
+    <string name="status_above_average">Arriba del promedio</string>
+    <string name="status_at_risk">En riesgo</string>
+    <string name="status_unevaluated">Sin evaluar</string>
+    <string name="create_group_button">Crear Grupo de Evaluación</string>
+    <string name="import_template_button">Importar Plantilla</string>
+
+    <!-- Forums / Foros -->
+    <string name="foros_title">Foros Académicos</string>
+    <string name="foros_subtitle_format">Canvas LMS • %1$d activos</string>
+    <string name="foros_syncing">Sincronizando foros...</string>
+    <string name="foros_loading">Descargando foros académicos de Canvas LMS...</string>
+    <string name="foro_detail_title">Detalle del Foro</string>
+    <string name="foros_search_placeholder">Buscar foros, temas o profesores...</string>
+    <string name="foros_search_empty_query">No se encontraron foros con \'%1$s\'</string>
+    <string name="foros_empty_category">No hay foros disponibles en esta categoría</string>
+    <string name="foros_empty_suggestion">Prueba cambiando de curso o filtro para ver más discusiones.</string>
+    <string name="foros_filter_all">Todos</string>
+    <string name="foros_filter_unread">No leídos</string>
+    <string name="foros_filter_pinned">Fijados</string>
+    <string name="foros_clear_search">Limpiar búsqueda</string>
+    <string name="foro_due_none">Sin fecha de cierre</string>
+    <string name="foro_due_closed">Cerrado</string>
+    <string name="foro_due_today_hours">Vence hoy (~%1$d h)</string>
+    <string name="foro_due_today_minutes">Vence hoy (~%1$d min)</string>
+    <string name="foro_due_days">Vence en %1$d días</string>
+    <string name="foro_graded_closed">Calificado • Cerrado</string>
+    <string name="foro_closed_expired">Cerrado / Vencido</string>
+    <string name="foro_points_graded">%1$d Pts • Calificado</string>
+    <string name="foro_formative">Formativo / Sin puntos</string>
+    <string name="foro_score_obtained">Calificación obtenida</string>
+    <string name="foro_available_to_participate">Disponible para participar</string>
+    <string name="foro_closed_status">Foro cerrado</string>
+    <string name="no_forums_found">No se encontraron discusiones</string>
+    <string name="foro_reply_placeholder">Escribe tu aporte aquí...</string>
+    <string name="foro_send_reply">Publicar Respuesta</string>
+    <string name="foro_copilot_suggest">Sugerencia Copilot</string>
+    <string name="foro_replies_count">%1$d respuestas</string>
+
+    <!-- Copilot AI Screen -->
+    <string name="copilot_title">Copilot IA</string>
+    <string name="copilot_new_chat">Nuevo Chat</string>
+    <string name="copilot_history_title">Historial de Conversaciones</string>
+    <string name="copilot_input_placeholder">Pregunta sobre tus tareas, notas o syllabus...</string>
+    <string name="copilot_send">Enviar</string>
+    <string name="copilot_thinking">Pensando...</string>
+    <string name="copilot_hero_title">¿En qué puedo ayudarte hoy?</string>
+    <string name="copilot_hero_subtitle">Tu copiloto académico con contexto directo de Canvas LMS</string>
+    <string name="copilot_badge_courses">%1$d cursos activos</string>
+    <string name="copilot_suggestion_summary">Resume mis entregas urgentes de esta semana</string>
+    <string name="copilot_suggestion_grades">¿Cuánto necesito para aprobar mis cursos?</string>
+    <string name="copilot_suggestion_forums">Redacta una respuesta para el foro pendiente</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Bienvenido a NotiVas</string>
+    <string name="onboarding_welcome_subtitle">Tu asistente moderno, inteligente y offline-first para Canvas LMS</string>
+    <string name="onboarding_start_button">Comenzar</string>
+    <string name="onboarding_domain_title">Selecciona tu Universidad</string>
+    <string name="onboarding_login_sso">Inicio Institucional (SSO Web)</string>
+    <string name="onboarding_login_token">Token Manual de Acceso</string>
+
+    <!-- Bento Cards & Herramientas extras -->
+    <string name="bento_progress_title">Progreso</string>
+    <string name="bento_progress_subtitle">Notas y promedio actual</string>
+    <string name="bento_active_course">Curso activo</string>
+    <string name="bento_no_graded_assignments">Sin evaluaciones calificadas</string>
+    <string name="bento_evaluated_prefix">Evaluada: %1$d%%</string>
+    <string name="bento_projected_prefix">Proyectada: %1$s</string>
+    <string name="bento_average_prefix">Promedio: %1$s</string>
+    <string name="bento_simulator_title">Simulador</string>
+    <string name="bento_simulator_subtitle">Nota mínima y escenarios de aprobación</string>
+    <string name="bento_courses_count">%1$d Cursos</string>
+    <string name="bento_projection_label">PROYECCIÓN</string>
+    <string name="bento_weighted_avg_desc">Promedio ponderado estimado</string>
+    <string name="bento_foros_title">Foros Académicos</string>
+    <string name="bento_foros_subtitle">Debates y respuestas con asistencia Copilot IA</string>
+    <string name="bento_foros_active_count">%1$d activos</string>
+    <string name="bento_foros_all_caught_up">Al día</string>
+    <string name="bento_foros_urgent_today_h">Hoy (~%1$d h)</string>
+    <string name="bento_foros_urgent_today_m">Hoy (~%1$d min)</string>
+    <string name="bento_foros_in_days">En %1$d días</string>
+    <string name="bento_foros_soon">Pronto</string>
+    <string name="bento_foros_rubric">Rúbrica: %1$d pts</string>
+    <string name="bento_foros_active_part">Participación activa</string>
+    <string name="bento_foros_replies_count">%1$d aportes registrados</string>
+    <string name="bento_foros_go_to_discussion">Ir al debate →</string>
+    <string name="bento_archive_title">Historial &amp; Archivo de Tareas</string>
+    <string name="bento_archive_subtitle">Descartadas y entregas pasadas (%1$d archivadas)</string>
+    <string name="bento_archived_count">%1$d Archivadas</string>
+
+    <!-- Copilot extras -->
+    <string name="copilot_model_prefix">Modelo: %1$s</string>
+    <string name="copilot_courses_synced">%1$d cursos sincronizados</string>
+    <string name="copilot_hero_description">Asistente universitario conectado en vivo con tus tareas, rúbricas de Canvas LMS y simulador de notas.</string>
+    <string name="copilot_suggestions_header">SUGERENCIAS RÁPIDAS</string>
+    <string name="copilot_suggestions_label">Sugerencias</string>
+    <string name="copilot_suggestion_urgent_q">¿Qué tareas tengo pendientes de entrega esta semana?</string>
+    <string name="copilot_suggestion_rubrics_q">¿Cuáles son las consignas y rúbricas de mi próxima tarea?</string>
+    <string name="copilot_suggestion_final_exam_q">¿Cuánto necesito sacar en el examen final para aprobar mis cursos?</string>
+    <string name="copilot_rename_query_title">Renombrar Consulta</string>
+    <string name="copilot_no_past_queries">No tienes consultas anteriores</string>
+    <string name="copilot_tokens_count">%1$d tokens</string>
+    <string name="copilot_btn_save">Guardar</string>
+    <string name="copilot_btn_cancel">Cancelar</string>
+    <string name="copilot_btn_new_query">Nueva consulta</string>
+    <string name="copilot_action_rename">Renombrar</string>
+    <string name="copilot_action_delete">Eliminar</string>
+
+    <!-- Foros extras -->
+    <string name="foros_btn_enter_forum">Ingresar al foro</string>
+    <string name="foros_author_default">Profesor del curso</string>
+    <string name="foros_default_message_prompt">Accede al foro de debate para consultar la consigna y participar activamente con tus compañeros.</string>
+
+    <!-- Additional Dashboard & Miuix Strings -->
+    <string name="dashboard_academic_title">Dashboard Académico y Seguimiento Canvas</string>
+    <string name="dashboard_this_week">Esta semana</string>
+    <string name="unconfigured_banner_title">Configuración de Fórmulas</string>
+    <string name="unconfigured_banner_desc_single">1 curso sin grupos ni pesos definidos</string>
+    <string name="unconfigured_banner_desc_multiple">%1$d cursos sin ponderaciones</string>
+    <string name="unconfigured_banner_btn">Configurar fórmulas y grupos</string>
+    <string name="urgent_critical_badge">%1$d Críticas</string>
+    <string name="urgent_tasks_all_clear">¡Todo al día! No tienes entregas urgentes pendientes.</string>
+    <string name="urgent_due_overdue">Vencida</string>
+    <string name="urgent_due_within_1h">&lt; 1h</string>
+    <string name="urgent_due_hours_format">En %1$dh</string>
+    <string name="urgent_virtual">Virtual</string>
+    <string name="course_pending_format">%1$d pendientes</string>
+    <string name="course_up_to_date">Al día ✓</string>
+
+    <!-- Additional Copilot Strings -->
+    <string name="copilot_topbar_title">Copilot Académico</string>
+    <string name="copilot_topbar_subtitle">Asistente IA para tus cursos</string>
+    <string name="copilot_warning_disabled_title">Copilot Desactivado</string>
+    <string name="copilot_warning_disabled_desc">Activa NotiVas Copilot en Ajustes</string>
+    <string name="copilot_warning_apikey_title">API Key Requerida</string>
+    <string name="copilot_warning_apikey_desc">Configura tu OpenRouter Key en Ajustes</string>
+    <string name="copilot_warning_btn_settings">Ajustes</string>
+    <string name="copilot_input_placeholder_miuix">Pregunta a Copilot o usa @curso...</string>
+    <string name="copilot_mention_course">Mencionar curso</string>
+
+    <!-- Foros Filter Bottom Sheet & Sort Options -->
+    <string name="foros_filter_sheet_title">Filtros y Ordenamiento</string>
+    <string name="foros_filter_sheet_subtitle">Personaliza la lista de foros</string>
+    <string name="foros_filter_section_category">Categoría y Estado</string>
+    <string name="foros_filter_section_subject">Filtro por Asignatura</string>
+    <string name="foros_filter_selected_course">Curso Seleccionado</string>
+    <string name="foros_filter_all_courses">Todos los cursos</string>
+    <string name="foros_filter_section_sort">Orden de Visualización</string>
+    <string name="foros_filter_sort_criteria">Criterio</string>
+    <string name="foros_filter_tab_all">Todos los foros</string>
+    <string name="foros_filter_tab_points">Foros con calificación (Puntos)</string>
+    <string name="foros_filter_tab_no_points">Foros sin calificación</string>
+    <string name="foros_filter_tab_expired">Foros vencidos</string>
+    <string name="foros_sort_due_asc">Fecha de vencimiento (Próximos)</string>
+    <string name="foros_sort_due_desc">Fecha de vencimiento (Lejanos)</string>
+    <string name="foros_sort_recent">Publicados recientemente</string>
+    <string name="foros_sort_replies">Mayor número de intervenciones</string>
+    <string name="foros_sort_title_asc">Nombre del tema (A - Z)</string>
+    <string name="foros_action_done">Listo</string>
+
+    <!-- Foro Detail & Consigna & Editor & Replies -->
+    <string name="foro_consigna_header">CONSIGNA OFICIAL CANVAS LMS</string>
+    <string name="foro_mandatory">Obligatorio</string>
+    <string name="foro_optional">Opcional</string>
+    <string name="foro_rubric_header_format">Rúbrica de Evaluación (%1$d pts max)</string>
+    <string name="foro_rubric_criterion_default">Criterio de evaluación</string>
+    <string name="foro_rubric_criterion_desc_default">Criterio oficial establecido en Canvas</string>
+    <string name="foro_your_reply_header">Tu Respuesta Académica</string>
+    <string name="foro_draft_saved">¡Borrador guardado!</string>
+    <string name="foro_draft_local">Borrador local</string>
+    <string name="foro_copilot_banner_title">¿Necesitas estructurar tu argumento?</string>
+    <string name="foro_copilot_banner_desc">Copilot analiza la consigna de Canvas LMS y la rúbrica para asistirte.</string>
+    <string name="foro_copilot_btn_structure">Estructurar respuesta con Copilot</string>
+    <string name="foro_words_chars_count">%1$d palabras (%2$d caracteres)</string>
+    <string name="foro_min_suggested_words">Mínimo sugerido: 150</string>
+    <string name="foro_saved_badge">¡Guardado!</string>
+    <string name="foro_save_draft_btn">Guardar Borrador</string>
+    <string name="foro_publish_btn">Publicar en Canvas</string>
+    <string name="foro_replies_recent_header">Aportes recientes (%1$d respuestas)</string>
+    <string name="foro_view_all_replies">Ver todos (%1$d)</string>
+    <string name="foro_show_less">Mostrar menos</string>
+    <string name="foro_no_replies_yet">Aún no hay intervenciones en este foro. ¡Sé el primero en responder!</string>
+
+    <string name="foro_loading_replies">Cargando respuestas de compañeros...</string>
+    <string name="foro_no_replies_subtitle">Sé el primero de tu clase en publicar una intervención académica.</string>
+    <string name="foro_show_more_replies">Mostrar %1$d aportes más</string>
+    <string name="foro_author_classmate">Compañero</string>
+    <string name="foro_author_classmate_role">Compañero de clase</string>
+    <string name="foro_show_more">Ver más...</string>
+    <string name="foro_show_less_action">Ver menos</string>
+
+    <!-- Copilot Assistant Sheet -->
+    <string name="copilot_assist_return_to_forum">Volver al Foro</string>
+    <string name="copilot_assist_academic_copilot">COPILOT ACADÉMICO</string>
+    <string name="copilot_assist_strategy_for">Estrategia para %1$s</string>
+    <string name="copilot_assist_analyzing_with">Analizando consigna con %1$s...</string>
+    <string name="copilot_assist_extracting">Extrayendo objetivos de aprendizaje y estructura de respuesta</string>
+    <string name="copilot_assist_failed_strategy">No se pudo generar la estrategia</string>
+    <string name="copilot_assist_retry_btn">Reintentar</string>
+    <string name="copilot_assist_objective_detected">Objetivo Detectado</string>
+    <string name="copilot_assist_technical_rigor">Rigor Técnico</string>
+    <string name="copilot_assist_counterexample">Contraejemplo</string>
+    <string name="copilot_assist_interaction">Interacción</string>
+    <string name="copilot_assist_structure_header">ESTRUCTURA ARGUMENTAL RECOMENDADA</string>
+    <string name="copilot_assist_phases_count">3 Fases</string>
+    <string name="copilot_assist_tone_header">AFINADOR DE TONO &amp; PERSPECTIVA</string>
+    <string name="copilot_assist_tone_formal">Más formal y técnico</string>
+    <string name="copilot_assist_tone_formal_prompt">Haz el texto más riguroso, formal y de nivel universitario avanzado.</string>
+    <string name="copilot_assist_tone_concise">Más conciso (-30%)</string>
+    <string name="copilot_assist_tone_concise_prompt">Resume la respuesta haciéndola 30% más concisa y directa al grano.</string>
+    <string name="copilot_assist_tone_citations">Añadir citas y teoría</string>
+    <string name="copilot_assist_tone_citations_prompt">Incluye fundamentación teórica profunda y referencias metodológicas.</string>
+    <string name="copilot_assist_tone_counterexample">Enfatizar contraejemplo</string>
+    <string name="copilot_assist_tone_counterexample_prompt">Profundiza en contraejemplos detallados y casos de borde.</string>
+    <string name="copilot_assist_draft_suggested">Borrador sugerido</string>
+    <string name="copilot_assist_words_count">%1$d palabras</string>
+    <string name="copilot_assist_academic_tone">Tono Académico</string>
+    <string name="copilot_assist_copied">¡Copiado!</string>
+    <string name="copilot_assist_copy_text">Copiar texto</string>
+    <string name="copilot_assist_edit_draft">Editar borrador</string>
+    <string name="copilot_assist_insert_btn">Insertar en mi respuesta</string>
+</resources>

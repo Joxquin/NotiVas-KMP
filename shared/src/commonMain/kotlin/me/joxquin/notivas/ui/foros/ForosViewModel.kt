@@ -396,6 +396,7 @@ class ForosViewModel(
                 appendLine("2. PROHIBIDO incluir despedidas o firmas al final (NO 'Saludos cordiales', 'Atentamente', 'Espero sus comentarios', etc.).")
                 appendLine("3. PROHIBIDO incluir preguntas de cierre conversacionales al usuario o compañeros.")
                 appendLine("4. 'suggestedDraft' debe ser EXCLUSIVAMENTE el desarrollo analítico, directo, sustantivo y estructurado que responde con el mayor rigor a la consigna académica y los criterios de evaluación.")
+                appendLine("5. 'suggestedDraft' debe redactarse en el mismo idioma de la consigna del profesor o del curso (ej. si la consigna o curso es en inglés, redacta en inglés; si es en español, en español).")
                 appendLine()
                 appendLine("Genera una respuesta en formato JSON EXACTO sin bloques markdown adicionales:")
                 appendLine("""

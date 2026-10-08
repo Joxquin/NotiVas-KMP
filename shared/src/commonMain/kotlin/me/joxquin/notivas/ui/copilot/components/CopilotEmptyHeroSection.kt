@@ -36,6 +36,8 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -118,7 +120,7 @@ fun CopilotEmptyHeroSection(
                                 .background(MiuixTheme.colorScheme.primary)
                         )
                         Text(
-                            text = "Modelo: $modelLabel",
+                            text = stringResource(Res.string.copilot_model_prefix, modelLabel),
                             style = MiuixTheme.textStyles.footnote2.copy(fontWeight = FontWeight.Medium),
                             color = MiuixTheme.colorScheme.onSurfaceSecondary
                         )
@@ -150,7 +152,7 @@ fun CopilotEmptyHeroSection(
                                 .background(Color(0xFF34D399))
                         )
                         Text(
-                            text = "$coursesCount cursos sincronizados",
+                            text = stringResource(Res.string.copilot_courses_synced, coursesCount),
                             style = MiuixTheme.textStyles.footnote2.copy(fontWeight = FontWeight.Medium),
                             color = MiuixTheme.colorScheme.onSurfaceSecondary
                         )
@@ -161,7 +163,7 @@ fun CopilotEmptyHeroSection(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Asistente universitario conectado en vivo con tus tareas, rúbricas de Canvas LMS y simulador de notas.",
+                text = stringResource(Res.string.copilot_hero_description),
                 style = MiuixTheme.textStyles.subtitle,
                 color = MiuixTheme.colorScheme.onSurfaceSecondary,
                 textAlign = TextAlign.Center,
@@ -244,7 +246,7 @@ fun CopilotEmptyHeroSection(
                             modifier = Modifier.size(12.dp)
                         )
                         Text(
-                            text = "$coursesCount cursos",
+                            text = stringResource(Res.string.courses_enrolled_format, coursesCount),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -255,7 +257,7 @@ fun CopilotEmptyHeroSection(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Pregunta sobre tus tareas, rúbricas de Canvas LMS o simulaciones de notas.",
+                text = stringResource(Res.string.copilot_hero_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

@@ -28,6 +28,11 @@ import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.herramientas_title
+import me.joxquin.notivas.shared.resources.herramientas_subtitle
+import me.joxquin.notivas.shared.resources.herramientas_modules_header
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -90,14 +95,14 @@ fun HerramientasMiuixContent(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Herramientas",
+                            text = stringResource(Res.string.herramientas_title),
                             fontSize = MiuixTheme.textStyles.title1.fontSize,
                             fontWeight = FontWeight.Normal,
                             color = MiuixTheme.colorScheme.onSurface
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            text = "Utilidades y módulos NotiVas",
+                            text = stringResource(Res.string.herramientas_subtitle),
                             style = MiuixTheme.textStyles.body2,
                             color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                         )
@@ -107,7 +112,7 @@ fun HerramientasMiuixContent(
 
             item {
                 SmallTitle(
-                    text = "MÓDULOS ACTIVOS",
+                    text = stringResource(Res.string.herramientas_modules_header),
                     modifier = Modifier.padding(horizontal = 20.dp)
                 )
             }

@@ -82,6 +82,11 @@ kotlin {
     }
 }
 
+compose.resources {
+    packageOfResClass = "me.joxquin.notivas.shared.resources"
+    publicResClass = true
+}
+
 room {
     schemaDirectory("$projectDir/schemas")
 }

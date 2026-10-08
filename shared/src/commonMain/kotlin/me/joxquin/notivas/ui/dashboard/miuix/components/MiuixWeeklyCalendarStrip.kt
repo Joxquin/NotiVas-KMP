@@ -26,6 +26,8 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 private val MiuixBlue = Color(0xFF3482FF)
 private val MiuixGreen = Color(0xFF66BB6A)
@@ -60,7 +62,7 @@ fun MiuixWeeklyCalendarStrip(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SmallTitle(
-                text = "ESTA SEMANA",
+                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.dashboard_this_week).uppercase(),
                 modifier = Modifier.weight(1f, fill = false)
             )
             Text(

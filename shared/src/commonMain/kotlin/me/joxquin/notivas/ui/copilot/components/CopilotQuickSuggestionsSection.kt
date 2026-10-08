@@ -36,6 +36,8 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 private data class SuggestionItem(
     val icon: ImageVector,
@@ -52,17 +54,17 @@ fun CopilotQuickSuggestionsSection(
     val suggestions = listOf(
         SuggestionItem(
             icon = Icons.Default.CalendarMonth,
-            text = "¿Qué tareas tengo pendientes de entrega esta semana?",
+            text = stringResource(Res.string.copilot_suggestion_urgent_q),
             iconTint = Color(0xFF3482FF)
         ),
         SuggestionItem(
             icon = Icons.AutoMirrored.Filled.Assignment,
-            text = "¿Cuáles son las consignas y rúbricas de mi próxima tarea?",
+            text = stringResource(Res.string.copilot_suggestion_rubrics_q),
             iconTint = Color(0xFFA855F7)
         ),
         SuggestionItem(
             icon = Icons.Default.Calculate,
-            text = "¿Cuánto necesito sacar en el examen final para aprobar mis cursos?",
+            text = stringResource(Res.string.copilot_suggestion_final_exam_q),
             iconTint = Color(0xFFFFB74D)
         )
     )
@@ -74,7 +76,7 @@ fun CopilotQuickSuggestionsSection(
                 .padding(horizontal = 16.dp, vertical = 6.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SmallTitle(text = "SUGERENCIAS RÁPIDAS")
+            SmallTitle(text = stringResource(Res.string.copilot_suggestions_header))
 
             suggestions.forEach { item ->
                 Box(
@@ -153,7 +155,7 @@ fun CopilotQuickSuggestionsSection(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Sugerencias",
+                text = stringResource(Res.string.copilot_suggestions_label),
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)

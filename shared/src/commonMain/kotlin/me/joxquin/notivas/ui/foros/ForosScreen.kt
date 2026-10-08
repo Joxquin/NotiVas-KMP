@@ -74,6 +74,8 @@ import me.joxquin.notivas.ui.foros.components.ForosCardItem
 import me.joxquin.notivas.ui.foros.components.ForosFilterBottomSheet
 import me.joxquin.notivas.ui.foros.components.ForosSearchAndFilters
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,7 +134,7 @@ fun ForosScreen(
                                     color = MiuixTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "Descargando foros académicos de Canvas LMS...",
+                                    text = stringResource(Res.string.foros_loading),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                                 )
@@ -168,14 +170,14 @@ fun ForosScreen(
                                 }
 
                                 Text(
-                                    text = if (uiState.searchQuery.isNotBlank()) "No se encontraron foros con '${uiState.searchQuery}'" else "No hay foros disponibles en esta categoría",
+                                    text = if (uiState.searchQuery.isNotBlank()) stringResource(Res.string.foros_search_empty_query, uiState.searchQuery) else stringResource(Res.string.foros_empty_category),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MiuixTheme.colorScheme.onSurface,
                                     textAlign = TextAlign.Center
                                 )
 
                                 Text(
-                                    text = "Prueba cambiando de curso o filtro para ver más discusiones.",
+                                    text = stringResource(Res.string.foros_empty_suggestion),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                     textAlign = TextAlign.Center
@@ -247,12 +249,12 @@ fun ForosScreen(
                                     }
                                     Column {
                                         Text(
-                                            text = "Foros Académicos",
+                                            text = stringResource(Res.string.foros_title),
                                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (uiState.isLoading) "Sincronizando foros..." else "Canvas LMS • ${uiState.pendingCount} activos",
+                                            text = if (uiState.isLoading) stringResource(Res.string.foros_syncing) else stringResource(Res.string.foros_subtitle_format, uiState.pendingCount),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1
@@ -264,7 +266,7 @@ fun ForosScreen(
                                 IconButton(onClick = onBack) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Atrás",
+                                        contentDescription = stringResource(Res.string.back),
                                         tint = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
@@ -273,7 +275,7 @@ fun ForosScreen(
                                 IconButton(onClick = { viewModel.setShowFilterBottomSheet(true) }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Tune,
-                                        contentDescription = "Filtros y Ordenamiento",
+                                        contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -327,7 +329,7 @@ fun ForosScreen(
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "Descargando foros académicos de Canvas LMS...",
+                                    text = stringResource(Res.string.foros_loading),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -363,14 +365,14 @@ fun ForosScreen(
                                 }
 
                                 Text(
-                                    text = if (uiState.searchQuery.isNotBlank()) "No se encontraron foros con '${uiState.searchQuery}'" else "No hay foros disponibles en esta categoría",
+                                    text = if (uiState.searchQuery.isNotBlank()) stringResource(Res.string.foros_search_empty_query, uiState.searchQuery) else stringResource(Res.string.foros_empty_category),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface,
                                     textAlign = TextAlign.Center
                                 )
 
                                 Text(
-                                    text = "Prueba cambiando de curso o filtro para ver más discusiones.",
+                                    text = stringResource(Res.string.foros_empty_suggestion),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center

@@ -58,6 +58,8 @@ import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import androidx.compose.material.icons.filled.Lock
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -99,7 +101,7 @@ fun ForoDetailEditorSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Tu Respuesta Académica",
+                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_your_reply_header),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = onSurface
             )
@@ -109,7 +111,11 @@ fun ForoDetailEditorSection(
                 color = if (isDraftSaved) Color(0xFF4CAF50).copy(alpha = 0.2f) else editorBg
             ) {
                 Text(
-                    text = if (isDraftSaved) "¡Borrador guardado!" else "Borrador local",
+                    text = if (isDraftSaved) {
+                        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_draft_saved)
+                    } else {
+                        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_draft_local)
+                    },
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 11.sp,
                         fontWeight = if (isDraftSaved) FontWeight.Bold else FontWeight.Normal
@@ -157,12 +163,12 @@ fun ForoDetailEditorSection(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "¿Necesitas estructurar tu argumento?",
+                                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_copilot_banner_title),
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                 color = onSurface
                             )
                             Text(
-                                text = "Copilot analiza la consigna de Canvas LMS y la rúbrica para asistirte.",
+                                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_copilot_banner_desc),
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 16.sp),
                                 color = onSurfaceVariant
                             )
@@ -193,7 +199,7 @@ fun ForoDetailEditorSection(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
-                                    text = "Estructurar respuesta con Copilot",
+                                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_copilot_btn_structure),
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                                     color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
                                 )
@@ -243,7 +249,7 @@ fun ForoDetailEditorSection(
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "ES-LA",
+                            text = "AUTO",
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                             color = onSurfaceVariant
                         )
@@ -272,7 +278,7 @@ fun ForoDetailEditorSection(
                         decorationBox = { innerTextField ->
                             if (draftText.isEmpty()) {
                                 Text(
-                                    text = "Escribe tu intervención académica aquí o genera una estructura con Copilot...",
+                                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_reply_placeholder),
                                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
                                     color = onSurfaceVariant.copy(alpha = 0.7f)
                                 )
@@ -299,7 +305,7 @@ fun ForoDetailEditorSection(
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "$wordCount palabras ($charCount caracteres)",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_words_chars_count, wordCount, charCount),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 11.sp,
                                 fontWeight = if (isWordCountMet) FontWeight.Bold else FontWeight.Normal
@@ -309,7 +315,7 @@ fun ForoDetailEditorSection(
                     }
 
                     Text(
-                        text = "Mínimo sugerido: 150",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_min_suggested_words),
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         color = onSurfaceVariant
                     )
@@ -345,7 +351,11 @@ fun ForoDetailEditorSection(
                     )
                     Spacer(Modifier.size(6.dp))
                     Text(
-                        text = if (isDraftSaved) "¡Guardado!" else "Guardar Borrador",
+                        text = if (isDraftSaved) {
+                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_saved_badge)
+                        } else {
+                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_save_draft_btn)
+                        },
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = onSurface
                     )
@@ -380,7 +390,11 @@ fun ForoDetailEditorSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isExpired) "Foro Cerrado" else "Publicar en Canvas",
+                        text = if (isExpired) {
+                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_closed_status)
+                        } else {
+                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_publish_btn)
+                        },
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                         color = publishBtnTextColor
                     )

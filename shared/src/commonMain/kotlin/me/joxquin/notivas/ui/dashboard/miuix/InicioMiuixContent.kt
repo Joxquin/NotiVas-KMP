@@ -30,6 +30,8 @@ import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixUrgentTasksCarousel
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixWeeklyCalendarStrip
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * Dashboard Académico Miuix:
@@ -102,7 +104,7 @@ fun InicioMiuixContent(
                     )
                     Spacer(Modifier.height(2.dp))
                     MiuixText(
-                        text = "Dashboard Académico y Seguimiento Canvas",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.dashboard_academic_title),
                         style = MiuixTheme.textStyles.body2,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )

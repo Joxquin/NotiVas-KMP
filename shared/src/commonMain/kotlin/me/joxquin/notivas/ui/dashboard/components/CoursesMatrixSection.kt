@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.ui.dashboard.CourseStat
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun CoursesMatrixSection(
@@ -71,7 +73,7 @@ fun CoursesMatrixSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Cursos Activos",
+                    text = stringResource(Res.string.courses_section_title),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -80,7 +82,7 @@ fun CoursesMatrixSection(
                     color = MaterialTheme.colorScheme.surfaceContainerHighest
                 ) {
                     Text(
-                        text = "${displayCourses.size} inscritos",
+                        text = stringResource(Res.string.courses_enrolled_format, displayCourses.size),
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
@@ -89,7 +91,7 @@ fun CoursesMatrixSection(
             }
 
             Text(
-                text = "Gestionar",
+                text = stringResource(Res.string.manage),
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { }
@@ -203,7 +205,7 @@ private fun MaterialCourseGridCard(
                         color = MaterialTheme.colorScheme.errorContainer
                     ) {
                         Text(
-                            text = "$pendingCount pend.",
+                            text = stringResource(Res.string.course_pending_format, pendingCount),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold
@@ -218,7 +220,7 @@ private fun MaterialCourseGridCard(
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = "Al día",
+                            text = stringResource(Res.string.course_up_to_date),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold

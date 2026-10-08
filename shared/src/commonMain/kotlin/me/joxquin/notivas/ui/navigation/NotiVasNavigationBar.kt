@@ -35,15 +35,23 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.nav_inicio
+import me.joxquin.notivas.shared.resources.nav_herramientas
+import me.joxquin.notivas.shared.resources.nav_copilot
+import me.joxquin.notivas.shared.resources.nav_ajustes
+
 enum class MainDestination(
-    val title: String,
+    val titleRes: StringResource,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
-    Inicio("Inicio", Icons.Filled.Home, Icons.Outlined.Home),
-    Herramientas("Herramientas", Icons.Filled.Analytics, Icons.Outlined.Analytics),
-    Copilot("Copilot", Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome),
-    Ajustes("Ajustes", Icons.Filled.Settings, Icons.Outlined.Settings)
+    Inicio(Res.string.nav_inicio, Icons.Filled.Home, Icons.Outlined.Home),
+    Herramientas(Res.string.nav_herramientas, Icons.Filled.Analytics, Icons.Outlined.Analytics),
+    Copilot(Res.string.nav_copilot, Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome),
+    Ajustes(Res.string.nav_ajustes, Icons.Filled.Settings, Icons.Outlined.Settings)
 }
 
 @Composable
@@ -74,13 +82,14 @@ fun NotiVasNavigationBar(
         ) {
         MainDestination.entries.forEach { destination ->
             val isSelected = currentDestination == destination
+            val itemTitle = stringResource(destination.titleRes)
             val iconScale by animateFloatAsState(
                 targetValue = if (isSelected) 1.15f else 1.0f,
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
                     stiffness = Spring.StiffnessMediumLow
                 ),
-                label = "navItemScale_${destination.title}"
+                label = "navItemScale_${destination.name}"
             )
 
             NavigationBarItem(
@@ -89,7 +98,7 @@ fun NotiVasNavigationBar(
                 icon = {
                     Icon(
                         imageVector = if (isSelected) destination.selectedIcon else destination.unselectedIcon,
-                        contentDescription = destination.title,
+                        contentDescription = itemTitle,
                         modifier = Modifier
                             .size(24.dp)
                             .graphicsLayer(
@@ -100,7 +109,7 @@ fun NotiVasNavigationBar(
                 },
                 label = {
                     Text(
-                        text = destination.title,
+                        text = itemTitle,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                     )

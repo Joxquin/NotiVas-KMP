@@ -62,8 +62,9 @@ class CopilotRepository(
         }
 
         val model = preferencesManager.openRouterModel.first()
+        val appLanguage = preferencesManager.appLanguage.first()
         val courses = localStore.courses.first()
-        val systemPrompt = promptBuilder.buildSystemPrompt(courses, selectedCourseId)
+        val systemPrompt = promptBuilder.buildSystemPrompt(courses, selectedCourseId, appLanguage)
 
         val messages = promptBuilder.buildConversationMessages(systemPrompt, history, userPrompt)
 

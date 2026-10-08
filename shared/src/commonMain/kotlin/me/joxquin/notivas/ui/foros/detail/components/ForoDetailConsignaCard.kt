@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun ForoDetailConsignaCard(
@@ -100,7 +102,7 @@ fun ForoDetailConsignaCard(
                         }
 
                         Text(
-                            text = "CONSIGNA OFICIAL CANVAS LMS",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_consigna_header),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -111,7 +113,11 @@ fun ForoDetailConsignaCard(
                     }
 
                     Text(
-                        text = if (isMandatory) "Obligatorio" else "Opcional",
+                        text = if (isMandatory) {
+                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_mandatory)
+                        } else {
+                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_optional)
+                        },
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )
@@ -154,7 +160,7 @@ fun ForoDetailConsignaCard(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
-                                        text = "Rúbrica de Evaluación (${points?.toInt() ?: 0} pts max)",
+                                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_rubric_header_format, points?.toInt() ?: 0),
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold
@@ -165,7 +171,7 @@ fun ForoDetailConsignaCard(
 
                                 Icon(
                                     imageVector = Icons.Default.ExpandMore,
-                                    contentDescription = if (isRubricExpanded) "Colapsar" else "Expandir",
+                                    contentDescription = null,
                                     tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                     modifier = Modifier
                                         .size(18.dp)
@@ -184,11 +190,13 @@ fun ForoDetailConsignaCard(
                                         .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
+                                    val defaultTitle = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_rubric_criterion_default)
+                                    val defaultDesc = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_rubric_criterion_desc_default)
                                     realRubric.forEachIndexed { index, criterion ->
                                         RubricItem(
                                             number = "${index + 1}.",
-                                            title = criterion.description ?: "Criterio de evaluación",
-                                            subtitle = criterion.longDescription ?: "Criterio oficial establecido en Canvas",
+                                            title = criterion.description ?: defaultTitle,
+                                            subtitle = criterion.longDescription ?: defaultDesc,
                                             score = "${criterion.points?.toInt() ?: 0} pts",
                                             themeStyle = themeStyle
                                         )
@@ -238,7 +246,7 @@ fun ForoDetailConsignaCard(
                         }
 
                         Text(
-                            text = "CONSIGNA OFICIAL CANVAS LMS",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_consigna_header),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -249,7 +257,11 @@ fun ForoDetailConsignaCard(
                     }
 
                     Text(
-                        text = if (isMandatory) "Obligatorio" else "Opcional",
+                        text = if (isMandatory) {
+                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_mandatory)
+                        } else {
+                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_optional)
+                        },
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -290,7 +302,7 @@ fun ForoDetailConsignaCard(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
-                                        text = "Rúbrica de Evaluación (${points?.toInt() ?: 0} pts max)",
+                                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_rubric_header_format, points?.toInt() ?: 0),
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold
@@ -301,7 +313,7 @@ fun ForoDetailConsignaCard(
 
                                 Icon(
                                     imageVector = Icons.Default.ExpandMore,
-                                    contentDescription = if (isRubricExpanded) "Colapsar" else "Expandir",
+                                    contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
                                         .size(18.dp)
@@ -320,11 +332,13 @@ fun ForoDetailConsignaCard(
                                         .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
+                                    val defaultTitle = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_rubric_criterion_default)
+                                    val defaultDesc = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_rubric_criterion_desc_default)
                                     realRubric.forEachIndexed { index, criterion ->
                                         RubricItem(
                                             number = "${index + 1}.",
-                                            title = criterion.description ?: "Criterio de evaluación",
-                                            subtitle = criterion.longDescription ?: "Criterio oficial establecido en Canvas",
+                                            title = criterion.description ?: defaultTitle,
+                                            subtitle = criterion.longDescription ?: defaultDesc,
                                             score = "${criterion.points?.toInt() ?: 0} pts",
                                             themeStyle = themeStyle
                                         )

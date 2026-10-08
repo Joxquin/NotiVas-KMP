@@ -28,6 +28,8 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun CopilotHeaderBar(
@@ -41,7 +43,7 @@ fun CopilotHeaderBar(
     modifier: Modifier = Modifier
 ) {
     val tokenLabel = if (tokens > 0) {
-        "$tokens tokens"
+        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_tokens_count, tokens)
     } else if (balance != null) {
         val rounded = (balance * 1000).toLong() / 1000.0
         "$$rounded"
@@ -81,12 +83,12 @@ fun CopilotHeaderBar(
                     ) {
                         Icon(
                             imageVector = Icons.Default.History,
-                            contentDescription = "Historial",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_history_title),
                             tint = MiuixTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "Historial",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_history_title),
                             style = MiuixTheme.textStyles.footnote1.copy(fontWeight = FontWeight.Medium),
                             color = MiuixTheme.colorScheme.onSurface
                         )
@@ -114,12 +116,12 @@ fun CopilotHeaderBar(
                     ) {
                         Icon(
                             imageVector = Icons.Default.AddComment,
-                            contentDescription = "Nuevo Chat",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_new_chat),
                             tint = MiuixTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "Nueva",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_new_chat),
                             style = MiuixTheme.textStyles.footnote1.copy(fontWeight = FontWeight.Medium),
                             color = MiuixTheme.colorScheme.onSurface
                         )
@@ -168,7 +170,7 @@ fun CopilotHeaderBar(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CleaningServices,
-                            contentDescription = "Limpiar chat",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.clear),
                             tint = MiuixTheme.colorScheme.error,
                             modifier = Modifier.size(16.dp)
                         )
@@ -203,7 +205,7 @@ fun CopilotHeaderBar(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "Historial",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_history_title),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 6.dp)
@@ -224,7 +226,7 @@ fun CopilotHeaderBar(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "Nuevo",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_new_chat),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 6.dp)
@@ -257,7 +259,7 @@ fun CopilotHeaderBar(
                     IconButton(onClick = onClearChat) {
                         Icon(
                             imageVector = Icons.Default.CleaningServices,
-                            contentDescription = "Limpiar chat",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.clear),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )

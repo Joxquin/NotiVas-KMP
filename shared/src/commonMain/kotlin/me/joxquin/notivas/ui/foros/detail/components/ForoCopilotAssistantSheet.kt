@@ -73,6 +73,38 @@ import me.joxquin.notivas.ui.copilot.components.formatMarkdown
 import me.joxquin.notivas.ui.foros.CopilotForoStrategy
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.copilot_assist_return_to_forum
+import me.joxquin.notivas.shared.resources.copilot_assist_academic_copilot
+import me.joxquin.notivas.shared.resources.copilot_assist_strategy_for
+import me.joxquin.notivas.shared.resources.copilot_assist_analyzing_with
+import me.joxquin.notivas.shared.resources.copilot_assist_extracting
+import me.joxquin.notivas.shared.resources.copilot_assist_failed_strategy
+import me.joxquin.notivas.shared.resources.copilot_assist_retry_btn
+import me.joxquin.notivas.shared.resources.copilot_assist_objective_detected
+import me.joxquin.notivas.shared.resources.copilot_assist_technical_rigor
+import me.joxquin.notivas.shared.resources.copilot_assist_counterexample
+import me.joxquin.notivas.shared.resources.copilot_assist_interaction
+import me.joxquin.notivas.shared.resources.copilot_assist_structure_header
+import me.joxquin.notivas.shared.resources.copilot_assist_phases_count
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_header
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_formal
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_formal_prompt
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_concise
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_concise_prompt
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_citations
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_citations_prompt
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_counterexample
+import me.joxquin.notivas.shared.resources.copilot_assist_tone_counterexample_prompt
+import me.joxquin.notivas.shared.resources.copilot_assist_draft_suggested
+import me.joxquin.notivas.shared.resources.copilot_assist_words_count
+import me.joxquin.notivas.shared.resources.copilot_assist_academic_tone
+import me.joxquin.notivas.shared.resources.copilot_assist_copied
+import me.joxquin.notivas.shared.resources.copilot_assist_copy_text
+import me.joxquin.notivas.shared.resources.copilot_assist_edit_draft
+import me.joxquin.notivas.shared.resources.copilot_assist_insert_btn
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForoCopilotAssistantSheet(
@@ -153,12 +185,12 @@ fun ForoCopilotAssistantSheet(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
+                            contentDescription = stringResource(Res.string.copilot_assist_return_to_forum),
                             tint = primaryColor,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "Volver al Foro",
+                            text = stringResource(Res.string.copilot_assist_return_to_forum),
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = onSurface
                         )
@@ -193,7 +225,7 @@ fun ForoCopilotAssistantSheet(
             // Título Principal
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
                 Text(
-                    text = "COPILOT ACADÉMICO",
+                    text = stringResource(Res.string.copilot_assist_academic_copilot),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
@@ -202,14 +234,12 @@ fun ForoCopilotAssistantSheet(
                     color = primaryColor
                 )
                 Text(
-                    text = "Estrategia para ${topic.title}",
+                    text = stringResource(Res.string.copilot_assist_strategy_for, topic.title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = onSurface,
                     maxLines = 1
                 )
-            }
-
-            // Contenido dinámico (Cargando / Error / Contenido)
+            }            // Contenido dinámico (Cargando / Error / Contenido)
             if (isGenerating) {
                 Box(
                     modifier = Modifier
@@ -226,13 +256,13 @@ fun ForoCopilotAssistantSheet(
                             modifier = Modifier.size(36.dp)
                         )
                         Text(
-                            text = "Analizando consigna con $cleanModelDisplayName...",
+                            text = stringResource(Res.string.copilot_assist_analyzing_with, cleanModelDisplayName),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                             color = onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "Extrayendo objetivos de aprendizaje y estructura de respuesta",
+                            text = stringResource(Res.string.copilot_assist_extracting),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                             color = onSurfaceVariant.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center
@@ -258,7 +288,7 @@ fun ForoCopilotAssistantSheet(
                             modifier = Modifier.size(40.dp)
                         )
                         Text(
-                            text = "No se pudo generar la estrategia",
+                            text = stringResource(Res.string.copilot_assist_failed_strategy),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = onSurface
                         )
@@ -287,7 +317,7 @@ fun ForoCopilotAssistantSheet(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
-                                    text = "Reintentar",
+                                    text = stringResource(Res.string.copilot_assist_retry_btn),
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                     color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
                                 )
@@ -341,7 +371,7 @@ fun ForoCopilotAssistantSheet(
                                                     modifier = Modifier.size(13.dp)
                                                 )
                                                 Text(
-                                                    text = "Objetivo Detectado",
+                                                    text = stringResource(Res.string.copilot_assist_objective_detected),
                                                     style = MaterialTheme.typography.labelSmall.copy(
                                                         fontSize = 10.sp,
                                                         fontWeight = FontWeight.Bold
@@ -387,19 +417,19 @@ fun ForoCopilotAssistantSheet(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     MetricPill(
-                                        title = "Rigor Técnico",
+                                        title = stringResource(Res.string.copilot_assist_technical_rigor),
                                         value = strategy.technicalRigor,
                                         themeStyle = themeStyle,
                                         modifier = Modifier.weight(1f)
                                     )
                                     MetricPill(
-                                        title = "Contraejemplo",
+                                        title = stringResource(Res.string.copilot_assist_counterexample),
                                         value = strategy.counterExample,
                                         themeStyle = themeStyle,
                                         modifier = Modifier.weight(1f)
                                     )
                                     MetricPill(
-                                        title = "Interacción",
+                                        title = stringResource(Res.string.copilot_assist_interaction),
                                         value = strategy.activeInteraction,
                                         themeStyle = themeStyle,
                                         modifier = Modifier.weight(1f)
@@ -418,7 +448,7 @@ fun ForoCopilotAssistantSheet(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "ESTRUCTURA ARGUMENTAL RECOMENDADA",
+                                    text = stringResource(Res.string.copilot_assist_structure_header),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
@@ -427,7 +457,7 @@ fun ForoCopilotAssistantSheet(
                                     color = onSurfaceVariant
                                 )
                                 Text(
-                                    text = "3 Fases",
+                                    text = stringResource(Res.string.copilot_assist_phases_count),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
@@ -468,6 +498,11 @@ fun ForoCopilotAssistantSheet(
 
                     // 3. Afinador de Tono & Perspectiva (Chips interactivos)
                     item(key = "copilot_tone_tuner") {
+                        val toneFormalPrompt = stringResource(Res.string.copilot_assist_tone_formal_prompt)
+                        val toneConcisePrompt = stringResource(Res.string.copilot_assist_tone_concise_prompt)
+                        val toneCitationsPrompt = stringResource(Res.string.copilot_assist_tone_citations_prompt)
+                        val toneCounterPrompt = stringResource(Res.string.copilot_assist_tone_counterexample_prompt)
+
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -475,7 +510,7 @@ fun ForoCopilotAssistantSheet(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "AFINADOR DE TONO & PERSPECTIVA",
+                                    text = stringResource(Res.string.copilot_assist_tone_header),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
@@ -499,40 +534,40 @@ fun ForoCopilotAssistantSheet(
                             ) {
                                 ToneChip(
                                     icon = Icons.Default.Psychology,
-                                    text = "Más formal y técnico",
-                                    isSelected = selectedTone == "Haz el texto más riguroso, formal y de nivel universitario avanzado.",
+                                    text = stringResource(Res.string.copilot_assist_tone_formal),
+                                    isSelected = selectedTone == toneFormalPrompt,
                                     onClick = {
-                                        selectedTone = "Haz el texto más riguroso, formal y de nivel universitario avanzado."
+                                        selectedTone = toneFormalPrompt
                                         onGenerate(selectedTone)
                                     },
                                     themeStyle = themeStyle
                                 )
                                 ToneChip(
                                     icon = Icons.Default.Compress,
-                                    text = "Más conciso (-30%)",
-                                    isSelected = selectedTone == "Resume la respuesta haciéndola 30% más concisa y directa al grano.",
+                                    text = stringResource(Res.string.copilot_assist_tone_concise),
+                                    isSelected = selectedTone == toneConcisePrompt,
                                     onClick = {
-                                        selectedTone = "Resume la respuesta haciéndola 30% más concisa y directa al grano."
+                                        selectedTone = toneConcisePrompt
                                         onGenerate(selectedTone)
                                     },
                                     themeStyle = themeStyle
                                 )
                                 ToneChip(
                                     icon = Icons.Default.MenuBook,
-                                    text = "Añadir citas y teoría",
-                                    isSelected = selectedTone == "Incluye fundamentación teórica profunda y referencias metodológicas.",
+                                    text = stringResource(Res.string.copilot_assist_tone_citations),
+                                    isSelected = selectedTone == toneCitationsPrompt,
                                     onClick = {
-                                        selectedTone = "Incluye fundamentación teórica profunda y referencias metodológicas."
+                                        selectedTone = toneCitationsPrompt
                                         onGenerate(selectedTone)
                                     },
                                     themeStyle = themeStyle
                                 )
                                 ToneChip(
                                     icon = Icons.Default.CrisisAlert,
-                                    text = "Enfatizar contraejemplo",
-                                    isSelected = selectedTone == "Profundiza en contraejemplos detallados y casos de borde.",
+                                    text = stringResource(Res.string.copilot_assist_tone_counterexample),
+                                    isSelected = selectedTone == toneCounterPrompt,
                                     onClick = {
-                                        selectedTone = "Profundiza en contraejemplos detallados y casos de borde."
+                                        selectedTone = toneCounterPrompt
                                         onGenerate(selectedTone)
                                     },
                                     themeStyle = themeStyle
@@ -579,7 +614,7 @@ fun ForoCopilotAssistantSheet(
                                                     modifier = Modifier.size(12.dp)
                                                 )
                                                 Text(
-                                                    text = "Borrador sugerido",
+                                                    text = stringResource(Res.string.copilot_assist_draft_suggested),
                                                     style = MaterialTheme.typography.labelSmall.copy(
                                                         fontSize = 10.sp,
                                                         fontWeight = FontWeight.Bold
@@ -590,7 +625,7 @@ fun ForoCopilotAssistantSheet(
                                         }
 
                                         Text(
-                                            text = "${strategy.wordCount} palabras",
+                                            text = stringResource(Res.string.copilot_assist_words_count, strategy.wordCount),
                                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                                             color = onSurfaceVariant
                                         )
@@ -601,7 +636,7 @@ fun ForoCopilotAssistantSheet(
                                         color = chipBg
                                     ) {
                                         Text(
-                                            text = "Tono Académico",
+                                            text = stringResource(Res.string.copilot_assist_academic_tone),
                                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Medium),
                                             color = primaryColor,
                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -633,6 +668,11 @@ fun ForoCopilotAssistantSheet(
 
                     // 5. Botones de Acción (Copiar + Editar + Insertar)
                     item(key = "copilot_actions") {
+                        val draftCopiedText = stringResource(Res.string.copilot_assist_copied)
+                        val copyDraftText = stringResource(Res.string.copilot_assist_copy_text)
+                        val editDraftText = stringResource(Res.string.copilot_assist_edit_draft)
+                        val insertDraftText = stringResource(Res.string.copilot_assist_insert_btn)
+
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -667,7 +707,7 @@ fun ForoCopilotAssistantSheet(
                                         )
                                         Spacer(Modifier.width(6.dp))
                                         Text(
-                                            text = if (isCopied) "¡Copiado!" else "Copiar texto",
+                                            text = if (isCopied) draftCopiedText else copyDraftText,
                                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                             color = if (isCopied) successColor else onSurface
                                         )
@@ -702,7 +742,7 @@ fun ForoCopilotAssistantSheet(
                                         )
                                         Spacer(Modifier.width(6.dp))
                                         Text(
-                                            text = "Editar borrador",
+                                            text = editDraftText,
                                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                             color = onSurface
                                         )
@@ -744,7 +784,7 @@ fun ForoCopilotAssistantSheet(
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Text(
-                                            text = "Insertar en mi respuesta",
+                                            text = insertDraftText,
                                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                             color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
                                         )
@@ -769,6 +809,7 @@ fun ForoCopilotAssistantSheet(
         }
     }
 }
+
 
 @Composable
 private fun MetricPill(

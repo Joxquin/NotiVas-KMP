@@ -53,27 +53,36 @@ actual object DateTimeUtil {
 
     actual fun dayOfWeekName(date: DateComponents): String {
         val ld = LocalDate.of(date.year, date.month, date.day)
-        return when (ld.dayOfWeek) {
-            DayOfWeek.MONDAY -> "LUN"
-            DayOfWeek.TUESDAY -> "MAR"
-            DayOfWeek.WEDNESDAY -> "MIÉ"
-            DayOfWeek.THURSDAY -> "JUE"
-            DayOfWeek.FRIDAY -> "VIE"
-            DayOfWeek.SATURDAY -> "SÁB"
-            DayOfWeek.SUNDAY -> "DOM"
-            else -> "LUN"
+        val locale = Locale.getDefault()
+        return try {
+            val formatter = DateTimeFormatter.ofPattern("EEE", locale)
+            ld.format(formatter).take(3).uppercase(locale)
+        } catch (_: Exception) {
+            when (ld.dayOfWeek) {
+                DayOfWeek.MONDAY -> "MON"
+                DayOfWeek.TUESDAY -> "TUE"
+                DayOfWeek.WEDNESDAY -> "WED"
+                DayOfWeek.THURSDAY -> "THU"
+                DayOfWeek.FRIDAY -> "FRI"
+                DayOfWeek.SATURDAY -> "SAT"
+                DayOfWeek.SUNDAY -> "SUN"
+                else -> "MON"
+            }
         }
     }
 
     actual fun formatFullDate(date: DateComponents): String {
         val ld = LocalDate.of(date.year, date.month, date.day)
-        val formatter = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale("es", "ES"))
-        return ld.format(formatter).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("es", "ES")) else it.toString() }
+        val locale = Locale.getDefault()
+        val pattern = if (locale.language == "es") "EEEE d 'de' MMMM" else "EEEE, MMMM d"
+        val formatter = DateTimeFormatter.ofPattern(pattern, locale)
+        return ld.format(formatter).replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
     }
 
     actual fun formatMonthYear(date: DateComponents): String {
         val ld = LocalDate.of(date.year, date.month, date.day)
-        val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
-        return ld.format(formatter).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("es", "ES")) else it.toString() }
+        val locale = Locale.getDefault()
+        val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", locale)
+        return ld.format(formatter).replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
     }
 }

@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.ui.dashboard.DaySchedule
 import me.joxquin.notivas.util.DateComponents
 import me.joxquin.notivas.util.DateTimeUtil
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun WeeklyTimelineStrip(
@@ -59,7 +61,7 @@ fun WeeklyTimelineStrip(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Esta semana",
+                text = stringResource(Res.string.dashboard_this_week),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )

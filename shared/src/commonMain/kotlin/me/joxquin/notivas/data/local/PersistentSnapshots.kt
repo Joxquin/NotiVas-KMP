@@ -3,6 +3,13 @@ package me.joxquin.notivas.data.local
 import kotlinx.serialization.Serializable
 
 @Serializable
+enum class AppLanguage(val code: String, val displayName: String) {
+    SYSTEM("", "Predeterminado del sistema"),
+    SPANISH("es", "Español"),
+    ENGLISH("en", "English")
+}
+
+@Serializable
 data class PersistentPreferencesSnapshot(
     val universityUrl: String? = "https://canvas.utp.edu.pe",
     val accessToken: String? = null,
@@ -21,6 +28,7 @@ data class PersistentPreferencesSnapshot(
     val totalCopilotTokens: Long = 0L,
     val dynamicColorEnabled: Boolean = true,
     val themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    val appLanguage: AppLanguage = AppLanguage.SYSTEM,
     val unconfiguredCoursesBannerDismissedUntil: Long = 0L,
     val authMode: me.joxquin.notivas.data.model.AuthMode = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION,
     val sessionCookies: String? = null,

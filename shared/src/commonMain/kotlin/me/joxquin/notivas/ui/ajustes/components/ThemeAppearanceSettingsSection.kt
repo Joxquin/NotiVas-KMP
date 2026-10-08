@@ -44,6 +44,24 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.settings_theme_section_title
+import me.joxquin.notivas.shared.resources.settings_theme_title
+import me.joxquin.notivas.shared.resources.settings_theme_summary
+import me.joxquin.notivas.shared.resources.settings_theme_dialog_title
+import me.joxquin.notivas.shared.resources.settings_theme_dialog_desc
+import me.joxquin.notivas.shared.resources.theme_material
+import me.joxquin.notivas.shared.resources.theme_material_desc
+import me.joxquin.notivas.shared.resources.theme_miuix
+import me.joxquin.notivas.shared.resources.theme_miuix_desc
+import me.joxquin.notivas.shared.resources.dynamic_color_title
+import me.joxquin.notivas.shared.resources.dynamic_color_summary_on
+import me.joxquin.notivas.shared.resources.dynamic_color_summary_off
+import me.joxquin.notivas.shared.resources.close
+import me.joxquin.notivas.shared.resources.change
+import me.joxquin.notivas.shared.resources.selected
+
 @Composable
 fun ThemeAppearanceSettingsSection(
     dynamicColorEnabled: Boolean,
@@ -52,10 +70,13 @@ fun ThemeAppearanceSettingsSection(
     onThemeStyleChange: (AppThemeStyle) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val themeOptions = remember {
+    val materialLabel = stringResource(Res.string.theme_material)
+    val miuixLabel = stringResource(Res.string.theme_miuix)
+
+    val themeOptions = remember(materialLabel, miuixLabel) {
         listOf(
-            AppThemeStyle.MATERIAL to "Material",
-            AppThemeStyle.MIUIX to "Miuix"
+            AppThemeStyle.MATERIAL to materialLabel,
+            AppThemeStyle.MIUIX to miuixLabel
         )
     }
 
@@ -76,7 +97,7 @@ fun ThemeAppearanceSettingsSection(
             },
             title = {
                 Text(
-                    text = "Estilo de Diseño",
+                    text = stringResource(Res.string.settings_theme_dialog_title),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold
                     )
@@ -85,7 +106,7 @@ fun ThemeAppearanceSettingsSection(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Selecciona el motor de interfaz visual y tokens para la aplicación:",
+                        text = stringResource(Res.string.settings_theme_dialog_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 6.dp)
@@ -127,9 +148,9 @@ fun ThemeAppearanceSettingsSection(
                                     )
                                     Text(
                                         text = if (style == AppThemeStyle.MATERIAL) {
-                                            "Tokens Material 3 Expressive & paleta dinámica Monet"
+                                            stringResource(Res.string.theme_material_desc)
                                         } else {
-                                            "Componentes Xiaomi HyperOS Miuix, Squircle & Glass"
+                                            stringResource(Res.string.theme_miuix_desc)
                                         },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = if (isSelected) {
@@ -143,7 +164,7 @@ fun ThemeAppearanceSettingsSection(
                                 if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Seleccionado",
+                                        contentDescription = stringResource(Res.string.selected),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -155,7 +176,7 @@ fun ThemeAppearanceSettingsSection(
             },
             confirmButton = {
                 TextButton(onClick = { showMaterialThemeDialog = false }) {
-                    Text("Cerrar")
+                    Text(stringResource(Res.string.close))
                 }
             }
         )
@@ -163,15 +184,15 @@ fun ThemeAppearanceSettingsSection(
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         Column(modifier = modifier.fillMaxWidth()) {
-            SmallTitle(text = "SISTEMA VISUAL Y TEMAS")
+            SmallTitle(text = stringResource(Res.string.settings_theme_section_title))
             MiuixCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 WindowDropdownPreference(
-                    title = "Estilo de Diseño",
-                    summary = "Experiencia visual activa",
+                    title = stringResource(Res.string.settings_theme_title),
+                    summary = stringResource(Res.string.settings_theme_summary),
                     items = themeOptions.map { it.second },
                     selectedIndex = selectedThemeIndex,
                     onSelectedIndexChange = { index ->
@@ -181,8 +202,8 @@ fun ThemeAppearanceSettingsSection(
                 )
                 if (isDynamicColorAvailable()) {
                     SwitchPreference(
-                        title = "Color dinámico (Monet)",
-                        summary = "Extraer paleta del fondo de pantalla",
+                        title = stringResource(Res.string.dynamic_color_title),
+                        summary = stringResource(Res.string.dynamic_color_summary_on),
                         checked = dynamicColorEnabled,
                         onCheckedChange = onDynamicColorChange
                     )
@@ -218,7 +239,7 @@ fun ThemeAppearanceSettingsSection(
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
-                        text = "Sistema Visual & Temas",
+                        text = stringResource(Res.string.settings_theme_title),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -261,7 +282,7 @@ fun ThemeAppearanceSettingsSection(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "Estilo de Diseño",
+                                text = stringResource(Res.string.settings_theme_title),
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     fontWeight = FontWeight.SemiBold
                                 ),
@@ -285,7 +306,7 @@ fun ThemeAppearanceSettingsSection(
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
-                            text = "Cambiar",
+                            text = stringResource(Res.string.change),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),
@@ -301,11 +322,11 @@ fun ThemeAppearanceSettingsSection(
 
                     MaterialNotificationToggleRow(
                         icon = Icons.Default.ColorLens,
-                        title = "Color dinámico (Monet)",
+                        title = stringResource(Res.string.dynamic_color_title),
                         subtitle = if (dynamicColorEnabled) {
-                            "Paleta adaptativa al fondo de pantalla"
+                            stringResource(Res.string.dynamic_color_summary_on)
                         } else {
-                            "Paleta Stitch predeterminada"
+                            stringResource(Res.string.dynamic_color_summary_off)
                         },
                         checked = dynamicColorEnabled,
                         onCheckedChange = onDynamicColorChange

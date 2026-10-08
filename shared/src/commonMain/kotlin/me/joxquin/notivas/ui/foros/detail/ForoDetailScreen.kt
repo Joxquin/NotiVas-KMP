@@ -55,6 +55,8 @@ import me.joxquin.notivas.ui.foros.detail.components.ForoDetailEditorSection
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailHeroCard
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailRepliesSection
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -189,12 +191,12 @@ fun ForoDetailScreen(
                             }
                             Column {
                                 Text(
-                                    text = "Detalle del Foro",
+                                    text = stringResource(Res.string.foro_detail_title),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = topic.courseName ?: "Foro Académico Canvas",
+                                    text = topic.courseName ?: "Canvas",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1
@@ -206,7 +208,7 @@ fun ForoDetailScreen(
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
+                                contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }

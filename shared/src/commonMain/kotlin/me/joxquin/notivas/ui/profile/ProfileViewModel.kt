@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.joxquin.notivas.background.BackgroundSyncScheduler
+import me.joxquin.notivas.data.local.AppLanguage
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.model.AuthMode
@@ -40,7 +41,8 @@ data class ProfileUiState(
     val lastSyncAgoText: String = "hace 5 min",
     val apiLatencyMs: Int = 42,
     val dynamicColorEnabled: Boolean = true,
-    val themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
+    val themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    val appLanguage: AppLanguage = AppLanguage.SYSTEM
 )
 
 class ProfileViewModel(
@@ -112,7 +114,8 @@ class ProfileViewModel(
         _isVerifyingToken,
         preferencesManager.dynamicColorEnabled,
         preferencesManager.themeStyle,
-        preferencesManager.authMode
+        preferencesManager.authMode,
+        preferencesManager.appLanguage
     ) { args: Array<Any?> ->
         val url = args[1] as String?
         val host = if (url.isNullOrBlank()) "Canvas LMS" else {
@@ -140,9 +143,14 @@ class ProfileViewModel(
             isVerifyingToken = args[16] as Boolean,
             dynamicColorEnabled = args[17] as Boolean,
             themeStyle = args[18] as AppThemeStyle,
-            authMode = args[19] as AuthMode
+            authMode = args[19] as AuthMode,
+            appLanguage = args[20] as AppLanguage
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
+
+    fun setAppLanguage(language: AppLanguage) {
+        viewModelScope.launch { preferencesManager.setAppLanguage(language) }
+    }
 
     fun setDynamicColorEnabled(enabled: Boolean) {
         viewModelScope.launch { preferencesManager.setDynamicColorEnabled(enabled) }

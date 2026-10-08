@@ -28,6 +28,9 @@ import me.joxquin.notivas.ui.dashboard.components.SelectedDateAssignmentsSection
 import me.joxquin.notivas.ui.dashboard.components.UrgentAssignmentsSection
 import me.joxquin.notivas.ui.dashboard.components.WeeklyTimelineStrip
 import me.joxquin.notivas.ui.dashboard.miuix.InicioMiuixContent
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.shared.resources.dashboard_academic_title
 
 /**
  * Orquestador declarativo de la pantalla de Inicio de NotiVas.
@@ -117,7 +120,7 @@ fun InicioScreen(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Dashboard Académico y Seguimiento Canvas",
+                        text = stringResource(Res.string.dashboard_academic_title),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

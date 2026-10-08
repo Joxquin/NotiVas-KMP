@@ -111,6 +111,10 @@ class PreferencesManager(
     val themeStyle: Flow<AppThemeStyle> = _themeStyle.asStateFlow()
     fun getThemeStyle(): AppThemeStyle = _themeStyle.value
 
+    private val _appLanguage = MutableStateFlow(AppLanguage.SYSTEM)
+    val appLanguage: Flow<AppLanguage> = _appLanguage.asStateFlow()
+    fun getAppLanguage(): AppLanguage = _appLanguage.value
+
     private val _unconfiguredCoursesBannerDismissedUntil = MutableStateFlow(0L)
     val unconfiguredCoursesBannerDismissedUntil: Flow<Long> = _unconfiguredCoursesBannerDismissedUntil.asStateFlow()
     fun getUnconfiguredCoursesBannerDismissedUntil(): Long = _unconfiguredCoursesBannerDismissedUntil.value
@@ -144,6 +148,7 @@ class PreferencesManager(
             _totalCopilotTokens.value = snapshot.totalCopilotTokens
             _dynamicColorEnabled.value = snapshot.dynamicColorEnabled
             _themeStyle.value = snapshot.themeStyle
+            _appLanguage.value = snapshot.appLanguage
             _unconfiguredCoursesBannerDismissedUntil.value = snapshot.unconfiguredCoursesBannerDismissedUntil
         } catch (_: Exception) {
         } finally {
@@ -182,6 +187,7 @@ class PreferencesManager(
                 totalCopilotTokens = _totalCopilotTokens.value,
                 dynamicColorEnabled = _dynamicColorEnabled.value,
                 themeStyle = _themeStyle.value,
+                appLanguage = _appLanguage.value,
                 unconfiguredCoursesBannerDismissedUntil = _unconfiguredCoursesBannerDismissedUntil.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)
@@ -286,6 +292,11 @@ class PreferencesManager(
 
     suspend fun setThemeStyle(style: AppThemeStyle) {
         _themeStyle.value = style
+        schedulePersist()
+    }
+
+    suspend fun setAppLanguage(language: AppLanguage) {
+        _appLanguage.value = language
         schedulePersist()
     }
 
