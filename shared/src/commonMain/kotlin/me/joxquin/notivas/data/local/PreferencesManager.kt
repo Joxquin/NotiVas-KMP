@@ -119,6 +119,25 @@ class PreferencesManager(
     val unconfiguredCoursesBannerDismissedUntil: Flow<Long> = _unconfiguredCoursesBannerDismissedUntil.asStateFlow()
     fun getUnconfiguredCoursesBannerDismissedUntil(): Long = _unconfiguredCoursesBannerDismissedUntil.value
 
+    private val _googleDriveConnected = MutableStateFlow(false)
+    val googleDriveConnected: Flow<Boolean> = _googleDriveConnected.asStateFlow()
+    fun isGoogleDriveConnected(): Boolean = _googleDriveConnected.value
+
+    private val _googleDriveEmail = MutableStateFlow<String?>(null)
+    val googleDriveEmail: Flow<String?> = _googleDriveEmail.asStateFlow()
+    fun getGoogleDriveEmail(): String? = _googleDriveEmail.value
+
+    private val _googleDriveLastSyncTimestamp = MutableStateFlow(0L)
+    val googleDriveLastSyncTimestamp: Flow<Long> = _googleDriveLastSyncTimestamp.asStateFlow()
+    fun getGoogleDriveLastSyncTimestamp(): Long = _googleDriveLastSyncTimestamp.value
+
+    private val _googleDriveAccessToken = MutableStateFlow<String?>(null)
+    val googleDriveAccessToken: Flow<String?> = _googleDriveAccessToken.asStateFlow()
+    fun getGoogleDriveAccessToken(): String? = _googleDriveAccessToken.value
+
+    private val _googleDriveRefreshToken = MutableStateFlow<String?>(null)
+    val googleDriveRefreshToken: Flow<String?> = _googleDriveRefreshToken.asStateFlow()
+    fun getGoogleDriveRefreshToken(): String? = _googleDriveRefreshToken.value
 
     init {
         loadFromDisk()
@@ -150,6 +169,11 @@ class PreferencesManager(
             _themeStyle.value = snapshot.themeStyle
             _appLanguage.value = snapshot.appLanguage
             _unconfiguredCoursesBannerDismissedUntil.value = snapshot.unconfiguredCoursesBannerDismissedUntil
+            _googleDriveConnected.value = snapshot.googleDriveConnected
+            _googleDriveEmail.value = snapshot.googleDriveEmail
+            _googleDriveLastSyncTimestamp.value = snapshot.googleDriveLastSyncTimestamp
+            _googleDriveAccessToken.value = snapshot.googleDriveAccessToken
+            _googleDriveRefreshToken.value = snapshot.googleDriveRefreshToken
         } catch (_: Exception) {
         } finally {
             _isLoaded.value = true
@@ -188,12 +212,48 @@ class PreferencesManager(
                 dynamicColorEnabled = _dynamicColorEnabled.value,
                 themeStyle = _themeStyle.value,
                 appLanguage = _appLanguage.value,
-                unconfiguredCoursesBannerDismissedUntil = _unconfiguredCoursesBannerDismissedUntil.value
+                unconfiguredCoursesBannerDismissedUntil = _unconfiguredCoursesBannerDismissedUntil.value,
+                googleDriveConnected = _googleDriveConnected.value,
+                googleDriveEmail = _googleDriveEmail.value,
+                googleDriveLastSyncTimestamp = _googleDriveLastSyncTimestamp.value,
+                googleDriveAccessToken = _googleDriveAccessToken.value,
+                googleDriveRefreshToken = _googleDriveRefreshToken.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)
             PlatformFileSystem.writeString(prefsFile, jsonString)
         } catch (_: Exception) {
         }
+    }
+
+    suspend fun saveGoogleDriveTokens(
+        accessToken: String,
+        refreshToken: String?,
+        userEmail: String?
+    ) {
+        _googleDriveConnected.value = true
+        _googleDriveAccessToken.value = accessToken
+        if (refreshToken != null) {
+            _googleDriveRefreshToken.value = refreshToken
+        }
+        if (userEmail != null) {
+            _googleDriveEmail.value = userEmail
+        }
+        _googleDriveLastSyncTimestamp.value = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+        schedulePersist()
+    }
+
+    suspend fun updateGoogleDriveLastSync() {
+        _googleDriveLastSyncTimestamp.value = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+        schedulePersist()
+    }
+
+    suspend fun unlinkGoogleDrive() {
+        _googleDriveConnected.value = false
+        _googleDriveEmail.value = null
+        _googleDriveAccessToken.value = null
+        _googleDriveRefreshToken.value = null
+        _googleDriveLastSyncTimestamp.value = 0L
+        schedulePersist()
     }
 
     suspend fun saveUniversityUrl(url: String) {
@@ -313,6 +373,11 @@ class PreferencesManager(
         _authMode.value = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION
         _universityUrl.value = null
         _isOnboardingCompleted.value = false
+        _googleDriveConnected.value = false
+        _googleDriveEmail.value = null
+        _googleDriveAccessToken.value = null
+        _googleDriveRefreshToken.value = null
+        _googleDriveLastSyncTimestamp.value = 0L
         PlatformFileSystem.deleteFile(prefsFile)
     }
 }

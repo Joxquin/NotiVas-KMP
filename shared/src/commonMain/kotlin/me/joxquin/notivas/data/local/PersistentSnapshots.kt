@@ -32,6 +32,11 @@ data class PersistentPreferencesSnapshot(
     val unconfiguredCoursesBannerDismissedUntil: Long = 0L,
     val authMode: me.joxquin.notivas.data.model.AuthMode = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION,
     val sessionCookies: String? = null,
-    val csrfToken: String? = null
+    val csrfToken: String? = null,
+    val googleDriveConnected: Boolean = false,
+    val googleDriveEmail: String? = null,
+    val googleDriveLastSyncTimestamp: Long = 0L,
+    val googleDriveAccessToken: String? = null,
+    val googleDriveRefreshToken: String? = null
 )
 

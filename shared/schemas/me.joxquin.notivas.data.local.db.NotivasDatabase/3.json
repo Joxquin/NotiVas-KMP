@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "7591264c835fde39f6756da6509b98d9",
+    "identityHash": "36e627f8c5aa0e777157e229119527ab",
     "entities": [
       {
         "tableName": "courses",
@@ -225,7 +225,7 @@
       },
       {
         "tableName": "assignment_drafts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`assignment_id` INTEGER NOT NULL, `course_id` INTEGER NOT NULL, `drive_file_id` TEXT, `drive_file_url` TEXT, `drive_file_name` TEXT, `last_modified_remote` INTEGER, `cached_text` TEXT, `cached_text_hash` TEXT, `sync_status` TEXT NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`assignment_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`assignment_id` INTEGER NOT NULL, `file_name` TEXT NOT NULL, `drive_url` TEXT NOT NULL, `drive_file_id` TEXT, `account_email` TEXT NOT NULL, `detected_template` TEXT, `course_folder` TEXT NOT NULL, `draft_status` TEXT NOT NULL, `last_edited_time` TEXT NOT NULL, `updated_at_timestamp` INTEGER NOT NULL, PRIMARY KEY(`assignment_id`), FOREIGN KEY(`assignment_id`) REFERENCES `assignments`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "assignmentId",
@@ -234,9 +234,15 @@
             "notNull": true
           },
           {
-            "fieldPath": "courseId",
-            "columnName": "course_id",
-            "affinity": "INTEGER",
+            "fieldPath": "fileName",
+            "columnName": "file_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "driveUrl",
+            "columnName": "drive_url",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -245,39 +251,37 @@
             "affinity": "TEXT"
           },
           {
-            "fieldPath": "driveFileUrl",
-            "columnName": "drive_file_url",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "driveFileName",
-            "columnName": "drive_file_name",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "lastModifiedRemote",
-            "columnName": "last_modified_remote",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "cachedText",
-            "columnName": "cached_text",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "cachedTextHash",
-            "columnName": "cached_text_hash",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "syncStatus",
-            "columnName": "sync_status",
+            "fieldPath": "accountEmail",
+            "columnName": "account_email",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "updatedAt",
-            "columnName": "updated_at",
+            "fieldPath": "detectedTemplate",
+            "columnName": "detected_template",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "courseFolder",
+            "columnName": "course_folder",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "draftStatus",
+            "columnName": "draft_status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastEditedTime",
+            "columnName": "last_edited_time",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtTimestamp",
+            "columnName": "updated_at_timestamp",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -290,22 +294,26 @@
         },
         "indices": [
           {
-            "name": "index_assignment_drafts_course_id",
-            "unique": false,
+            "name": "index_assignment_drafts_assignment_id",
+            "unique": true,
             "columnNames": [
-              "course_id"
+              "assignment_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_assignment_drafts_course_id` ON `${TABLE_NAME}` (`course_id`)"
-          },
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_assignment_drafts_assignment_id` ON `${TABLE_NAME}` (`assignment_id`)"
+          }
+        ],
+        "foreignKeys": [
           {
-            "name": "index_assignment_drafts_drive_file_id",
-            "unique": false,
-            "columnNames": [
-              "drive_file_id"
+            "table": "assignments",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "assignment_id"
             ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_assignment_drafts_drive_file_id` ON `${TABLE_NAME}` (`drive_file_id`)"
+            "referencedColumns": [
+              "id"
+            ]
           }
         ]
       },
@@ -790,7 +798,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7591264c835fde39f6756da6509b98d9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '36e627f8c5aa0e777157e229119527ab')"
     ]
   }
 }

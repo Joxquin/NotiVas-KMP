@@ -19,17 +19,21 @@ import me.joxquin.notivas.data.local.db.entities.PlannerItemEntity
 import me.joxquin.notivas.data.local.db.entities.SimulationGroupEntity
 import me.joxquin.notivas.data.local.db.entities.SimulationItemEntity
 
+import me.joxquin.notivas.data.local.db.dao.AssignmentDraftDao
+import me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity
+
 @Database(
     entities = [
         CourseEntity::class,
         AssignmentEntity::class,
+        AssignmentDraftEntity::class,
         CopilotSessionEntity::class,
         CopilotMessageEntity::class,
         SimulationGroupEntity::class,
         SimulationItemEntity::class,
         PlannerItemEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(RoomConverters::class)
@@ -37,10 +41,13 @@ import me.joxquin.notivas.data.local.db.entities.SimulationItemEntity
 abstract class NotivasDatabase : RoomDatabase() {
     abstract fun courseDao(): CourseDao
     abstract fun assignmentDao(): AssignmentDao
+    abstract fun assignmentDraftDao(): AssignmentDraftDao
     abstract fun copilotChatDao(): CopilotChatDao
     abstract fun simulationDao(): SimulationDao
     abstract fun plannerDao(): PlannerDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-expect object NotivasDatabaseConstructor : RoomDatabaseConstructor<NotivasDatabase>
+expect object NotivasDatabaseConstructor : RoomDatabaseConstructor<NotivasDatabase> {
+    override fun initialize(): NotivasDatabase
+}

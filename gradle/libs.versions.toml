@@ -59,6 +59,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version = "21.3.0" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

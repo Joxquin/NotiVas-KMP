@@ -180,6 +180,27 @@ class InMemoryLocalStore(
         }
     }
 
+    // ─── Borradores Google Drive (Room) ─────────────────────────────────────
+    fun observeDraftByAssignmentId(assignmentId: Long): Flow<me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity?> =
+        database.assignmentDraftDao().observeByAssignmentId(assignmentId)
+
+    suspend fun getDraftByAssignmentId(assignmentId: Long): me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity? =
+        database.assignmentDraftDao().getByAssignmentId(assignmentId)
+
+    fun saveAssignmentDraft(draft: me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity) {
+        scope.launch {
+            database.assignmentDraftDao().upsert(draft)
+        }
+    }
+
+    suspend fun deleteAssignmentDraft(assignmentId: Long) {
+        database.assignmentDraftDao().deleteByAssignmentId(assignmentId)
+    }
+
+    suspend fun deleteAllAssignmentDrafts() {
+        database.assignmentDraftDao().deleteAll()
+    }
+
     // ─── Agenda y Planificación (Room) ──────────────────────────────────────
     val plannerItems: Flow<List<PlannerItem>> = database.plannerDao().observeAll().map { entities ->
         entities.map { it.toDomain() }
