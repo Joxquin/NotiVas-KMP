@@ -2,6 +2,7 @@ package me.joxquin.notivas.data.remote
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
@@ -104,6 +105,29 @@ class CanvasApiService(
     ): SubmissionDetails {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/assignments/$assignmentId/submissions/self")) {
             applyAuth(token)
+        }.body()
+    }
+
+    suspend fun submitAssignmentSubmission(
+        baseUrl: String,
+        token: String,
+        courseId: Long,
+        assignmentId: Long,
+        submissionType: String = "online_url",
+        url: String? = null,
+        bodyText: String? = null,
+        csrfToken: String? = null
+    ): SubmissionDetails {
+        val formUrl = formatUrl(baseUrl, "api/v1/courses/$courseId/assignments/$assignmentId/submissions")
+        return client.submitForm(
+            url = formUrl,
+            formParameters = io.ktor.http.parameters {
+                append("submission[submission_type]", submissionType)
+                url?.let { append("submission[url]", it) }
+                bodyText?.let { append("submission[body]", it) }
+            }
+        ) {
+            applyAuth(token, csrfToken)
         }.body()
     }
 
@@ -241,6 +265,39 @@ class CanvasApiService(
             }.body()
         } catch (_: Exception) {
             emptyList()
+        }
+    }
+
+    suspend fun postDiscussionEntry(
+        baseUrl: String,
+        token: String,
+        courseId: Long,
+        topicId: Long,
+        message: String,
+        csrfToken: String? = null
+    ): CanvasDiscussionEntry {
+        val formUrl = formatUrl(baseUrl, "api/v1/courses/$courseId/discussion_topics/$topicId/entries")
+        return client.submitForm(
+            url = formUrl,
+            formParameters = io.ktor.http.parameters {
+                append("message", message)
+            }
+        ) {
+            applyAuth(token, csrfToken)
+        }.body()
+    }
+
+    suspend fun downloadFileBytes(
+        downloadUrl: String,
+        token: String
+    ): ByteArray? {
+        return try {
+            client.get(downloadUrl) {
+                applyAuth(token)
+            }.body()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }
