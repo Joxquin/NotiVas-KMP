@@ -160,6 +160,7 @@ class GoogleDriveApiService(
             val response = httpClient.post("$DRIVE_FILES_API/$fileId/copy") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
+                parameter("supportsAllDrives", true)
                 parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
                 setBody(requestBody)
             }
@@ -184,6 +185,7 @@ class GoogleDriveApiService(
         return try {
             httpClient.get("$DRIVE_FILES_API/$fileId") {
                 header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("supportsAllDrives", true)
                 parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
             }.body()
         } catch (e: Exception) {
@@ -223,50 +225,116 @@ class GoogleDriveApiService(
     ): GoogleDriveFile? {
         val fileId = extractDriveFileId(sourceUrlOrId) ?: sourceUrlOrId.trim()
         if (fileId.isBlank()) return null
+        val token = getValidAccessToken(accessToken)
 
-        // 1. Intentar copia nativa en Google Drive
+        // 1. Intentar copia nativa en Google Drive (con supportsAllDrives)
         val copied = copyFile(
             fileId = fileId,
             newFileName = newFileName,
             parentFolderId = parentFolderId,
-            accessToken = accessToken
+            accessToken = token
         )
         if (copied != null) return copied
 
-        // 2. Si copyFile falló (ej. HTTP 404 por permisos cross-domain), descargar vía endpoint público de exportación
-        return try {
-            val isSheet = sourceUrlOrId.contains("spreadsheets")
-            val exportFormat = if (isSheet) "xlsx" else "docx"
-            val exportUrl = if (isSheet) {
-                "https://docs.google.com/spreadsheets/d/$fileId/export?format=$exportFormat"
-            } else {
-                "https://docs.google.com/document/d/$fileId/export?format=$exportFormat"
+        val isSheet = sourceUrlOrId.contains("spreadsheets")
+        val targetExportMime = if (isSheet) MIME_TYPE_XLSX else MIME_TYPE_DOCX
+
+        // 2. Intentar exportación autenticada oficial de Google Drive API (files.export)
+        if (token != null) {
+            try {
+                println("GoogleDriveApiService: intentando exportación autenticada oficial files.export para $fileId...")
+                val apiExportResponse = httpClient.get("$DRIVE_FILES_API/$fileId/export") {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    parameter("mimeType", targetExportMime)
+                }
+                if (apiExportResponse.status.value in 200..299) {
+                    val bytes = apiExportResponse.body<ByteArray>()
+                    if (bytes.isNotEmpty()) {
+                        println("GoogleDriveApiService: descargados ${bytes.size} bytes vía files.export. Subiendo a Drive...")
+                        val uploaded = uploadAndConvertFile(
+                            fileName = newFileName,
+                            parentFolderId = parentFolderId,
+                            fileBytes = bytes,
+                            targetMimeType = if (isSheet) MIME_TYPE_GSHEET else MIME_TYPE_GDOC,
+                            sourceMimeType = targetExportMime,
+                            accessToken = token
+                        )
+                        if (uploaded != null) return uploaded
+                    }
+                } else {
+                    println("GoogleDriveApiService: files.export API falló con HTTP ${apiExportResponse.status.value}")
+                }
+            } catch (e: Exception) {
+                println("GoogleDriveApiService: error en files.export: ${e.message}")
             }
 
-            println("GoogleDriveApiService: intentando descarga de exportación pública desde $exportUrl...")
-            val exportResponse = httpClient.get(exportUrl)
-            if (exportResponse.status.value in 200..299) {
-                val bytes = exportResponse.body<ByteArray>()
-                if (bytes.isNotEmpty()) {
-                    println("GoogleDriveApiService: descargados ${bytes.size} bytes de plantilla. Subiendo a Drive con conversión...")
-                    uploadAndConvertFile(
-                        fileName = newFileName,
-                        parentFolderId = parentFolderId,
-                        fileBytes = bytes,
-                        targetMimeType = if (isSheet) MIME_TYPE_GSHEET else MIME_TYPE_GDOC,
-                        sourceMimeType = if (isSheet) MIME_TYPE_XLSX else MIME_TYPE_DOCX,
-                        accessToken = accessToken
-                    )
-                } else null
-            } else {
-                println("GoogleDriveApiService: exportación pública falló HTTP ${exportResponse.status.value}")
-                null
+            // 2.1 Si es un archivo binario en Drive (ej. Office subido con rtpof=true), descargar con alt=media
+            try {
+                println("GoogleDriveApiService: intentando descarga directa binaria files.get(alt=media) para $fileId...")
+                val mediaResponse = httpClient.get("$DRIVE_FILES_API/$fileId") {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    parameter("alt", "media")
+                    parameter("supportsAllDrives", true)
+                }
+                if (mediaResponse.status.value in 200..299) {
+                    val bytes = mediaResponse.body<ByteArray>()
+                    if (bytes.isNotEmpty()) {
+                        println("GoogleDriveApiService: descargados ${bytes.size} bytes vía files.get(alt=media). Subiendo a Drive...")
+                        val uploaded = uploadAndConvertFile(
+                            fileName = newFileName,
+                            parentFolderId = parentFolderId,
+                            fileBytes = bytes,
+                            targetMimeType = if (isSheet) MIME_TYPE_GSHEET else MIME_TYPE_GDOC,
+                            sourceMimeType = targetExportMime,
+                            accessToken = token
+                        )
+                        if (uploaded != null) return uploaded
+                    }
+                } else {
+                    println("GoogleDriveApiService: files.get(alt=media) falló con HTTP ${mediaResponse.status.value}")
+                }
+            } catch (e: Exception) {
+                println("GoogleDriveApiService: error en files.get(alt=media): ${e.message}")
             }
-        } catch (e: Exception) {
-            println("GoogleDriveApiService: error en fallback de exportación: ${e.message}")
-            e.printStackTrace()
-            null
         }
+
+        // 3. Fallback de descarga web (para documentos públicos o compartidos en web)
+        val downloadUrls = listOfNotNull(
+            if (isSheet) "https://docs.google.com/spreadsheets/d/$fileId/export?format=xlsx" else "https://docs.google.com/document/d/$fileId/export?format=docx",
+            "https://drive.google.com/uc?export=download&id=$fileId"
+        )
+
+        for (webUrl in downloadUrls) {
+            try {
+                println("GoogleDriveApiService: intentando descarga desde $webUrl...")
+                val exportResponse = httpClient.get(webUrl) {
+                    if (token != null) {
+                        header(HttpHeaders.Authorization, "Bearer $token")
+                    }
+                }
+                if (exportResponse.status.value in 200..299) {
+                    val bytes = exportResponse.body<ByteArray>()
+                    if (bytes.isNotEmpty()) {
+                        println("GoogleDriveApiService: descargados ${bytes.size} bytes de plantilla. Subiendo a Drive con conversión...")
+                        val uploaded = uploadAndConvertFile(
+                            fileName = newFileName,
+                            parentFolderId = parentFolderId,
+                            fileBytes = bytes,
+                            targetMimeType = if (isSheet) MIME_TYPE_GSHEET else MIME_TYPE_GDOC,
+                            sourceMimeType = if (isSheet) MIME_TYPE_XLSX else MIME_TYPE_DOCX,
+                            accessToken = token
+                        )
+                        if (uploaded != null) return uploaded
+                    }
+                } else {
+                    println("GoogleDriveApiService: descarga web falló HTTP ${exportResponse.status.value} en $webUrl")
+                }
+            } catch (e: Exception) {
+                println("GoogleDriveApiService: error en descarga web $webUrl: ${e.message}")
+            }
+        }
+
+        return null
     }
 
     /**

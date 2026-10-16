@@ -40,7 +40,10 @@ actual fun rememberGoogleAuthLauncher(
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
-            .requestScopes(Scope("https://www.googleapis.com/auth/drive.file"))
+            .requestScopes(
+                Scope("https://www.googleapis.com/auth/drive.file"),
+                Scope("https://www.googleapis.com/auth/drive.readonly")
+            )
             .build()
     }
 
@@ -61,7 +64,7 @@ actual fun rememberGoogleAuthLauncher(
                 if (accountObj != null && email != null) {
                     coroutineScope.launch(Dispatchers.IO) {
                         try {
-                            val scopeStr = "oauth2:https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email"
+                            val scopeStr = "oauth2:https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email"
                             val token = GoogleAuthUtil.getToken(context, accountObj, scopeStr)
                             withContext(Dispatchers.Main) {
                                 currentOnSuccess.value(token, null, email)

@@ -79,14 +79,14 @@ object GoogleDriveConstants {
     const val AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
     const val TOKEN_URI = "https://oauth2.googleapis.com/token"
     const val USER_INFO_URI = "https://www.googleapis.com/oauth2/v2/userinfo"
-    const val SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email"
+    const val SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email"
 }
 
 class GoogleDriveAuthService(
     private val httpClient: HttpClient = KtorHttpClientProvider.createClient()
 ) {
     fun getAuthorizationUrl(redirectUri: String, state: String = "notivas_auth"): String {
-        val scopeEncoded = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email"
+        val scopeEncoded = GoogleDriveConstants.SCOPES
         return "${GoogleDriveConstants.AUTH_URI}?" +
                 "client_id=${GoogleDriveConstants.CLIENT_ID_DESKTOP}&" +
                 "redirect_uri=${redirectUri}&" +
