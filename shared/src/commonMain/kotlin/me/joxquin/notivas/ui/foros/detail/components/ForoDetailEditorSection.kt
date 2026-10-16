@@ -71,6 +71,8 @@ fun ForoDetailEditorSection(
     onSaveDraft: () -> Unit,
     isDraftSaved: Boolean,
     isExpired: Boolean = false,
+    isPublishing: Boolean = false,
+    onPublishToCanvas: () -> Unit = {},
     onOpenCopilotAssistant: () -> Unit,
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
@@ -362,12 +364,13 @@ fun ForoDetailEditorSection(
                 }
             }
 
-            val publishBtnBg = if (isExpired) {
+            val canPublish = !isExpired && !isPublishing && draftText.isNotBlank()
+            val publishBtnBg = if (!canPublish) {
                 if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHigh
             } else {
                 primaryColor
             }
-            val publishBtnTextColor = if (isExpired) {
+            val publishBtnTextColor = if (!canPublish) {
                 onSurfaceVariant
             } else {
                 if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
@@ -380,8 +383,8 @@ fun ForoDetailEditorSection(
                     .weight(1f)
                     .height(48.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable(enabled = !isExpired) {
-                        onSaveDraft()
+                    .clickable(enabled = canPublish) {
+                        onPublishToCanvas()
                     }
             ) {
                 Row(
@@ -389,22 +392,36 @@ fun ForoDetailEditorSection(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = if (isExpired) {
-                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_closed_status)
-                        } else {
-                            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_publish_btn)
-                        },
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = publishBtnTextColor
-                    )
-                    Spacer(Modifier.size(6.dp))
-                    Icon(
-                        imageVector = if (isExpired) Icons.Default.Lock else Icons.Default.Send,
-                        contentDescription = null,
-                        tint = publishBtnTextColor,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    if (isPublishing) {
+                        CircularProgressIndicator(
+                            color = publishBtnTextColor,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.size(8.dp))
+                        Text(
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_publishing),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = publishBtnTextColor
+                        )
+                    } else {
+                        Text(
+                            text = if (isExpired) {
+                                org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_closed_status)
+                            } else {
+                                org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_publish_btn)
+                            },
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = publishBtnTextColor
+                        )
+                        Spacer(Modifier.size(6.dp))
+                        Icon(
+                            imageVector = if (isExpired) Icons.Default.Lock else Icons.Default.Send,
+                            contentDescription = null,
+                            tint = publishBtnTextColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }

@@ -66,6 +66,9 @@ data class ForosUiState(
     val isLoadingReplies: Boolean = false,
     val currentDraft: String = "",
     val isDraftSavedMessage: Boolean = false,
+    val isPublishing: Boolean = false,
+    val publishSuccessMessage: Boolean = false,
+    val publishErrorMessage: String? = null,
     val isGeneratingCopilot: Boolean = false,
     val copilotStrategy: CopilotForoStrategy? = null,
     val copilotErrorMessage: String? = null,
@@ -90,6 +93,9 @@ class ForosViewModel(
     private val _isLoadingReplies = MutableStateFlow(false)
     private val _currentDraft = MutableStateFlow("")
     private val _isDraftSavedMessage = MutableStateFlow(false)
+    private val _isPublishing = MutableStateFlow(false)
+    private val _publishSuccessMessage = MutableStateFlow(false)
+    private val _publishErrorMessage = MutableStateFlow<String?>(null)
 
     private val _isGeneratingCopilot = MutableStateFlow(false)
     private val _copilotStrategy = MutableStateFlow<CopilotForoStrategy?>(null)
@@ -161,14 +167,21 @@ class ForosViewModel(
         combine(
             _currentDraft,
             _isDraftSavedMessage,
+            _isPublishing,
+            _publishSuccessMessage,
+            _publishErrorMessage
+        ) { draft, savedMsg, publishing, pubSuccess, pubError ->
+            Tuple5(draft, savedMsg, publishing, pubSuccess, pubError)
+        },
+        combine(
             _isGeneratingCopilot,
             _copilotStrategy,
-            _copilotErrorMessage
-        ) { draft, savedMsg, generating, strategy, errorMsg ->
-            Tuple5(draft, savedMsg, generating, strategy, errorMsg)
-        },
-        _activeCopilotModel
-    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, generating, strategy, errorMsg), activeModel ->
+            _copilotErrorMessage,
+            _activeCopilotModel
+        ) { generating, strategy, errorMsg, activeModel ->
+            Tuple4(generating, strategy, errorMsg, activeModel)
+        }
+    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, publishing, pubSuccess, pubError), (generating, strategy, errorMsg, activeModel) ->
 
         val nowMs = DateTimeUtil.nowEpochMillis()
 
@@ -248,6 +261,9 @@ class ForosViewModel(
             isLoadingReplies = loadingReplies,
             currentDraft = draft,
             isDraftSavedMessage = savedMsg,
+            isPublishing = publishing,
+            publishSuccessMessage = pubSuccess,
+            publishErrorMessage = pubError,
             isGeneratingCopilot = generating,
             copilotStrategy = strategy,
             copilotErrorMessage = errorMsg,
@@ -579,10 +595,72 @@ class ForosViewModel(
         return false
     }
 
+    fun publishForumReply(topic: CanvasDiscussionTopic) {
+        val courseId = topic.courseId ?: return
+        val message = _currentDraft.value.trim()
+        if (message.isBlank()) {
+            _publishErrorMessage.value = "No se puede publicar una respuesta vacía."
+            return
+        }
+
+        if (_isPublishing.value) return
+
+        viewModelScope.launch {
+            _isPublishing.value = true
+            _publishErrorMessage.value = null
+            _publishSuccessMessage.value = false
+
+            val result = canvasRepository.postDiscussionEntry(
+                courseId = courseId,
+                topicId = topic.id,
+                message = message
+            )
+
+            result.fold(
+                onSuccess = { newEntry ->
+                    // Limpiar borrador local
+                    _currentDraft.value = ""
+                    _draftsMemory.remove(topic.id)
+                    _publishSuccessMessage.value = true
+                    _publishErrorMessage.value = null
+
+                    // Agregar entrada inmediatamente o recargar
+                    val currentReplies = _selectedDiscussionReplies.value.toMutableList()
+                    currentReplies.add(0, newEntry)
+                    _selectedDiscussionReplies.value = currentReplies
+
+                    // Refrescar entradas de la API para sincronizar
+                    loadDiscussionEntries(topic)
+
+                    // Ocultar mensaje de éxito tras 3 segundos
+                    kotlinx.coroutines.delay(3000)
+                    _publishSuccessMessage.value = false
+                },
+                onFailure = { error ->
+                    _publishErrorMessage.value = error.message ?: "Error al publicar la respuesta en Canvas."
+                    _publishSuccessMessage.value = false
+                }
+            )
+            _isPublishing.value = false
+        }
+    }
+
+    fun clearPublishMessages() {
+        _publishSuccessMessage.value = false
+        _publishErrorMessage.value = null
+    }
+
     private fun getTopicDueDate(topic: CanvasDiscussionTopic): String? {
         return topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
     }
 }
+
+private data class Tuple4<A, B, C, D>(
+    val a: A,
+    val b: B,
+    val c: C,
+    val d: D
+)
 
 private data class Tuple5<A, B, C, D, E>(
     val a: A,

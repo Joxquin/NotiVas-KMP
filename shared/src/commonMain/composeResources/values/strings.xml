@@ -289,7 +289,7 @@
     <string name="urgent_due_hours_format">In %1$dh</string>
     <string name="urgent_virtual">Virtual</string>
     <string name="course_pending_format">%1$d pending</string>
-    <string name="course_up_to_date">On track ✓</string>
+    <string name="course_up_to_date">On track</string>
 
     <!-- Additional Copilot Strings -->
     <string name="copilot_topbar_title">Academic Copilot</string>
@@ -340,6 +340,9 @@
     <string name="foro_saved_badge">Saved!</string>
     <string name="foro_save_draft_btn">Save Draft</string>
     <string name="foro_publish_btn">Post to Canvas</string>
+    <string name="foro_publishing">Posting to Canvas...</string>
+    <string name="foro_publish_success">Reply posted successfully to Canvas!</string>
+    <string name="foro_publish_empty_error">Cannot post an empty response.</string>
     <string name="foro_replies_recent_header">Recent contributions (%1$d replies)</string>
     <string name="foro_view_all_replies">View all (%1$d)</string>
     <string name="foro_show_less">Show less</string>
@@ -383,6 +386,94 @@
     <string name="copilot_assist_copy_text">Copy text</string>
     <string name="copilot_assist_edit_draft">Edit draft</string>
     <string name="copilot_assist_insert_btn">Insert in my response</string>
+
+    <!-- Assignment Detail & Synchronized Draft Flow -->
+    <string name="assignment_detail_title">Assignment Details</string>
+    <string name="assignment_detail_tab_draft">Draft</string>
+    <string name="assignment_detail_tab_instructions">Instructions</string>
+    <string name="assignment_detail_tab_options">Options</string>
+    <string name="draft_status_card_title">Draft Synchronization</string>
+    <string name="draft_status_ready_desc">Create or link an editable document in Google Drive linked with NotiVas.</string>
+    <string name="draft_btn_start_template_format">Start copy of: %1$s</string>
+    <string name="draft_btn_start_blank">Start Blank Draft</string>
+    <string name="draft_template_detected_badge">Template detected</string>
+    <string name="draft_free_submission_badge">Open submission</string>
+    <string name="draft_syncing_title">Creating in Google Drive...</string>
+    <string name="draft_syncing_step_1">Generating document in your cloud...</string>
+    <string name="draft_syncing_step_2">Saving in folder NotiVas / %1$s</string>
+    <string name="draft_syncing_step_3">Linking file with Canvas LMS...</string>
+    <string name="draft_synced_chip">Draft in progress • Edited just now</string>
+    <string name="draft_open_docs_btn">Open in Google Docs</string>
+    <string name="draft_submit_canvas_btn">Submit to Canvas</string>
+    <string name="draft_reset_simulation_btn">Reset state</string>
+    <string name="draft_folder_location">Location: Google Drive / NotiVas / %1$s</string>
+    <string name="task_actions_title">Management &amp; Options</string>
+    <string name="task_submenu_manage_draft">Manage Draft in Google Drive</string>
+    <string name="task_submenu_manage_draft_desc">Create synchronized document or open existing draft</string>
+    <string name="task_consigna_title">Instructions &amp; Prompts</string>
+    <string name="task_submenu_open_canvas">Open assignment in Canvas LMS</string>
+    <string name="task_submenu_view_rubric">View evaluation rubric</string>
+    <string name="task_submenu_archive">Archive assignment from Dashboard</string>
+    <string name="task_submenu_mark_completed">Mark as completed</string>
+    <string name="task_submenu_share">Share assignment link</string>
+    <string name="task_due_label">Due:</string>
+    <string name="task_points_label">Points:</string>
+    <string name="task_submission_types_label">Submission type:</string>
+    <string name="task_no_instructions">This assignment does not include additional instructor instructions.</string>
+
+    <!-- Google Drive & Drafts Settings -->
+    <string name="settings_drive_section_title">Google Drive &amp; Drafts</string>
+    <string name="drive_connected_status">Connected</string>
+    <string name="drive_disconnected_status">Not linked</string>
+    <string name="drive_privacy_notice">Permission restricted to the NotiVas folder. No access to the rest of your personal files.</string>
+    <string name="drive_last_sync_format">Synced %1$s</string>
+    <string name="drive_connect_btn">Connect Google Drive</string>
+    <string name="drive_unlink_btn">Unlink Account</string>
+    <string name="drive_reconnect_btn">Reconnect / Renew Access</string>
+    <string name="drive_clear_cache_btn">Clear Drafts Cache</string>
+    <string name="drive_unlink_dialog_title">Unlink Google Drive?</string>
+    <string name="drive_unlink_dialog_desc">Google Drive credentials will be removed from this device. Cloud documents will not be affected.</string>
+    <string name="drive_clear_cache_dialog_title">Clear drafts cache?</string>
+    <string name="drive_clear_cache_dialog_desc">Local copies of drafts used by the AI Copilot will be cleared to free up storage. Your documents in Google Drive remain safe.</string>
+    <string name="drive_cache_cleared_toast">Drafts cache cleared successfully.</string>
+    <string name="drive_cache_size_label">Cached drafts: %1$s</string>
+    <string name="onboarding_drive_link_title">Google Drive Integration</string>
+    <string name="onboarding_drive_link_desc">Automatically sync assignment templates and drafts with Google Docs</string>
+    <string name="onboarding_drive_link_btn">Link Google Drive Now</string>
+    <string name="onboarding_drive_skip_btn">Skip for now</string>
+    <string name="task_detail_header_label">TASK DETAIL</string>
+    <string name="canvas_synced_badge">Canvas Synced</string>
+    <string name="canvas_graded_badge">Canvas Graded</string>
+    <string name="task_rubric_header">Canvas Rubric Criteria</string>
+    <string name="task_rubric_criteria_count">%1$d criteria</string>
+    <string name="task_action_save_later">Save for later</string>
+    <string name="task_action_go_to_editor">Go to Editor</string>
+    <string name="draft_drive_sync_subtitle">Sync with Google Drive</string>
+    <string name="draft_create_location_format">Will be created in: Google Drive / NotiVas / %1$s</string>
+    <string name="draft_btn_start_template_docx">Start DOCX template copy</string>
+    <string name="draft_official_template_subtitle">Canvas LMS official template</string>
+    <string name="task_menu_open_canvas">Open in Canvas LMS</string>
+    <string name="task_menu_explore_templates">Search template in modules</string>
+    <string name="task_menu_copy_canvas_link">Copy Canvas link</string>
+    <string name="template_picker_title">Course Templates</string>
+    <string name="template_picker_current_module_badge">Assignment module</string>
+    <string name="template_picker_loading">Scanning course modules...</string>
+    <string name="template_picker_empty">No templates or document links found in modules.</string>
+    <string name="template_picker_drive_desc">Remote file from Drive link</string>
+    <string name="template_picker_canvas_desc">Canvas course document</string>
+    <string name="draft_btn_start_template">Start copy of: %1$s</string>
+    <string name="draft_btn_start_blank_drive">Start blank draft in Google Drive</string>
+    <string name="draft_btn_explore_modules">Search template in course modules</string>
+    <string name="draft_status_submitted_title">Assignment Submitted</string>
+    <string name="draft_status_submitted_desc">Submission confirmed in Canvas LMS</string>
+    <string name="draft_creating_in_drive">Creating in Drive...</string>
+    <string name="draft_organizing_in_folder">Organizing in NotiVas / %1$s...</string>
+    <string name="draft_synced_cloud_status">Linked and synced document in Google Drive</string>
+    <string name="draft_syncing_cloud_status">Syncing with Google Drive...</string>
+    <string name="draft_cancel_action">Cancel</string>
+    <string name="draft_preparing_docs">Preparing Docs...</string>
+    <string name="draft_btn_send_to_canvas">Submit to Canvas</string>
+    <string name="task_rubric_empty">This assignment does not have an associated grading rubric configured by the teacher.</string>
 </resources>
 
 

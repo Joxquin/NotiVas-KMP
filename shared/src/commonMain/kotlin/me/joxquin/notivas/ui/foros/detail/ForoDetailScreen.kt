@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -145,9 +146,45 @@ fun ForoDetailScreen(
                         onSaveDraft = { viewModel.saveDraft() },
                         isDraftSaved = uiState.isDraftSavedMessage,
                         isExpired = isExpired,
+                        isPublishing = uiState.isPublishing,
+                        onPublishToCanvas = { viewModel.publishForumReply(topic) },
                         onOpenCopilotAssistant = { showCopilotAssistant = true },
                         themeStyle = themeStyle
                     )
+                }
+
+                if (uiState.publishSuccessMessage) {
+                    item(key = "foro_pub_success") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.foro_publish_success),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (uiState.publishErrorMessage != null) {
+                    item(key = "foro_pub_error") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = uiState.publishErrorMessage ?: "",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
                 }
 
                 item {
@@ -268,9 +305,45 @@ fun ForoDetailScreen(
                         onSaveDraft = { viewModel.saveDraft() },
                         isDraftSaved = uiState.isDraftSavedMessage,
                         isExpired = isExpired,
+                        isPublishing = uiState.isPublishing,
+                        onPublishToCanvas = { viewModel.publishForumReply(topic) },
                         onOpenCopilotAssistant = { showCopilotAssistant = true },
                         themeStyle = themeStyle
                     )
+                }
+
+                if (uiState.publishSuccessMessage) {
+                    item(key = "foro_pub_success_m3") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.foro_publish_success),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (uiState.publishErrorMessage != null) {
+                    item(key = "foro_pub_error_m3") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = uiState.publishErrorMessage ?: "",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
                 }
 
                 item {

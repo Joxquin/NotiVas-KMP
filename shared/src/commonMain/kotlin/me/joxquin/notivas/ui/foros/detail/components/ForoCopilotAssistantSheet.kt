@@ -940,7 +940,7 @@ private fun ToneChip(
                 modifier = Modifier.size(14.dp)
             )
             Text(
-                text = "✦ $text",
+                text = text,
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 11.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
