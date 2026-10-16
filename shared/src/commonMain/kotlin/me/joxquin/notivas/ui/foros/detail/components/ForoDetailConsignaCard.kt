@@ -55,13 +55,9 @@ fun ForoDetailConsignaCard(
     val isMandatory = points != null && points > 0
 
     val cleanMessage = remember(topic.message) {
-        topic.message
-            ?.replace(Regex("<[^>]*>"), "")
-            ?.replace("&nbsp;", " ")
-            ?.replace("&amp;", "&")
-            ?.replace("&lt;", "<")
-            ?.replace("&gt;", ">")
-            ?.trim() ?: "Sin descripción detallada provista por el docente."
+        topic.message?.let { me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.cleanHtml(it) }
+            ?.ifBlank { null }
+            ?: "Sin descripción detallada provista por el docente."
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {

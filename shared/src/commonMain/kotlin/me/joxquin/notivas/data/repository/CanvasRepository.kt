@@ -623,12 +623,13 @@ class CanvasRepository(
         }
 
         try {
+            val formattedMessage = me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.textToHtml(message)
             val result = apiService.postDiscussionEntry(
                 baseUrl = baseUrl,
                 token = token,
                 courseId = courseId,
                 topicId = topicId,
-                message = message,
+                message = formattedMessage,
                 csrfToken = csrfToken
             )
             Result.success(result)
@@ -659,6 +660,7 @@ class CanvasRepository(
         }
 
         try {
+            val formattedBody = bodyText?.let { me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.textToHtml(it) }
             val result = apiService.submitAssignmentSubmission(
                 baseUrl = baseUrl,
                 token = token,
@@ -666,7 +668,7 @@ class CanvasRepository(
                 assignmentId = assignmentId,
                 submissionType = submissionType,
                 url = url,
-                bodyText = bodyText,
+                bodyText = formattedBody,
                 csrfToken = csrfToken
             )
             // Actualizar assignment localmente de inmediato con prevalencia canónica de entrega

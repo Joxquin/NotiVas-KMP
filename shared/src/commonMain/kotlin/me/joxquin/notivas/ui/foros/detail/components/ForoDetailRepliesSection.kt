@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionEntry
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.ui.copilot.components.formatMarkdown
 
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
@@ -248,13 +249,7 @@ private fun ReplyCardItem(
     themeStyle: AppThemeStyle
 ) {
     val cleanText = remember(entry.message) {
-        entry.message
-            ?.replace(Regex("<[^>]*>"), "")
-            ?.replace("&nbsp;", " ")
-            ?.replace("&amp;", "&")
-            ?.replace("&lt;", "<")
-            ?.replace("&gt;", ">")
-            ?.trim() ?: ""
+        entry.message?.let { me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.cleanHtml(it) } ?: ""
     }
 
     val defaultAuthorName = stringResource(Res.string.foro_author_classmate)
@@ -359,8 +354,9 @@ private fun ReplyCardItem(
                     .fillMaxWidth()
                     .clickable { isTextExpanded = !isTextExpanded }
             ) {
+                val formattedText = remember(cleanText) { formatMarkdown(cleanText) }
                 Text(
-                    text = cleanText,
+                    text = formattedText,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
                     color = onSurfaceVariant,
                     maxLines = if (isTextExpanded) Int.MAX_VALUE else 3,
