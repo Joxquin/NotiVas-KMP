@@ -293,11 +293,15 @@ class DashboardViewModel(
                         when (effectiveCandidate.type) {
                             me.joxquin.notivas.data.model.TemplateSourceType.DRIVE_URL -> {
                                 // Clonar directamente desde URL pública/compartida de Google Drive
-                                googleDriveApiService.cloneFromDriveUrlOrId(
+                                val cloned = googleDriveApiService.cloneFromDriveUrlOrId(
                                     sourceUrlOrId = effectiveCandidate.url,
                                     newFileName = generatedFileName,
                                     parentFolderId = folderId
-                                ) ?: googleDriveApiService.createBlankDocument(generatedFileName, folderId)
+                                )
+                                if (cloned == null) {
+                                    _uiEffect.tryEmit(UiEffect.ShowToast("No se pudo clonar la plantilla. Verifica que estés conectado con la cuenta institucional que tiene acceso al enlace."))
+                                }
+                                cloned
                             }
                             me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE -> {
                                 // Obtener URL de descarga del archivo de Canvas y descargarlo
