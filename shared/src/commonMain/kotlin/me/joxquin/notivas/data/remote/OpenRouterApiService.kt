@@ -61,4 +61,32 @@ class OpenRouterApiService(
             header("Authorization", authHeader)
         }.body()
     }
+
+    suspend fun getModelEndpoints(
+        modelId: String,
+        apiKey: String? = null
+    ): me.joxquin.notivas.data.model.OpenRouterModelEndpointsResponse {
+        val cleanModel = modelId.trim().removePrefix("/")
+        val response = client.get("$baseUrl/models/$cleanModel/endpoints") {
+            if (!apiKey.isNullOrBlank()) {
+                val authHeader = if (apiKey.startsWith("Bearer ")) apiKey else "Bearer $apiKey"
+                header("Authorization", authHeader)
+            }
+        }
+        val status = response.status.value
+        val responseText = response.body<String>()
+        if (status !in 200..299) {
+            val errorMsg = try {
+                val errorObj = KtorHttpClientProvider.jsonConfig.decodeFromString<me.joxquin.notivas.data.model.OpenRouterModelEndpointsResponse>(responseText)
+                errorObj.error?.message ?: "Error HTTP $status al consultar modelo"
+            } catch (_: Exception) {
+                "Error HTTP $status al consultar modelo"
+            }
+            return me.joxquin.notivas.data.model.OpenRouterModelEndpointsResponse(
+                data = null,
+                error = me.joxquin.notivas.data.model.OpenRouterError(message = errorMsg, code = status)
+            )
+        }
+        return KtorHttpClientProvider.jsonConfig.decodeFromString(responseText)
+    }
 }
