@@ -15,13 +15,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddComment
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.ui.unit.sp
+import top.yukonga.miuix.kmp.squircle.squircleSurface
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,18 +67,13 @@ import me.joxquin.notivas.ui.notas.NotasViewModel
 import me.joxquin.notivas.ui.profile.ProfileViewModel
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
-import me.joxquin.notivas.shared.resources.app_name
-import me.joxquin.notivas.shared.resources.grades_progreso_title
-import me.joxquin.notivas.shared.resources.foro_detail_title
-import me.joxquin.notivas.shared.resources.foros_hub_title
-import me.joxquin.notivas.shared.resources.herramientas_title
-import me.joxquin.notivas.shared.resources.copilot_title
-import me.joxquin.notivas.shared.resources.settings_title
+import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Filter
 import top.yukonga.miuix.kmp.icon.extended.Refresh
+import top.yukonga.miuix.kmp.icon.extended.Tune
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
 
@@ -201,10 +200,35 @@ fun MainAppShell(
     val updateRepository = remember { UpdateRepository() }
     var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
 
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     LaunchedEffect(Unit) {
         val info = updateRepository.checkForUpdates()
         if (info.isUpdateAvailable) {
             activeUpdateInfo = info
+        }
+    }
+
+    var toastMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(dashboardViewModel) {
+        dashboardViewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is me.joxquin.notivas.ui.dashboard.DashboardViewModel.UiEffect.OpenUrl -> {
+                    try {
+                        uriHandler.openUri(effect.url)
+                    } catch (_: Exception) {}
+                }
+                is me.joxquin.notivas.ui.dashboard.DashboardViewModel.UiEffect.ShowToast -> {
+                    toastMessage = effect.message
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(toastMessage) {
+        if (toastMessage != null) {
+            kotlinx.coroutines.delay(3500)
+            toastMessage = null
         }
     }
 
@@ -267,11 +291,14 @@ fun MainAppShell(
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
     val forosUiState by forosViewModel.uiState.collectAsState()
+    val selectedAssignmentForDraft by dashboardViewModel.selectedAssignmentForDraft.collectAsState()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        // En Miuix: Interceptar botón Atrás físico para volver al Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
-        BackHandler(enabled = showingNotasDetail || showingForosDetail || currentDestination != MainDestination.Inicio) {
-            if (currentDestination == MainDestination.Herramientas) {
+        // En Miuix: Interceptar botón Atrás físico para volver de Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
+        BackHandler(enabled = selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || currentDestination != MainDestination.Inicio) {
+            if (selectedAssignmentForDraft != null) {
+                dashboardViewModel.closeDraft()
+            } else if (currentDestination == MainDestination.Herramientas) {
                 if (showingForosDetail && forosUiState.selectedDiscussion != null) {
                     forosViewModel.clearSelectedDiscussion()
                 } else if (showingNotasDetail || showingForosDetail) {
@@ -392,7 +419,9 @@ fun MainAppShell(
                     currentDestination == MainDestination.Herramientas && showingForosDetail -> {
                         if (forosUiState.selectedDiscussion != null) stringResource(Res.string.foro_detail_title) else stringResource(Res.string.foros_hub_title)
                     }
-                    currentDestination == MainDestination.Inicio -> stringResource(Res.string.app_name)
+                    currentDestination == MainDestination.Inicio -> {
+                        if (selectedAssignmentForDraft != null) stringResource(Res.string.assignment_detail_title) else stringResource(Res.string.app_name)
+                    }
                     currentDestination == MainDestination.Herramientas -> stringResource(Res.string.herramientas_title)
                     currentDestination == MainDestination.Copilot -> stringResource(Res.string.copilot_title)
                     currentDestination == MainDestination.Ajustes -> stringResource(Res.string.settings_title)
@@ -411,8 +440,16 @@ fun MainAppShell(
                     MainDestination.Copilot -> if (isCopilotScrolled) copilotScrollOffset else 64f
                 },
                 backdrop = contentBackdrop,
-                titleAlwaysVisible = currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail),
+                titleAlwaysVisible = (currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail)) ||
+                        (currentDestination == MainDestination.Inicio && selectedAssignmentForDraft != null),
                 navigationIcon = when {
+                    currentDestination == MainDestination.Inicio && selectedAssignmentForDraft != null -> {
+                        {
+                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
+                                onClick = { dashboardViewModel.closeDraft() }
+                            )
+                        }
+                    }
                     currentDestination == MainDestination.Herramientas && showingNotasDetail -> {
                         {
                             me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
@@ -450,8 +487,64 @@ fun MainAppShell(
                     else -> null
                 },
                 actions = {
-                    when (currentDestination) {
-                        MainDestination.Copilot -> {
+                    when {
+                        currentDestination == MainDestination.Inicio && selectedAssignmentForDraft != null -> {
+                            val assignment = selectedAssignmentForDraft?.assignment
+                            val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                            val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+                            val openCanvasLabel = stringResource(Res.string.task_menu_open_canvas)
+                            val exploreTemplatesLabel = stringResource(Res.string.task_menu_explore_templates)
+                            val copyCanvasLinkLabel = stringResource(Res.string.task_menu_copy_canvas_link)
+
+                            val dropdownEntries = remember(assignment, openCanvasLabel, exploreTemplatesLabel, copyCanvasLinkLabel) {
+                                listOf(
+                                    top.yukonga.miuix.kmp.basic.DropdownEntry(
+                                        items = listOf(
+                                            top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                text = openCanvasLabel,
+                                                onClick = {
+                                                    assignment?.htmlUrl?.let { url ->
+                                                        try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                                    }
+                                                }
+                                            ),
+                                            top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                text = exploreTemplatesLabel,
+                                                onClick = {
+                                                    if (assignment != null) {
+                                                        dashboardViewModel.openTemplatePicker(
+                                                            courseId = assignment.courseId,
+                                                            assignmentId = assignment.id,
+                                                            assignmentDescription = assignment.description
+                                                        )
+                                                    }
+                                                }
+                                            ),
+                                            top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                text = copyCanvasLinkLabel,
+                                                onClick = {
+                                                    assignment?.htmlUrl?.let { url ->
+                                                        clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(url))
+                                                    }
+                                                }
+                                            )
+                                        )
+                                    )
+                                )
+                            }
+
+                            top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu(
+                                entries = dropdownEntries,
+                                collapseOnSelection = true
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Tune,
+                                    contentDescription = "Options",
+                                    tint = MiuixTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                        currentDestination == MainDestination.Copilot -> {
                             me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
                                 onClick = { copilotViewModel.startNewSession() }
                             ) {
@@ -464,7 +557,7 @@ fun MainAppShell(
                             }
                         }
 
-                        MainDestination.Ajustes -> {
+                        currentDestination == MainDestination.Ajustes -> {
                             me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
                                 onClick = { profileViewModel.verifyToken() }
                             ) {
@@ -477,7 +570,7 @@ fun MainAppShell(
                             }
                         }
 
-                        MainDestination.Herramientas -> {
+                        currentDestination == MainDestination.Herramientas -> {
                             if (showingForosDetail) {
                                 if (forosUiState.selectedDiscussion == null) {
                                     me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
@@ -520,16 +613,19 @@ fun MainAppShell(
                         )
                     }
                 } else null,
-                onNavigationClick = if (currentDestination == MainDestination.Inicio) {
+                onNavigationClick = if (currentDestination == MainDestination.Inicio && selectedAssignmentForDraft == null) {
                     { /* Notificaciones */ }
                 } else null,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
 
-            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass")
+            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Siempre visible igual que en Foros
             FloatingNavigationBar(
                 currentDestination = currentDestination,
                 onNavigate = { destination ->
+                    if (selectedAssignmentForDraft != null) {
+                        dashboardViewModel.closeDraft()
+                    }
                     showingNotasDetail = false
                     showingForosDetail = false
                     val targetIndex = destinations.indexOf(destination)
@@ -540,6 +636,42 @@ fun MainAppShell(
                 backdrop = contentBackdrop,
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
+
+            // Feedback Toast / Banner Flotante en MIUIX
+            androidx.compose.animation.AnimatedVisibility(
+                visible = toastMessage != null,
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 90.dp, start = 20.dp, end = 20.dp)
+            ) {
+                toastMessage?.let { msg ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .squircleSurface(
+                                color = if (msg.contains("Error", ignoreCase = true) || msg.contains("Fallo", ignoreCase = true) || msg.contains("No se pudo", ignoreCase = true))
+                                    androidx.compose.ui.graphics.Color(0xFFE53935)
+                                else if (msg.contains("exitosamente", ignoreCase = true) || msg.contains("listo", ignoreCase = true) || msg.contains("cancelada", ignoreCase = true))
+                                    androidx.compose.ui.graphics.Color(0xFF388E3C)
+                                else
+                                    top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.primary,
+                                cornerRadius = 18.dp
+                            )
+                            .padding(vertical = 12.dp, horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = msg,
+                            color = androidx.compose.ui.graphics.Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                            maxLines = 3
+                        )
+                    }
+                }
+            }
         }
     } else {
         // ─── ARQUITECTURA MATERIAL DESIGN 3 (SCAFFOLD) ────────────────────────
@@ -549,8 +681,10 @@ fun MainAppShell(
         }
 
         // Interceptar gesto/botón Atrás del sistema para Material 3:
-        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingNotasDetail || showingForosDetail || materialDestination != MainDestination.Inicio)) {
-            if (materialDestination == MainDestination.Herramientas) {
+        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || materialDestination != MainDestination.Inicio)) {
+            if (selectedAssignmentForDraft != null) {
+                dashboardViewModel.closeDraft()
+            } else if (materialDestination == MainDestination.Herramientas) {
                 if (showingForosDetail && forosUiState.selectedDiscussion != null) {
                     forosViewModel.clearSelectedDiscussion()
                 } else if (showingNotasDetail || showingForosDetail) {
@@ -572,6 +706,9 @@ fun MainAppShell(
                     currentDestination = materialDestination,
                     isVisible = !isImeVisible,
                     onNavigate = { destination ->
+                        if (selectedAssignmentForDraft != null) {
+                            dashboardViewModel.closeDraft()
+                        }
                         showingNotasDetail = false
                         showingForosDetail = false
                         materialDestination = destination
@@ -591,30 +728,40 @@ fun MainAppShell(
                     .fillMaxSize()
                     .padding(bottom = animatedBottomPadding)
             ) {
-                androidx.compose.animation.AnimatedContent(
-                    targetState = materialDestination,
-                    transitionSpec = {
-                        val targetIndex = destinations.indexOf(targetState)
-                        val initialIndex = destinations.indexOf(initialState)
-                        val isForward = targetIndex >= initialIndex
-                        if (isForward) {
-                            (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it } +
-                                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
-                                .togetherWith(
-                                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it / 3 } +
-                                            androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
-                                )
-                        } else {
-                            (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it } +
-                                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
-                                .togetherWith(
-                                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it / 3 } +
-                                            androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
-                                )
-                        }
-                    },
-                    label = "materialDestinationTransition"
-                ) { currentScreen ->
+                if (selectedAssignmentForDraft != null) {
+                    selectedAssignmentForDraft?.let { draftAssignment ->
+                        me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
+                            assignmentUi = draftAssignment,
+                            onBack = { dashboardViewModel.closeDraft() },
+                            viewModel = dashboardViewModel,
+                            themeStyle = AppThemeStyle.MATERIAL
+                        )
+                    }
+                } else {
+                    androidx.compose.animation.AnimatedContent(
+                        targetState = materialDestination,
+                        transitionSpec = {
+                            val targetIndex = destinations.indexOf(targetState)
+                            val initialIndex = destinations.indexOf(initialState)
+                            val isForward = targetIndex >= initialIndex
+                            if (isForward) {
+                                (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it } +
+                                        androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
+                                    .togetherWith(
+                                        androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it / 3 } +
+                                                androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
+                                    )
+                            } else {
+                                (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it } +
+                                        androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
+                                    .togetherWith(
+                                        androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it / 3 } +
+                                                androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
+                                    )
+                            }
+                        },
+                        label = "materialDestinationTransition"
+                    ) { currentScreen ->
                     when (currentScreen) {
                         MainDestination.Inicio -> {
                             InicioScreen(
@@ -688,9 +835,46 @@ fun MainAppShell(
                         }
                     }
                 }
+
+                // Feedback Toast / Banner Flotante en Material 3
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = toastMessage != null,
+                    enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
+                    exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp, start = 20.dp, end = 20.dp)
+                ) {
+                    toastMessage?.let { msg ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = if (msg.contains("Error", ignoreCase = true) || msg.contains("Fallo", ignoreCase = true) || msg.contains("No se pudo", ignoreCase = true))
+                                        androidx.compose.ui.graphics.Color(0xFFE53935)
+                                    else if (msg.contains("exitosamente", ignoreCase = true) || msg.contains("listo", ignoreCase = true) || msg.contains("cancelada", ignoreCase = true))
+                                        androidx.compose.ui.graphics.Color(0xFF388E3C)
+                                    else
+                                        androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                                )
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = msg,
+                                color = androidx.compose.ui.graphics.Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                maxLines = 3
+                            )
+                        }
+                    }
+                }
             }
         }
     }
+}
 
     activeUpdateInfo?.let { info ->
         UpdateDialog(

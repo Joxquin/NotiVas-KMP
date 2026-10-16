@@ -31,7 +31,11 @@ class MainActivity : ComponentActivity() {
         BackgroundSyncScheduler.schedulePeriodicSync(15L)
 
         setContent {
-            App()
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.activity.compose.LocalActivityResultRegistryOwner provides this
+            ) {
+                App()
+            }
         }
     }
 }
