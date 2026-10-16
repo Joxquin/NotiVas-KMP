@@ -43,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import me.joxquin.notivas.data.local.AppThemeStyle
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -56,9 +57,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.ajustes.components.AjustesAppInfoFooter
 import me.joxquin.notivas.ui.ajustes.components.CopilotSettingsSection
+import me.joxquin.notivas.ui.ajustes.components.GoogleDriveSettingsSection
 import me.joxquin.notivas.ui.ajustes.components.GranularNotificationsSection
 import me.joxquin.notivas.ui.ajustes.components.SecurityAndKeystoreSettingsSection
 import me.joxquin.notivas.ui.ajustes.components.StudentIdentitySettingsCard
@@ -279,6 +280,22 @@ fun AjustesScreen(
                     )
                 }
 
+                // 4.1 Google Drive y Borradores
+                item {
+                    GoogleDriveSettingsSection(
+                        connected = uiState.googleDriveConnected,
+                        email = uiState.googleDriveEmail,
+                        lastSyncText = uiState.lastSyncAgoText,
+                        cacheSize = uiState.googleDriveCacheSize,
+                        onAuthSuccess = { token, refresh, email ->
+                            viewModel.saveGoogleDriveAuth(token, refresh, email)
+                        },
+                        onUnlink = { viewModel.unlinkGoogleDrive() },
+                        onClearCache = { viewModel.clearDraftsCache() },
+                        themeStyle = AppThemeStyle.MIUIX
+                    )
+                }
+
                 // 5. Seguridad y Zona Crítica
                 item {
                     SecurityAndKeystoreSettingsSection(
@@ -445,6 +462,22 @@ fun AjustesScreen(
                     onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
                     onModelChange = { viewModel.setOpenRouterModel(it) },
                     onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
+                    themeStyle = AppThemeStyle.MATERIAL
+                )
+            }
+
+            // 5.1 Google Drive y Borradores
+            item {
+                GoogleDriveSettingsSection(
+                    connected = uiState.googleDriveConnected,
+                    email = uiState.googleDriveEmail,
+                    lastSyncText = uiState.lastSyncAgoText,
+                    cacheSize = uiState.googleDriveCacheSize,
+                    onAuthSuccess = { token, refresh, email ->
+                        viewModel.saveGoogleDriveAuth(token, refresh, email)
+                    },
+                    onUnlink = { viewModel.unlinkGoogleDrive() },
+                    onClearCache = { viewModel.clearDraftsCache() },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }
