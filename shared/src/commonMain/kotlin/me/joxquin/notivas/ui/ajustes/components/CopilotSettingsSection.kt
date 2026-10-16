@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SmartToy
@@ -38,7 +39,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,9 +74,16 @@ import me.joxquin.notivas.shared.resources.openrouter_model_dialog_title
 import me.joxquin.notivas.shared.resources.openrouter_model_dialog_desc
 import me.joxquin.notivas.shared.resources.openrouter_balance_title
 import me.joxquin.notivas.shared.resources.tokens_used_format
+import me.joxquin.notivas.shared.resources.openrouter_analyze_model_btn
+import me.joxquin.notivas.shared.resources.openrouter_analyzing_model
+import me.joxquin.notivas.shared.resources.openrouter_custom_model_hint
+import me.joxquin.notivas.shared.resources.openrouter_custom_model_title
+import me.joxquin.notivas.shared.resources.openrouter_model_context
+import me.joxquin.notivas.shared.resources.openrouter_model_info_title
 import me.joxquin.notivas.shared.resources.save
 import me.joxquin.notivas.shared.resources.delete
 import me.joxquin.notivas.shared.resources.cancel
+import me.joxquin.notivas.shared.resources.close
 import me.joxquin.notivas.shared.resources.change
 import me.joxquin.notivas.shared.resources.sync
 
@@ -89,6 +99,7 @@ fun CopilotSettingsSection(
     onApiKeyChange: (String?) -> Unit,
     onModelChange: (String) -> Unit,
     onRefreshBalance: () -> Unit,
+    onAnalyzeModel: (suspend (String) -> me.joxquin.notivas.data.model.CustomModelAnalysisResult)? = null,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
 ) {
@@ -206,8 +217,88 @@ fun CopilotSettingsSection(
         )
     }
 
+    // Dialog flotante de informacion del modelo
+    var modelInfoResult by remember { mutableStateOf<me.joxquin.notivas.data.model.CustomModelAnalysisResult?>(null) }
+    if (modelInfoResult != null) {
+        val info = modelInfoResult!!
+        val infoContainerColor = when (info.status) {
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.OPTIMAL ->
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.COMPATIBLE ->
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.INCOMPATIBLE,
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.NOT_FOUND ->
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.ERROR ->
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        }
+
+        AlertDialog(
+            onDismissRequest = { modelInfoResult = null },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(Res.string.openrouter_model_info_title),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            },
+            text = {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = infoContainerColor),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = info.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        if (info.contextLength != null && info.contextLength > 0) {
+                            Text(
+                                text = stringResource(Res.string.openrouter_model_context, info.contextLength),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Text(
+                            text = info.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { modelInfoResult = null },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(stringResource(Res.string.close))
+                }
+            }
+        )
+    }
+
     // Dialog: Seleccionar Modelo LLM
     if (showModelDialog) {
+        val coroutineScope = rememberCoroutineScope()
         var selectedOption by remember { mutableStateOf(selectedModel) }
         var isCustom by remember {
             mutableStateOf(popularModels.none { it.first == selectedModel })
@@ -215,9 +306,12 @@ fun CopilotSettingsSection(
         var customInput by remember {
             mutableStateOf(if (isCustom) selectedModel else "")
         }
+        var isSavingAndAnalyzing by remember { mutableStateOf(false) }
 
         AlertDialog(
-            onDismissRequest = { showModelDialog = false },
+            onDismissRequest = {
+                if (!isSavingAndAnalyzing) showModelDialog = false
+            },
             icon = {
                 Icon(
                     imageVector = Icons.Default.SmartToy,
@@ -250,7 +344,7 @@ fun CopilotSettingsSection(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .clickable {
+                                .clickable(enabled = !isSavingAndAnalyzing) {
                                     isCustom = false
                                     selectedOption = modelId
                                 }
@@ -262,7 +356,8 @@ fun CopilotSettingsSection(
                                 onClick = {
                                     isCustom = false
                                     selectedOption = modelId
-                                }
+                                },
+                                enabled = !isSavingAndAnalyzing
                             )
                             Text(
                                 text = label,
@@ -273,21 +368,22 @@ fun CopilotSettingsSection(
                         }
                     }
 
-                    // Opción personalizada
+                    // Opcion personalizada
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { isCustom = true }
+                            .clickable(enabled = !isSavingAndAnalyzing) { isCustom = true }
                             .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = isCustom,
-                            onClick = { isCustom = true }
+                            onClick = { isCustom = true },
+                            enabled = !isSavingAndAnalyzing
                         )
                         Text(
-                            text = "Custom ID (Manual)",
+                            text = stringResource(Res.string.openrouter_custom_model_title),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = 8.dp)
@@ -299,8 +395,9 @@ fun CopilotSettingsSection(
                             value = customInput,
                             onValueChange = { customInput = it },
                             modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Model ID (e.g. meta-llama/...)") },
+                            label = { Text(stringResource(Res.string.openrouter_custom_model_hint)) },
                             singleLine = true,
+                            enabled = !isSavingAndAnalyzing,
                             shape = RoundedCornerShape(12.dp)
                         )
                     }
@@ -312,16 +409,45 @@ fun CopilotSettingsSection(
                         val finalModel = if (isCustom) customInput.trim() else selectedOption
                         if (finalModel.isNotBlank()) {
                             onModelChange(finalModel)
+                            if (isCustom && onAnalyzeModel != null) {
+                                coroutineScope.launch {
+                                    isSavingAndAnalyzing = true
+                                    try {
+                                        val result = onAnalyzeModel(finalModel)
+                                        showModelDialog = false
+                                        modelInfoResult = result
+                                    } finally {
+                                        isSavingAndAnalyzing = false
+                                    }
+                                }
+                            } else {
+                                showModelDialog = false
+                            }
+                        } else {
+                            showModelDialog = false
                         }
-                        showModelDialog = false
                     },
+                    enabled = !isSavingAndAnalyzing,
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text(stringResource(Res.string.save))
+                    if (isSavingAndAnalyzing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(Res.string.openrouter_analyzing_model))
+                    } else {
+                        Text(stringResource(Res.string.save))
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showModelDialog = false }) {
+                TextButton(
+                    onClick = { showModelDialog = false },
+                    enabled = !isSavingAndAnalyzing
+                ) {
                     Text(stringResource(Res.string.cancel))
                 }
             }

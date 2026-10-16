@@ -276,6 +276,7 @@ fun AjustesScreen(
                         onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
                         onModelChange = { viewModel.setOpenRouterModel(it) },
                         onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
+                        onAnalyzeModel = { viewModel.analyzeCustomModel(it) },
                         themeStyle = AppThemeStyle.MIUIX
                     )
                 }
@@ -462,6 +463,7 @@ fun AjustesScreen(
                     onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
                     onModelChange = { viewModel.setOpenRouterModel(it) },
                     onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
+                    onAnalyzeModel = { viewModel.analyzeCustomModel(it) },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }

@@ -94,6 +94,16 @@
     <string name="openrouter_balance_subtitle">Total usage &amp; available credits</string>
     <string name="openrouter_balance_usage">Usage: $%1$s / $%2$s USD</string>
     <string name="tokens_used_format">Total tokens used: %1$d</string>
+    <string name="openrouter_analyze_model_btn">Analyze model</string>
+    <string name="openrouter_analyzing_model">Analyzing model...</string>
+    <string name="openrouter_custom_model_hint">Model ID (e.g. meta-llama/llama-3.3-70b-instruct)</string>
+    <string name="openrouter_custom_model_title">Custom ID (Manual)</string>
+    <string name="openrouter_model_optimal">100% Compatible with NotiVas: Supports conversational chat and automatic Canvas LMS tools.</string>
+    <string name="openrouter_model_compatible">Compatible with chat: Answers questions and drafts text, but does not support dynamic Canvas tools.</string>
+    <string name="openrouter_model_incompatible">Model not recommended: Does not support conversational text generation.</string>
+    <string name="openrouter_model_not_found">Model not found on OpenRouter. Check the model ID.</string>
+    <string name="openrouter_model_context">Context: %1$d tokens</string>
+    <string name="openrouter_model_info_title">Model Information</string>
 
     <!-- Security and Session -->
     <string name="settings_security_section_title">SECURITY &amp; CRITICAL ZONE</string>

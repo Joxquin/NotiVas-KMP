@@ -248,6 +248,10 @@ class ProfileViewModel(
         viewModelScope.launch { preferencesManager.setCopilotEnabled(enabled) }
     }
 
+    suspend fun analyzeCustomModel(modelId: String): me.joxquin.notivas.data.model.CustomModelAnalysisResult {
+        return copilotRepository.analyzeModelCompatibility(modelId)
+    }
+
     fun logout() {
         viewModelScope.launch {
             BackgroundSyncScheduler.cancelPeriodicSync()
