@@ -81,7 +81,7 @@ class ReminderWorker(
                             AssignmentAlarmReceiver.ALERT_TYPE_30M
                         )
                         notificationHelper.showNotification(
-                            title = "⚠️ Alerta Crítica · $courseName",
+                            title = "Alerta Crítica · $courseName",
                             message = "$shortName: ¡Últimos $minutesRemaining minutos para la entrega!",
                             notificationId = notifId
                         )
@@ -95,7 +95,7 @@ class ReminderWorker(
                             AssignmentAlarmReceiver.ALERT_TYPE_3H
                         )
                         notificationHelper.showNotification(
-                            title = "⏰ Alerta de Urgencia · $courseName",
+                            title = "Alerta de Urgencia · $courseName",
                             message = "$shortName: Quedan ~$hours hora(s) para la entrega",
                             notificationId = notifId
                         )
@@ -108,7 +108,7 @@ class ReminderWorker(
                             AssignmentAlarmReceiver.ALERT_TYPE_24H
                         )
                         notificationHelper.showNotification(
-                            title = "📅 Recordatorio Preventivo · $courseName",
+                            title = "Recordatorio Preventivo · $courseName",
                             message = "$shortName: Entrega programada para las próximas 24h",
                             notificationId = notifId
                         )

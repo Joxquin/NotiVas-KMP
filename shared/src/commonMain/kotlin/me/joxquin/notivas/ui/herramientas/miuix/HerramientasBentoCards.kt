@@ -640,7 +640,7 @@ fun ForosBentoCard(
                                 val points = nextClosingForum.assignment?.pointsPossible
                                 val rubricInfo = if (points != null && points > 0) stringResource(Res.string.bento_foros_rubric, points.toInt()) else stringResource(Res.string.bento_foros_active_part)
                                 Text(
-                                    text = "✨ Copilot: $rubricInfo",
+                                    text = "Copilot: $rubricInfo",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MiuixPurple,

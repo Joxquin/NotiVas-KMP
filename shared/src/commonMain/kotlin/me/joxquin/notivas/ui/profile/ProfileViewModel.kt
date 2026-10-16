@@ -42,7 +42,11 @@ data class ProfileUiState(
     val apiLatencyMs: Int = 42,
     val dynamicColorEnabled: Boolean = true,
     val themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
-    val appLanguage: AppLanguage = AppLanguage.SYSTEM
+    val appLanguage: AppLanguage = AppLanguage.SYSTEM,
+    val googleDriveConnected: Boolean = false,
+    val googleDriveEmail: String? = null,
+    val googleDriveLastSyncTimestamp: Long = 0L,
+    val googleDriveCacheSize: String = "0 KB"
 )
 
 class ProfileViewModel(
@@ -60,6 +64,7 @@ class ProfileViewModel(
 
     private val _openRouterBalance = MutableStateFlow<OpenRouterAccountBalance?>(null)
     private val _isLoadingBalance = MutableStateFlow(false)
+    private val _googleDriveCacheSize = MutableStateFlow("0 KB")
 
     init {
         fetchProfile()
@@ -115,7 +120,11 @@ class ProfileViewModel(
         preferencesManager.dynamicColorEnabled,
         preferencesManager.themeStyle,
         preferencesManager.authMode,
-        preferencesManager.appLanguage
+        preferencesManager.appLanguage,
+        preferencesManager.googleDriveConnected,
+        preferencesManager.googleDriveEmail,
+        preferencesManager.googleDriveLastSyncTimestamp,
+        _googleDriveCacheSize
     ) { args: Array<Any?> ->
         val url = args[1] as String?
         val host = if (url.isNullOrBlank()) "Canvas LMS" else {
@@ -144,9 +153,38 @@ class ProfileViewModel(
             dynamicColorEnabled = args[17] as Boolean,
             themeStyle = args[18] as AppThemeStyle,
             authMode = args[19] as AuthMode,
-            appLanguage = args[20] as AppLanguage
+            appLanguage = args[20] as AppLanguage,
+            googleDriveConnected = args[21] as Boolean,
+            googleDriveEmail = args[22] as String?,
+            googleDriveLastSyncTimestamp = args[23] as Long,
+            googleDriveCacheSize = args[24] as String
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
+
+    fun saveGoogleDriveAuth(accessToken: String, refreshToken: String?, email: String?) {
+        viewModelScope.launch {
+            preferencesManager.saveGoogleDriveTokens(
+                accessToken = accessToken,
+                refreshToken = refreshToken ?: "",
+                userEmail = email ?: "Google Drive Conectado"
+            )
+        }
+    }
+
+    fun unlinkGoogleDrive() {
+        viewModelScope.launch {
+            preferencesManager.unlinkGoogleDrive()
+            _googleDriveCacheSize.value = "0 KB"
+        }
+    }
+
+    fun clearDraftsCache() {
+        viewModelScope.launch {
+            canvasRepository.deleteAllAssignmentDrafts()
+            _googleDriveCacheSize.value = "0 KB"
+            preferencesManager.updateGoogleDriveLastSync()
+        }
+    }
 
     fun setAppLanguage(language: AppLanguage) {
         viewModelScope.launch { preferencesManager.setAppLanguage(language) }

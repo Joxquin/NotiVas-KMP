@@ -540,7 +540,7 @@ fun MaterialForosCard(
                                     stringResource(Res.string.bento_foros_active_part)
                                 }
                                 Text(
-                                    text = "✨ Copilot: $rubricInfo",
+                                    text = "Copilot: $rubricInfo",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Medium,
