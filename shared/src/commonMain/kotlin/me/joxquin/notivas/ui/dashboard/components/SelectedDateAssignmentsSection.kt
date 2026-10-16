@@ -1,5 +1,6 @@
 package me.joxquin.notivas.ui.dashboard.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,6 +32,7 @@ fun SelectedDateAssignmentsSection(
     selectedDate: DateComponents,
     assignments: List<AssignmentUiModel>,
     onClearDate: () -> Unit,
+    onAssignmentClick: (AssignmentUiModel) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val dateFormatted = DateTimeUtil.formatFullDate(selectedDate)
@@ -81,7 +83,10 @@ fun SelectedDateAssignmentsSection(
             }
         } else {
             assignments.forEach { item ->
-                ExpressiveAssignmentCard(uiModel = item)
+                ExpressiveAssignmentCard(
+                    uiModel = item,
+                    onClick = { onAssignmentClick(item) }
+                )
             }
         }
     }
@@ -90,6 +95,7 @@ fun SelectedDateAssignmentsSection(
 @Composable
 fun ExpressiveAssignmentCard(
     uiModel: AssignmentUiModel,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val assignment = uiModel.assignment
@@ -100,7 +106,9 @@ fun ExpressiveAssignmentCard(
     }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer

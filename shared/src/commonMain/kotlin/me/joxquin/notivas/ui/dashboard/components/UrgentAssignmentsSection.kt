@@ -47,6 +47,7 @@ import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 fun UrgentAssignmentsSection(
     urgentAssignments: List<AssignmentUiModel>,
     onViewAll: () -> Unit,
+    onAssignmentClick: (AssignmentUiModel) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 12.dp)) {
@@ -152,7 +153,10 @@ fun UrgentAssignmentsSection(
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 items(urgentAssignments, key = { it.assignment.id }) { item ->
-                    UrgentCard(item = item)
+                    UrgentCard(
+                        item = item,
+                        onClick = { onAssignmentClick(item) }
+                    )
                 }
             }
         }
