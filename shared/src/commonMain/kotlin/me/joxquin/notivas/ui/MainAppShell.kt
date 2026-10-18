@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.ui.unit.sp
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.icon.extended.Alarm
+import top.yukonga.miuix.kmp.icon.extended.Weeks
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -309,6 +311,7 @@ fun MainAppShell(
     var showingForosDetail by remember { mutableStateOf(false) }
     var showingArchiveDetail by remember { mutableStateOf(false) }
     var showingActivityDetail by remember { mutableStateOf(false) }
+    var showingScheduleDetail by remember { mutableStateOf(false) }
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
@@ -317,9 +320,11 @@ fun MainAppShell(
     val selectedAssignmentForDraft by dashboardViewModel.selectedAssignmentForDraft.collectAsState()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        // En Miuix: Interceptar botón Atrás físico para volver de Actividad -> Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
-        BackHandler(enabled = showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || currentDestination != MainDestination.Inicio) {
-            if (showingActivityDetail) {
+        // En Miuix: Interceptar botón Atrás físico para volver de Agenda -> Actividad -> Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
+        BackHandler(enabled = showingScheduleDetail || showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || currentDestination != MainDestination.Inicio) {
+            if (showingScheduleDetail) {
+                showingScheduleDetail = false
+            } else if (showingActivityDetail) {
                 showingActivityDetail = false
             } else if (selectedAssignmentForDraft != null) {
                 dashboardViewModel.closeDraft()
@@ -389,6 +394,17 @@ fun MainAppShell(
                         lazyListState = activityListState,
                         modifier = Modifier.fillMaxSize()
                     )
+                } else if (showingScheduleDetail) {
+                    me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen(
+                        viewModel = dashboardViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { showingScheduleDetail = false },
+                        onAssignmentClick = { assignmentUi ->
+                            dashboardViewModel.openDraft(assignmentUi)
+                        },
+                        lazyListState = inicioListState,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 } else if (selectedAssignmentForDraft != null) {
                     me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
                         assignmentUi = selectedAssignmentForDraft!!,
@@ -426,6 +442,14 @@ fun MainAppShell(
                                         showingNotasDetail = false
                                         showingForosDetail = false
                                         mainPagerState.animateToPage(3)
+                                    },
+                                    onNavigateToActivity = {
+                                        showingScheduleDetail = false
+                                        showingActivityDetail = true
+                                    },
+                                    onNavigateToSchedule = {
+                                        showingActivityDetail = false
+                                        showingScheduleDetail = true
                                     },
                                     onNavigateToCourseProgreso = { course ->
                                         notasViewModel.selectCourse(course)
@@ -510,6 +534,7 @@ fun MainAppShell(
             // Capa 2: Barra Superior Canónica Unificada (Top Overlay)
             MiuixTopAppBar(
                 title = when {
+                    showingScheduleDetail -> stringResource(Res.string.schedule_screen_title)
                     showingActivityDetail -> stringResource(Res.string.recent_activity_title)
                     selectedAssignmentForDraft != null -> stringResource(Res.string.assignment_detail_title)
                     currentDestination == MainDestination.Herramientas && showingArchiveDetail -> stringResource(Res.string.archive_screen_title)
@@ -524,6 +549,7 @@ fun MainAppShell(
                     else -> stringResource(Res.string.app_name)
                 },
                 isScrolled = when {
+                    showingScheduleDetail -> isInicioScrolled
                     showingActivityDetail -> isActivityScrolled
                     selectedAssignmentForDraft != null -> true
                     currentDestination == MainDestination.Inicio -> isInicioScrolled
@@ -533,6 +559,7 @@ fun MainAppShell(
                     else -> false
                 },
                 scrollOffset = when {
+                    showingScheduleDetail -> inicioScrollOffset
                     showingActivityDetail -> activityScrollOffset
                     selectedAssignmentForDraft != null -> 64f
                     currentDestination == MainDestination.Inicio -> inicioScrollOffset
@@ -542,9 +569,16 @@ fun MainAppShell(
                     else -> 0f
                 },
                 backdrop = contentBackdrop,
-                titleAlwaysVisible = showingActivityDetail || (selectedAssignmentForDraft != null) ||
+                titleAlwaysVisible = showingScheduleDetail || showingActivityDetail || (selectedAssignmentForDraft != null) ||
                         (currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail || showingArchiveDetail)),
                 navigationIcon = when {
+                    showingScheduleDetail -> {
+                        {
+                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
+                                onClick = { showingScheduleDetail = false }
+                            )
+                        }
+                    }
                     showingActivityDetail -> {
                         {
                             me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
@@ -604,17 +638,32 @@ fun MainAppShell(
                 },
                 actions = {
                     when {
-                        showingActivityDetail -> {}
+                        showingScheduleDetail || showingActivityDetail -> {}
                         currentDestination == MainDestination.Inicio && selectedAssignmentForDraft == null -> {
-                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                onClick = { showingActivityDetail = true }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = MiuixIcons.Alarm,
-                                    contentDescription = stringResource(Res.string.recent_activity_title),
-                                    tint = MiuixTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                    onClick = { showingScheduleDetail = true }
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Weeks,
+                                        contentDescription = stringResource(Res.string.schedule_screen_title),
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                    onClick = { showingActivityDetail = true }
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Alarm,
+                                        contentDescription = stringResource(Res.string.recent_activity_title),
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
                         selectedAssignmentForDraft != null -> {
@@ -761,8 +810,8 @@ fun MainAppShell(
                 modifier = Modifier.align(Alignment.TopCenter)
             )
 
-            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador o actividad reciente
-            if (!showingActivityDetail && selectedAssignmentForDraft == null) {
+            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador, actividad reciente o agenda
+            if (!showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null) {
                 FloatingNavigationBar(
                     currentDestination = currentDestination,
                     onNavigate = { destination ->
@@ -825,8 +874,10 @@ fun MainAppShell(
         }
 
         // Interceptar gesto/botón Atrás del sistema para Material 3:
-        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || materialDestination != MainDestination.Inicio)) {
-            if (showingActivityDetail) {
+        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingScheduleDetail || showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || materialDestination != MainDestination.Inicio)) {
+            if (showingScheduleDetail) {
+                showingScheduleDetail = false
+            } else if (showingActivityDetail) {
                 showingActivityDetail = false
             } else if (selectedAssignmentForDraft != null) {
                 dashboardViewModel.closeDraft()
@@ -851,7 +902,7 @@ fun MainAppShell(
             bottomBar = {
                 NotiVasNavigationBar(
                     currentDestination = materialDestination,
-                    isVisible = !isImeVisible && !showingActivityDetail && selectedAssignmentForDraft == null,
+                    isVisible = !isImeVisible && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null,
                     onNavigate = { destination ->
                         if (selectedAssignmentForDraft != null) {
                             dashboardViewModel.closeDraft()
@@ -863,7 +914,7 @@ fun MainAppShell(
                 )
             }
         ) { innerPadding ->
-            val targetBottom = if (!isImeVisible && !showingActivityDetail && selectedAssignmentForDraft == null) innerPadding.calculateBottomPadding() else 0.dp
+            val targetBottom = if (!isImeVisible && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null) innerPadding.calculateBottomPadding() else 0.dp
             val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
                 targetValue = targetBottom,
                 animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
@@ -875,7 +926,18 @@ fun MainAppShell(
                     .fillMaxSize()
                     .padding(bottom = animatedBottomPadding)
             ) {
-                if (showingActivityDetail) {
+                if (showingScheduleDetail) {
+                    me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen(
+                        viewModel = dashboardViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { showingScheduleDetail = false },
+                        onAssignmentClick = { assignmentUi ->
+                            dashboardViewModel.openDraft(assignmentUi)
+                        },
+                        lazyListState = inicioListState,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (showingActivityDetail) {
                     me.joxquin.notivas.ui.activity.RecentActivityScreen(
                         viewModel = activityViewModel,
                         themeStyle = AppThemeStyle.MATERIAL,
@@ -970,6 +1032,9 @@ fun MainAppShell(
                                 },
                                 onNavigateToActivity = {
                                     showingActivityDetail = true
+                                },
+                                onNavigateToSchedule = {
+                                    showingScheduleDetail = true
                                 },
                                 onNavigateToCourseProgreso = { course ->
                                     notasViewModel.selectCourse(course)

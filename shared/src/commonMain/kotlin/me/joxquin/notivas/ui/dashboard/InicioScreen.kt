@@ -46,6 +46,7 @@ fun InicioScreen(
     onNavigateToHerramientas: () -> Unit = {},
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToActivity: () -> Unit = {},
+    onNavigateToSchedule: () -> Unit = {},
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -55,6 +56,8 @@ fun InicioScreen(
             listState = listState,
             onNavigateToAjustes = onNavigateToAjustes,
             onNavigateToCourseProgreso = onNavigateToCourseProgreso,
+            onNavigateToCopilot = onNavigateToCopilot,
+            onNavigateToHerramientas = onNavigateToHerramientas,
             modifier = modifier
         )
         return
@@ -64,13 +67,35 @@ fun InicioScreen(
     val syncStatus by viewModel.syncStatus.collectAsState()
     val courses by viewModel.courses.collectAsState()
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
+    val allAssignments by viewModel.allAssignmentsUi.collectAsState()
     val courseStats by viewModel.courseStats.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
-    val weeklySchedule by viewModel.weeklySchedule.collectAsState()
-    val selectedDate by viewModel.selectedDate.collectAsState()
-    val selectedDateAssignments by viewModel.selectedDateAssignments.collectAsState()
     val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
+
+    var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+
+    // Filtrar tareas que son de hoy
+    val todayTasks = androidx.compose.runtime.remember(allAssignments) {
+        val today = me.joxquin.notivas.util.DateTimeUtil.nowLocalDate()
+        allAssignments.filter { ui ->
+            val due = ui.assignment.dueAt ?: ui.assignment.lockAt ?: return@filter false
+            val comp = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(due) ?: return@filter false
+            comp.date == today
+        }.sortedBy { ui ->
+            val due = ui.assignment.dueAt ?: ui.assignment.lockAt ?: ""
+            me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(due)?.epochMillis ?: Long.MAX_VALUE
+        }
+    }
+
+    // Filtrar cursos si hay búsqueda activa
+    val filteredCourses = androidx.compose.runtime.remember(courses, searchQuery) {
+        if (searchQuery.isBlank()) courses
+        else courses.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+                    (it.courseCode?.contains(searchQuery, ignoreCase = true) == true)
+        }
+    }
 
     if (selectedAssignmentForDraft != null) {
         me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
@@ -102,6 +127,7 @@ fun InicioScreen(
                 title = "NotiVas",
                 onRefresh = { viewModel.refreshData() },
                 onNavigateToActivity = onNavigateToActivity,
+                onNavigateToSchedule = onNavigateToSchedule,
                 onNavigateToAjustes = onNavigateToAjustes
             )
         },
@@ -117,43 +143,43 @@ fun InicioScreen(
             state = listState,
             contentPadding = PaddingValues(
                 top = innerPadding.calculateTopPadding() + 8.dp,
-                bottom = innerPadding.calculateBottomPadding() + 100.dp
+                bottom = innerPadding.calculateBottomPadding() + 100.dp,
+                start = 16.dp,
+                end = 16.dp
             ),
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ─── 0. Header con título ────────────────────────────────────────
+            // ─── 0. Header de Bienvenida (Welcome, Salung) ───────────────────
             item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 4.dp)
-                ) {
+                val studentName = userProfile?.name ?: "Estudiante"
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
                     Text(
-                        text = "NotiVas",
+                        text = "Bienvenido, ${studentName.substringBefore(" ")}",
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 28.sp
+                            fontSize = 26.sp
                         ),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = stringResource(Res.string.dashboard_academic_title),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            // ─── 1. Top Greeting Bar & Status ────────────────────────────────
+            // ─── 1. Buscador Global + Input para IA ─────────────────────────
             item {
-                GreetingSection(
-                    profile = userProfile,
-                    institution = institutionName,
-                    syncStatus = syncStatus,
-                    onRefresh = { viewModel.refreshData() },
-                    onAvatarClick = onNavigateToAjustes
+                me.joxquin.notivas.ui.dashboard.components.DashboardSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    onAskAi = { query ->
+                        onNavigateToCopilot()
+                    },
+                    themeStyle = AppThemeStyle.MATERIAL
                 )
             }
 
@@ -170,43 +196,42 @@ fun InicioScreen(
                 )
             }
 
-            // ─── 2. Weekly Timeline Strip ────────────────────────────────────
+            // ─── 2. Tarjeta Bento Híbrida: Rendimiento + Notificaciones ─────
             item {
-                WeeklyTimelineStrip(
-                    weeklySchedule = weeklySchedule,
-                    selectedDate = selectedDate,
-                    onDateSelect = { date -> viewModel.selectDate(date) }
+                me.joxquin.notivas.ui.dashboard.components.DashboardPerformanceBento(
+                    courseStats = courseStats,
+                    recentActivities = emptyList(),
+                    onCheckNow = { onNavigateToHerramientas() },
+                    themeStyle = AppThemeStyle.MATERIAL
                 )
             }
 
-
-            // ─── 2.1 Entregas de Fecha Seleccionada ─────────────────────────
-            selectedDate?.let { date ->
-                item {
-                    SelectedDateAssignmentsSection(
-                        selectedDate = date,
-                        assignments = selectedDateAssignments,
-                        onClearDate = { viewModel.selectDate(null) },
-                        onAssignmentClick = { selectedAssignmentForSubmenu = it }
-                    )
-                }
-            }
-
-            // ─── 3. Para Hoy y Mañana Carousel ───────────────────────────────
+            // ─── 3. Projects: Cursos Destacados / Asignaturas Activas ────────
             item {
-                UrgentAssignmentsSection(
-                    urgentAssignments = urgentAssignments,
-                    onViewAll = onNavigateToHerramientas,
-                    onAssignmentClick = { selectedAssignmentForSubmenu = it }
+                me.joxquin.notivas.ui.dashboard.components.DashboardProjectsBento(
+                    courseStats = courseStats,
+                    courses = courses,
+                    onCourseClick = { course -> onNavigateToCourseProgreso(course) },
+                    themeStyle = AppThemeStyle.MATERIAL
                 )
             }
 
-            // ─── 4. Cursos del Semestre ──────────────────────────────────────
+            // ─── 4. Today's Tasks: Entregas del Día ──────────────────────────
+            item {
+                me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
+                    tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
+                    onSeeAll = onNavigateToSchedule,
+                    onTaskClick = { selectedAssignmentForSubmenu = it },
+                    themeStyle = AppThemeStyle.MATERIAL
+                )
+            }
+
+            // ─── 5. Matriz de Todos los Cursos del Semestre ─────────────────
             item {
                 CoursesMatrixSection(
                     courseStats = courseStats,
-                    courses = courses,
-                    onCourseClick = { /* navegar a detalles del curso */ }
+                    courses = filteredCourses,
+                    onCourseClick = { course -> onNavigateToCourseProgreso(course) }
                 )
             }
         }

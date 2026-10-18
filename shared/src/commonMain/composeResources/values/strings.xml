@@ -542,6 +542,21 @@
     <string name="recent_activity_action_open_document">Open document</string>
     <string name="recent_activity_empty_title">No activity recorded</string>
     <string name="recent_activity_empty_desc">When you submit assignments, reply to forums or sync drafts, they will be logged here.</string>
+
+    <!-- Dashboard Redesign & Schedule Screen -->
+    <string name="dashboard_search_hint">Search project, task, event…</string>
+    <string name="dashboard_ask_ai">Ask AI</string>
+    <string name="dashboard_see_performance">See your performance</string>
+    <string name="dashboard_performance_status">+3.45% this month</string>
+    <string name="dashboard_check_now">Check now</string>
+    <string name="dashboard_projects_section">Projects &amp; Courses</string>
+    <string name="dashboard_todays_tasks_section">Today\'s tasks</string>
+    <string name="dashboard_see_all">See all</string>
+    <string name="dashboard_no_tasks_today">No tasks scheduled for today</string>
+    <string name="schedule_screen_title">Schedule</string>
+    <string name="schedule_upcoming_status">Upcoming</string>
+    <string name="schedule_in_progress_status">In Progress</string>
+    <string name="schedule_completed_status">Complete</string>
 </resources>
 
 

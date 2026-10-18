@@ -45,23 +45,48 @@ fun InicioMiuixContent(
     listState: LazyListState,
     contentPadding: PaddingValues = PaddingValues(
         top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-        bottom = 100.dp
+        bottom = 100.dp,
+        start = 16.dp,
+        end = 16.dp
     ),
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
+    onNavigateToCopilot: () -> Unit = {},
+    onNavigateToHerramientas: () -> Unit = {},
+    onNavigateToSchedule: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
     val syncStatus by viewModel.syncStatus.collectAsState()
     val courses by viewModel.courses.collectAsState()
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
+    val allAssignments by viewModel.allAssignmentsUi.collectAsState()
     val courseStats by viewModel.courseStats.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
-    val weeklySchedule by viewModel.weeklySchedule.collectAsState()
-    val selectedDate by viewModel.selectedDate.collectAsState()
-    val selectedDateAssignments by viewModel.selectedDateAssignments.collectAsState()
     val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
+
+    var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+
+    val todayTasks = androidx.compose.runtime.remember(allAssignments) {
+        val today = me.joxquin.notivas.util.DateTimeUtil.nowLocalDate()
+        allAssignments.filter { ui ->
+            val due = ui.assignment.dueAt ?: ui.assignment.lockAt ?: return@filter false
+            val comp = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(due) ?: return@filter false
+            comp.date == today
+        }.sortedBy { ui ->
+            val due = ui.assignment.dueAt ?: ui.assignment.lockAt ?: ""
+            me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(due)?.epochMillis ?: Long.MAX_VALUE
+        }
+    }
+
+    val filteredCourses = androidx.compose.runtime.remember(courses, searchQuery) {
+        if (searchQuery.isBlank()) courses
+        else courses.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+                    (it.courseCode?.contains(searchQuery, ignoreCase = true) == true)
+        }
+    }
 
     if (selectedAssignmentForDraft != null) {
         me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
@@ -90,7 +115,7 @@ fun InicioMiuixContent(
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 0. Large Title Canónico HyperOS Miuix (32.sp) con scroll fade
+            // 0. Welcome Header (32.sp) con scroll fade
             item {
                 val firstIndex = listState.firstVisibleItemIndex
                 val firstOffset = listState.firstVisibleItemScrollOffset
@@ -105,17 +130,19 @@ fun InicioMiuixContent(
                     -25f
                 }
 
+                val studentName = userProfile?.name ?: "Estudiante"
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 4.dp)
+                        .padding(horizontal = 4.dp, vertical = 4.dp)
                         .graphicsLayer {
                             alpha = largeTitleAlpha
                             translationY = largeTitleTranslationY
                         }
                 ) {
                     MiuixText(
-                        text = "NotiVas",
+                        text = "Bienvenido, ${studentName.substringBefore(" ")}",
                         fontSize = MiuixTheme.textStyles.title1.fontSize,
                         fontWeight = FontWeight.Normal,
                         color = MiuixTheme.colorScheme.onSurface
@@ -129,14 +156,13 @@ fun InicioMiuixContent(
                 }
             }
 
-            // 1. Student Profile Header (Avatar Squircle & Sync Capsule)
+            // 1. Buscador Global + Input para IA
             item {
-                MiuixStudentHeader(
-                    profile = userProfile,
-                    institution = institutionName,
-                    syncStatus = syncStatus,
-                    onRefresh = { viewModel.refreshData() },
-                    onAvatarClick = onNavigateToAjustes
+                me.joxquin.notivas.ui.dashboard.components.DashboardSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    onAskAi = { onNavigateToCopilot() },
+                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
                 )
             }
 
@@ -153,40 +179,40 @@ fun InicioMiuixContent(
                 )
             }
 
-            // 2. Urgent Tasks Horizontal Snap Carousel (<12h, 12-48h, upcoming)
+            // 2. Tarjeta Bento Híbrida: Rendimiento + Notificaciones
             item {
-                MiuixUrgentTasksCarousel(
-                    urgentAssignments = urgentAssignments,
-                    onAssignmentClick = { selectedAssignmentForSubmenu = it }
+                me.joxquin.notivas.ui.dashboard.components.DashboardPerformanceBento(
+                    courseStats = courseStats,
+                    recentActivities = emptyList(),
+                    onCheckNow = { onNavigateToHerramientas() },
+                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
                 )
             }
 
-
-            // 3. Weekly 7-Day Scheduler Strip
+            // 3. Projects: Cursos Destacados / Asignaturas Activas
             item {
-                MiuixWeeklyCalendarStrip(
-                    weeklySchedule = weeklySchedule,
-                    selectedDate = selectedDate,
-                    onDateSelect = { date -> viewModel.selectDate(date) }
+                me.joxquin.notivas.ui.dashboard.components.DashboardProjectsBento(
+                    courseStats = courseStats,
+                    courses = courses,
+                    onCourseClick = { course -> onNavigateToCourseProgreso(course) },
+                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
                 )
             }
 
-            // 3.1 Tareas del día seleccionado si hay filtro
-            selectedDate?.let { date ->
-                item {
-                    SelectedDateAssignmentsSection(
-                        selectedDate = date,
-                        assignments = selectedDateAssignments,
-                        onClearDate = { viewModel.selectDate(null) },
-                        onAssignmentClick = { selectedAssignmentForSubmenu = it }
-                    )
-                }
+            // 4. Today's Tasks: Entregas del Día
+            item {
+                me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
+                    tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
+                    onSeeAll = onNavigateToSchedule,
+                    onTaskClick = { selectedAssignmentForSubmenu = it },
+                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                )
             }
 
-            // 4. Courses Summary List (Grid de 2 columnas de cursos con barras de color y notas sobre 20)
+            // 5. Courses Summary List (Grid de 2 columnas de cursos con barras de color y notas sobre 20)
             item {
                 MiuixCourseSummaryList(
-                    courses = courses,
+                    courses = filteredCourses,
                     courseStats = courseStats,
                     onCourseClick = { course -> viewModel.inspectCourse(course) }
                 )

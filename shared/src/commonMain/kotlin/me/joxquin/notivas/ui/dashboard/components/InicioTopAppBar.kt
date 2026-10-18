@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
@@ -44,7 +45,8 @@ fun InicioTopAppBar(
     title: String = "Inicio",
     onRefresh: () -> Unit = {},
     onNavigateToActivity: () -> Unit = {},
-    onNavigateToAjustes: () -> Unit,
+    onNavigateToSchedule: () -> Unit = {},
+    onNavigateToAjustes: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val topAppBarContainerColor by animateColorAsState(
@@ -94,12 +96,20 @@ fun InicioTopAppBar(
             }
         },
         actions = {
+            IconButton(onClick = onNavigateToSchedule) {
+                Icon(
+                    imageVector = Icons.Default.CalendarMonth,
+                    contentDescription = "Agenda",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
             IconButton(onClick = onNavigateToActivity) {
                 Icon(
                     imageVector = Icons.Filled.History,
                     contentDescription = "Actividad Reciente",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         },

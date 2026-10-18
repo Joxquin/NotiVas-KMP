@@ -542,4 +542,19 @@
     <string name="recent_activity_action_open_document">Abrir documento</string>
     <string name="recent_activity_empty_title">Sin actividad registrada</string>
     <string name="recent_activity_empty_desc">Tus entregas de tareas, participaciones en foros y sincronizaciones de Drive aparecerán listadas aquí en tiempo real.</string>
+
+    <!-- Dashboard Redesign & Schedule Screen -->
+    <string name="dashboard_search_hint">Buscar proyectos, tareas, eventos…</string>
+    <string name="dashboard_ask_ai">Preguntar a IA</string>
+    <string name="dashboard_see_performance">Ver mi rendimiento</string>
+    <string name="dashboard_performance_status">+3.45% este mes</string>
+    <string name="dashboard_check_now">Ver progreso</string>
+    <string name="dashboard_projects_section">Proyectos y Cursos</string>
+    <string name="dashboard_todays_tasks_section">Tareas de hoy</string>
+    <string name="dashboard_see_all">Ver todo</string>
+    <string name="dashboard_no_tasks_today">No tienes tareas programadas para hoy</string>
+    <string name="schedule_screen_title">Agenda Académica</string>
+    <string name="schedule_upcoming_status">Próxima</string>
+    <string name="schedule_in_progress_status">En progreso</string>
+    <string name="schedule_completed_status">Completada</string>
 </resources>
