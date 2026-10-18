@@ -95,6 +95,12 @@ fun DashboardEmbeddedSearchBar(
     val cancelText = stringResource(Res.string.cancel)
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val surfaceColor = if (isMiuix) MiuixTheme.colorScheme.surface else MaterialTheme.colorScheme.surface
+    val surfaceAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isExpanded) 1f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(220, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "DashboardSearchSurfaceAlpha"
+    )
 
     if (!isExpanded) {
         // ─── Estado Colapsado: Cápsula en el Feed ───────────────────────────
@@ -177,7 +183,7 @@ fun DashboardEmbeddedSearchBar(
             modifier = Modifier
                 .fillMaxSize()
                 .zIndex(100f)
-                .background(if (isMiuix) MiuixTheme.colorScheme.surface else MaterialTheme.colorScheme.surface)
+                .background(surfaceColor.copy(alpha = surfaceAlpha))
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Header de Búsqueda
@@ -250,17 +256,17 @@ fun DashboardEmbeddedSearchBar(
                         }
                     }
                 } else {
-                    // Header Material 3
+                    // Header Material 3 Expressive SearchBar
                     Surface(
-                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        color = MaterialTheme.colorScheme.surface,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = statusBarTop + 4.dp, start = 8.dp, end = 16.dp, bottom = 8.dp),
+                                .padding(top = statusBarTop + 8.dp, start = 8.dp, end = 16.dp, bottom = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             IconButton(
                                 onClick = {
@@ -275,87 +281,116 @@ fun DashboardEmbeddedSearchBar(
                                 )
                             }
 
-                            BasicTextField(
-                                value = query,
-                                onValueChange = onQueryChange,
+                            Surface(
+                                shape = RoundedCornerShape(28.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .focusRequester(focusRequester),
-                                singleLine = true,
-                                textStyle = TextStyle(
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Normal,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                ),
-                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                decorationBox = { innerTextField ->
-                                    if (query.isEmpty()) {
-                                        Text(
-                                            text = placeholder,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    innerTextField()
-                                }
-                            )
-
-                            if (query.isNotEmpty()) {
-                                IconButton(onClick = { onQueryChange("") }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Limpiar",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    .height(48.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    BasicTextField(
+                                        value = query,
+                                        onValueChange = onQueryChange,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .focusRequester(focusRequester),
+                                        singleLine = true,
+                                        textStyle = TextStyle(
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Normal,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        ),
+                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                        decorationBox = { innerTextField ->
+                                            if (query.isEmpty()) {
+                                                Text(
+                                                    text = placeholder,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
                                     )
+
+                                    if (query.isNotEmpty()) {
+                                        IconButton(
+                                            onClick = { onQueryChange("") },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Limpiar",
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                // Contenido de Resultados o Historial
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 32.dp)
+                // Contenido de Resultados o Historial con animación fluida
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(240)) +
+                            androidx.compose.animation.slideInVertically(
+                                animationSpec = androidx.compose.animation.core.tween(260)
+                            ) { it / 8 },
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    if (query.isBlank()) {
-                        item {
-                            SearchHistorySection(
-                                recentSearches = recentSearches,
-                                onSelectQuery = { selectedTerm ->
-                                    onQueryChange(selectedTerm)
-                                    onSearchCommit(selectedTerm)
-                                },
-                                onRemoveQuery = onRemoveRecentQuery,
-                                onClearHistory = onClearRecentHistory,
-                                onAskAi = { onAskAi(query) },
-                                themeStyle = themeStyle
-                            )
-                        }
-                    } else {
-                        item {
-                            SearchLiveResultsSection(
-                                query = query,
-                                courses = courses,
-                                courseStats = courseStats,
-                                assignments = assignments,
-                                onCourseClick = { course ->
-                                    onSearchCommit(course.name)
-                                    onExpandedChange(false)
-                                    onCourseClick(course)
-                                },
-                                onAssignmentClick = { uiModel ->
-                                    onSearchCommit(uiModel.assignment.name)
-                                    onExpandedChange(false)
-                                    onAssignmentClick(uiModel)
-                                },
-                                onAskCopilot = { prompt ->
-                                    onSearchCommit(prompt)
-                                    onExpandedChange(false)
-                                    onAskAi(prompt)
-                                },
-                                themeStyle = themeStyle
-                            )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 32.dp)
+                    ) {
+                        if (query.isBlank()) {
+                            item {
+                                SearchHistorySection(
+                                    recentSearches = recentSearches,
+                                    onSelectQuery = { selectedTerm ->
+                                        onQueryChange(selectedTerm)
+                                        onSearchCommit(selectedTerm)
+                                    },
+                                    onRemoveQuery = onRemoveRecentQuery,
+                                    onClearHistory = onClearRecentHistory,
+                                    onAskAi = { onAskAi(query) },
+                                    themeStyle = themeStyle
+                                )
+                            }
+                        } else {
+                            item {
+                                SearchLiveResultsSection(
+                                    query = query,
+                                    courses = courses,
+                                    courseStats = courseStats,
+                                    assignments = assignments,
+                                    onCourseClick = { course ->
+                                        onSearchCommit(course.name)
+                                        onExpandedChange(false)
+                                        onCourseClick(course)
+                                    },
+                                    onAssignmentClick = { uiModel ->
+                                        onSearchCommit(uiModel.assignment.name)
+                                        onExpandedChange(false)
+                                        onAssignmentClick(uiModel)
+                                    },
+                                    onAskCopilot = { prompt ->
+                                        onSearchCommit(prompt)
+                                        onExpandedChange(false)
+                                        onAskAi(prompt)
+                                    },
+                                    themeStyle = themeStyle
+                                )
+                            }
                         }
                     }
                 }

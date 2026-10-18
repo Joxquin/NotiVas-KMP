@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.AddComment
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.sp
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.icon.extended.Alarm
@@ -530,6 +531,11 @@ fun MainAppShell(
             }
 
             val copilotUiState by copilotViewModel.uiState.collectAsState()
+            val isDashboardSearchExpanded by dashboardViewModel.isSearchExpanded.collectAsState()
+            val topBarAlpha by androidx.compose.animation.core.animateFloatAsState(
+                targetValue = if (currentDestination == MainDestination.Inicio && isDashboardSearchExpanded) 0f else 1f,
+                animationSpec = androidx.compose.animation.core.tween(200)
+            )
 
             // Capa 2: Barra Superior Canónica Unificada (Top Overlay)
             MiuixTopAppBar(
@@ -639,7 +645,7 @@ fun MainAppShell(
                 actions = {
                     when {
                         showingScheduleDetail || showingActivityDetail -> {}
-                        currentDestination == MainDestination.Inicio && selectedAssignmentForDraft == null -> {
+                        currentDestination == MainDestination.Inicio && selectedAssignmentForDraft == null && !isDashboardSearchExpanded -> {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -807,11 +813,15 @@ fun MainAppShell(
                     else -> null
                 },
                 onNavigationClick = null,
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .graphicsLayer {
+                        alpha = topBarAlpha
+                    }
             )
 
-            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador, actividad reciente o agenda
-            if (!showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null) {
+            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador, actividad reciente, agenda o búsqueda
+            if (!showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null && !isDashboardSearchExpanded) {
                 FloatingNavigationBar(
                     currentDestination = currentDestination,
                     onNavigate = { destination ->

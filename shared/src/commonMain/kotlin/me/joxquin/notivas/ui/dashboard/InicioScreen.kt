@@ -121,19 +121,21 @@ fun InicioScreen(
     }
 
     val recentSearches by viewModel.recentSearches.collectAsState()
-    var isSearchExpanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            InicioTopAppBar(
-                isScrolled = isScrolled,
-                title = "NotiVas",
-                onRefresh = { viewModel.refreshData() },
-                onNavigateToActivity = onNavigateToActivity,
-                onNavigateToSchedule = onNavigateToSchedule,
-                onNavigateToAjustes = onNavigateToAjustes
-            )
+            if (!isSearchExpanded) {
+                InicioTopAppBar(
+                    isScrolled = isScrolled,
+                    title = "NotiVas",
+                    onRefresh = { viewModel.refreshData() },
+                    onNavigateToActivity = onNavigateToActivity,
+                    onNavigateToSchedule = onNavigateToSchedule,
+                    onNavigateToAjustes = onNavigateToAjustes
+                )
+            }
         },
         floatingActionButton = {
             if (!isSearchExpanded) {
@@ -195,7 +197,7 @@ fun InicioScreen(
                         onAskAi = { query -> onNavigateToCopilot() },
                         themeStyle = AppThemeStyle.MATERIAL,
                         isExpanded = false,
-                        onExpandedChange = { isSearchExpanded = it }
+                        onExpandedChange = { viewModel.setSearchExpanded(it) }
                     )
                 }
 
@@ -254,7 +256,7 @@ fun InicioScreen(
                     onAskAi = { query -> onNavigateToCopilot() },
                     themeStyle = AppThemeStyle.MATERIAL,
                     isExpanded = true,
-                    onExpandedChange = { isSearchExpanded = it }
+                    onExpandedChange = { viewModel.setSearchExpanded(it) }
                 )
             }
         }

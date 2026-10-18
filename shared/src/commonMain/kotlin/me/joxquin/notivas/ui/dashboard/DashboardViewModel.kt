@@ -105,6 +105,13 @@ class DashboardViewModel(
         emptyList()
     )
 
+    private val _isSearchExpanded = MutableStateFlow(false)
+    val isSearchExpanded: StateFlow<Boolean> = _isSearchExpanded.asStateFlow()
+
+    fun setSearchExpanded(expanded: Boolean) {
+        _isSearchExpanded.value = expanded
+    }
+
     fun addRecentSearch(query: String) {
         viewModelScope.launch {
             preferencesManager.addRecentSearch(query)

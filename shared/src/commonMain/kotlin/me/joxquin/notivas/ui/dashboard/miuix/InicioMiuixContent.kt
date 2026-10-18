@@ -105,7 +105,7 @@ fun InicioMiuixContent(
     }
 
     val recentSearches by viewModel.recentSearches.collectAsState()
-    var isSearchExpanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
 
     Box(
         modifier = modifier
@@ -176,7 +176,7 @@ fun InicioMiuixContent(
                     onAskAi = { query -> onNavigateToCopilot() },
                     themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
                     isExpanded = false,
-                    onExpandedChange = { isSearchExpanded = it }
+                    onExpandedChange = { viewModel.setSearchExpanded(it) }
                 )
             }
 
@@ -235,7 +235,7 @@ fun InicioMiuixContent(
                 onAskAi = { query -> onNavigateToCopilot() },
                 themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
                 isExpanded = true,
-                onExpandedChange = { isSearchExpanded = it }
+                onExpandedChange = { viewModel.setSearchExpanded(it) }
             )
         }
 
