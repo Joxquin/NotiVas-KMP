@@ -54,13 +54,23 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(connection: SQLiteConnection) {
+        try {
+            connection.execSQL("CREATE TABLE IF NOT EXISTS `activity_logs` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `course_code` TEXT, `course_name` TEXT, `timestamp` INTEGER NOT NULL, `target_id` INTEGER, `secondary_id` INTEGER, `extra_info` TEXT, `action_url` TEXT)")
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_activity_logs_timestamp` ON `activity_logs` (`timestamp`)")
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_activity_logs_type` ON `activity_logs` (`type`)")
+        } catch (_: Throwable) {}
+    }
+}
+
 fun createRoomDatabase(
     builder: RoomDatabase.Builder<NotivasDatabase> = getDatabaseBuilder()
 ): NotivasDatabase {
     return builder
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
         .fallbackToDestructiveMigration(dropAllTables = true)
         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()

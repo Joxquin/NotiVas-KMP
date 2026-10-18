@@ -19,7 +19,9 @@ import me.joxquin.notivas.data.local.db.entities.PlannerItemEntity
 import me.joxquin.notivas.data.local.db.entities.SimulationGroupEntity
 import me.joxquin.notivas.data.local.db.entities.SimulationItemEntity
 
+import me.joxquin.notivas.data.local.db.dao.ActivityLogDao
 import me.joxquin.notivas.data.local.db.dao.AssignmentDraftDao
+import me.joxquin.notivas.data.local.db.entities.ActivityLogEntity
 import me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity
 
 @Database(
@@ -27,13 +29,14 @@ import me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity
         CourseEntity::class,
         AssignmentEntity::class,
         AssignmentDraftEntity::class,
+        ActivityLogEntity::class,
         CopilotSessionEntity::class,
         CopilotMessageEntity::class,
         SimulationGroupEntity::class,
         SimulationItemEntity::class,
         PlannerItemEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(RoomConverters::class)
@@ -42,6 +45,7 @@ abstract class NotivasDatabase : RoomDatabase() {
     abstract fun courseDao(): CourseDao
     abstract fun assignmentDao(): AssignmentDao
     abstract fun assignmentDraftDao(): AssignmentDraftDao
+    abstract fun activityLogDao(): ActivityLogDao
     abstract fun copilotChatDao(): CopilotChatDao
     abstract fun simulationDao(): SimulationDao
     abstract fun plannerDao(): PlannerDao

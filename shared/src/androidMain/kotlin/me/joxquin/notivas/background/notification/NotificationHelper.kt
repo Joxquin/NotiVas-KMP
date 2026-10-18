@@ -4,6 +4,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 
 class NotificationHelper(
@@ -52,6 +55,22 @@ class NotificationHelper(
 
         val id = notificationId ?: notificationIdGenerator.incrementAndGet()
         notificationManager.notify(id, notification)
+
+        // Registrar evento en la base de datos Room para el feed de Actividad Reciente
+        try {
+            val db = me.joxquin.notivas.data.local.db.createRoomDatabase()
+            CoroutineScope(Dispatchers.IO).launch {
+                db.activityLogDao().insert(
+                    me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                        type = "CANVAS_NOTIFICATION",
+                        title = title,
+                        description = message,
+                        timestamp = System.currentTimeMillis(),
+                        extraInfo = "Notificación Canvas"
+                    )
+                )
+            }
+        } catch (_: Throwable) {}
 
         // Generar o actualizar notificación resumen para agrupar
         val summaryNotification = NotificationCompat.Builder(context, channelId)

@@ -120,6 +120,10 @@ class InMemoryLocalStore(
         }
     }
 
+    suspend fun getAssignmentById(id: Long): Assignment? {
+        return database.assignmentDao().getById(id)?.toDomain()
+    }
+
     fun insertAssignments(items: List<Assignment>) {
         scope.launch {
             val existingList = database.assignmentDao().getAll()
@@ -202,6 +206,32 @@ class InMemoryLocalStore(
 
     suspend fun deleteAllAssignmentDrafts() {
         database.assignmentDraftDao().deleteAll()
+    }
+
+    // ─── Registro de Actividad Reciente (Room) ──────────────────────────────
+    fun observeActivityLogs(): Flow<List<me.joxquin.notivas.data.local.db.entities.ActivityLogEntity>> =
+        database.activityLogDao().observeAll()
+
+    fun observeActivityLogsByType(type: String): Flow<List<me.joxquin.notivas.data.local.db.entities.ActivityLogEntity>> =
+        database.activityLogDao().observeByType(type)
+
+    fun saveActivityLog(log: me.joxquin.notivas.data.local.db.entities.ActivityLogEntity) {
+        scope.launch {
+            database.activityLogDao().insert(log)
+        }
+    }
+
+    fun saveActivityLogs(logs: List<me.joxquin.notivas.data.local.db.entities.ActivityLogEntity>) {
+        scope.launch {
+            database.activityLogDao().insertAll(logs)
+        }
+    }
+
+    suspend fun countActivityLogs(): Int =
+        database.activityLogDao().count()
+
+    suspend fun clearActivityLogs() {
+        database.activityLogDao().deleteAll()
     }
 
     // ─── Agenda y Planificación (Room) ──────────────────────────────────────

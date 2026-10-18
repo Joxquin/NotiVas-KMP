@@ -7,6 +7,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
@@ -632,6 +633,21 @@ class CanvasRepository(
                 message = formattedMessage,
                 csrfToken = csrfToken
             )
+            // Registrar evento de actividad en Room
+            val course = localStore.courses.firstOrNull()?.find { it.id == courseId }
+            localStore.saveActivityLog(
+                me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                    type = "FORUM_POST",
+                    title = "Participación en Foro Académico",
+                    description = "Respuesta publicada en Canvas LMS: \"${message.take(120).trim()}...\"",
+                    courseCode = course?.courseCode ?: "Curso $courseId",
+                    courseName = course?.name,
+                    timestamp = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis(),
+                    targetId = topicId,
+                    secondaryId = courseId,
+                    extraInfo = "ID de entrada #${result.id}"
+                )
+            )
             Result.success(result)
         } catch (e: Exception) {
             Result.failure(e)
@@ -683,6 +699,22 @@ class CanvasRepository(
                 )
                 localStore.insertAssignments(listOf(updated))
             }
+            // Registrar evento de actividad en Room
+            val course = localStore.courses.firstOrNull()?.find { it.id == courseId }
+            localStore.saveActivityLog(
+                me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                    type = "ASSIGNMENT_SUBMISSION",
+                    title = existing?.name ?: "Entrega de Tarea",
+                    description = if (!url.isNullOrBlank()) "Enlace enviado a Canvas LMS: $url" else "Texto en línea entregado a Canvas LMS",
+                    courseCode = course?.courseCode ?: "Curso $courseId",
+                    courseName = course?.name,
+                    timestamp = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis(),
+                    targetId = assignmentId,
+                    secondaryId = courseId,
+                    extraInfo = result.id?.let { "Recibo #$it" } ?: "Enviado con éxito",
+                    actionUrl = url ?: existing?.htmlUrl
+                )
+            )
             Result.success(result)
         } catch (e: Exception) {
             Result.failure(e)
@@ -698,14 +730,116 @@ class CanvasRepository(
     suspend fun getAssignmentDraft(assignmentId: Long): me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity? =
         localStore.getDraftByAssignmentId(assignmentId)
 
-    fun saveAssignmentDraft(draft: me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity) =
+    fun saveAssignmentDraft(draft: me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity) {
         localStore.saveAssignmentDraft(draft)
+        // Registrar evento de sincronización de borrador
+        localStore.saveActivityLog(
+            me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                type = "DRIVE_SYNC",
+                title = "Borrador de Tarea Sincronizado",
+                description = "Archivo \"${draft.fileName}\" guardado en tu carpeta de Google Drive",
+                courseCode = draft.courseFolder,
+                timestamp = draft.updatedAtTimestamp.takeIf { it > 0 } ?: me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis(),
+                targetId = draft.assignmentId,
+                extraInfo = draft.draftStatus,
+                actionUrl = draft.driveUrl
+            )
+        )
+    }
 
     suspend fun deleteAssignmentDraft(assignmentId: Long) =
         localStore.deleteAssignmentDraft(assignmentId)
 
     suspend fun deleteAllAssignmentDrafts() =
         localStore.deleteAllAssignmentDrafts()
+
+    // ─── Actividad Reciente ─────────────────────────────────────────────────
+    fun observeActivityLogs(): Flow<List<me.joxquin.notivas.data.local.db.entities.ActivityLogEntity>> =
+        localStore.observeActivityLogs()
+
+    suspend fun logActivity(
+        type: String,
+        title: String,
+        description: String,
+        courseCode: String? = null,
+        courseName: String? = null,
+        targetId: Long? = null,
+        secondaryId: Long? = null,
+        extraInfo: String? = null,
+        actionUrl: String? = null
+    ) {
+        localStore.saveActivityLog(
+            me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                type = type,
+                title = title,
+                description = description,
+                courseCode = courseCode,
+                courseName = courseName,
+                timestamp = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis(),
+                targetId = targetId,
+                secondaryId = secondaryId,
+                extraInfo = extraInfo,
+                actionUrl = actionUrl
+            )
+        )
+    }
+
+    suspend fun getAssignment(id: Long): Assignment? =
+        localStore.getAssignmentById(id)
+
+    suspend fun seedInitialActivitiesIfEmpty() = withContext(Dispatchers.IO) {
+        if (localStore.countActivityLogs() > 0) return@withContext
+
+        val allAssignments = localStore.getAllAssignments().firstOrNull().orEmpty()
+        val allDrafts = localStore.observeAllDrafts().firstOrNull().orEmpty()
+        val courses = localStore.courses.firstOrNull().orEmpty()
+
+        val seedLogs = mutableListOf<me.joxquin.notivas.data.local.db.entities.ActivityLogEntity>()
+
+        // Sembrar entregas existentes
+        val completedAssignments = allAssignments.filter { it.isCompleted }
+        completedAssignments.take(8).forEachIndexed { index, a ->
+            val course = courses.find { it.id == a.courseId }
+            val fakeOffsetHours = (index * 6).toLong()
+            val time = (me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() - fakeOffsetHours * 3600 * 1000).coerceAtLeast(1000L)
+            seedLogs.add(
+                me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                    type = "ASSIGNMENT_SUBMISSION",
+                    title = a.name,
+                    description = "Entrega registrada en Canvas LMS con calificación ${a.submission?.score?.toString() ?: a.pointsPossible?.toString() ?: "completada"}",
+                    courseCode = course?.courseCode ?: "Curso ${a.courseId}",
+                    courseName = course?.name,
+                    timestamp = time,
+                    targetId = a.id,
+                    secondaryId = a.courseId,
+                    extraInfo = a.submission?.id?.let { "Recibo #$it" } ?: "Entrega Canvas ✓",
+                    actionUrl = a.htmlUrl
+                )
+            )
+        }
+
+        // Sembrar borradores existentes
+        allDrafts.take(4).forEachIndexed { index, d ->
+            val fakeOffsetHours = ((index + 1) * 14).toLong()
+            val time = (me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() - fakeOffsetHours * 3600 * 1000).coerceAtLeast(1000L)
+            seedLogs.add(
+                me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                    type = "DRIVE_SYNC",
+                    title = "Borrador: ${d.fileName}",
+                    description = "Plantilla sincronizada automáticamente en tu unidad compartida de Google Drive",
+                    courseCode = d.courseFolder,
+                    timestamp = time,
+                    targetId = d.assignmentId,
+                    extraInfo = "Drive Sync",
+                    actionUrl = d.driveUrl
+                )
+            )
+        }
+
+        if (seedLogs.isNotEmpty()) {
+            localStore.saveActivityLogs(seedLogs)
+        }
+    }
 
     suspend fun downloadCanvasFileBytes(fileDownloadUrl: String): ByteArray? = withContext(Dispatchers.IO) {
         val token = getAuthToken() ?: return@withContext null
