@@ -196,6 +196,9 @@ fun MainAppShell(
     val profileViewModel = remember {
         ProfileViewModel(canvasRepository, copilotRepository, preferencesManager)
     }
+    val archiveViewModel = remember {
+        me.joxquin.notivas.ui.herramientas.archive.ArchiveViewModel(canvasRepository, preferencesManager)
+    }
 
     val updateRepository = remember { UpdateRepository() }
     var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
@@ -287,6 +290,7 @@ fun MainAppShell(
     val contentBackdrop = rememberLayerBackdrop()
     var showingNotasDetail by remember { mutableStateOf(false) }
     var showingForosDetail by remember { mutableStateOf(false) }
+    var showingArchiveDetail by remember { mutableStateOf(false) }
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
@@ -295,15 +299,16 @@ fun MainAppShell(
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         // En Miuix: Interceptar botón Atrás físico para volver de Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
-        BackHandler(enabled = selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || currentDestination != MainDestination.Inicio) {
+        BackHandler(enabled = selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || currentDestination != MainDestination.Inicio) {
             if (selectedAssignmentForDraft != null) {
                 dashboardViewModel.closeDraft()
             } else if (currentDestination == MainDestination.Herramientas) {
                 if (showingForosDetail && forosUiState.selectedDiscussion != null) {
                     forosViewModel.clearSelectedDiscussion()
-                } else if (showingNotasDetail || showingForosDetail) {
+                } else if (showingNotasDetail || showingForosDetail || showingArchiveDetail) {
                     showingNotasDetail = false
                     showingForosDetail = false
+                    showingArchiveDetail = false
                 } else {
                     mainPagerState.animateToPage(0)
                 }
@@ -318,93 +323,123 @@ fun MainAppShell(
                 .fillMaxSize()
                 .background(MiuixTheme.colorScheme.surface)
         ) {
-            // Capa 1: Contenido de la Pantalla Activa con HorizontalPager (Transiciones fluidas)
+            // Capa 1: Contenido de la Pantalla Activa con HorizontalPager o Borrador de Tarea
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .layerBackdrop(contentBackdrop)
             ) {
-                HorizontalPager(
-                    state = mainPagerState.pagerState,
-                    userScrollEnabled = false,
-                    modifier = Modifier.fillMaxSize(),
-                    verticalAlignment = Alignment.Top,
-                    beyondViewportPageCount = 1
-                ) { page ->
-                    when (destinations[page]) {
-                        MainDestination.Inicio -> {
-                            InicioScreen(
-                                viewModel = dashboardViewModel,
-                                themeStyle = AppThemeStyle.MIUIX,
-                                listState = inicioListState,
-                                onNavigateToCopilot = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    mainPagerState.animateToPage(2)
-                                },
-                                onNavigateToHerramientas = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    mainPagerState.animateToPage(1)
-                                },
-                                onNavigateToAjustes = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    mainPagerState.animateToPage(3)
-                                },
-                                onNavigateToCourseProgreso = { course ->
-                                    notasViewModel.selectCourse(course)
-                                    showingForosDetail = false
-                                    showingNotasDetail = true
-                                    mainPagerState.animateToPage(1)
-                                }
-                            )
-                        }
+                if (selectedAssignmentForDraft != null) {
+                    me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
+                        assignmentUi = selectedAssignmentForDraft!!,
+                        onBack = { dashboardViewModel.closeDraft() },
+                        viewModel = dashboardViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        lazyListState = inicioListState,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    HorizontalPager(
+                        state = mainPagerState.pagerState,
+                        userScrollEnabled = false,
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.Top,
+                        beyondViewportPageCount = 1
+                    ) { page ->
+                        when (destinations[page]) {
+                            MainDestination.Inicio -> {
+                                InicioScreen(
+                                    viewModel = dashboardViewModel,
+                                    themeStyle = AppThemeStyle.MIUIX,
+                                    listState = inicioListState,
+                                    onNavigateToCopilot = {
+                                        showingNotasDetail = false
+                                        showingForosDetail = false
+                                        mainPagerState.animateToPage(2)
+                                    },
+                                    onNavigateToHerramientas = {
+                                        showingNotasDetail = false
+                                        showingForosDetail = false
+                                        mainPagerState.animateToPage(1)
+                                    },
+                                    onNavigateToAjustes = {
+                                        showingNotasDetail = false
+                                        showingForosDetail = false
+                                        mainPagerState.animateToPage(3)
+                                    },
+                                    onNavigateToCourseProgreso = { course ->
+                                        notasViewModel.selectCourse(course)
+                                        showingForosDetail = false
+                                        showingNotasDetail = true
+                                        mainPagerState.animateToPage(1)
+                                    }
+                                )
+                            }
 
 
-                        MainDestination.Herramientas -> {
-                            me.joxquin.notivas.ui.herramientas.HerramientasScreen(
-                                viewModel = notasViewModel,
-                                forosViewModel = forosViewModel,
-                                showingNotasDetail = showingNotasDetail,
-                                showingForosDetail = showingForosDetail,
-                                onOpenProgreso = {
-                                    showingForosDetail = false
-                                    showingNotasDetail = true
-                                },
-                                onOpenForos = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = true
-                                },
-                                onOpenTuneSettings = { showHerramientasTuneSheet = true },
-                                onBack = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                },
-                                themeStyle = AppThemeStyle.MIUIX,
-                                lazyListState = herramientasListState
-                            )
-                        }
+                            MainDestination.Herramientas -> {
+                                me.joxquin.notivas.ui.herramientas.HerramientasScreen(
+                                    viewModel = notasViewModel,
+                                    forosViewModel = forosViewModel,
+                                    archiveViewModel = archiveViewModel,
+                                    showingNotasDetail = showingNotasDetail,
+                                    showingForosDetail = showingForosDetail,
+                                    showingArchiveDetail = showingArchiveDetail,
+                                    onOpenProgreso = {
+                                        showingForosDetail = false
+                                        showingArchiveDetail = false
+                                        showingNotasDetail = true
+                                    },
+                                    onOpenForos = {
+                                        showingNotasDetail = false
+                                        showingArchiveDetail = false
+                                        showingForosDetail = true
+                                    },
+                                    onOpenArchive = {
+                                        showingNotasDetail = false
+                                        showingForosDetail = false
+                                        showingArchiveDetail = true
+                                    },
+                                    onOpenAssignmentDetail = { assignment ->
+                                        val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                                        dashboardViewModel.openDraft(
+                                            me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
+                                                assignment = assignment,
+                                                courseName = courseName
+                                            )
+                                        )
+                                    },
+                                    onOpenTuneSettings = { showHerramientasTuneSheet = true },
+                                    onBack = {
+                                        showingNotasDetail = false
+                                        showingForosDetail = false
+                                        showingArchiveDetail = false
+                                    },
+                                    themeStyle = AppThemeStyle.MIUIX,
+                                    lazyListState = herramientasListState
+                                )
+                            }
 
-                        MainDestination.Copilot -> {
-                            me.joxquin.notivas.ui.copilot.CopilotScreen(
-                                viewModel = copilotViewModel,
-                                themeStyle = AppThemeStyle.MIUIX,
-                                lazyListState = copilotListState,
-                                onNavigateToSettings = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    mainPagerState.animateToPage(3)
-                                }
-                            )
-                        }
+                            MainDestination.Copilot -> {
+                                me.joxquin.notivas.ui.copilot.CopilotScreen(
+                                    viewModel = copilotViewModel,
+                                    themeStyle = AppThemeStyle.MIUIX,
+                                    lazyListState = copilotListState,
+                                    onNavigateToSettings = {
+                                        showingNotasDetail = false
+                                        showingForosDetail = false
+                                        mainPagerState.animateToPage(3)
+                                    }
+                                )
+                            }
 
-                        MainDestination.Ajustes -> {
-                            me.joxquin.notivas.ui.ajustes.AjustesScreen(
-                                viewModel = profileViewModel,
-                                themeStyle = AppThemeStyle.MIUIX,
-                                lazyListState = ajustesListState
-                            )
+                            MainDestination.Ajustes -> {
+                                me.joxquin.notivas.ui.ajustes.AjustesScreen(
+                                    viewModel = profileViewModel,
+                                    themeStyle = AppThemeStyle.MIUIX,
+                                    lazyListState = ajustesListState
+                                )
+                            }
                         }
                     }
                 }
@@ -415,38 +450,49 @@ fun MainAppShell(
             // Capa 2: Barra Superior Canónica Unificada (Top Overlay)
             MiuixTopAppBar(
                 title = when {
+                    selectedAssignmentForDraft != null -> stringResource(Res.string.assignment_detail_title)
+                    currentDestination == MainDestination.Herramientas && showingArchiveDetail -> stringResource(Res.string.archive_screen_title)
                     currentDestination == MainDestination.Herramientas && showingNotasDetail -> stringResource(Res.string.grades_progreso_title)
                     currentDestination == MainDestination.Herramientas && showingForosDetail -> {
                         if (forosUiState.selectedDiscussion != null) stringResource(Res.string.foro_detail_title) else stringResource(Res.string.foros_hub_title)
                     }
-                    currentDestination == MainDestination.Inicio -> {
-                        if (selectedAssignmentForDraft != null) stringResource(Res.string.assignment_detail_title) else stringResource(Res.string.app_name)
-                    }
+                    currentDestination == MainDestination.Inicio -> stringResource(Res.string.app_name)
                     currentDestination == MainDestination.Herramientas -> stringResource(Res.string.herramientas_title)
                     currentDestination == MainDestination.Copilot -> stringResource(Res.string.copilot_title)
                     currentDestination == MainDestination.Ajustes -> stringResource(Res.string.settings_title)
                     else -> stringResource(Res.string.app_name)
                 },
-                isScrolled = when (currentDestination) {
-                    MainDestination.Inicio -> isInicioScrolled
-                    MainDestination.Herramientas -> isHerramientasScrolled
-                    MainDestination.Ajustes -> isAjustesScrolled
-                    MainDestination.Copilot -> true
+                isScrolled = when {
+                    selectedAssignmentForDraft != null -> true
+                    currentDestination == MainDestination.Inicio -> isInicioScrolled
+                    currentDestination == MainDestination.Herramientas -> isHerramientasScrolled
+                    currentDestination == MainDestination.Ajustes -> isAjustesScrolled
+                    currentDestination == MainDestination.Copilot -> true
+                    else -> false
                 },
-                scrollOffset = when (currentDestination) {
-                    MainDestination.Inicio -> inicioScrollOffset
-                    MainDestination.Herramientas -> herramientasScrollOffset
-                    MainDestination.Ajustes -> ajustesScrollOffset
-                    MainDestination.Copilot -> if (isCopilotScrolled) copilotScrollOffset else 64f
+                scrollOffset = when {
+                    selectedAssignmentForDraft != null -> 64f
+                    currentDestination == MainDestination.Inicio -> inicioScrollOffset
+                    currentDestination == MainDestination.Herramientas -> herramientasScrollOffset
+                    currentDestination == MainDestination.Ajustes -> ajustesScrollOffset
+                    currentDestination == MainDestination.Copilot -> if (isCopilotScrolled) copilotScrollOffset else 64f
+                    else -> 0f
                 },
                 backdrop = contentBackdrop,
-                titleAlwaysVisible = (currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail)) ||
-                        (currentDestination == MainDestination.Inicio && selectedAssignmentForDraft != null),
+                titleAlwaysVisible = (selectedAssignmentForDraft != null) ||
+                        (currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail || showingArchiveDetail)),
                 navigationIcon = when {
-                    currentDestination == MainDestination.Inicio && selectedAssignmentForDraft != null -> {
+                    selectedAssignmentForDraft != null -> {
                         {
                             me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
                                 onClick = { dashboardViewModel.closeDraft() }
+                            )
+                        }
+                    }
+                    currentDestination == MainDestination.Herramientas && showingArchiveDetail -> {
+                        {
+                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
+                                onClick = { showingArchiveDetail = false }
                             )
                         }
                     }
@@ -488,7 +534,7 @@ fun MainAppShell(
                 },
                 actions = {
                     when {
-                        currentDestination == MainDestination.Inicio && selectedAssignmentForDraft != null -> {
+                        selectedAssignmentForDraft != null -> {
                             val assignment = selectedAssignmentForDraft?.assignment
                             val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
                             val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
@@ -584,7 +630,7 @@ fun MainAppShell(
                                         )
                                     }
                                 }
-                            } else if (!showingNotasDetail) {
+                            } else if (!showingNotasDetail && !showingArchiveDetail) {
                                 me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
                                     onClick = { showHerramientasTuneSheet = true }
                                 ) {
@@ -601,7 +647,7 @@ fun MainAppShell(
                         else -> {}
                     }
                 },
-                bottomContent = if (currentDestination == MainDestination.Herramientas && showingForosDetail && forosUiState.selectedDiscussion == null) {
+                bottomContent = if (selectedAssignmentForDraft == null && currentDestination == MainDestination.Herramientas && showingForosDetail && forosUiState.selectedDiscussion == null) {
                     {
                         me.joxquin.notivas.ui.foros.components.ForosSearchAndFilters(
                             searchQuery = forosUiState.searchQuery,
@@ -619,23 +665,25 @@ fun MainAppShell(
                 modifier = Modifier.align(Alignment.TopCenter)
             )
 
-            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Siempre visible igual que en Foros
-            FloatingNavigationBar(
-                currentDestination = currentDestination,
-                onNavigate = { destination ->
-                    if (selectedAssignmentForDraft != null) {
-                        dashboardViewModel.closeDraft()
-                    }
-                    showingNotasDetail = false
-                    showingForosDetail = false
-                    val targetIndex = destinations.indexOf(destination)
-                    if (targetIndex != -1) {
-                        mainPagerState.animateToPage(targetIndex)
-                    }
-                },
-                backdrop = contentBackdrop,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
+            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador
+            if (selectedAssignmentForDraft == null) {
+                FloatingNavigationBar(
+                    currentDestination = currentDestination,
+                    onNavigate = { destination ->
+                        if (selectedAssignmentForDraft != null) {
+                            dashboardViewModel.closeDraft()
+                        }
+                        showingNotasDetail = false
+                        showingForosDetail = false
+                        val targetIndex = destinations.indexOf(destination)
+                        if (targetIndex != -1) {
+                            mainPagerState.animateToPage(targetIndex)
+                        }
+                    },
+                    backdrop = contentBackdrop,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
+            }
 
             // Feedback Toast / Banner Flotante en MIUIX
             androidx.compose.animation.AnimatedVisibility(
@@ -681,15 +729,16 @@ fun MainAppShell(
         }
 
         // Interceptar gesto/botón Atrás del sistema para Material 3:
-        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || materialDestination != MainDestination.Inicio)) {
+        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || materialDestination != MainDestination.Inicio)) {
             if (selectedAssignmentForDraft != null) {
                 dashboardViewModel.closeDraft()
             } else if (materialDestination == MainDestination.Herramientas) {
                 if (showingForosDetail && forosUiState.selectedDiscussion != null) {
                     forosViewModel.clearSelectedDiscussion()
-                } else if (showingNotasDetail || showingForosDetail) {
+                } else if (showingNotasDetail || showingForosDetail || showingArchiveDetail) {
                     showingNotasDetail = false
                     showingForosDetail = false
+                    showingArchiveDetail = false
                 } else {
                     materialDestination = MainDestination.Inicio
                 }
@@ -796,20 +845,39 @@ fun MainAppShell(
                             me.joxquin.notivas.ui.herramientas.HerramientasScreen(
                                 viewModel = notasViewModel,
                                 forosViewModel = forosViewModel,
+                                archiveViewModel = archiveViewModel,
                                 showingNotasDetail = showingNotasDetail,
                                 showingForosDetail = showingForosDetail,
+                                showingArchiveDetail = showingArchiveDetail,
                                 onOpenProgreso = {
                                     showingForosDetail = false
+                                    showingArchiveDetail = false
                                     showingNotasDetail = true
                                 },
                                 onOpenForos = {
                                     showingNotasDetail = false
+                                    showingArchiveDetail = false
                                     showingForosDetail = true
+                                },
+                                onOpenArchive = {
+                                    showingNotasDetail = false
+                                    showingForosDetail = false
+                                    showingArchiveDetail = true
+                                },
+                                onOpenAssignmentDetail = { assignment ->
+                                    val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                                    dashboardViewModel.openDraft(
+                                        me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
+                                            assignment = assignment,
+                                            courseName = courseName
+                                        )
+                                    )
                                 },
                                 onOpenTuneSettings = { showHerramientasTuneSheet = true },
                                 onBack = {
                                     showingNotasDetail = false
                                     showingForosDetail = false
+                                    showingArchiveDetail = false
                                 },
                                 themeStyle = AppThemeStyle.MATERIAL,
                                 lazyListState = herramientasListState
