@@ -523,4 +523,23 @@
     <string name="archive_trash_cleared">Papelera vaciada correctamente.</string>
     <string name="archive_pdf_exported">Reporte exportado a descargas.</string>
     <string name="archive_restored_to_pending">Tarea restaurada a pendientes.</string>
+
+    <!-- Recent Activity & Submissions Screen -->
+    <string name="recent_activity_title">Actividad Reciente</string>
+    <string name="recent_activity_search_hint">Buscar envíos, tareas o foros…</string>
+    <string name="recent_activity_filter_all">Todos (%1$d)</string>
+    <string name="recent_activity_filter_submissions">Tareas entregadas</string>
+    <string name="recent_activity_filter_forums">Foros respondidos</string>
+    <string name="recent_activity_filter_notifications">Notificaciones Canvas</string>
+    <string name="recent_activity_filter_drive">Sincronizaciones Drive</string>
+    <string name="recent_activity_section_today">Hoy</string>
+    <string name="recent_activity_section_yesterday">Ayer</string>
+    <string name="recent_activity_section_this_week">Esta semana</string>
+    <string name="recent_activity_section_older">Más antiguos</string>
+    <string name="recent_activity_records_count">%1$d registros</string>
+    <string name="recent_activity_action_view_receipt">Ver recibo oficial</string>
+    <string name="recent_activity_action_view_thread">Ver hilo</string>
+    <string name="recent_activity_action_open_document">Abrir documento</string>
+    <string name="recent_activity_empty_title">Sin actividad registrada</string>
+    <string name="recent_activity_empty_desc">Tus entregas de tareas, participaciones en foros y sincronizaciones de Drive aparecerán listadas aquí en tiempo real.</string>
 </resources>

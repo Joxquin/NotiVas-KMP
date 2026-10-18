@@ -523,6 +523,25 @@
     <string name="archive_trash_cleared">Trash emptied successfully.</string>
     <string name="archive_pdf_exported">Report exported to downloads.</string>
     <string name="archive_restored_to_pending">Assignment restored to pending.</string>
+
+    <!-- Recent Activity & Submissions Screen -->
+    <string name="recent_activity_title">Recent Activity</string>
+    <string name="recent_activity_search_hint">Search submissions, tasks or forums…</string>
+    <string name="recent_activity_filter_all">All (%1$d)</string>
+    <string name="recent_activity_filter_submissions">Submissions</string>
+    <string name="recent_activity_filter_forums">Forums</string>
+    <string name="recent_activity_filter_notifications">Notifications</string>
+    <string name="recent_activity_filter_drive">Drive Sync</string>
+    <string name="recent_activity_section_today">Today</string>
+    <string name="recent_activity_section_yesterday">Yesterday</string>
+    <string name="recent_activity_section_this_week">This week</string>
+    <string name="recent_activity_section_older">Older</string>
+    <string name="recent_activity_records_count">%1$d records</string>
+    <string name="recent_activity_action_view_receipt">View receipt</string>
+    <string name="recent_activity_action_view_thread">View thread</string>
+    <string name="recent_activity_action_open_document">Open document</string>
+    <string name="recent_activity_empty_title">No activity recorded</string>
+    <string name="recent_activity_empty_desc">When you submit assignments, reply to forums or sync drafts, they will be logged here.</string>
 </resources>
 
 

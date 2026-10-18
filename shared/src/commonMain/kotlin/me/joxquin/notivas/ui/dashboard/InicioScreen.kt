@@ -45,6 +45,7 @@ fun InicioScreen(
     onNavigateToCopilot: () -> Unit = {},
     onNavigateToHerramientas: () -> Unit = {},
     onNavigateToAjustes: () -> Unit = {},
+    onNavigateToActivity: () -> Unit = {},
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -100,6 +101,7 @@ fun InicioScreen(
                 isScrolled = isScrolled,
                 title = "NotiVas",
                 onRefresh = { viewModel.refreshData() },
+                onNavigateToActivity = onNavigateToActivity,
                 onNavigateToAjustes = onNavigateToAjustes
             )
         },

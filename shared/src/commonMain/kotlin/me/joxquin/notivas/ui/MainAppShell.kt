@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.ui.unit.sp
 import top.yukonga.miuix.kmp.squircle.squircleSurface
+import top.yukonga.miuix.kmp.icon.extended.Alarm
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -199,6 +200,9 @@ fun MainAppShell(
     val archiveViewModel = remember {
         me.joxquin.notivas.ui.herramientas.archive.ArchiveViewModel(canvasRepository, preferencesManager)
     }
+    val activityViewModel = remember {
+        me.joxquin.notivas.ui.activity.ActivityViewModel(canvasRepository)
+    }
 
     val updateRepository = remember { UpdateRepository() }
     var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
@@ -248,6 +252,19 @@ fun MainAppShell(
         }
     }
 
+    val activityListState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val isActivityScrolled by remember {
+        derivedStateOf {
+            activityListState.firstVisibleItemIndex > 0 || activityListState.firstVisibleItemScrollOffset > 40
+        }
+    }
+    val activityScrollOffset by remember {
+        derivedStateOf {
+            if (activityListState.firstVisibleItemIndex > 0) 100f
+            else activityListState.firstVisibleItemScrollOffset.toFloat()
+        }
+    }
+
     val herramientasListState = androidx.compose.foundation.lazy.rememberLazyListState()
     val isHerramientasScrolled by remember {
         derivedStateOf {
@@ -291,16 +308,20 @@ fun MainAppShell(
     var showingNotasDetail by remember { mutableStateOf(false) }
     var showingForosDetail by remember { mutableStateOf(false) }
     var showingArchiveDetail by remember { mutableStateOf(false) }
+    var showingActivityDetail by remember { mutableStateOf(false) }
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
     val forosUiState by forosViewModel.uiState.collectAsState()
+    val activityUiState by activityViewModel.uiState.collectAsState()
     val selectedAssignmentForDraft by dashboardViewModel.selectedAssignmentForDraft.collectAsState()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        // En Miuix: Interceptar botón Atrás físico para volver de Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
-        BackHandler(enabled = selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || currentDestination != MainDestination.Inicio) {
-            if (selectedAssignmentForDraft != null) {
+        // En Miuix: Interceptar botón Atrás físico para volver de Actividad -> Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
+        BackHandler(enabled = showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || currentDestination != MainDestination.Inicio) {
+            if (showingActivityDetail) {
+                showingActivityDetail = false
+            } else if (selectedAssignmentForDraft != null) {
                 dashboardViewModel.closeDraft()
             } else if (currentDestination == MainDestination.Herramientas) {
                 if (showingForosDetail && forosUiState.selectedDiscussion != null) {
@@ -329,7 +350,46 @@ fun MainAppShell(
                     .fillMaxSize()
                     .layerBackdrop(contentBackdrop)
             ) {
-                if (selectedAssignmentForDraft != null) {
+                if (showingActivityDetail) {
+                    me.joxquin.notivas.ui.activity.RecentActivityScreen(
+                        viewModel = activityViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { showingActivityDetail = false },
+                        onNavigateToAssignment = { assignmentId ->
+                            showingActivityDetail = false
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                                    dashboardViewModel.openDraft(
+                                        me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
+                                            assignment = assignment,
+                                            courseName = courseName
+                                        )
+                                    )
+                                }
+                            }
+                        },
+                        onNavigateToForum = { topicId ->
+                            showingActivityDetail = false
+                            val topic = forosUiState.discussions.find { it.id == topicId }
+                            if (topic != null) {
+                                forosViewModel.selectDiscussion(topic)
+                                showingNotasDetail = false
+                                showingArchiveDetail = false
+                                showingForosDetail = true
+                                mainPagerState.animateToPage(1)
+                            }
+                        },
+                        onOpenUrl = { url ->
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (_: Exception) {}
+                        },
+                        lazyListState = activityListState,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (selectedAssignmentForDraft != null) {
                     me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
                         assignmentUi = selectedAssignmentForDraft!!,
                         onBack = { dashboardViewModel.closeDraft() },
@@ -450,6 +510,7 @@ fun MainAppShell(
             // Capa 2: Barra Superior Canónica Unificada (Top Overlay)
             MiuixTopAppBar(
                 title = when {
+                    showingActivityDetail -> stringResource(Res.string.recent_activity_title)
                     selectedAssignmentForDraft != null -> stringResource(Res.string.assignment_detail_title)
                     currentDestination == MainDestination.Herramientas && showingArchiveDetail -> stringResource(Res.string.archive_screen_title)
                     currentDestination == MainDestination.Herramientas && showingNotasDetail -> stringResource(Res.string.grades_progreso_title)
@@ -463,6 +524,7 @@ fun MainAppShell(
                     else -> stringResource(Res.string.app_name)
                 },
                 isScrolled = when {
+                    showingActivityDetail -> isActivityScrolled
                     selectedAssignmentForDraft != null -> true
                     currentDestination == MainDestination.Inicio -> isInicioScrolled
                     currentDestination == MainDestination.Herramientas -> isHerramientasScrolled
@@ -471,6 +533,7 @@ fun MainAppShell(
                     else -> false
                 },
                 scrollOffset = when {
+                    showingActivityDetail -> activityScrollOffset
                     selectedAssignmentForDraft != null -> 64f
                     currentDestination == MainDestination.Inicio -> inicioScrollOffset
                     currentDestination == MainDestination.Herramientas -> herramientasScrollOffset
@@ -479,9 +542,16 @@ fun MainAppShell(
                     else -> 0f
                 },
                 backdrop = contentBackdrop,
-                titleAlwaysVisible = (selectedAssignmentForDraft != null) ||
+                titleAlwaysVisible = showingActivityDetail || (selectedAssignmentForDraft != null) ||
                         (currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail || showingArchiveDetail)),
                 navigationIcon = when {
+                    showingActivityDetail -> {
+                        {
+                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
+                                onClick = { showingActivityDetail = false }
+                            )
+                        }
+                    }
                     selectedAssignmentForDraft != null -> {
                         {
                             me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
@@ -534,6 +604,19 @@ fun MainAppShell(
                 },
                 actions = {
                     when {
+                        showingActivityDetail -> {}
+                        currentDestination == MainDestination.Inicio && selectedAssignmentForDraft == null -> {
+                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                onClick = { showingActivityDetail = true }
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Alarm,
+                                    contentDescription = stringResource(Res.string.recent_activity_title),
+                                    tint = MiuixTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                         selectedAssignmentForDraft != null -> {
                             val assignment = selectedAssignmentForDraft?.assignment
                             val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
@@ -647,26 +730,39 @@ fun MainAppShell(
                         else -> {}
                     }
                 },
-                bottomContent = if (selectedAssignmentForDraft == null && currentDestination == MainDestination.Herramientas && showingForosDetail && forosUiState.selectedDiscussion == null) {
-                    {
-                        me.joxquin.notivas.ui.foros.components.ForosSearchAndFilters(
-                            searchQuery = forosUiState.searchQuery,
-                            onSearchQueryChange = { query: String -> forosViewModel.onSearchQueryChange(query) },
-                            themeStyle = AppThemeStyle.MIUIX,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 6.dp)
-                        )
+                bottomContent = when {
+                    showingActivityDetail -> {
+                        {
+                            me.joxquin.notivas.ui.activity.components.ActivitySearchAndFilters(
+                                searchQuery = activityUiState.searchQuery,
+                                onSearchQueryChange = { query: String -> activityViewModel.onSearchQueryChange(query) },
+                                themeStyle = AppThemeStyle.MIUIX,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 6.dp)
+                            )
+                        }
                     }
-                } else null,
-                onNavigationClick = if (currentDestination == MainDestination.Inicio && selectedAssignmentForDraft == null) {
-                    { /* Notificaciones */ }
-                } else null,
+                    selectedAssignmentForDraft == null && currentDestination == MainDestination.Herramientas && showingForosDetail && forosUiState.selectedDiscussion == null -> {
+                        {
+                            me.joxquin.notivas.ui.foros.components.ForosSearchAndFilters(
+                                searchQuery = forosUiState.searchQuery,
+                                onSearchQueryChange = { query: String -> forosViewModel.onSearchQueryChange(query) },
+                                themeStyle = AppThemeStyle.MIUIX,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 6.dp)
+                            )
+                        }
+                    }
+                    else -> null
+                },
+                onNavigationClick = null,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
 
-            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador
-            if (selectedAssignmentForDraft == null) {
+            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador o actividad reciente
+            if (!showingActivityDetail && selectedAssignmentForDraft == null) {
                 FloatingNavigationBar(
                     currentDestination = currentDestination,
                     onNavigate = { destination ->
@@ -729,8 +825,10 @@ fun MainAppShell(
         }
 
         // Interceptar gesto/botón Atrás del sistema para Material 3:
-        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || materialDestination != MainDestination.Inicio)) {
-            if (selectedAssignmentForDraft != null) {
+        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || materialDestination != MainDestination.Inicio)) {
+            if (showingActivityDetail) {
+                showingActivityDetail = false
+            } else if (selectedAssignmentForDraft != null) {
                 dashboardViewModel.closeDraft()
             } else if (materialDestination == MainDestination.Herramientas) {
                 if (showingForosDetail && forosUiState.selectedDiscussion != null) {
@@ -753,7 +851,7 @@ fun MainAppShell(
             bottomBar = {
                 NotiVasNavigationBar(
                     currentDestination = materialDestination,
-                    isVisible = !isImeVisible,
+                    isVisible = !isImeVisible && !showingActivityDetail && selectedAssignmentForDraft == null,
                     onNavigate = { destination ->
                         if (selectedAssignmentForDraft != null) {
                             dashboardViewModel.closeDraft()
@@ -765,7 +863,7 @@ fun MainAppShell(
                 )
             }
         ) { innerPadding ->
-            val targetBottom = if (!isImeVisible) innerPadding.calculateBottomPadding() else 0.dp
+            val targetBottom = if (!isImeVisible && !showingActivityDetail && selectedAssignmentForDraft == null) innerPadding.calculateBottomPadding() else 0.dp
             val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
                 targetValue = targetBottom,
                 animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
@@ -777,7 +875,46 @@ fun MainAppShell(
                     .fillMaxSize()
                     .padding(bottom = animatedBottomPadding)
             ) {
-                if (selectedAssignmentForDraft != null) {
+                if (showingActivityDetail) {
+                    me.joxquin.notivas.ui.activity.RecentActivityScreen(
+                        viewModel = activityViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { showingActivityDetail = false },
+                        onNavigateToAssignment = { assignmentId ->
+                            showingActivityDetail = false
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                                    dashboardViewModel.openDraft(
+                                        me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
+                                            assignment = assignment,
+                                            courseName = courseName
+                                        )
+                                    )
+                                }
+                            }
+                        },
+                        onNavigateToForum = { topicId ->
+                            showingActivityDetail = false
+                            val topic = forosUiState.discussions.find { it.id == topicId }
+                            if (topic != null) {
+                                forosViewModel.selectDiscussion(topic)
+                                showingNotasDetail = false
+                                showingArchiveDetail = false
+                                showingForosDetail = true
+                                navigateToMaterial(MainDestination.Herramientas)
+                            }
+                        },
+                        onOpenUrl = { url ->
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (_: Exception) {}
+                        },
+                        lazyListState = activityListState,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (selectedAssignmentForDraft != null) {
                     selectedAssignmentForDraft?.let { draftAssignment ->
                         me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
                             assignmentUi = draftAssignment,
@@ -830,6 +967,9 @@ fun MainAppShell(
                                     showingNotasDetail = false
                                     showingForosDetail = false
                                     navigateToMaterial(MainDestination.Ajustes)
+                                },
+                                onNavigateToActivity = {
+                                    showingActivityDetail = true
                                 },
                                 onNavigateToCourseProgreso = { course ->
                                     notasViewModel.selectCourse(course)

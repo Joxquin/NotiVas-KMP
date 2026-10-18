@@ -151,15 +151,6 @@ fun MiuixTopAppBar(
                 ) {
                     if (navigationIcon != null) {
                         navigationIcon()
-                    } else if (onNavigationClick != null) {
-                        MiuixTopAppBarAction(onClick = onNavigationClick) {
-                            Icon(
-                                imageVector = MiuixIcons.Alarm,
-                                contentDescription = "Notificaciones",
-                                tint = MiuixTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
                     }
                 }
 

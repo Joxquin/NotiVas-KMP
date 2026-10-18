@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Sync
@@ -41,7 +42,8 @@ import androidx.compose.ui.unit.dp
 fun InicioTopAppBar(
     isScrolled: Boolean,
     title: String = "Inicio",
-    onRefresh: () -> Unit,
+    onRefresh: () -> Unit = {},
+    onNavigateToActivity: () -> Unit = {},
     onNavigateToAjustes: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -92,12 +94,12 @@ fun InicioTopAppBar(
             }
         },
         actions = {
-            IconButton(onClick = onRefresh) {
+            IconButton(onClick = onNavigateToActivity) {
                 Icon(
-                    imageVector = Icons.Default.Sync,
-                    contentDescription = "Sincronizar",
+                    imageVector = Icons.Filled.History,
+                    contentDescription = "Actividad Reciente",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         },
