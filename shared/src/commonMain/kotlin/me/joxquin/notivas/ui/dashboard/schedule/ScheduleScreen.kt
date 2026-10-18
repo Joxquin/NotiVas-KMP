@@ -257,7 +257,7 @@ fun ScheduleScreen(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = monthYearText,
+                                        text = "Planificador y entregas",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 1
@@ -496,14 +496,16 @@ private fun ScheduleAssignmentTimelineCard(
                     Spacer(Modifier.height(4.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = item.courseName,
                             style = MaterialTheme.typography.bodySmall,
                             color = if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
                         Box(
                             modifier = Modifier
@@ -514,7 +516,9 @@ private fun ScheduleAssignmentTimelineCard(
                         Text(
                             text = statusLabel,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                            color = accentColor
+                            color = accentColor,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }

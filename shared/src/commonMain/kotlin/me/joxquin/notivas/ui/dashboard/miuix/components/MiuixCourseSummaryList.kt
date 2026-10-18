@@ -5,38 +5,41 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.model.Course
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.course_pending_format
+import me.joxquin.notivas.shared.resources.course_up_to_date
+import me.joxquin.notivas.shared.resources.courses_enrolled_format
+import me.joxquin.notivas.shared.resources.courses_section_title
+import me.joxquin.notivas.shared.resources.manage
 import me.joxquin.notivas.ui.dashboard.CourseStat
+import org.jetbrains.compose.resources.stringResource
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import org.jetbrains.compose.resources.stringResource
-import me.joxquin.notivas.shared.resources.*
-
-private val MiuixBlue = Color(0xFF3482FF)
-private val MiuixAmber = Color(0xFFFFB74D)
-private val MiuixGreen = Color(0xFF66BB6A)
-private val MiuixGreenBg = Color(0x3366BB6A)
+import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
 /**
- * MiuixCourseSummaryList: Grid de 2 columnas de Cursos Activos estilo Stitch.
+ * MiuixCourseSummaryList: Grid de 2 columnas de Cursos Activos estilo HyperOS MIUIX.
  */
 @Composable
 fun MiuixCourseSummaryList(
@@ -45,13 +48,7 @@ fun MiuixCourseSummaryList(
     onCourseClick: (Course) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val barColors = listOf(
-        MiuixBlue,
-        Color(0xFFA855F7), // Morado
-        MiuixAmber,
-        Color(0xFF2DD4BF), // Teal
-        Color(0xFFEC4899)  // Rosa
-    )
+    if (courses.isEmpty()) return
 
     Column(
         modifier = modifier
@@ -65,7 +62,7 @@ fun MiuixCourseSummaryList(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SmallTitle(
-                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.courses_section_title).uppercase(),
+                text = stringResource(Res.string.courses_section_title).uppercase(),
                 modifier = Modifier.weight(1f, fill = false)
             )
 
@@ -75,23 +72,23 @@ fun MiuixCourseSummaryList(
                 modifier = Modifier.padding(end = 20.dp)
             ) {
                 Text(
-                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.courses_enrolled_format, courses.size),
+                    text = stringResource(Res.string.courses_enrolled_format, courses.size),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                     modifier = Modifier
                         .squircleSurface(
-                            color = Color.White.copy(alpha = 0.06f),
+                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
                             cornerRadius = 10.dp
                         )
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 )
 
                 Text(
-                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.manage),
+                    text = stringResource(Res.string.manage),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = MiuixBlue,
+                    color = MiuixTheme.colorScheme.primary,
                     modifier = Modifier.clickable { }
                 )
             }
@@ -105,28 +102,24 @@ fun MiuixCourseSummaryList(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            coursePairs.forEachIndexed { pairIndex, pair ->
+            coursePairs.forEach { pair ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     val firstCourse = pair[0]
-                    val firstIndex = pairIndex * 2
                     MiuixCourseGridCard(
                         course = firstCourse,
                         stat = courseStats.find { it.course.id == firstCourse.id },
-                        accentColor = barColors[firstIndex % barColors.size],
                         onClick = { onCourseClick(firstCourse) },
                         modifier = Modifier.weight(1f)
                     )
 
                     if (pair.size > 1) {
                         val secondCourse = pair[1]
-                        val secondIndex = firstIndex + 1
                         MiuixCourseGridCard(
                             course = secondCourse,
                             stat = courseStats.find { it.course.id == secondCourse.id },
-                            accentColor = barColors[secondIndex % barColors.size],
                             onClick = { onCourseClick(secondCourse) },
                             modifier = Modifier.weight(1f)
                         )
@@ -143,47 +136,62 @@ fun MiuixCourseSummaryList(
 private fun MiuixCourseGridCard(
     course: Course,
     stat: CourseStat?,
-    accentColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pendingCount = stat?.pendingCount ?: 0
     val avg = stat?.averageScore ?: 18.0
 
-    Box(
-        modifier = modifier
-            .squircleSurface(
-                color = MiuixTheme.colorScheme.surfaceContainer,
-                cornerRadius = 20.dp
-            )
-            .squircleBorder(
-                width = 0.5.dp,
-                color = MiuixTheme.colorScheme.dividerLine,
-                cornerRadius = 20.dp
-            )
-            .clickable(onClick = onClick)
-            .padding(12.dp)
+    MiuixCard(
+        modifier = modifier.fillMaxWidth(),
+        colors = MiuixCardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+        insideMargin = PaddingValues(14.dp),
+        pressFeedbackType = PressFeedbackType.Sink,
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                // Barra superior de acento (h: 3dp)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(3.dp)
-                        .clip(CircleShape)
-                        .background(accentColor)
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Header: Código del curso y Nota sobre 20
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .squircleSurface(
+                                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                cornerRadius = 6.dp
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = course.courseCode ?: "CS-${course.id % 1000}",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                        )
+                    }
 
-                Text(
-                    text = course.courseCode ?: "CS-301",
-                    fontSize = 10.sp,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                )
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = (if (avg % 1.0 == 0.0) "${avg.toInt()}.0" else "$avg").take(4),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (avg >= 13.0) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.error
+                        )
+                        Text(
+                            text = " /20",
+                            fontSize = 9.sp,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                        )
+                    }
+                }
 
+                // Nombre del curso (altura fija para alineación homogénea en grid)
                 Text(
                     text = course.name,
                     fontSize = 13.sp,
@@ -191,74 +199,67 @@ private fun MiuixCourseGridCard(
                     color = MiuixTheme.colorScheme.onSurface,
                     maxLines = 2,
                     lineHeight = 17.sp,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.height(36.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Footer con badge de pendientes y nota sobre 20
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (pendingCount > 0) {
-                    Box(
-                        modifier = Modifier
-                            .squircleSurface(
-                                color = Color(0xFF4A2800),
-                                cornerRadius = 4.dp
-                            )
-                            .squircleBorder(
-                                width = 0.5.dp,
-                                color = MiuixAmber.copy(alpha = 0.3f),
-                                cornerRadius = 4.dp
-                            )
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.course_pending_format, pendingCount),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MiuixAmber
+            // Footer con badge elegante de estado
+            if (pendingCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .squircleSurface(
+                            color = MiuixTheme.colorScheme.errorContainer.copy(alpha = 0.85f),
+                            cornerRadius = 10.dp
                         )
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .squircleSurface(
-                                color = MiuixGreenBg,
-                                cornerRadius = 4.dp
-                            )
-                            .squircleBorder(
-                                width = 0.5.dp,
-                                color = MiuixGreen.copy(alpha = 0.2f),
-                                cornerRadius = 4.dp
-                            )
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .clip(CircleShape)
+                                .background(MiuixTheme.colorScheme.error)
+                        )
                         Text(
-                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.course_up_to_date),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MiuixGreen
+                            text = stringResource(Res.string.course_pending_format, pendingCount),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MiuixTheme.colorScheme.onErrorContainer
                         )
                     }
                 }
-
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = (if (avg % 1.0 == 0.0) "${avg.toInt()}.0" else "$avg").take(4),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (avg >= 14.0) MiuixGreen else MiuixAmber
-                    )
-                    Text(
-                        text = " /20",
-                        fontSize = 9.sp,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                    )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .squircleSurface(
+                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                            cornerRadius = 10.dp
+                        )
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .clip(CircleShape)
+                                .background(MiuixTheme.colorScheme.primary)
+                        )
+                        Text(
+                            text = stringResource(Res.string.course_up_to_date),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MiuixTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }

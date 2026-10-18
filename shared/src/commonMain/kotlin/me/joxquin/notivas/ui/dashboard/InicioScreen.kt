@@ -183,40 +183,25 @@ fun InicioScreen(
                 )
             }
 
-            // ─── 1.1 Banner Contextual de Cursos sin Configurar ──────────────
+            // ─── 2. Carrusel Hero: Rendimiento Académico + Configuración de Fórmulas ─
             item {
-                me.joxquin.notivas.ui.dashboard.components.UnconfiguredCoursesBanner(
+                me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
+                    courseStats = courseStats,
                     unconfiguredCount = unconfiguredBannerState.first,
                     firstUnconfiguredCourse = unconfiguredBannerState.second,
-                    visible = unconfiguredBannerState.third,
-                    onDismiss = { viewModel.dismissUnconfiguredBanner() },
-                    onConfigureClick = { course ->
-                        onNavigateToCourseProgreso(course)
-                    }
-                )
-            }
-
-            // ─── 2. Tarjeta Bento Híbrida: Rendimiento + Notificaciones ─────
-            item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardPerformanceBento(
-                    courseStats = courseStats,
-                    recentActivities = emptyList(),
-                    onCheckNow = { onNavigateToHerramientas() },
+                    onCheckPerformance = { onNavigateToHerramientas() },
+                    onConfigureFormulas = { course ->
+                        if (course != null) {
+                            onNavigateToCourseProgreso(course)
+                        } else if (courses.isNotEmpty()) {
+                            onNavigateToCourseProgreso(courses.first())
+                        }
+                    },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }
 
-            // ─── 3. Projects: Cursos Destacados / Asignaturas Activas ────────
-            item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardProjectsBento(
-                    courseStats = courseStats,
-                    courses = courses,
-                    onCourseClick = { course -> onNavigateToCourseProgreso(course) },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // ─── 4. Today's Tasks: Entregas del Día ──────────────────────────
+            // ─── 3. Today's Tasks: Entregas del Día ──────────────────────────
             item {
                 me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
                     tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
@@ -226,7 +211,7 @@ fun InicioScreen(
                 )
             }
 
-            // ─── 5. Matriz de Todos los Cursos del Semestre ─────────────────
+            // ─── 4. Cursos Activos: Grid Rediseñado de Cursos ───────────────
             item {
                 CoursesMatrixSection(
                     courseStats = courseStats,

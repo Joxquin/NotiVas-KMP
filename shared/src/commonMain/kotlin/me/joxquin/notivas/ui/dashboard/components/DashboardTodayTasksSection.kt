@@ -234,14 +234,16 @@ private fun TaskCardContent(
             Spacer(Modifier.height(3.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
                     text = item.courseName,
                     style = MaterialTheme.typography.bodySmall,
                     color = onVariantColor,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 Box(
                     modifier = Modifier
@@ -252,15 +254,19 @@ private fun TaskCardContent(
                 Text(
                     text = statusLabel,
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                    color = accentColor
+                    color = accentColor,
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         }
 
         Text(
             text = timeFormatted,
-            style = MaterialTheme.typography.labelSmall,
-            color = onVariantColor
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+            color = onVariantColor,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }

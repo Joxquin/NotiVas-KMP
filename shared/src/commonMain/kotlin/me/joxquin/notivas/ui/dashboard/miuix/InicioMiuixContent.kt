@@ -166,40 +166,25 @@ fun InicioMiuixContent(
                 )
             }
 
-            // 1.1 Banner Contextual de Cursos sin Configurar
+            // 2. Carrusel Hero: Rendimiento Académico + Configuración de Fórmulas
             item {
-                me.joxquin.notivas.ui.dashboard.components.UnconfiguredCoursesBanner(
+                me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
+                    courseStats = courseStats,
                     unconfiguredCount = unconfiguredBannerState.first,
                     firstUnconfiguredCourse = unconfiguredBannerState.second,
-                    visible = unconfiguredBannerState.third,
-                    onDismiss = { viewModel.dismissUnconfiguredBanner() },
-                    onConfigureClick = { course ->
-                        onNavigateToCourseProgreso(course)
-                    }
-                )
-            }
-
-            // 2. Tarjeta Bento Híbrida: Rendimiento + Notificaciones
-            item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardPerformanceBento(
-                    courseStats = courseStats,
-                    recentActivities = emptyList(),
-                    onCheckNow = { onNavigateToHerramientas() },
+                    onCheckPerformance = { onNavigateToHerramientas() },
+                    onConfigureFormulas = { course ->
+                        if (course != null) {
+                            onNavigateToCourseProgreso(course)
+                        } else if (courses.isNotEmpty()) {
+                            onNavigateToCourseProgreso(courses.first())
+                        }
+                    },
                     themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
                 )
             }
 
-            // 3. Projects: Cursos Destacados / Asignaturas Activas
-            item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardProjectsBento(
-                    courseStats = courseStats,
-                    courses = courses,
-                    onCourseClick = { course -> onNavigateToCourseProgreso(course) },
-                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
-                )
-            }
-
-            // 4. Today's Tasks: Entregas del Día
+            // 3. Today's Tasks: Entregas del Día
             item {
                 me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
                     tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
@@ -209,12 +194,12 @@ fun InicioMiuixContent(
                 )
             }
 
-            // 5. Courses Summary List (Grid de 2 columnas de cursos con barras de color y notas sobre 20)
+            // 4. Courses Summary List (Grid de 2 columnas de cursos estilo MIUIX)
             item {
                 MiuixCourseSummaryList(
                     courses = filteredCourses,
                     courseStats = courseStats,
-                    onCourseClick = { course -> viewModel.inspectCourse(course) }
+                    onCourseClick = { course -> onNavigateToCourseProgreso(course) }
                 )
             }
         }
