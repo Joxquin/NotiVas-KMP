@@ -1,6 +1,7 @@
 package me.joxquin.notivas.data.repository.copilot.tools.handlers
 
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -19,6 +20,22 @@ import me.joxquin.notivas.data.repository.CopilotSource
 import me.joxquin.notivas.data.repository.copilot.ToolExecutionResult
 import me.joxquin.notivas.data.repository.copilot.tools.CopilotToolHandler
 import me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils
+
+@Serializable
+private data class AcademicNextDeadline(
+    val id: String,
+    val name: String,
+    val due_at: String
+)
+
+@Serializable
+private data class AcademicCourseOverview(
+    val course_id: String,
+    val name: String,
+    val course_code: String,
+    val pending_assignments_count: String,
+    val next_deadlines: List<AcademicNextDeadline>
+)
 
 class CanvasAcademicToolsHandler(
     private val canvasApiService: CanvasApiService,
@@ -90,16 +107,16 @@ class CanvasAcademicToolsHandler(
                     val summaryList = courses.map { course ->
                         val courseAssignments = allAssignments.filter { it.courseId == course.id }
                         val pendingAssignments = courseAssignments.filter { !it.isCompleted }
-                        mapOf(
-                            "course_id" to course.id.toString(),
-                            "name" to course.name,
-                            "course_code" to (course.courseCode ?: "N/A"),
-                            "pending_assignments_count" to pendingAssignments.size.toString(),
-                            "next_deadlines" to pendingAssignments.take(3).map { a ->
-                                mapOf(
-                                    "id" to a.id.toString(),
-                                    "name" to a.name,
-                                    "due_at" to (a.dueAt ?: "Sin fecha")
+                        AcademicCourseOverview(
+                            course_id = course.id.toString(),
+                            name = course.name,
+                            course_code = course.courseCode ?: "N/A",
+                            pending_assignments_count = pendingAssignments.size.toString(),
+                            next_deadlines = pendingAssignments.take(3).map { a ->
+                                AcademicNextDeadline(
+                                    id = a.id.toString(),
+                                    name = a.name,
+                                    due_at = a.dueAt ?: "Sin fecha"
                                 )
                             }
                         )
