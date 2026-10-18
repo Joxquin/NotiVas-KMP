@@ -184,6 +184,9 @@ class InMemoryLocalStore(
     fun observeDraftByAssignmentId(assignmentId: Long): Flow<me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity?> =
         database.assignmentDraftDao().observeByAssignmentId(assignmentId)
 
+    fun observeAllDrafts(): Flow<List<me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity>> =
+        database.assignmentDraftDao().observeAll()
+
     suspend fun getDraftByAssignmentId(assignmentId: Long): me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity? =
         database.assignmentDraftDao().getByAssignmentId(assignmentId)
 

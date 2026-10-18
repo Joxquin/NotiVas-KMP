@@ -692,6 +692,9 @@ class CanvasRepository(
     fun observeAssignmentDraft(assignmentId: Long): Flow<me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity?> =
         localStore.observeDraftByAssignmentId(assignmentId)
 
+    fun observeAllAssignmentDrafts(): Flow<List<me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity>> =
+        localStore.observeAllDrafts()
+
     suspend fun getAssignmentDraft(assignmentId: Long): me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity? =
         localStore.getDraftByAssignmentId(assignmentId)
 

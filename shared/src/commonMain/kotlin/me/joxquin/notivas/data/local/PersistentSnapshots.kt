@@ -37,6 +37,7 @@ data class PersistentPreferencesSnapshot(
     val googleDriveEmail: String? = null,
     val googleDriveLastSyncTimestamp: Long = 0L,
     val googleDriveAccessToken: String? = null,
-    val googleDriveRefreshToken: String? = null
+    val googleDriveRefreshToken: String? = null,
+    val discardedAssignmentIds: Set<Long> = emptySet()
 )
 

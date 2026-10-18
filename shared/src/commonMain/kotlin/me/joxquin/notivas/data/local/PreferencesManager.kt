@@ -139,6 +139,25 @@ class PreferencesManager(
     val googleDriveRefreshToken: Flow<String?> = _googleDriveRefreshToken.asStateFlow()
     fun getGoogleDriveRefreshToken(): String? = _googleDriveRefreshToken.value
 
+    private val _discardedAssignmentIds = MutableStateFlow<Set<Long>>(emptySet())
+    val discardedAssignmentIds: Flow<Set<Long>> = _discardedAssignmentIds.asStateFlow()
+    fun getDiscardedAssignmentIds(): Set<Long> = _discardedAssignmentIds.value
+
+    suspend fun discardAssignment(assignmentId: Long) {
+        _discardedAssignmentIds.value = _discardedAssignmentIds.value + assignmentId
+        schedulePersist()
+    }
+
+    suspend fun restoreAssignment(assignmentId: Long) {
+        _discardedAssignmentIds.value = _discardedAssignmentIds.value - assignmentId
+        schedulePersist()
+    }
+
+    suspend fun clearDiscardedAssignments() {
+        _discardedAssignmentIds.value = emptySet()
+        schedulePersist()
+    }
+
     init {
         loadFromDisk()
     }
@@ -174,6 +193,7 @@ class PreferencesManager(
             _googleDriveLastSyncTimestamp.value = snapshot.googleDriveLastSyncTimestamp
             _googleDriveAccessToken.value = snapshot.googleDriveAccessToken
             _googleDriveRefreshToken.value = snapshot.googleDriveRefreshToken
+            _discardedAssignmentIds.value = snapshot.discardedAssignmentIds
         } catch (_: Exception) {
         } finally {
             _isLoaded.value = true
@@ -217,7 +237,8 @@ class PreferencesManager(
                 googleDriveEmail = _googleDriveEmail.value,
                 googleDriveLastSyncTimestamp = _googleDriveLastSyncTimestamp.value,
                 googleDriveAccessToken = _googleDriveAccessToken.value,
-                googleDriveRefreshToken = _googleDriveRefreshToken.value
+                googleDriveRefreshToken = _googleDriveRefreshToken.value,
+                discardedAssignmentIds = _discardedAssignmentIds.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)
             PlatformFileSystem.writeString(prefsFile, jsonString)
