@@ -104,6 +104,9 @@ fun InicioMiuixContent(
         androidx.compose.runtime.mutableStateOf<me.joxquin.notivas.ui.dashboard.AssignmentUiModel?>(null)
     }
 
+    val recentSearches by viewModel.recentSearches.collectAsState()
+    var isSearchExpanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -156,13 +159,24 @@ fun InicioMiuixContent(
                 }
             }
 
-            // 1. Buscador Global + Input para IA
+            // 1. Buscador Global + Vista Incrustada de Búsqueda
             item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardSearchBar(
+                me.joxquin.notivas.ui.dashboard.components.search.DashboardEmbeddedSearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
-                    onAskAi = { onNavigateToCopilot() },
-                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                    onSearchCommit = { viewModel.addRecentSearch(it) },
+                    recentSearches = recentSearches,
+                    onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
+                    onClearRecentHistory = { viewModel.clearRecentSearches() },
+                    courses = courses,
+                    courseStats = courseStats,
+                    assignments = allAssignments,
+                    onCourseClick = onNavigateToCourseProgreso,
+                    onAssignmentClick = { selectedAssignmentForSubmenu = it },
+                    onAskAi = { query -> onNavigateToCopilot() },
+                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                    isExpanded = false,
+                    onExpandedChange = { isSearchExpanded = it }
                 )
             }
 
@@ -202,6 +216,27 @@ fun InicioMiuixContent(
                     onCourseClick = { course -> onNavigateToCourseProgreso(course) }
                 )
             }
+        }
+
+        // Vista Incrustada de Búsqueda en Pantalla Completa
+        if (isSearchExpanded) {
+            me.joxquin.notivas.ui.dashboard.components.search.DashboardEmbeddedSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                onSearchCommit = { viewModel.addRecentSearch(it) },
+                recentSearches = recentSearches,
+                onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
+                onClearRecentHistory = { viewModel.clearRecentSearches() },
+                courses = courses,
+                courseStats = courseStats,
+                assignments = allAssignments,
+                onCourseClick = onNavigateToCourseProgreso,
+                onAssignmentClick = { selectedAssignmentForSubmenu = it },
+                onAskAi = { query -> onNavigateToCopilot() },
+                themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                isExpanded = true,
+                onExpandedChange = { isSearchExpanded = it }
+            )
         }
 
         // Submenú Rápido de Opciones y Gestión de Tarea (WindowBottomSheet)

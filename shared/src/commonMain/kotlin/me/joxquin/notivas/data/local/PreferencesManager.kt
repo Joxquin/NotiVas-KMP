@@ -158,6 +158,29 @@ class PreferencesManager(
         schedulePersist()
     }
 
+    private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
+    val recentSearches: Flow<List<String>> = _recentSearches.asStateFlow()
+    fun getRecentSearches(): List<String> = _recentSearches.value
+
+    suspend fun addRecentSearch(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return
+        val current = _recentSearches.value
+        val updated = (listOf(trimmed) + (current - trimmed)).take(10)
+        _recentSearches.value = updated
+        schedulePersist()
+    }
+
+    suspend fun removeRecentSearch(query: String) {
+        _recentSearches.value = _recentSearches.value - query.trim()
+        schedulePersist()
+    }
+
+    suspend fun clearRecentSearches() {
+        _recentSearches.value = emptyList()
+        schedulePersist()
+    }
+
     init {
         loadFromDisk()
     }
@@ -194,6 +217,7 @@ class PreferencesManager(
             _googleDriveAccessToken.value = snapshot.googleDriveAccessToken
             _googleDriveRefreshToken.value = snapshot.googleDriveRefreshToken
             _discardedAssignmentIds.value = snapshot.discardedAssignmentIds
+            _recentSearches.value = snapshot.recentSearches
         } catch (_: Exception) {
         } finally {
             _isLoaded.value = true
@@ -238,7 +262,8 @@ class PreferencesManager(
                 googleDriveLastSyncTimestamp = _googleDriveLastSyncTimestamp.value,
                 googleDriveAccessToken = _googleDriveAccessToken.value,
                 googleDriveRefreshToken = _googleDriveRefreshToken.value,
-                discardedAssignmentIds = _discardedAssignmentIds.value
+                discardedAssignmentIds = _discardedAssignmentIds.value,
+                recentSearches = _recentSearches.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)
             PlatformFileSystem.writeString(prefsFile, jsonString)

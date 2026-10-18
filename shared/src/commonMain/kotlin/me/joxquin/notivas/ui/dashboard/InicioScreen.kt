@@ -1,6 +1,7 @@
 package me.joxquin.notivas.ui.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -119,6 +120,9 @@ fun InicioScreen(
         }
     }
 
+    val recentSearches by viewModel.recentSearches.collectAsState()
+    var isSearchExpanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -132,91 +136,125 @@ fun InicioScreen(
             )
         },
         floatingActionButton = {
-            InicioQuickActionsFab(
-                onNavigateToCopilot = onNavigateToCopilot,
-                onNavigateToHerramientas = onNavigateToHerramientas
-            )
+            if (!isSearchExpanded) {
+                InicioQuickActionsFab(
+                    onNavigateToCopilot = onNavigateToCopilot,
+                    onNavigateToHerramientas = onNavigateToHerramientas
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.surface
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
-            contentPadding = PaddingValues(
-                top = innerPadding.calculateTopPadding() + 8.dp,
-                bottom = innerPadding.calculateBottomPadding() + 100.dp,
-                start = 16.dp,
-                end = 16.dp
-            ),
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ─── 0. Header de Bienvenida (Welcome, Salung) ───────────────────
-            item {
-                val studentName = userProfile?.name ?: "Estudiante"
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-                    Text(
-                        text = "Bienvenido, ${studentName.substringBefore(" ")}",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 26.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(
+                    top = innerPadding.calculateTopPadding() + 8.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 100.dp,
+                    start = 16.dp,
+                    end = 16.dp
+                ),
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // ─── 0. Header de Bienvenida (Welcome, Salung) ───────────────────
+                item {
+                    val studentName = userProfile?.name ?: "Estudiante"
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                        Text(
+                            text = "Bienvenido, ${studentName.substringBefore(" ")}",
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 26.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(Res.string.dashboard_academic_title),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // ─── 1. Buscador Global + Vista Incrustada de Búsqueda ──────────
+                item {
+                    me.joxquin.notivas.ui.dashboard.components.search.DashboardEmbeddedSearchBar(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        onSearchCommit = { viewModel.addRecentSearch(it) },
+                        recentSearches = recentSearches,
+                        onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
+                        onClearRecentHistory = { viewModel.clearRecentSearches() },
+                        courses = courses,
+                        courseStats = courseStats,
+                        assignments = allAssignments,
+                        onCourseClick = onNavigateToCourseProgreso,
+                        onAssignmentClick = { selectedAssignmentForSubmenu = it },
+                        onAskAi = { query -> onNavigateToCopilot() },
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        isExpanded = false,
+                        onExpandedChange = { isSearchExpanded = it }
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = stringResource(Res.string.dashboard_academic_title),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+
+                // ─── 2. Carrusel Hero: Rendimiento Académico + Configuración de Fórmulas ─
+                item {
+                    me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
+                        courseStats = courseStats,
+                        unconfiguredCount = unconfiguredBannerState.first,
+                        firstUnconfiguredCourse = unconfiguredBannerState.second,
+                        onCheckPerformance = { onNavigateToHerramientas() },
+                        onConfigureFormulas = { course ->
+                            if (course != null) {
+                                onNavigateToCourseProgreso(course)
+                            } else if (courses.isNotEmpty()) {
+                                onNavigateToCourseProgreso(courses.first())
+                            }
+                        },
+                        themeStyle = AppThemeStyle.MATERIAL
+                    )
+                }
+
+                // ─── 3. Today's Tasks: Entregas del Día ──────────────────────────
+                item {
+                    me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
+                        tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
+                        onSeeAll = onNavigateToSchedule,
+                        onTaskClick = { selectedAssignmentForSubmenu = it },
+                        themeStyle = AppThemeStyle.MATERIAL
+                    )
+                }
+
+                // ─── 4. Cursos Activos: Grid Rediseñado de Cursos ───────────────
+                item {
+                    CoursesMatrixSection(
+                        courseStats = courseStats,
+                        courses = filteredCourses,
+                        onCourseClick = { course -> onNavigateToCourseProgreso(course) }
                     )
                 }
             }
 
-            // ─── 1. Buscador Global + Input para IA ─────────────────────────
-            item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardSearchBar(
+            // Vista Incrustada de Búsqueda en Pantalla Completa
+            if (isSearchExpanded) {
+                me.joxquin.notivas.ui.dashboard.components.search.DashboardEmbeddedSearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
-                    onAskAi = { query ->
-                        onNavigateToCopilot()
-                    },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // ─── 2. Carrusel Hero: Rendimiento Académico + Configuración de Fórmulas ─
-            item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
+                    onSearchCommit = { viewModel.addRecentSearch(it) },
+                    recentSearches = recentSearches,
+                    onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
+                    onClearRecentHistory = { viewModel.clearRecentSearches() },
+                    courses = courses,
                     courseStats = courseStats,
-                    unconfiguredCount = unconfiguredBannerState.first,
-                    firstUnconfiguredCourse = unconfiguredBannerState.second,
-                    onCheckPerformance = { onNavigateToHerramientas() },
-                    onConfigureFormulas = { course ->
-                        if (course != null) {
-                            onNavigateToCourseProgreso(course)
-                        } else if (courses.isNotEmpty()) {
-                            onNavigateToCourseProgreso(courses.first())
-                        }
-                    },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // ─── 3. Today's Tasks: Entregas del Día ──────────────────────────
-            item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
-                    tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
-                    onSeeAll = onNavigateToSchedule,
-                    onTaskClick = { selectedAssignmentForSubmenu = it },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // ─── 4. Cursos Activos: Grid Rediseñado de Cursos ───────────────
-            item {
-                CoursesMatrixSection(
-                    courseStats = courseStats,
-                    courses = filteredCourses,
-                    onCourseClick = { course -> onNavigateToCourseProgreso(course) }
+                    assignments = allAssignments,
+                    onCourseClick = onNavigateToCourseProgreso,
+                    onAssignmentClick = { selectedAssignmentForSubmenu = it },
+                    onAskAi = { query -> onNavigateToCopilot() },
+                    themeStyle = AppThemeStyle.MATERIAL,
+                    isExpanded = true,
+                    onExpandedChange = { isSearchExpanded = it }
                 )
             }
         }

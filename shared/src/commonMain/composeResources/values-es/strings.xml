@@ -557,4 +557,11 @@
     <string name="schedule_upcoming_status">Próxima</string>
     <string name="schedule_in_progress_status">En progreso</string>
     <string name="schedule_completed_status">Completada</string>
+    <string name="search_recent_title">Búsquedas recientes</string>
+    <string name="search_clear_history">Borrar historial</string>
+    <string name="search_filter_courses">Cursos</string>
+    <string name="search_filter_assignments">Tareas</string>
+    <string name="search_no_results">No se encontraron resultados para \"%1$s\"</string>
+    <string name="search_ask_copilot_format">Preguntar a Copilot IA sobre \"%1$s\"</string>
+    <string name="search_quick_suggestions">Sugerencias y accesos directos</string>
 </resources>

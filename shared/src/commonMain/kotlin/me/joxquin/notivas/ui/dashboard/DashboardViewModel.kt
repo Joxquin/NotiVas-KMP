@@ -99,6 +99,30 @@ class DashboardViewModel(
     private val _selectedAssignmentForDraft = MutableStateFlow<AssignmentUiModel?>(null)
     val selectedAssignmentForDraft: StateFlow<AssignmentUiModel?> = _selectedAssignmentForDraft.asStateFlow()
 
+    val recentSearches: StateFlow<List<String>> = preferencesManager.recentSearches.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        emptyList()
+    )
+
+    fun addRecentSearch(query: String) {
+        viewModelScope.launch {
+            preferencesManager.addRecentSearch(query)
+        }
+    }
+
+    fun removeRecentSearch(query: String) {
+        viewModelScope.launch {
+            preferencesManager.removeRecentSearch(query)
+        }
+    }
+
+    fun clearRecentSearches() {
+        viewModelScope.launch {
+            preferencesManager.clearRecentSearches()
+        }
+    }
+
     private val googleDriveApiService = me.joxquin.notivas.data.remote.GoogleDriveApiService(
         preferencesManager = preferencesManager
     )
