@@ -57,6 +57,7 @@ fun HerramientasMaterialContent(
     onOpenProgreso: () -> Unit = {},
     onOpenForos: () -> Unit = {},
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
+    onOpenArchive: () -> Unit = {},
     onOpenTuneSettings: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
@@ -215,7 +216,10 @@ fun HerramientasMaterialContent(
 
             // ─── CARD 3: Historial & Archivo de Tareas ────────────────────────
             item {
-                MaterialArchiveCard(modifier = Modifier.padding(horizontal = 16.dp))
+                MaterialArchiveCard(
+                    onClick = onOpenArchive,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
 
             item {

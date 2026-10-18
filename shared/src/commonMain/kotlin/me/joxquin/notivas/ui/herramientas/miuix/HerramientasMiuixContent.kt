@@ -46,6 +46,7 @@ fun HerramientasMiuixContent(
     onOpenProgreso: () -> Unit = {},
     onOpenForos: () -> Unit = {},
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
+    onOpenArchive: () -> Unit = {},
     onOpenTuneSettings: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
@@ -142,7 +143,7 @@ fun HerramientasMiuixContent(
 
             // ─── CARD 3: Historial & Archivo de Tareas ──────────────
             item {
-                ArchiveBentoCard()
+                ArchiveBentoCard(onClick = onOpenArchive)
             }
 
             item {

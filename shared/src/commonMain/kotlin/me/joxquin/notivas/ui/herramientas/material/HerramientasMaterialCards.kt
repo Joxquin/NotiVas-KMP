@@ -594,11 +594,17 @@ fun MaterialForosCard(
 
 // ─── CARD 5: Historial & Archivo de Tareas ───────────────────────────────────
 @Composable
-fun MaterialArchiveCard(modifier: Modifier = Modifier) {
+fun MaterialArchiveCard(
+    count: Int = 12,
+    onClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
     Card(
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
         Row(
             modifier = Modifier
@@ -635,7 +641,7 @@ fun MaterialArchiveCard(modifier: Modifier = Modifier) {
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = stringResource(Res.string.bento_archive_subtitle, 12),
+                        text = stringResource(Res.string.bento_archive_subtitle, count),
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -647,7 +653,7 @@ fun MaterialArchiveCard(modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.surfaceContainerHigh
             ) {
                 Text(
-                    text = stringResource(Res.string.bento_archived_count, 12),
+                    text = stringResource(Res.string.bento_archived_count, count),
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)

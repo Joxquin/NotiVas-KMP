@@ -20,12 +20,15 @@ import me.joxquin.notivas.ui.notas.NotasViewModel
 
 import me.joxquin.notivas.ui.foros.ForosScreen
 import me.joxquin.notivas.ui.foros.ForosViewModel
+import me.joxquin.notivas.ui.herramientas.archive.ArchiveViewModel
+import me.joxquin.notivas.ui.herramientas.archive.TaskHistoryArchiveScreen
 
 enum class HerramientasSubDestination {
     HUB,
     PROGRESO_DETAIL,
     FOROS_LIST,
-    FORO_DETAIL
+    FORO_DETAIL,
+    ARCHIVE
 }
 
 /**
@@ -36,11 +39,15 @@ enum class HerramientasSubDestination {
 fun HerramientasScreen(
     viewModel: NotasViewModel? = null,
     forosViewModel: ForosViewModel? = null,
+    archiveViewModel: ArchiveViewModel? = null,
     showingNotasDetail: Boolean = false,
     showingForosDetail: Boolean = false,
+    showingArchiveDetail: Boolean = false,
     onOpenProgreso: () -> Unit = {},
     onOpenForos: () -> Unit = {},
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
+    onOpenArchive: () -> Unit = {},
+    onOpenAssignmentDetail: ((me.joxquin.notivas.data.model.Assignment) -> Unit)? = null,
     onOpenTuneSettings: () -> Unit = {},
     onBack: () -> Unit = {},
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
@@ -49,6 +56,7 @@ fun HerramientasScreen(
 ) {
     val forosUiState = forosViewModel?.uiState?.collectAsState()?.value
     val currentSubDestination = when {
+        showingArchiveDetail -> HerramientasSubDestination.ARCHIVE
         showingForosDetail && forosUiState?.selectedDiscussion != null -> HerramientasSubDestination.FORO_DETAIL
         showingForosDetail -> HerramientasSubDestination.FOROS_LIST
         showingNotasDetail -> HerramientasSubDestination.PROGRESO_DETAIL
@@ -140,6 +148,17 @@ fun HerramientasScreen(
                     )
                 }
             }
+            HerramientasSubDestination.ARCHIVE -> {
+                if (archiveViewModel != null) {
+                    TaskHistoryArchiveScreen(
+                        viewModel = archiveViewModel,
+                        themeStyle = themeStyle,
+                        lazyListState = lazyListState,
+                        onBack = onBack,
+                        onOpenAssignmentDetail = onOpenAssignmentDetail
+                    )
+                }
+            }
             HerramientasSubDestination.HUB -> {
                 if (themeStyle == AppThemeStyle.MIUIX) {
                     HerramientasMiuixContent(
@@ -148,6 +167,7 @@ fun HerramientasScreen(
                         onOpenProgreso = onOpenProgreso,
                         onOpenForos = onOpenForos,
                         onOpenForoDetail = handleOpenForoDetail,
+                        onOpenArchive = onOpenArchive,
                         onOpenTuneSettings = onOpenTuneSettings,
                         lazyListState = lazyListState
                     )
@@ -158,6 +178,7 @@ fun HerramientasScreen(
                         onOpenProgreso = onOpenProgreso,
                         onOpenForos = onOpenForos,
                         onOpenForoDetail = handleOpenForoDetail,
+                        onOpenArchive = onOpenArchive,
                         onOpenTuneSettings = onOpenTuneSettings,
                         lazyListState = lazyListState
                     )

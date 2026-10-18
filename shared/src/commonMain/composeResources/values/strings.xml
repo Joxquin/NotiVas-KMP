@@ -484,6 +484,44 @@
     <string name="draft_preparing_docs">Preparing Docs...</string>
     <string name="draft_btn_send_to_canvas">Submit to Canvas</string>
     <string name="task_rubric_empty">This assignment does not have an associated grading rubric configured by the teacher.</string>
+
+    <!-- Task History & Archive -->
+    <string name="archive_screen_title">History &amp; Archive</string>
+    <string name="archive_search_placeholder">Search archived or submitted...</string>
+    <string name="archive_tab_submitted">Submitted</string>
+    <string name="archive_tab_discarded">Discarded</string>
+    <string name="archive_tab_expired">Expired</string>
+    <string name="archive_summary_card_title">Submissions &amp; Archive Summary</string>
+    <string name="archive_semester_tag">Current Term</string>
+    <string name="archive_stat_ontime">On time</string>
+    <string name="archive_stat_ontime_rate">%1$d%% on time</string>
+    <string name="archive_stat_discarded">Discarded</string>
+    <string name="archive_stat_discarded_sub">No academic weight</string>
+    <string name="archive_stat_average">Average</string>
+    <string name="archive_stat_average_sub">Out of %1$s pts</string>
+    <string name="archive_sync_banner">%1$d records in local SQLite • Synced with Canvas</string>
+    <string name="archive_section_recents">Recent Submissions</string>
+    <string name="archive_items_count">%1$d items</string>
+    <string name="archive_action_view_submission">View submission</string>
+    <string name="archive_action_rubric">Rubric</string>
+    <string name="archive_action_restore_pending">Restore to pending</string>
+    <string name="archive_discarded_date">Discarded • %1$s</string>
+    <string name="archive_discarded_hint">Excluded with no academic penalty (0 pts weighted)</string>
+    <string name="archive_auto_archived">Auto-archived</string>
+    <string name="archive_copilot_assisted">Drafted with Copilot AI Assistance</string>
+    <string name="archive_graded_by">• Graded by %1$s</string>
+    <string name="archive_graded_badge">• Submission Accepted</string>
+    <string name="archive_max_score">• Maximum Score</string>
+    <string name="archive_storage_card_title">NotiVas Local Storage</string>
+    <string name="archive_storage_card_desc">Archived assignments and submitted work are preserved in your local SQLite database. You can free up space or export a PDF report anytime.</string>
+    <string name="archive_action_export_pdf">Export PDF</string>
+    <string name="archive_action_empty_trash">Empty trash</string>
+    <string name="archive_empty_submitted">No submitted assignments found.</string>
+    <string name="archive_empty_discarded">No discarded assignments in archive.</string>
+    <string name="archive_empty_expired">No expired assignments.</string>
+    <string name="archive_trash_cleared">Trash emptied successfully.</string>
+    <string name="archive_pdf_exported">Report exported to downloads.</string>
+    <string name="archive_restored_to_pending">Assignment restored to pending.</string>
 </resources>
 
 

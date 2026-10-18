@@ -484,4 +484,42 @@
     <string name="draft_preparing_docs">Preparando Docs...</string>
     <string name="draft_btn_send_to_canvas">Enviar Entrega a Canvas</string>
     <string name="task_rubric_empty">Esta tarea no tiene una rúbrica de calificación asociada configurada por el docente.</string>
+
+    <!-- Historial y Archivo de Tareas -->
+    <string name="archive_screen_title">Historial Y Archivo</string>
+    <string name="archive_search_placeholder">Buscar en archivadas o entregadas...</string>
+    <string name="archive_tab_submitted">Entregadas</string>
+    <string name="archive_tab_discarded">Descartadas</string>
+    <string name="archive_tab_expired">Expiradas</string>
+    <string name="archive_summary_card_title">Resumen de Entregas &amp; Archivo</string>
+    <string name="archive_semester_tag">Ciclo Actual</string>
+    <string name="archive_stat_ontime">A tiempo</string>
+    <string name="archive_stat_ontime_rate">%1$d%% puntual</string>
+    <string name="archive_stat_discarded">Descartadas</string>
+    <string name="archive_stat_discarded_sub">Sin efecto</string>
+    <string name="archive_stat_average">Promedio</string>
+    <string name="archive_stat_average_sub">De %1$s pts</string>
+    <string name="archive_sync_banner">%1$d registros en SQLite local • Sincronizado con Canvas</string>
+    <string name="archive_section_recents">Entregas Recientes</string>
+    <string name="archive_items_count">%1$d items</string>
+    <string name="archive_action_view_submission">Ver entrega</string>
+    <string name="archive_action_rubric">Rúbrica</string>
+    <string name="archive_action_restore_pending">Restaurar a pendientes</string>
+    <string name="archive_discarded_date">Descartada • %1$s</string>
+    <string name="archive_discarded_hint">Ignorada sin penalización académica (0 pts ponderados)</string>
+    <string name="archive_auto_archived">Archivada automáticamente</string>
+    <string name="archive_copilot_assisted">Redactado con Asistencia Copilot IA</string>
+    <string name="archive_graded_by">• Calificado por %1$s</string>
+    <string name="archive_graded_badge">• Publicación Aceptada</string>
+    <string name="archive_max_score">• Puntaje Máximo</string>
+    <string name="archive_storage_card_title">Almacenamiento Local de NotiVas</string>
+    <string name="archive_storage_card_desc">Las tareas archivadas se conservan durante el ciclo actual en tu base SQLite. Puedes liberar espacio o exportar el reporte en PDF cuando lo necesites.</string>
+    <string name="archive_action_export_pdf">Exportar PDF</string>
+    <string name="archive_action_empty_trash">Vaciar papelera</string>
+    <string name="archive_empty_submitted">No se encontraron tareas entregadas.</string>
+    <string name="archive_empty_discarded">No hay tareas descartadas en el archivo.</string>
+    <string name="archive_empty_expired">No hay tareas expiradas.</string>
+    <string name="archive_trash_cleared">Papelera vaciada correctamente.</string>
+    <string name="archive_pdf_exported">Reporte exportado a descargas.</string>
+    <string name="archive_restored_to_pending">Tarea restaurada a pendientes.</string>
 </resources>

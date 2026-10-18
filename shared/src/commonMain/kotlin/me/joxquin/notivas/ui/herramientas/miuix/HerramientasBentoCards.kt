@@ -688,6 +688,7 @@ fun ForosBentoCard(
 // ─── CARD 4: Historial & Archivo de Tareas ───────────────────────────────────
 @Composable
 fun ArchiveBentoCard(
+    count: Int = 12,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
@@ -748,7 +749,7 @@ fun ArchiveBentoCard(
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = stringResource(Res.string.bento_archive_subtitle, 12),
+                        text = stringResource(Res.string.bento_archive_subtitle, count),
                         fontSize = 11.sp,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )
@@ -764,7 +765,7 @@ fun ArchiveBentoCard(
                     .padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 Text(
-                    text = stringResource(Res.string.bento_archived_count, 12),
+                    text = stringResource(Res.string.bento_archived_count, count),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary
