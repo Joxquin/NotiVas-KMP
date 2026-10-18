@@ -451,6 +451,7 @@
     <string name="onboarding_drive_link_desc">Automatically sync assignment templates and drafts with Google Docs</string>
     <string name="onboarding_drive_link_btn">Link Google Drive Now</string>
     <string name="onboarding_drive_skip_btn">Skip for now</string>
+    <string name="drive_auth_error_title">Error linking Google Drive</string>
     <string name="task_detail_header_label">TASK DETAIL</string>
     <string name="canvas_synced_badge">Canvas Synced</string>
     <string name="canvas_graded_badge">Canvas Graded</string>

@@ -451,6 +451,7 @@
     <string name="onboarding_drive_link_desc">Sincroniza plantillas de tareas y borradores automáticamente en Google Docs</string>
     <string name="onboarding_drive_link_btn">Vincular Google Drive Ahora</string>
     <string name="onboarding_drive_skip_btn">Omitir por ahora</string>
+    <string name="drive_auth_error_title">Error al vincular Google Drive</string>
     <string name="task_detail_header_label">DETALLE DE TAREA</string>
     <string name="canvas_synced_badge">Sincronizado Canvas</string>
     <string name="canvas_graded_badge">Calificado Canvas</string>

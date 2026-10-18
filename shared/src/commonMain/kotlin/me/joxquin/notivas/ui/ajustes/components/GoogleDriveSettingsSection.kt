@@ -46,8 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -55,26 +53,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
-import me.joxquin.notivas.data.remote.GoogleDriveAuthService
-import me.joxquin.notivas.data.remote.GoogleDriveConstants
-import me.joxquin.notivas.ui.components.GoogleAuthWebView
 import me.joxquin.notivas.util.rememberGoogleAuthLauncher
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-
-private val DriveGreen = Color(0xFF4CAF50)
-private val DriveGrey = Color(0xFF9E9E9E)
-private val MiuixBlue = Color(0xFF3482FF)
 
 @Composable
 fun GoogleDriveSettingsSection(
@@ -89,26 +77,17 @@ fun GoogleDriveSettingsSection(
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
-    val coroutineScope = rememberCoroutineScope()
-    val authService = remember { GoogleDriveAuthService() }
 
     var showUnlinkDialog by remember { mutableStateOf(false) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
-    var showAuthModal by remember { mutableStateOf(false) }
     var authErrorMsg by remember { mutableStateOf<String?>(null) }
-    var isAuthenticating by remember { mutableStateOf(false) }
-
-    val redirectUri = "http://localhost/oauth2callback"
-    val authUrl = remember { authService.getAuthorizationUrl(redirectUri) }
 
     // Launcher nativo/desktop
     val authLauncher = rememberGoogleAuthLauncher(
         onAuthSuccess = { token, refresh, userEmail ->
-            isAuthenticating = false
             onAuthSuccess(token, refresh, userEmail)
         },
         onAuthError = { error ->
-            isAuthenticating = false
             authErrorMsg = error
         }
     )
@@ -121,12 +100,12 @@ fun GoogleDriveSettingsSection(
                 Icon(
                     imageVector = Icons.Default.CloudOff,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
+                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error
                 )
             },
             title = {
                 Text(
-                    text = "Error al vincular Google Drive",
+                    text = stringResource(Res.string.drive_auth_error_title),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
             },
@@ -138,8 +117,18 @@ fun GoogleDriveSettingsSection(
                 )
             },
             confirmButton = {
-                Button(onClick = { authErrorMsg = null }) {
-                    Text("Entendido")
+                Button(
+                    onClick = { authErrorMsg = null },
+                    colors = if (themeStyle == AppThemeStyle.MIUIX) {
+                        ButtonDefaults.buttonColors(
+                            containerColor = MiuixTheme.colorScheme.primary,
+                            contentColor = MiuixTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        ButtonDefaults.buttonColors()
+                    }
+                ) {
+                    Text(stringResource(Res.string.close))
                 }
             }
         )
@@ -153,7 +142,7 @@ fun GoogleDriveSettingsSection(
                 Icon(
                     imageVector = Icons.Default.LinkOff,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
+                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error
                 )
             },
             title = {
@@ -177,8 +166,8 @@ fun GoogleDriveSettingsSection(
                         onUnlink()
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
+                        containerColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error,
+                        contentColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onError else MaterialTheme.colorScheme.onError
                     )
                 ) {
                     Text(stringResource(Res.string.drive_unlink_btn))
@@ -200,7 +189,7 @@ fun GoogleDriveSettingsSection(
                 Icon(
                     imageVector = Icons.Default.CleaningServices,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
                 )
             },
             title = {
@@ -222,6 +211,14 @@ fun GoogleDriveSettingsSection(
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         showClearCacheDialog = false
                         onClearCache()
+                    },
+                    colors = if (themeStyle == AppThemeStyle.MIUIX) {
+                        ButtonDefaults.buttonColors(
+                            containerColor = MiuixTheme.colorScheme.primary,
+                            contentColor = MiuixTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        ButtonDefaults.buttonColors()
                     }
                 ) {
                     Text(stringResource(Res.string.drive_clear_cache_btn))
@@ -237,10 +234,7 @@ fun GoogleDriveSettingsSection(
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         Column(modifier = modifier.fillMaxWidth()) {
-            SmallTitle(
-                text = stringResource(Res.string.settings_drive_section_title),
-                insideMargin = PaddingValues(16.dp, 8.dp)
-            )
+            SmallTitle(text = stringResource(Res.string.settings_drive_section_title))
             MiuixCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -260,18 +254,27 @@ fun GoogleDriveSettingsSection(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f, fill = false)
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = if (connected) DriveGreen.copy(alpha = 0.15f) else DriveGrey.copy(alpha = 0.15f),
+                                color = if (connected) {
+                                    MiuixTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                } else {
+                                    MiuixTheme.colorScheme.surfaceContainerHigh
+                                },
                                 modifier = Modifier.size(36.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         imageVector = if (connected) Icons.Default.CloudDone else Icons.Default.CloudOff,
                                         contentDescription = null,
-                                        tint = if (connected) DriveGreen else DriveGrey,
+                                        tint = if (connected) {
+                                            MiuixTheme.colorScheme.primary
+                                        } else {
+                                            MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                        },
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -285,19 +288,39 @@ fun GoogleDriveSettingsSection(
                                         modifier = Modifier
                                             .size(8.dp)
                                             .clip(CircleShape)
-                                            .background(if (connected) DriveGreen else DriveGrey)
+                                            .background(
+                                                if (connected) {
+                                                    MiuixTheme.colorScheme.primary
+                                                } else {
+                                                    MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                                }
+                                            )
                                     )
                                     MiuixText(
-                                        text = if (connected) stringResource(Res.string.drive_connected_status) else stringResource(Res.string.drive_disconnected_status),
+                                        text = if (connected) {
+                                            stringResource(Res.string.drive_connected_status)
+                                        } else {
+                                            stringResource(Res.string.drive_disconnected_status)
+                                        },
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (connected) DriveGreen else MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                        color = if (connected) {
+                                            MiuixTheme.colorScheme.primary
+                                        } else {
+                                            MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                        }
                                     )
                                 }
                                 MiuixText(
-                                    text = if (connected && !email.isNullOrBlank()) email else "Google Cloud Drive",
+                                    text = if (connected && !email.isNullOrBlank()) {
+                                        email
+                                    } else {
+                                        stringResource(Res.string.settings_drive_section_title)
+                                    },
                                     fontSize = 13.sp,
-                                    color = MiuixTheme.colorScheme.onSurface
+                                    color = MiuixTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -311,57 +334,17 @@ fun GoogleDriveSettingsSection(
                         }
                     }
 
-                    // Nota de Privacidad
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f))
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = MiuixTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        MiuixText(
-                            text = stringResource(Res.string.drive_privacy_notice),
-                            fontSize = 11.sp,
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                        )
-                    }
-
-                    // Botones de Acción
+                    // Botones de Acción Miuix
                     if (!connected) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MiuixBlue)
-                                .clickable {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    authLauncher.launchSignIn()
-                                }
-                                .padding(vertical = 12.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AddLink,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(Res.string.drive_connect_btn),
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                color = Color.White
-                            )
-                        }
+                        MiuixTextButton(
+                            text = stringResource(Res.string.drive_connect_btn),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                authLauncher.launchSignIn()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
+                        )
                     } else {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(
@@ -369,90 +352,47 @@ fun GoogleDriveSettingsSection(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 // Botón Reconectar
-                                Row(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(MiuixTheme.colorScheme.surfaceContainerHigh)
-                                        .clickable {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            authLauncher.launchSignIn()
-                                        }
-                                        .padding(vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = null,
-                                        tint = MiuixTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
+                                MiuixTextButton(
+                                    text = stringResource(Res.string.drive_reconnect_btn),
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        authLauncher.launchSignIn()
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = MiuixButtonDefaults.textButtonColors(
+                                        color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                        textColor = MiuixTheme.colorScheme.primary
                                     )
-                                    Spacer(Modifier.width(6.dp))
-                                    MiuixText(
-                                        text = stringResource(Res.string.drive_reconnect_btn),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MiuixTheme.colorScheme.primary
-                                    )
-                                }
+                                )
 
                                 // Botón Vaciar Caché
-                                Row(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(MiuixTheme.colorScheme.surfaceContainerHigh)
-                                        .clickable {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            showClearCacheDialog = true
-                                        }
-                                        .padding(vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.CleaningServices,
-                                        contentDescription = null,
-                                        tint = MiuixTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(16.dp)
+                                MiuixTextButton(
+                                    text = stringResource(Res.string.drive_clear_cache_btn),
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        showClearCacheDialog = true
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = MiuixButtonDefaults.textButtonColors(
+                                        color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                        textColor = MiuixTheme.colorScheme.onSurface
                                     )
-                                    Spacer(Modifier.width(6.dp))
-                                    MiuixText(
-                                        text = stringResource(Res.string.drive_clear_cache_btn),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MiuixTheme.colorScheme.onSurface
-                                    )
-                                }
+                                )
                             }
 
                             // Botón Desvincular
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .clickable {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        showUnlinkDialog = true
-                                    }
-                                    .padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.LinkOff,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(16.dp)
+                            MiuixTextButton(
+                                text = stringResource(Res.string.drive_unlink_btn),
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    showUnlinkDialog = true
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = MiuixButtonDefaults.textButtonColors(
+                                    color = MiuixTheme.colorScheme.errorContainer,
+                                    textColor = MiuixTheme.colorScheme.onErrorContainer
                                 )
-                                Spacer(Modifier.width(6.dp))
-                                Text(
-                                    text = stringResource(Res.string.drive_unlink_btn),
-                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
+                            )
                         }
                     }
                 }
@@ -464,15 +404,15 @@ fun GoogleDriveSettingsSection(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 6.dp),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(18.dp),
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // Header Fila
@@ -483,18 +423,27 @@ fun GoogleDriveSettingsSection(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f, fill = false)
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (connected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            shape = CircleShape,
+                            color = if (connected) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                            },
                             modifier = Modifier.size(40.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = if (connected) Icons.Default.FolderShared else Icons.Default.CloudOff,
                                     contentDescription = null,
-                                    tint = if (connected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = if (connected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
                                     modifier = Modifier.size(22.dp)
                                 )
                             }
@@ -508,18 +457,38 @@ fun GoogleDriveSettingsSection(
                                     modifier = Modifier
                                         .size(8.dp)
                                         .clip(CircleShape)
-                                        .background(if (connected) DriveGreen else DriveGrey)
+                                        .background(
+                                            if (connected) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.outline
+                                            }
+                                        )
                                 )
                                 Text(
-                                    text = if (connected) stringResource(Res.string.drive_connected_status) else stringResource(Res.string.drive_disconnected_status),
+                                    text = if (connected) {
+                                        stringResource(Res.string.drive_connected_status)
+                                    } else {
+                                        stringResource(Res.string.drive_disconnected_status)
+                                    },
                                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = if (connected) DriveGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (connected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
                                 )
                             }
                             Text(
-                                text = if (connected && !email.isNullOrBlank()) email else stringResource(Res.string.settings_drive_section_title),
+                                text = if (connected && !email.isNullOrBlank()) {
+                                    email
+                                } else {
+                                    stringResource(Res.string.settings_drive_section_title)
+                                },
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -533,35 +502,7 @@ fun GoogleDriveSettingsSection(
                     }
                 }
 
-                // Nota de Privacidad
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Text(
-                            text = stringResource(Res.string.drive_privacy_notice),
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-
-                // Acciones
+                // Acciones Material 3
                 if (!connected) {
                     Button(
                         onClick = {
