@@ -1,20 +1,27 @@
 package me.joxquin.notivas.ui.dashboard.components.search
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +30,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,9 +56,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import me.joxquin.notivas.data.local.AppThemeStyle
@@ -68,6 +80,443 @@ import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+/**
+ * Cápsula ancla en el Feed que reporta su posición Y en la ventana global
+ * para inicializar y sincronizar la animación fluida tipo SuperSearchBar.
+ */
+@Composable
+fun DashboardSearchBarAnchor(
+    query: String,
+    onSearchClick: () -> Unit,
+    onPositionChanged: (Dp) -> Unit,
+    onAskAi: (String) -> Unit = {},
+    themeStyle: AppThemeStyle,
+    isVisible: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    val isMiuix = themeStyle == AppThemeStyle.MIUIX
+    val density = LocalDensity.current
+    val placeholder = stringResource(Res.string.dashboard_search_hint)
+    val containerColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHigh
+    val textColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
+    val placeholderColor = if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
+
+    if (isMiuix) {
+        // En MIUIX: utilizar InputField deshabilitado para consistencia 1:1 de padding, altura e iconos
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    alpha = if (isVisible) 1f else 0f
+                }
+                .onGloballyPositioned { coordinates ->
+                    with(density) {
+                        val y = coordinates.positionInWindow().y.toDp()
+                        if (y > 0.dp) {
+                            onPositionChanged(y)
+                        }
+                    }
+                }
+                .then(
+                    if (isVisible) {
+                        Modifier.clickable { onSearchClick() }
+                    } else {
+                        Modifier
+                    }
+                )
+        ) {
+            InputField(
+                query = query,
+                onQueryChange = {},
+                label = placeholder,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        modifier = Modifier.padding(start = 12.dp, end = 4.dp).size(20.dp)
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                enabled = false,
+                onSearch = {},
+                expanded = true,
+                onExpandedChange = {}
+            )
+        }
+    } else {
+        // En Material 3 Expressive: dimensiones y padding idénticos a la cápsula dinámica (48.dp, esquinas 24.dp)
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = containerColor,
+            modifier = modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .graphicsLayer {
+                    alpha = if (isVisible) 1f else 0f
+                }
+                .clip(RoundedCornerShape(24.dp))
+                .onGloballyPositioned { coordinates ->
+                    with(density) {
+                        val y = coordinates.positionInWindow().y.toDp()
+                        if (y > 0.dp) {
+                            onPositionChanged(y)
+                        }
+                    }
+                }
+                .then(
+                    if (isVisible) {
+                        Modifier.clickable { onSearchClick() }
+                    } else {
+                        Modifier
+                    }
+                )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = placeholderColor,
+                    modifier = Modifier.size(18.dp)
+                )
+
+                Text(
+                    text = query.ifBlank { placeholder },
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = if (query.isNotBlank()) textColor else placeholderColor
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Overlay de búsqueda con animación Ease (interpolación vertical continua).
+ * Sube desde la coordenada [initialOffsetY] hasta la parte superior de la pantalla,
+ * desvaneciendo suavemente el fondo e introduciendo el campo de búsqueda y resultados.
+ */
+@Composable
+fun DashboardAnimatedSearchOverlay(
+    isExpanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    initialOffsetY: Dp,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearchCommit: (String) -> Unit,
+    recentSearches: List<String>,
+    onRemoveRecentQuery: (String) -> Unit,
+    onClearRecentHistory: () -> Unit,
+    courses: List<Course>,
+    courseStats: List<CourseStat>,
+    assignments: List<AssignmentUiModel>,
+    onCourseClick: (Course) -> Unit,
+    onAssignmentClick: (AssignmentUiModel) -> Unit,
+    onAskAi: (String) -> Unit,
+    themeStyle: AppThemeStyle,
+    onAnimStatusChange: (SearchAnimStatus) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    var animStatus by remember { mutableStateOf(if (isExpanded) SearchAnimStatus.EXPANDED else SearchAnimStatus.COLLAPSED) }
+
+    LaunchedEffect(animStatus) {
+        onAnimStatusChange(animStatus)
+    }
+
+    LaunchedEffect(isExpanded) {
+        if (isExpanded && animStatus.shouldCollapse()) {
+            animStatus = SearchAnimStatus.EXPANDING
+        } else if (!isExpanded && animStatus.shouldExpand()) {
+            animStatus = SearchAnimStatus.COLLAPSING
+        }
+    }
+
+    if (animStatus == SearchAnimStatus.COLLAPSED && !isExpanded) {
+        return
+    }
+
+    val isMiuix = themeStyle == AppThemeStyle.MIUIX
+    val focusRequester = remember { FocusRequester() }
+
+    val placeholder = stringResource(Res.string.dashboard_search_hint)
+    val cancelText = stringResource(Res.string.cancel)
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    val targetTopPadding = if (animStatus.shouldExpand()) {
+        statusBarTop + 8.dp
+    } else {
+        max(initialOffsetY, statusBarTop + 8.dp)
+    }
+
+    val animatedTopPadding by animateDpAsState(
+        targetValue = targetTopPadding,
+        animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing),
+        label = "DashboardSearchTopPadding",
+        finishedListener = {
+            if (animStatus == SearchAnimStatus.EXPANDING) {
+                animStatus = SearchAnimStatus.EXPANDED
+            } else if (animStatus == SearchAnimStatus.COLLAPSING) {
+                animStatus = SearchAnimStatus.COLLAPSED
+                onExpandedChange(false)
+            }
+        }
+    )
+
+    val surfaceAlpha by animateFloatAsState(
+        targetValue = if (animStatus.shouldExpand()) 1f else 0f,
+        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        label = "DashboardSearchSurfaceAlpha"
+    )
+
+    val surfaceColor = if (isMiuix) MiuixTheme.colorScheme.surface else MaterialTheme.colorScheme.surface
+
+    me.joxquin.notivas.ui.components.BackHandler(enabled = animStatus.shouldExpand()) {
+        animStatus = SearchAnimStatus.COLLAPSING
+        onQueryChange("")
+    }
+
+    LaunchedEffect(animStatus) {
+        if (animStatus == SearchAnimStatus.EXPANDED) {
+            try {
+                focusRequester.requestFocus()
+            } catch (_: Exception) {}
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .zIndex(100f)
+            .background(surfaceColor.copy(alpha = surfaceAlpha))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = animatedTopPadding)
+        ) {
+            // Header del Buscador Animado
+            if (isMiuix) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        InputField(
+                            query = query,
+                            onQueryChange = onQueryChange,
+                            label = placeholder,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                    modifier = Modifier.padding(start = 12.dp, end = 4.dp).size(20.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                if (query.isNotEmpty()) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Limpiar",
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                        modifier = Modifier
+                                            .padding(end = 12.dp)
+                                            .size(20.dp)
+                                            .clickable { onQueryChange("") }
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
+                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                            onSearch = {
+                                if (query.isNotBlank()) onSearchCommit(query)
+                            },
+                            expanded = true,
+                            onExpandedChange = {}
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = animStatus.shouldExpand(),
+                        enter = expandHorizontally() + slideInHorizontally(initialOffsetX = { it }),
+                        exit = shrinkHorizontally() + slideOutHorizontally(targetOffsetX = { it })
+                    ) {
+                        MiuixText(
+                            text = cancelText,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MiuixTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .padding(start = 12.dp, end = 4.dp)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = {
+                                        animStatus = SearchAnimStatus.COLLAPSING
+                                        onQueryChange("")
+                                    }
+                                )
+                        )
+                    }
+                }
+            } else {
+                // Header Material 3 Expressive
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, end = 16.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    AnimatedVisibility(
+                        visible = animStatus.shouldExpand(),
+                        enter = fadeIn() + expandHorizontally(),
+                        exit = fadeOut() + shrinkHorizontally()
+                    ) {
+                        IconButton(
+                            onClick = {
+                                animStatus = SearchAnimStatus.COLLAPSING
+                                onQueryChange("")
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Atrás",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(24.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            BasicTextField(
+                                value = query,
+                                onValueChange = onQueryChange,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(focusRequester),
+                                singleLine = true,
+                                textStyle = TextStyle(
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                ),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                decorationBox = { innerTextField ->
+                                    if (query.isEmpty()) {
+                                        Text(
+                                            text = placeholder,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+
+                            if (query.isNotEmpty()) {
+                                IconButton(
+                                    onClick = { onQueryChange("") },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Limpiar",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Resultados o Historial revelados con animación secuencial
+            AnimatedVisibility(
+                visible = animStatus.isExpand(),
+                enter = fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(250)) { it / 6 },
+                exit = fadeOut(animationSpec = tween(150)) + slideOutVertically(animationSpec = tween(150)) { it / 6 },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 32.dp)
+                ) {
+                    if (query.isBlank()) {
+                        item {
+                            SearchHistorySection(
+                                recentSearches = recentSearches,
+                                onSelectQuery = { selectedTerm ->
+                                    onQueryChange(selectedTerm)
+                                    onSearchCommit(selectedTerm)
+                                },
+                                onRemoveQuery = onRemoveRecentQuery,
+                                onClearHistory = onClearRecentHistory,
+                                onAskAi = { onAskAi(query) },
+                                themeStyle = themeStyle
+                            )
+                        }
+                    } else {
+                        item {
+                            SearchLiveResultsSection(
+                                query = query,
+                                courses = courses,
+                                courseStats = courseStats,
+                                assignments = assignments,
+                                onCourseClick = { course ->
+                                    onSearchCommit(course.name)
+                                    animStatus = SearchAnimStatus.COLLAPSING
+                                    onCourseClick(course)
+                                },
+                                onAssignmentClick = { uiModel ->
+                                    onSearchCommit(uiModel.assignment.name)
+                                    animStatus = SearchAnimStatus.COLLAPSING
+                                    onAssignmentClick(uiModel)
+                                },
+                                onAskCopilot = { prompt ->
+                                    onSearchCommit(prompt)
+                                    animStatus = SearchAnimStatus.COLLAPSING
+                                    onAskAi(prompt)
+                                },
+                                themeStyle = themeStyle
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Componente unificado para mantener compatibilidad si se invoca directamente.
+ */
 @Composable
 fun DashboardEmbeddedSearchBar(
     query: String,
@@ -87,314 +536,34 @@ fun DashboardEmbeddedSearchBar(
     onExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isMiuix = themeStyle == AppThemeStyle.MIUIX
-    val focusRequester = remember { FocusRequester() }
-
-    val placeholder = stringResource(Res.string.dashboard_search_hint)
-    val askAiText = stringResource(Res.string.dashboard_ask_ai)
-    val cancelText = stringResource(Res.string.cancel)
-
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val surfaceColor = if (isMiuix) MiuixTheme.colorScheme.surface else MaterialTheme.colorScheme.surface
-    val surfaceAlpha by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (isExpanded) 1f else 0f,
-        animationSpec = androidx.compose.animation.core.tween(220, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-        label = "DashboardSearchSurfaceAlpha"
-    )
-
     if (!isExpanded) {
-        // ─── Estado Colapsado: Cápsula en el Feed ───────────────────────────
-        val containerColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHigh
-        val textColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-        val placeholderColor = if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
-        val aiButtonBgColor = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
-        val aiButtonTextColor = if (isMiuix) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer
-
-        Surface(
-            shape = RoundedCornerShape(9999.dp),
-            color = containerColor,
+        DashboardSearchBarAnchor(
+            query = query,
+            onSearchClick = { onExpandedChange(true) },
+            onPositionChanged = {},
+            onAskAi = onAskAi,
+            themeStyle = themeStyle,
             modifier = modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .clip(RoundedCornerShape(9999.dp))
-                .clickable { onExpandedChange(true) }
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = placeholderColor,
-                    modifier = Modifier.size(18.dp)
-                )
-
-                Text(
-                    text = query.ifBlank { placeholder },
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = if (query.isNotBlank()) textColor else placeholderColor
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
-
-                Surface(
-                    shape = RoundedCornerShape(9999.dp),
-                    color = aiButtonBgColor,
-                    modifier = Modifier.clickable { onAskAi(query) }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = null,
-                            tint = aiButtonTextColor,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Text(
-                            text = askAiText,
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = aiButtonTextColor
-                        )
-                    }
-                }
-            }
-        }
+        )
     } else {
-        // ─── Estado Expandido: Vista Incrustada a Pantalla Completa ─────────
-        me.joxquin.notivas.ui.components.BackHandler(enabled = isExpanded) {
-            onQueryChange("")
-            onExpandedChange(false)
-        }
-
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(100f)
-                .background(surfaceColor.copy(alpha = surfaceAlpha))
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // Header de Búsqueda
-                if (isMiuix) {
-                    // Header MIUIX estilo SuperSearchBar
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = statusBarTop + 8.dp, start = 12.dp, end = 12.dp, bottom = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            InputField(
-                                query = query,
-                                onQueryChange = onQueryChange,
-                                label = placeholder,
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Search,
-                                        contentDescription = null,
-                                        tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                        modifier = Modifier.padding(start = 12.dp, end = 4.dp).size(20.dp)
-                                    )
-                                },
-                                trailingIcon = {
-                                    if (query.isNotEmpty()) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = "Limpiar",
-                                            tint = MiuixTheme.colorScheme.onSurface,
-                                            modifier = Modifier
-                                                .padding(end = 12.dp)
-                                                .size(20.dp)
-                                                .clickable { onQueryChange("") }
-                                        )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .focusRequester(focusRequester),
-                                color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                                onSearch = {
-                                    if (query.isNotBlank()) onSearchCommit(query)
-                                },
-                                expanded = true,
-                                onExpandedChange = {}
-                            )
-                        }
-
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = expandHorizontally() + slideInHorizontally(initialOffsetX = { it }),
-                            exit = shrinkHorizontally() + slideOutHorizontally(targetOffsetX = { it })
-                        ) {
-                            MiuixText(
-                                text = cancelText,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MiuixTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .padding(start = 12.dp, end = 4.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                        onClick = {
-                                            onQueryChange("")
-                                            onExpandedChange(false)
-                                        }
-                                    )
-                            )
-                        }
-                    }
-                } else {
-                    // Header Material 3 Expressive SearchBar
-                    Surface(
-                        color = MaterialTheme.colorScheme.surface,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = statusBarTop + 8.dp, start = 8.dp, end = 16.dp, bottom = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    onQueryChange("")
-                                    onExpandedChange(false)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Atrás",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(28.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    BasicTextField(
-                                        value = query,
-                                        onValueChange = onQueryChange,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .focusRequester(focusRequester),
-                                        singleLine = true,
-                                        textStyle = TextStyle(
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Normal,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        ),
-                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                        decorationBox = { innerTextField ->
-                                            if (query.isEmpty()) {
-                                                Text(
-                                                    text = placeholder,
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                            innerTextField()
-                                        }
-                                    )
-
-                                    if (query.isNotEmpty()) {
-                                        IconButton(
-                                            onClick = { onQueryChange("") },
-                                            modifier = Modifier.size(28.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = "Limpiar",
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Contenido de Resultados o Historial con animación fluida
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(240)) +
-                            androidx.compose.animation.slideInVertically(
-                                animationSpec = androidx.compose.animation.core.tween(260)
-                            ) { it / 8 },
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 32.dp)
-                    ) {
-                        if (query.isBlank()) {
-                            item {
-                                SearchHistorySection(
-                                    recentSearches = recentSearches,
-                                    onSelectQuery = { selectedTerm ->
-                                        onQueryChange(selectedTerm)
-                                        onSearchCommit(selectedTerm)
-                                    },
-                                    onRemoveQuery = onRemoveRecentQuery,
-                                    onClearHistory = onClearRecentHistory,
-                                    onAskAi = { onAskAi(query) },
-                                    themeStyle = themeStyle
-                                )
-                            }
-                        } else {
-                            item {
-                                SearchLiveResultsSection(
-                                    query = query,
-                                    courses = courses,
-                                    courseStats = courseStats,
-                                    assignments = assignments,
-                                    onCourseClick = { course ->
-                                        onSearchCommit(course.name)
-                                        onExpandedChange(false)
-                                        onCourseClick(course)
-                                    },
-                                    onAssignmentClick = { uiModel ->
-                                        onSearchCommit(uiModel.assignment.name)
-                                        onExpandedChange(false)
-                                        onAssignmentClick(uiModel)
-                                    },
-                                    onAskCopilot = { prompt ->
-                                        onSearchCommit(prompt)
-                                        onExpandedChange(false)
-                                        onAskAi(prompt)
-                                    },
-                                    themeStyle = themeStyle
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        DashboardAnimatedSearchOverlay(
+            isExpanded = true,
+            onExpandedChange = onExpandedChange,
+            initialOffsetY = 120.dp,
+            query = query,
+            onQueryChange = onQueryChange,
+            onSearchCommit = onSearchCommit,
+            recentSearches = recentSearches,
+            onRemoveRecentQuery = onRemoveRecentQuery,
+            onClearRecentHistory = onClearRecentHistory,
+            courses = courses,
+            courseStats = courseStats,
+            assignments = assignments,
+            onCourseClick = onCourseClick,
+            onAssignmentClick = onAssignmentClick,
+            onAskAi = onAskAi,
+            themeStyle = themeStyle,
+            modifier = modifier
+        )
     }
 }

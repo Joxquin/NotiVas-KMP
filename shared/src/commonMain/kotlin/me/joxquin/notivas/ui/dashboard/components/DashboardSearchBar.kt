@@ -41,12 +41,11 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun DashboardSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
-    onAskAi: (String) -> Unit,
+    onAskAi: (String) -> Unit = {},
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
     val placeholder = stringResource(Res.string.dashboard_search_hint)
-    val askAiText = stringResource(Res.string.dashboard_ask_ai)
 
     val containerColor = if (themeStyle == AppThemeStyle.MIUIX) {
         MiuixTheme.colorScheme.surfaceContainerHigh
@@ -64,18 +63,6 @@ fun DashboardSearchBar(
         MiuixTheme.colorScheme.onSurfaceVariantSummary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    val aiButtonBgColor = if (themeStyle == AppThemeStyle.MIUIX) {
-        MiuixTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.primaryContainer
-    }
-
-    val aiButtonTextColor = if (themeStyle == AppThemeStyle.MIUIX) {
-        MiuixTheme.colorScheme.onPrimary
-    } else {
-        MaterialTheme.colorScheme.onPrimaryContainer
     }
 
     Surface(
@@ -132,34 +119,6 @@ fun DashboardSearchBar(
                         .clip(CircleShape)
                         .clickable { onQueryChange("") }
                 )
-            }
-
-            // Botón/Chip inteligente "Preguntar a IA" (Copilot)
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(9999.dp))
-                    .background(aiButtonBgColor)
-                    .clickable { onAskAi(query) }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = askAiText,
-                        tint = aiButtonTextColor,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = askAiText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = aiButtonTextColor
-                    )
-                }
             }
         }
     }
