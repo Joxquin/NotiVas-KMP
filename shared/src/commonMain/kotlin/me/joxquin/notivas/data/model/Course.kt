@@ -9,6 +9,7 @@ data class Course(
     @SerialName("name") val name: String,
     @SerialName("course_code") val courseCode: String? = null,
     @SerialName("enrollment_term_id") val enrollmentTermId: Long? = null,
+    @SerialName("image_download_url") val imageUrl: String? = null,
     val totalWeeks: Int = 18,
     val passingGrade: Float = 12.0f
 )

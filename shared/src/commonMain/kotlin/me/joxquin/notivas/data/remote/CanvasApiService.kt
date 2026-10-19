@@ -36,13 +36,16 @@ class CanvasApiService(
     }
 
     private fun HttpRequestBuilder.applyAuth(credentialOrToken: String, csrfToken: String? = null) {
+        header("User-Agent", "CanvasFastClient/1.0")
         if (credentialOrToken.startsWith("Cookie: ") || credentialOrToken.contains("canvas_session") || credentialOrToken.contains("_csrf_token")) {
             val cookies = credentialOrToken.removePrefix("Cookie: ")
             header("Cookie", cookies)
             csrfToken?.let { header("X-CSRF-Token", it) }
+            println("[CanvasApiService] applyAuth usando Cookie (longitud: ${cookies.length})")
         } else {
-            val bearer = if (credentialOrToken.startsWith("Bearer ")) credentialOrToken else "Bearer $credentialOrToken"
-            header("Authorization", bearer)
+            val cleanToken = credentialOrToken.removePrefix("Bearer ").trim()
+            header("Authorization", "Bearer $cleanToken")
+            println("[CanvasApiService] applyAuth usando Bearer token (prefijo: ${cleanToken.take(10)}...)")
         }
     }
 
@@ -70,6 +73,31 @@ class CanvasApiService(
             parameter("enrollment_state", state)
             parameter("per_page", perPage)
         }.body()
+    }
+
+    suspend fun getDashboardCards(
+        baseUrl: String,
+        token: String
+    ): List<me.joxquin.notivas.data.model.CanvasDashboardCard> {
+        return try {
+            val url = formatUrl(baseUrl, "api/v1/dashboard/dashboard_cards")
+            val httpResponse = client.get(url) {
+                applyAuth(token)
+            }
+            val text = httpResponse.body<String>()
+            println("[CanvasApiService] getDashboardCards status: ${httpResponse.status}, body: ${text.take(300)}")
+            if (text.trimStart().startsWith("[")) {
+                val list = KtorHttpClientProvider.jsonConfig.decodeFromString<List<me.joxquin.notivas.data.model.CanvasDashboardCard>>(text)
+                println("[CanvasApiService] getDashboardCards éxito: ${list.size} tarjetas")
+                list
+            } else {
+                println("[CanvasApiService] getDashboardCards no devolvió array JSON: $text")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            println("[CanvasApiService] getDashboardCards error: ${e.message}")
+            emptyList()
+        }
     }
 
     suspend fun getUpcomingAssignments(

@@ -183,3 +183,13 @@ data class TemplateCandidate(
     val canvasFileId: Long? = null,
     val isCurrentAssignmentModule: Boolean = false
 )
+
+@Serializable
+data class CanvasDashboardCard(
+    @SerialName("id") val id: Long? = null,
+    @SerialName("shortName") val shortName: String? = null,
+    @SerialName("originalName") val originalName: String? = null,
+    @SerialName("courseCode") val courseCode: String? = null,
+    @SerialName("image") val image: String? = null,
+    @SerialName("pagesUrl") val pagesUrl: String? = null
+)

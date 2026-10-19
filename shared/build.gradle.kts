@@ -76,6 +76,9 @@ kotlin {
             implementation(libs.miuix.icons)
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
+            implementation(libs.coil.gif)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -19,13 +19,16 @@ data class CourseEntity(
     @ColumnInfo(name = "total_weeks", defaultValue = "18")
     val totalWeeks: Int = 18,
     @ColumnInfo(name = "passing_grade", defaultValue = "12.0")
-    val passingGrade: Float = 12.0f
+    val passingGrade: Float = 12.0f,
+    @ColumnInfo(name = "image_url")
+    val imageUrl: String? = null
 ) {
     fun toDomain(): Course = Course(
         id = id,
         name = name,
         courseCode = courseCode,
         enrollmentTermId = enrollmentTermId,
+        imageUrl = imageUrl,
         totalWeeks = totalWeeks,
         passingGrade = passingGrade
     )
@@ -36,6 +39,7 @@ data class CourseEntity(
             name = course.name,
             courseCode = course.courseCode,
             enrollmentTermId = course.enrollmentTermId,
+            imageUrl = course.imageUrl,
             totalWeeks = course.totalWeeks,
             passingGrade = course.passingGrade
         )

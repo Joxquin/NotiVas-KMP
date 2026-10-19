@@ -416,11 +416,37 @@ class CanvasRepository(
                 localStore.insertPlannerItems(plannerItems)
             } catch (_: Exception) { }
 
-            // 2. Fetch Active Courses
-            val allCoursesList = apiService.getCourses(
+            // 2. Fetch Active Courses & Dashboard Cards (con portadas firmadas de Canvas)
+            val dashboardCards = try {
+                apiService.getDashboardCards(baseUrl, token)
+            } catch (_: Exception) {
+                emptyList()
+            }
+            val cardImagesByCourseId = buildMap {
+                dashboardCards.forEach { card ->
+                    val image = card.image?.takeIf { it.isNotBlank() } ?: return@forEach
+                    val courseId = card.id ?: card.pagesUrl?.let { url ->
+                        Regex("""/courses/(\d+)""").find(url)?.groupValues?.getOrNull(1)?.toLongOrNull()
+                    }
+                    if (courseId != null) {
+                        put(courseId, image)
+                    }
+                }
+            }
+
+            val rawCoursesList = apiService.getCourses(
                 baseUrl = baseUrl,
                 token = token
             )
+            val allCoursesList = rawCoursesList.map { course ->
+                val cardImage = cardImagesByCourseId[course.id]
+                val finalImageUrl = cardImage ?: course.imageUrl
+                course.copy(imageUrl = finalImageUrl)
+            }
+            println("[CanvasRepository] Cursos actualizados: ${allCoursesList.size}. Con portada: ${allCoursesList.count { !it.imageUrl.isNullOrBlank() }}")
+            allCoursesList.forEach {
+                println("[CanvasRepository] Curso ${it.id} (${it.courseCode}): imageUrl=${it.imageUrl}")
+            }
             localStore.upsertCourses(allCoursesList)
 
             // 3. Fetch assignments for courses in parallel
@@ -732,15 +758,26 @@ class CanvasRepository(
 
     fun saveAssignmentDraft(draft: me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity) {
         localStore.saveAssignmentDraft(draft)
-        // Registrar evento de sincronización de borrador
+        // Registrar evento de sincronización de borrador con nombre corto de curso si es posible
+        val courses = localStore.getCourseList()
+        val matchingCourse = courses.find { c ->
+            (!draft.courseFolder.isBlank() && (c.name.equals(draft.courseFolder, ignoreCase = true) || c.courseCode.equals(draft.courseFolder, ignoreCase = true)))
+        }
+        val shortCourseCode = matchingCourse?.courseCode?.takeIf { it.isNotBlank() }
+            ?: draft.courseFolder.takeIf { it.isNotBlank() && it.length <= 16 }
+            ?: "ProgMov"
+        val courseName = matchingCourse?.name ?: draft.courseFolder
+
         localStore.saveActivityLog(
             me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
                 type = "DRIVE_SYNC",
                 title = "Borrador de Tarea Sincronizado",
                 description = "Archivo \"${draft.fileName}\" guardado en tu carpeta de Google Drive",
-                courseCode = draft.courseFolder,
+                courseCode = shortCourseCode,
+                courseName = courseName,
                 timestamp = draft.updatedAtTimestamp.takeIf { it > 0 } ?: me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis(),
                 targetId = draft.assignmentId,
+                secondaryId = matchingCourse?.id,
                 extraInfo = draft.draftStatus,
                 actionUrl = draft.driveUrl
             )
@@ -802,12 +839,13 @@ class CanvasRepository(
             val course = courses.find { it.id == a.courseId }
             val fakeOffsetHours = (index * 6).toLong()
             val time = (me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() - fakeOffsetHours * 3600 * 1000).coerceAtLeast(1000L)
+            val code = course?.courseCode?.takeIf { it.isNotBlank() } ?: "ProgMov"
             seedLogs.add(
                 me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
                     type = "ASSIGNMENT_SUBMISSION",
                     title = a.name,
                     description = "Entrega registrada en Canvas LMS con calificación ${a.submission?.score?.toString() ?: a.pointsPossible?.toString() ?: "completada"}",
-                    courseCode = course?.courseCode ?: "Curso ${a.courseId}",
+                    courseCode = code,
                     courseName = course?.name,
                     timestamp = time,
                     targetId = a.id,
@@ -820,17 +858,27 @@ class CanvasRepository(
 
         // Sembrar borradores existentes
         allDrafts.take(4).forEachIndexed { index, d ->
+            val assignment = allAssignments.find { it.id == d.assignmentId }
+            val course = courses.find { c ->
+                (assignment != null && c.id == assignment.courseId) ||
+                (!d.courseFolder.isBlank() && (c.name.equals(d.courseFolder, ignoreCase = true) || c.courseCode.equals(d.courseFolder, ignoreCase = true)))
+            }
+            val shortCode = course?.courseCode?.takeIf { it.isNotBlank() }
+                ?: d.courseFolder.takeIf { it.isNotBlank() && it.length <= 16 }
+                ?: "ProgMov"
             val fakeOffsetHours = ((index + 1) * 14).toLong()
             val time = (me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() - fakeOffsetHours * 3600 * 1000).coerceAtLeast(1000L)
             seedLogs.add(
                 me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
                     type = "DRIVE_SYNC",
-                    title = "Borrador: ${d.fileName}",
-                    description = "Plantilla sincronizada automáticamente en tu unidad compartida de Google Drive",
-                    courseCode = d.courseFolder,
+                    title = "Borrador de Tarea Sincronizado",
+                    description = "Archivo \"${d.fileName}\" guardado en tu carpeta de Google Drive",
+                    courseCode = shortCode,
+                    courseName = course?.name ?: d.courseFolder,
                     timestamp = time,
                     targetId = d.assignmentId,
-                    extraInfo = "Drive Sync",
+                    secondaryId = assignment?.courseId,
+                    extraInfo = d.draftStatus,
                     actionUrl = d.driveUrl
                 )
             )

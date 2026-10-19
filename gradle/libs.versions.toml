@@ -22,6 +22,7 @@ androidx-room = "2.8.5"
 androidx-sqlite = "2.7.1"
 androidx-work = "2.10.0"
 ksp = "2.3.12"
+coil = "3.1.0"
 
 
 [libraries]
@@ -60,6 +61,9 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version = "21.3.0" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
