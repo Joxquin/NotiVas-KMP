@@ -75,11 +75,23 @@ class DashboardViewModel(
     private val repository: CanvasRepository = AppModule.canvasRepository,
     private val preferencesManager: PreferencesManager = AppModule.preferencesManager,
     private val simulationDao: SimulationDao = AppModule.simulationDao,
-    private val academicCalculatorUseCase: AcademicCalculatorUseCase = AppModule.academicCalculatorUseCase
+    private val academicCalculatorUseCase: AcademicCalculatorUseCase = AppModule.academicCalculatorUseCase,
+    private val morningBriefingUseCase: me.joxquin.notivas.domain.usecase.MorningBriefingUseCase = AppModule.morningBriefingUseCase
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _showingMorningRoadmap = MutableStateFlow(false)
+    val showingMorningRoadmap: StateFlow<Boolean> = _showingMorningRoadmap.asStateFlow()
+
+    fun openMorningRoadmap() {
+        _showingMorningRoadmap.value = true
+    }
+
+    fun closeMorningRoadmap() {
+        _showingMorningRoadmap.value = false
+    }
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.SYNCING)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
@@ -675,5 +687,29 @@ class DashboardViewModel(
 
     fun inspectCourse(course: Course?) {
         _inspectedCourse.value = course
+    }
+
+    private val _forceAiMorningRefresh = MutableStateFlow(0)
+
+    val morningBriefing: StateFlow<me.joxquin.notivas.data.model.MorningBriefingData?> = combine(
+        userProfile,
+        courses,
+        allAssignmentsUi,
+        courseStats,
+        _forceAiMorningRefresh
+    ) { profile, courseList, assignments, stats, _ ->
+        morningBriefingUseCase.buildMorningBriefing(
+            userProfile = profile,
+            courses = courseList,
+            allAssignments = assignments,
+            courseStats = stats,
+            forceAiRefresh = false
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun refreshMorningBriefingAi() {
+        viewModelScope.launch {
+            _forceAiMorningRefresh.value += 1
+        }
     }
 }
