@@ -104,6 +104,20 @@
     <string name="openrouter_model_not_found">Modelo no encontrado en OpenRouter. Revisa el ID.</string>
     <string name="openrouter_model_context">Contexto: %1$d tokens</string>
     <string name="openrouter_model_info_title">Información del Modelo</string>
+    <string name="copilot_provider_title">Proveedor de IA</string>
+    <string name="copilot_provider_summary">Motor de inferencia para Copilot</string>
+    <string name="copilot_provider_dialog_title">Seleccionar Proveedor de IA</string>
+    <string name="copilot_provider_dialog_desc">Elige el servicio de inferencia para procesar tus consultas académicas:</string>
+    <string name="google_ai_studio_api_key_title">Clave de API Google AI Studio</string>
+    <string name="google_ai_studio_api_key_desc_not_set">Sin configurar (requerido)</string>
+    <string name="google_ai_studio_api_key_dialog_title">Clave de API Google AI Studio</string>
+    <string name="google_ai_studio_api_key_dialog_desc">Ingresa tu clave de Gemini de Google AI Studio (aistudio.google.com) para inferencia gratuita ilimitada:</string>
+    <string name="google_ai_studio_api_key_placeholder">AIzaSy...</string>
+    <string name="google_ai_studio_model_title">Modelo Google AI Studio</string>
+    <string name="google_ai_studio_model_dialog_title">Seleccionar Modelo Gemini</string>
+    <string name="google_ai_studio_model_dialog_desc">Selecciona el modelo Gemini de Google AI Studio para tus consultas:</string>
+    <string name="google_ai_studio_custom_model_hint">ID del modelo (ej: gemini-1.5-flash)</string>
+    <string name="google_ai_studio_balance_title">Tokens Locales Usados</string>
 
     <!-- Security and Session -->
     <string name="settings_security_section_title">SEGURIDAD Y ZONA CRÍTICA</string>

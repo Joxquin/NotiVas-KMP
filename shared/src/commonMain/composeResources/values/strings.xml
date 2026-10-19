@@ -104,6 +104,20 @@
     <string name="openrouter_model_not_found">Model not found on OpenRouter. Check the model ID.</string>
     <string name="openrouter_model_context">Context: %1$d tokens</string>
     <string name="openrouter_model_info_title">Model Information</string>
+    <string name="copilot_provider_title">AI Provider</string>
+    <string name="copilot_provider_summary">Inference engine for Copilot</string>
+    <string name="copilot_provider_dialog_title">Select AI Provider</string>
+    <string name="copilot_provider_dialog_desc">Choose the inference service to process your academic queries:</string>
+    <string name="google_ai_studio_api_key_title">Google AI Studio API Key</string>
+    <string name="google_ai_studio_api_key_desc_not_set">Not configured (required)</string>
+    <string name="google_ai_studio_api_key_dialog_title">Google AI Studio API Key</string>
+    <string name="google_ai_studio_api_key_dialog_desc">Enter your Google AI Studio Gemini key (aistudio.google.com) for free inference:</string>
+    <string name="google_ai_studio_api_key_placeholder">AIzaSy...</string>
+    <string name="google_ai_studio_model_title">Google AI Studio Model</string>
+    <string name="google_ai_studio_model_dialog_title">Select Gemini Model</string>
+    <string name="google_ai_studio_model_dialog_desc">Select the Gemini model from Google AI Studio for your queries:</string>
+    <string name="google_ai_studio_custom_model_hint">Model ID (e.g. gemini-1.5-flash)</string>
+    <string name="google_ai_studio_balance_title">Local Tokens Used</string>
 
     <!-- Security and Session -->
     <string name="settings_security_section_title">SECURITY &amp; CRITICAL ZONE</string>
