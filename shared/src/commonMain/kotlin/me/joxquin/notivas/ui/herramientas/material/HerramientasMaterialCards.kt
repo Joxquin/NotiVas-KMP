@@ -60,8 +60,8 @@ fun MaterialHeroPlannerCard(
     val taskScore = uiState?.latestGradedScoreFormatted ?: stringResource(Res.string.pending_badge)
 
     val (statusLabel, statusColor, statusBg) = when {
-        currentAvg >= 15.0f -> Triple(stringResource(Res.string.status_good_performance), Color(0xFF2E7D32), Color(0xFFE8F5E9))
-        currentAvg >= 12.0f -> Triple(stringResource(Res.string.status_above_average), MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
+        currentAvg >= 15.0f -> Triple(stringResource(Res.string.status_good_performance), MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
+        currentAvg >= 12.0f -> Triple(stringResource(Res.string.status_above_average), MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondaryContainer)
         currentAvg > 0f -> Triple(stringResource(Res.string.status_at_risk), MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.errorContainer)
         else -> Triple(stringResource(Res.string.status_unevaluated), MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.surfaceContainerHigh)
     }
@@ -71,7 +71,7 @@ fun MaterialHeroPlannerCard(
     val formattedAvg = ((currentAvg * 10f).toInt() / 10f).toString()
 
     Card(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = modifier
             .fillMaxWidth()
@@ -94,8 +94,8 @@ fun MaterialHeroPlannerCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
@@ -145,7 +145,7 @@ fun MaterialHeroPlannerCard(
 
             // Sub-tarjeta de Curso y Última Tarea Calificada
             Card(
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -232,7 +232,7 @@ fun MaterialWhatIfCard(
     onClick: (() -> Unit)? = null
 ) {
     Card(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = modifier
             .fillMaxWidth()
@@ -252,8 +252,8 @@ fun MaterialWhatIfCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(MaterialTheme.colorScheme.secondaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
@@ -261,7 +261,7 @@ fun MaterialWhatIfCard(
                             imageVector = Icons.Outlined.Analytics,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
 
@@ -397,7 +397,7 @@ fun MaterialForosCard(
     }
 
     Card(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = modifier
             .fillMaxWidth()
@@ -422,8 +422,8 @@ fun MaterialForosCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(11.dp))
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
@@ -431,7 +431,7 @@ fun MaterialForosCard(
                             imageVector = Icons.Default.Forum,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
 
@@ -475,7 +475,7 @@ fun MaterialForosCard(
                     }
                 }
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(18.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -600,7 +600,7 @@ fun MaterialArchiveCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = modifier
             .fillMaxWidth()
@@ -620,8 +620,8 @@ fun MaterialArchiveCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     contentAlignment = Alignment.Center
                 ) {
@@ -629,7 +629,7 @@ fun MaterialArchiveCard(
                         imageVector = Icons.Outlined.Inventory2,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
 

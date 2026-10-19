@@ -58,6 +58,7 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
 import me.joxquin.notivas.util.rememberFilePickerLauncher
 
@@ -220,50 +221,49 @@ private fun SettingActionTile(
     onClick: () -> Unit
 ) {
     if (themeStyle == AppThemeStyle.MIUIX) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .squircleSurface(
-                    color = MiuixTheme.colorScheme.surfaceVariant,
-                    cornerRadius = 16.dp
-                )
-                .squircleBorder(
-                    width = 0.5.dp,
-                    color = MiuixTheme.colorScheme.dividerLine,
-                    cornerRadius = 16.dp
-                )
-                .clickable(onClick = onClick)
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        top.yukonga.miuix.kmp.basic.Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = top.yukonga.miuix.kmp.basic.CardDefaults.defaultColors(
+                color = MiuixTheme.colorScheme.surfaceContainer
+            ),
+            insideMargin = androidx.compose.foundation.layout.PaddingValues(14.dp),
+            pressFeedbackType = PressFeedbackType.Sink,
+            onClick = onClick
         ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isDestructive) Color(0xFFFFEBEE) else MiuixTheme.colorScheme.primary.copy(alpha = 0.12f)
-                    ),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = if (isDestructive) Color(0xFFD32F2F) else MiuixTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (isDestructive) Color(0xFFD32F2F) else MiuixTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isDestructive) MiuixTheme.colorScheme.errorContainer
+                            else MiuixTheme.colorScheme.primary.copy(alpha = 0.12f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isDestructive) MiuixTheme.colorScheme.onErrorContainer else MiuixTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = if (isDestructive) MiuixTheme.colorScheme.error else MiuixTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                    )
+                }
             }
         }
     } else {

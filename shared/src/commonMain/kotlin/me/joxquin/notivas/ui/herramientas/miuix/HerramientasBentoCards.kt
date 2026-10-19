@@ -1,7 +1,6 @@
 package me.joxquin.notivas.ui.herramientas.miuix
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,40 +21,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Assignment
-import androidx.compose.material.icons.outlined.Grading
 import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.Sync
-import androidx.compose.material3.Icon as M3Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.ChevronForward
-import top.yukonga.miuix.kmp.icon.extended.Refresh
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
-
-// ─── CONSTANTES DE COLOR MIUIX ──────────────────────────────────────────────
-private val MiuixBlue = Color(0xFF3482FF)
-private val MiuixRed = Color(0xFFFF5449)
-private val MiuixAmber = Color(0xFFFFB74D)
-private val MiuixGreen = Color(0xFF66BB6A)
-private val MiuixPurple = Color(0xFF8B5CF6)
 
 // ─── CARD 1: Large Hero Bento (Planificador & Tareas Canvas) ────────────────
 @Composable
@@ -75,31 +59,40 @@ fun PlannerHeroBentoCard(
     val taskScore = uiState?.latestGradedScoreFormatted ?: stringResource(Res.string.pending_badge)
 
     val (statusLabel, statusColor, statusBg) = when {
-        currentAvg >= 15.0f -> Triple(stringResource(Res.string.status_good_performance), Color(0xFF2E7D32), Color(0xFF2E7D32).copy(alpha = 0.12f))
-        currentAvg >= 12.0f -> Triple(stringResource(Res.string.status_above_average), MiuixBlue, MiuixBlue.copy(alpha = 0.12f))
-        currentAvg > 0f -> Triple(stringResource(Res.string.status_at_risk), MiuixRed, MiuixRed.copy(alpha = 0.12f))
-        else -> Triple(stringResource(Res.string.status_unevaluated), MiuixTheme.colorScheme.onSurfaceVariantSummary, MiuixTheme.colorScheme.surfaceContainerHigh)
+        currentAvg >= 15.0f -> Triple(
+            stringResource(Res.string.status_good_performance),
+            MiuixTheme.colorScheme.primary,
+            MiuixTheme.colorScheme.primary.copy(alpha = 0.12f)
+        )
+        currentAvg >= 12.0f -> Triple(
+            stringResource(Res.string.status_above_average),
+            MiuixTheme.colorScheme.primary,
+            MiuixTheme.colorScheme.primary.copy(alpha = 0.12f)
+        )
+        currentAvg > 0f -> Triple(
+            stringResource(Res.string.status_at_risk),
+            MiuixTheme.colorScheme.error,
+            MiuixTheme.colorScheme.error.copy(alpha = 0.12f)
+        )
+        else -> Triple(
+            stringResource(Res.string.status_unevaluated),
+            MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            MiuixTheme.colorScheme.surfaceContainerHigh
+        )
     }
 
     val evaluatedPct = (progressRatio * 100f).toInt()
     val formattedProj = ((projectedGrade * 10f).toInt() / 10f).toString()
     val formattedAvg = ((currentAvg * 10f).toInt() / 10f).toString()
 
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .squircleSurface(
-                color = MiuixTheme.colorScheme.surfaceContainer,
-                cornerRadius = 22.dp
-            )
-            .squircleBorder(
-                width = 0.5.dp,
-                color = MiuixTheme.colorScheme.dividerLine,
-                cornerRadius = 22.dp
-            )
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+        insideMargin = PaddingValues(16.dp),
+        pressFeedbackType = if (onClick != null) PressFeedbackType.Sink else PressFeedbackType.None,
+        onClick = onClick
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             // Fila Superior: Icono Squircle, Título y Badge de Rendimiento
@@ -117,20 +110,20 @@ fun PlannerHeroBentoCard(
                         modifier = Modifier
                             .size(42.dp)
                             .squircleSurface(
-                                color = MiuixBlue.copy(alpha = 0.15f),
+                                color = MiuixTheme.colorScheme.primary.copy(alpha = 0.14f),
                                 cornerRadius = 12.dp
                             )
                             .squircleBorder(
                                 width = 0.5.dp,
-                                color = MiuixBlue.copy(alpha = 0.35f),
+                                color = MiuixTheme.colorScheme.primary.copy(alpha = 0.35f),
                                 cornerRadius = 12.dp
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        M3Icon(
+                        Icon(
                             imageVector = Icons.Outlined.Assignment,
                             contentDescription = null,
-                            tint = MiuixBlue,
+                            tint = MiuixTheme.colorScheme.primary,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -182,7 +175,7 @@ fun PlannerHeroBentoCard(
                 }
             }
 
-            // Chip interno: Curso y Última Tarea Calificada
+            // Sub-tarjeta de Curso y Última Tarea Calificada
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -228,7 +221,7 @@ fun PlannerHeroBentoCard(
                             text = taskScore,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (currentAvg >= 12f) MiuixBlue else MiuixRed
+                            color = if (currentAvg >= 12f) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.error
                         )
                     }
 
@@ -240,7 +233,7 @@ fun PlannerHeroBentoCard(
                             .clip(RoundedCornerShape(9999.dp))
                             .background(MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.4f))
                     ) {
-                        val progressColor = if (currentAvg >= 12f) Color(0xFF4CAF50) else MiuixRed
+                        val progressColor = if (currentAvg >= 12f) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.error
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(progressRatio.coerceIn(0.05f, 1f))
@@ -270,7 +263,7 @@ fun PlannerHeroBentoCard(
                             text = stringResource(Res.string.bento_average_prefix, formattedAvg),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (currentAvg >= 12f) MiuixBlue else MiuixRed
+                            color = if (currentAvg >= 12f) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.error
                         )
                     }
                 }
@@ -285,21 +278,14 @@ fun WhatIfBentoCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .squircleSurface(
-                color = MiuixTheme.colorScheme.surfaceContainer,
-                cornerRadius = 22.dp
-            )
-            .squircleBorder(
-                width = 0.5.dp,
-                color = MiuixTheme.colorScheme.dividerLine,
-                cornerRadius = 22.dp
-            )
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+        insideMargin = PaddingValues(16.dp),
+        pressFeedbackType = if (onClick != null) PressFeedbackType.Sink else PressFeedbackType.None,
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -313,22 +299,22 @@ fun WhatIfBentoCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(36.dp)
                             .squircleSurface(
-                                color = MiuixGreen.copy(alpha = 0.15f),
+                                color = MiuixTheme.colorScheme.primary.copy(alpha = 0.14f),
                                 cornerRadius = 10.dp
                             )
                             .squircleBorder(
                                 width = 0.5.dp,
-                                color = MiuixGreen.copy(alpha = 0.3f),
+                                color = MiuixTheme.colorScheme.primary.copy(alpha = 0.3f),
                                 cornerRadius = 10.dp
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        M3Icon(
+                        Icon(
                             imageVector = Icons.Outlined.Analytics,
                             contentDescription = null,
-                            tint = MiuixGreen,
+                            tint = MiuixTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -386,7 +372,7 @@ fun WhatIfBentoCard(
                         text = "16.2 / 20",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MiuixGreen
+                        color = MiuixTheme.colorScheme.primary
                     )
                 }
                 Spacer(Modifier.height(4.dp))
@@ -402,7 +388,7 @@ fun WhatIfBentoCard(
                             .fillMaxWidth(0.81f)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(9999.dp))
-                            .background(MiuixGreen)
+                            .background(MiuixTheme.colorScheme.primary)
                     )
                 }
                 Spacer(Modifier.height(8.dp))
@@ -417,7 +403,7 @@ fun WhatIfBentoCard(
     }
 }
 
-// ─── CARD: Foros de Discusión ───────────────────────────────────────────────
+// ─── CARD 3: Foros de Discusión ─────────────────────────────────────────────
 @Composable
 fun ForosBentoCard(
     forosUiState: me.joxquin.notivas.ui.foros.ForosUiState? = null,
@@ -472,24 +458,17 @@ fun ForosBentoCard(
         }
     }
 
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .squircleSurface(
-                color = MiuixTheme.colorScheme.surfaceContainer,
-                cornerRadius = 22.dp
-            )
-            .squircleBorder(
-                width = 0.5.dp,
-                color = MiuixTheme.colorScheme.dividerLine,
-                cornerRadius = 22.dp
-            )
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+        insideMargin = PaddingValues(16.dp),
+        pressFeedbackType = if (onClick != null) PressFeedbackType.Sink else PressFeedbackType.None,
+        onClick = onClick
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // Fila Superior: Icono, Título y Badge de Estado Activo
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header: Icono, Título y Badge de Foros Activos
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -504,20 +483,20 @@ fun ForosBentoCard(
                         modifier = Modifier
                             .size(40.dp)
                             .squircleSurface(
-                                color = MiuixBlue.copy(alpha = 0.15f),
+                                color = MiuixTheme.colorScheme.primary.copy(alpha = 0.14f),
                                 cornerRadius = 11.dp
                             )
                             .squircleBorder(
                                 width = 0.5.dp,
-                                color = MiuixBlue.copy(alpha = 0.35f),
+                                color = MiuixTheme.colorScheme.primary.copy(alpha = 0.35f),
                                 cornerRadius = 11.dp
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        M3Icon(
+                        Icon(
                             imageVector = Icons.Default.Forum,
                             contentDescription = null,
-                            tint = MiuixBlue,
+                            tint = MiuixTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -543,12 +522,12 @@ fun ForosBentoCard(
                 Box(
                     modifier = Modifier
                         .squircleSurface(
-                            color = MiuixBlue.copy(alpha = 0.12f),
+                            color = MiuixTheme.colorScheme.primary.copy(alpha = 0.12f),
                             cornerRadius = 9999.dp
                         )
                         .squircleBorder(
                             width = 0.5.dp,
-                            color = MiuixBlue.copy(alpha = 0.25f),
+                            color = MiuixTheme.colorScheme.primary.copy(alpha = 0.25f),
                             cornerRadius = 9999.dp
                         )
                         .padding(horizontal = 8.dp, vertical = 3.dp)
@@ -557,7 +536,7 @@ fun ForosBentoCard(
                         text = activeBadgesText,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = MiuixBlue
+                        color = MiuixTheme.colorScheme.primary
                     )
                 }
             }
@@ -602,7 +581,7 @@ fun ForosBentoCard(
                                     modifier = Modifier
                                         .size(7.dp)
                                         .clip(CircleShape)
-                                        .background(if (isUrgent) MiuixRed else MiuixBlue)
+                                        .background(if (isUrgent) MiuixTheme.colorScheme.error else MiuixTheme.colorScheme.primary)
                                 )
                                 Text(
                                     text = nextClosingForum.title,
@@ -618,7 +597,7 @@ fun ForosBentoCard(
                                 text = dueBadgeText,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (isUrgent) MiuixRed else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                color = if (isUrgent) MiuixTheme.colorScheme.error else MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                 modifier = Modifier.padding(start = 6.dp)
                             )
                         }
@@ -628,8 +607,7 @@ fun ForosBentoCard(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(MiuixPurple.copy(alpha = 0.10f))
-                                .border(0.5.dp, MiuixPurple.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                                .background(MiuixTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.60f))
                                 .padding(horizontal = 8.dp, vertical = 5.dp)
                         ) {
                             Row(
@@ -643,7 +621,7 @@ fun ForosBentoCard(
                                     text = "Copilot: $rubricInfo",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = MiuixPurple,
+                                    color = MiuixTheme.colorScheme.primary,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.weight(1f)
@@ -675,7 +653,7 @@ fun ForosBentoCard(
                                 text = stringResource(Res.string.bento_foros_go_to_discussion),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MiuixBlue
+                                color = MiuixTheme.colorScheme.primary
                             )
                         }
                     }
@@ -692,21 +670,14 @@ fun ArchiveBentoCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .squircleSurface(
-                color = MiuixTheme.colorScheme.surfaceContainer,
-                cornerRadius = 22.dp
-            )
-            .squircleBorder(
-                width = 0.5.dp,
-                color = MiuixTheme.colorScheme.dividerLine,
-                cornerRadius = 22.dp
-            )
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+        insideMargin = PaddingValues(16.dp),
+        pressFeedbackType = if (onClick != null) PressFeedbackType.Sink else PressFeedbackType.None,
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -732,7 +703,7 @@ fun ArchiveBentoCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    M3Icon(
+                    Icon(
                         imageVector = Icons.Outlined.Inventory2,
                         contentDescription = null,
                         tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
