@@ -226,14 +226,34 @@ class CanvasAcademicToolsHandler(
                             )
 
                             val submissionInfo = details.submission?.let { sub ->
-                                mapOf(
+                                val teacherComments = sub.submissionComments?.mapNotNull { comment ->
+                                    val author = comment.authorName ?: "Profesor"
+                                    val text = comment.comment?.trim()
+                                    val date = comment.createdAt ?: ""
+                                    if (!text.isNullOrBlank()) {
+                                        "[$author - $date]: $text"
+                                    } else null
+                                } ?: emptyList()
+
+                                val rubricEvaluations = sub.rubricAssessment?.mapNotNull { (critId, item) ->
+                                    val pts = item.points?.toString() ?: ""
+                                    val comments = item.comments?.trim() ?: ""
+                                    if (comments.isNotBlank() || pts.isNotBlank()) {
+                                        "Criterio $critId: $pts pts. Comentario: $comments"
+                                    } else null
+                                } ?: emptyList()
+
+                                val infoMap = mutableMapOf(
                                     "submitted_at" to (sub.submittedAt ?: "No entregado"),
                                     "score" to (sub.score?.toString() ?: "Sin calificación"),
                                     "grade" to (sub.grade ?: "N/A"),
                                     "workflow_state" to (sub.workflowState ?: "unsubmitted"),
                                     "late" to sub.late.toString(),
-                                    "missing" to sub.missing.toString()
+                                    "missing" to sub.missing.toString(),
+                                    "teacher_comments" to if (teacherComments.isNotEmpty()) teacherComments.joinToString("\n") else "Sin comentarios del docente registrados",
+                                    "rubric_assessment" to if (rubricEvaluations.isNotEmpty()) rubricEvaluations.joinToString("\n") else "Sin evaluación de rúbrica desglosada"
                                 )
+                                infoMap
                             }
 
                             val resultMap = mutableMapOf<String, String?>(
@@ -243,7 +263,8 @@ class CanvasAcademicToolsHandler(
                                 "points_possible" to details.pointsPossible?.toString(),
                                 "description" to cleanDesc.take(4000),
                                 "submission_types" to details.submissionTypes?.joinToString(", "),
-                                "student_submission" to submissionInfo?.let { json.encodeToString(it) }
+                                "student_submission" to submissionInfo?.let { json.encodeToString(it) },
+                                "teacher_feedback_summary" to submissionInfo?.get("teacher_comments")
                             )
 
                             if (!details.rubric.isNullOrEmpty()) {
