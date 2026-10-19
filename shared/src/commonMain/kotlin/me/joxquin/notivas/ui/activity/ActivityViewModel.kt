@@ -50,10 +50,30 @@ class ActivityViewModel(
 
     val uiState: StateFlow<ActivityUiState> = combine(
         repository.observeActivityLogs(),
+        repository.allCourses,
         _searchQuery,
         _selectedFilter
-    ) { logs, query, filter ->
-        val filtered = logs.filter { log ->
+    ) { logs, courses, query, filter ->
+        val resolvedLogs = logs.map { log ->
+            val matchingCourse = courses.find { c ->
+                (log.secondaryId != null && c.id == log.secondaryId) ||
+                (!log.courseName.isNullOrBlank() && c.name.equals(log.courseName, ignoreCase = true)) ||
+                (!log.courseCode.isNullOrBlank() && (c.name.equals(log.courseCode, ignoreCase = true) || c.courseCode.equals(log.courseCode, ignoreCase = true)))
+            }
+            val shortCode = matchingCourse?.courseCode?.takeIf { it.isNotBlank() }
+                ?: log.courseCode?.takeIf { it.isNotBlank() && it.length <= 16 }
+                ?: matchingCourse?.name?.take(10)
+                ?: log.courseName?.takeIf { it.isNotBlank() }?.let { if (it.length > 14) it.take(10) + "…" else it }
+                ?: "ProgMov"
+
+            if (log.courseCode != shortCode) {
+                log.copy(courseCode = shortCode, courseName = log.courseName ?: matchingCourse?.name)
+            } else {
+                log
+            }
+        }
+
+        val filtered = resolvedLogs.filter { log ->
             val matchesFilter = when (filter) {
                 ActivityFilter.TODOS -> true
                 else -> log.type == filter.typeKey

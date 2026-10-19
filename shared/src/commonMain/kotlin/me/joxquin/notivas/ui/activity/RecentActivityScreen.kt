@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -458,7 +459,16 @@ private fun ActivityCardContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val courseText = log.courseCode ?: log.courseName ?: "General"
+            val courseText = remember(log.courseCode, log.courseName) {
+                val candidate = log.courseCode?.takeIf { it.isNotBlank() }
+                    ?: log.courseName?.takeIf { it.isNotBlank() }
+                    ?: "ProgMov"
+                if (candidate.length > 16) {
+                    candidate.take(14) + "…"
+                } else {
+                    candidate
+                }
+            }
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
