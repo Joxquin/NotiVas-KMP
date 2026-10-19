@@ -56,12 +56,27 @@ class CopilotRepository(
         userPrompt: String,
         selectedCourseId: Long? = null
     ): Result<CopilotResult> {
-        val apiKey = preferencesManager.openRouterApiKey.first()
-        if (apiKey.isNullOrBlank()) {
-            return Result.failure(IllegalStateException("OpenRouter API Key no configurada. Ve a Ajustes para agregarla."))
+        val provider = preferencesManager.copilotProvider.first()
+        val apiKey: String?
+        val model: String
+        val customBaseUrl: String?
+
+        if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+            apiKey = preferencesManager.googleAiStudioApiKey.first()
+            if (apiKey.isNullOrBlank()) {
+                return Result.failure(IllegalStateException("Google AI Studio API Key no configurada. Ve a Ajustes para agregarla."))
+            }
+            model = preferencesManager.googleAiStudioModel.first()
+            customBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai"
+        } else {
+            apiKey = preferencesManager.openRouterApiKey.first()
+            if (apiKey.isNullOrBlank()) {
+                return Result.failure(IllegalStateException("OpenRouter API Key no configurada. Ve a Ajustes para agregarla."))
+            }
+            model = preferencesManager.openRouterModel.first()
+            customBaseUrl = null
         }
 
-        val model = preferencesManager.openRouterModel.first()
         val appLanguage = preferencesManager.appLanguage.first()
         val courses = localStore.courses.first()
         val systemPrompt = promptBuilder.buildSystemPrompt(courses, selectedCourseId, appLanguage)
@@ -92,7 +107,8 @@ class CopilotRepository(
                         tools = if (disableTools) null else toolExecutor.tools,
                         temperature = 0.3,
                         maxTokens = 4000
-                    )
+                    ),
+                    customBaseUrl = customBaseUrl
                 )
             } catch (e: Exception) {
                 // Si el proveedor del modelo rechaza el parámetro 'tools' o arroja 400 Provider error
@@ -104,7 +120,7 @@ class CopilotRepository(
 
                 if (isProviderToolError) {
                     disableTools = true
-                    println("Copilot [Aviso] El modelo '$model' no soporta function calling o el proveedor falló. Reintentando sin tools...")
+                    println("Copilot [Aviso] El modelo '$model' ($provider) no soporta function calling o el proveedor falló. Reintentando sin tools...")
                     try {
                         openRouterApiService.chatCompletion(
                             apiKey = apiKey,
@@ -114,20 +130,21 @@ class CopilotRepository(
                                 tools = null,
                                 temperature = 0.3,
                                 maxTokens = 4000
-                            )
+                            ),
+                            customBaseUrl = customBaseUrl
                         )
                     } catch (retryException: Exception) {
                         println("Copilot [Error] Falló reintento sin tools: ${retryException.message}")
                         return Result.failure(retryException)
                     }
                 } else {
-                    println("Copilot [Error] Falló la petición a OpenRouter: ${e.message}")
+                    println("Copilot [Error] Falló la petición a $provider: ${e.message}")
                     return Result.failure(e)
                 }
             }
 
             if (response.error != null) {
-                val err = response.error.message ?: "Error en la respuesta de OpenRouter (Código: ${response.error.code})"
+                val err = response.error.message ?: "Error en la respuesta del proveedor IA (Código: ${response.error.code})"
                 return Result.failure(IllegalStateException(err))
             }
 
@@ -243,7 +260,8 @@ class CopilotRepository(
                         tools = null,
                         temperature = 0.3,
                         maxTokens = 4000
-                    )
+                    ),
+                    customBaseUrl = customBaseUrl
                 )
                 val synthesisText = finalSynthesisResponse.choices?.firstOrNull()?.message?.content
                 if (!synthesisText.isNullOrBlank()) {
@@ -291,6 +309,10 @@ class CopilotRepository(
     }
 
     suspend fun getOpenRouterBalance(): OpenRouterAccountBalance? {
+        val provider = preferencesManager.copilotProvider.first()
+        if (provider != me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER) {
+            return null
+        }
         val apiKey = preferencesManager.openRouterApiKey.first() ?: return null
         if (apiKey.isBlank()) return null
 

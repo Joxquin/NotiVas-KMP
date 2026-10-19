@@ -10,6 +10,12 @@ enum class AppLanguage(val code: String, val displayName: String) {
 }
 
 @Serializable
+enum class CopilotProvider {
+    OPENROUTER,
+    GOOGLE_AI_STUDIO
+}
+
+@Serializable
 data class PersistentPreferencesSnapshot(
     val universityUrl: String? = "https://canvas.utp.edu.pe",
     val accessToken: String? = null,
@@ -22,8 +28,11 @@ data class PersistentPreferencesSnapshot(
     val autoFocusMode: Boolean = true,
     val pomodoroDurationMinutes: Int = 25,
     val biometricLock: Boolean = false,
+    val copilotProvider: CopilotProvider = CopilotProvider.OPENROUTER,
     val openRouterApiKey: String? = "",
     val openRouterModel: String = "google/gemini-2.5-flash",
+    val googleAiStudioApiKey: String? = "",
+    val googleAiStudioModel: String = "gemini-1.5-flash",
     val copilotEnabled: Boolean = true,
     val totalCopilotTokens: Long = 0L,
     val dynamicColorEnabled: Boolean = true,

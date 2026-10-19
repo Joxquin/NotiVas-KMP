@@ -92,11 +92,21 @@ class PreferencesManager(
     private val _biometricLock = MutableStateFlow(false)
     val biometricLock: Flow<Boolean> = _biometricLock.asStateFlow()
 
+    private val _copilotProvider = MutableStateFlow(CopilotProvider.OPENROUTER)
+    val copilotProvider: Flow<CopilotProvider> = _copilotProvider.asStateFlow()
+    fun getCopilotProvider(): CopilotProvider = _copilotProvider.value
+
     private val _openRouterApiKey = MutableStateFlow<String?>("")
     val openRouterApiKey: Flow<String?> = _openRouterApiKey.asStateFlow()
 
     private val _openRouterModel = MutableStateFlow("google/gemini-2.5-flash")
     val openRouterModel: Flow<String> = _openRouterModel.asStateFlow()
+
+    private val _googleAiStudioApiKey = MutableStateFlow<String?>("")
+    val googleAiStudioApiKey: Flow<String?> = _googleAiStudioApiKey.asStateFlow()
+
+    private val _googleAiStudioModel = MutableStateFlow("gemini-1.5-flash")
+    val googleAiStudioModel: Flow<String> = _googleAiStudioModel.asStateFlow()
 
     private val _copilotEnabled = MutableStateFlow(true)
     val copilotEnabled: Flow<Boolean> = _copilotEnabled.asStateFlow()
@@ -203,8 +213,11 @@ class PreferencesManager(
             _autoFocusMode.value = snapshot.autoFocusMode
             _pomodoroDurationMinutes.value = snapshot.pomodoroDurationMinutes
             _biometricLock.value = snapshot.biometricLock
+            _copilotProvider.value = snapshot.copilotProvider
             _openRouterApiKey.value = snapshot.openRouterApiKey
             _openRouterModel.value = snapshot.openRouterModel
+            _googleAiStudioApiKey.value = snapshot.googleAiStudioApiKey
+            _googleAiStudioModel.value = snapshot.googleAiStudioModel
             _copilotEnabled.value = snapshot.copilotEnabled
             _totalCopilotTokens.value = snapshot.totalCopilotTokens
             _dynamicColorEnabled.value = snapshot.dynamicColorEnabled
@@ -249,8 +262,11 @@ class PreferencesManager(
                 autoFocusMode = _autoFocusMode.value,
                 pomodoroDurationMinutes = _pomodoroDurationMinutes.value,
                 biometricLock = _biometricLock.value,
+                copilotProvider = _copilotProvider.value,
                 openRouterApiKey = _openRouterApiKey.value,
                 openRouterModel = _openRouterModel.value,
+                googleAiStudioApiKey = _googleAiStudioApiKey.value,
+                googleAiStudioModel = _googleAiStudioModel.value,
                 copilotEnabled = _copilotEnabled.value,
                 totalCopilotTokens = _totalCopilotTokens.value,
                 dynamicColorEnabled = _dynamicColorEnabled.value,
@@ -365,6 +381,11 @@ class PreferencesManager(
         schedulePersist()
     }
 
+    suspend fun setCopilotProvider(provider: CopilotProvider) {
+        _copilotProvider.value = provider
+        schedulePersist()
+    }
+
     suspend fun setOpenRouterApiKey(key: String?) {
         _openRouterApiKey.value = key
         schedulePersist()
@@ -372,6 +393,16 @@ class PreferencesManager(
 
     suspend fun setOpenRouterModel(model: String) {
         _openRouterModel.value = model
+        schedulePersist()
+    }
+
+    suspend fun setGoogleAiStudioApiKey(key: String?) {
+        _googleAiStudioApiKey.value = key
+        schedulePersist()
+    }
+
+    suspend fun setGoogleAiStudioModel(model: String) {
+        _googleAiStudioModel.value = model
         schedulePersist()
     }
 

@@ -17,10 +17,12 @@ class OpenRouterApiService(
 ) {
     suspend fun chatCompletion(
         apiKey: String,
-        request: OpenRouterChatRequest
+        request: OpenRouterChatRequest,
+        customBaseUrl: String? = null
     ): OpenRouterChatResponse {
+        val targetBaseUrl = (customBaseUrl ?: baseUrl).trimEnd('/')
         val authHeader = if (apiKey.startsWith("Bearer ")) apiKey else "Bearer $apiKey"
-        val response = client.post("$baseUrl/chat/completions") {
+        val response = client.post("$targetBaseUrl/chat/completions") {
             header("Authorization", authHeader)
             header("HTTP-Referer", "https://github.com/joxquin/NotiVas")
             header("X-Title", "NotiVas Academic Copilot")
@@ -29,12 +31,12 @@ class OpenRouterApiService(
         
         val status = response.status.value
         val responseText = response.body<String>()
-        println("Copilot [OpenRouter] HTTP $status response: $responseText")
+        println("Copilot [Api] HTTP $status response from $targetBaseUrl: $responseText")
         
         if (status !in 200..299) {
             val errorMsg = try {
                 val errorObj = KtorHttpClientProvider.jsonConfig.decodeFromString<OpenRouterChatResponse>(responseText)
-                errorObj.error?.message ?: "Error HTTP $status de OpenRouter"
+                errorObj.error?.message ?: "Error HTTP $status del proveedor de IA"
             } catch (e: Exception) {
                 "Error HTTP $status: $responseText"
             }
