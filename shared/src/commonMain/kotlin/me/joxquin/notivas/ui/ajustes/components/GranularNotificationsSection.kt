@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.WbSunny
@@ -75,6 +76,19 @@ import me.joxquin.notivas.shared.resources.sync_interval_6h
 import me.joxquin.notivas.shared.resources.sync_interval_custom_format
 import me.joxquin.notivas.shared.resources.close
 import me.joxquin.notivas.shared.resources.change
+import me.joxquin.notivas.shared.resources.onboarding_battery_title
+import me.joxquin.notivas.shared.resources.onboarding_battery_desc
+import me.joxquin.notivas.shared.resources.onboarding_alarms_title
+import me.joxquin.notivas.shared.resources.onboarding_alarms_desc
+import me.joxquin.notivas.shared.resources.onboarding_miui_title
+import me.joxquin.notivas.shared.resources.onboarding_miui_desc
+import me.joxquin.notivas.shared.resources.onboarding_miui_autostart_btn
+import me.joxquin.notivas.shared.resources.permission_status_granted
+import me.joxquin.notivas.shared.resources.permission_status_action
+import me.joxquin.notivas.shared.resources.morning_briefing_api_key_required_title
+import me.joxquin.notivas.shared.resources.morning_briefing_api_key_required_desc
+import me.joxquin.notivas.shared.resources.morning_briefing_configure_api_key
+import me.joxquin.notivas.shared.resources.cancel
 
 @Composable
 fun GranularNotificationsSection(
@@ -83,15 +97,68 @@ fun GranularNotificationsSection(
     notif30m: Boolean,
     notifMorning: Boolean,
     syncIntervalMinutes: Long,
+    openRouterApiKey: String? = null,
     onNotif24hChange: (Boolean) -> Unit,
     onNotif3hChange: (Boolean) -> Unit,
     onNotif30mChange: (Boolean) -> Unit,
     onNotifMorningChange: (Boolean) -> Unit,
     onSyncIntervalChange: (Long) -> Unit,
+    onNavigateToCopilotSettings: () -> Unit = {},
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
 ) {
     var showSyncIntervalDialog by remember { mutableStateOf(false) }
+    var showApiKeyRequiredDialog by remember { mutableStateOf(false) }
+    val permissionManager = me.joxquin.notivas.util.rememberBackgroundPermissionManager()
+
+    val handleMorningToggle: (Boolean) -> Unit = { enabling ->
+        if (enabling && openRouterApiKey.isNullOrBlank()) {
+            showApiKeyRequiredDialog = true
+        } else {
+            onNotifMorningChange(enabling)
+        }
+    }
+
+    if (showApiKeyRequiredDialog) {
+        AlertDialog(
+            onDismissRequest = { showApiKeyRequiredDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Key,
+                    contentDescription = null,
+                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(Res.string.morning_briefing_api_key_required_title),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(Res.string.morning_briefing_api_key_required_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showApiKeyRequiredDialog = false
+                        onNavigateToCopilotSettings()
+                    }
+                ) {
+                    Text(stringResource(Res.string.morning_briefing_configure_api_key))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showApiKeyRequiredDialog = false }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
+    }
 
     val sync15 = stringResource(Res.string.sync_interval_15m)
     val sync30 = stringResource(Res.string.sync_interval_30m)
@@ -223,13 +290,38 @@ fun GranularNotificationsSection(
                     title = stringResource(Res.string.notif_morning_title),
                     summary = stringResource(Res.string.notif_morning_desc),
                     checked = notifMorning,
-                    onCheckedChange = onNotifMorningChange
+                    onCheckedChange = handleMorningToggle
                 )
                 ArrowPreference(
                     title = stringResource(Res.string.sync_interval_title),
                     summary = currentLabel,
                     onClick = { showSyncIntervalDialog = true }
                 )
+                ArrowPreference(
+                    title = stringResource(Res.string.onboarding_battery_title),
+                    summary = if (permissionManager.isBatteryOptimizationIgnored()) {
+                        stringResource(Res.string.permission_status_granted)
+                    } else {
+                        stringResource(Res.string.permission_status_action)
+                    },
+                    onClick = { permissionManager.requestIgnoreBatteryOptimization() }
+                )
+                ArrowPreference(
+                    title = stringResource(Res.string.onboarding_alarms_title),
+                    summary = if (permissionManager.canScheduleExactAlarms()) {
+                        stringResource(Res.string.permission_status_granted)
+                    } else {
+                        stringResource(Res.string.permission_status_action)
+                    },
+                    onClick = { permissionManager.requestScheduleExactAlarms() }
+                )
+                if (permissionManager.isMiuiOrHyperOs()) {
+                    ArrowPreference(
+                        title = stringResource(Res.string.onboarding_miui_title),
+                        summary = stringResource(Res.string.onboarding_miui_autostart_btn),
+                        onClick = { permissionManager.openMiuiAutostartSettings() }
+                    )
+                }
             }
         }
     } else {
@@ -305,7 +397,7 @@ fun GranularNotificationsSection(
                     title = stringResource(Res.string.notif_morning_title),
                     subtitle = stringResource(Res.string.notif_morning_desc),
                     checked = notifMorning,
-                    onCheckedChange = onNotifMorningChange
+                    onCheckedChange = handleMorningToggle
                 )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -376,6 +468,137 @@ fun GranularNotificationsSection(
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                // Diagnóstico y Permisos de Batería y Alarmas
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { permissionManager.requestIgnoreBatteryOptimization() },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(Res.string.onboarding_battery_title),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(Res.string.onboarding_battery_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (permissionManager.isBatteryOptimizationIgnored()) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.errorContainer
+                        },
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(
+                            text = if (permissionManager.isBatteryOptimizationIgnored()) {
+                                stringResource(Res.string.permission_status_granted)
+                            } else {
+                                stringResource(Res.string.permission_status_action)
+                            },
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = if (permissionManager.isBatteryOptimizationIgnored()) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onErrorContainer
+                            },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { permissionManager.requestScheduleExactAlarms() },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(Res.string.onboarding_alarms_title),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(Res.string.onboarding_alarms_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (permissionManager.canScheduleExactAlarms()) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.errorContainer
+                        },
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(
+                            text = if (permissionManager.canScheduleExactAlarms()) {
+                                stringResource(Res.string.permission_status_granted)
+                            } else {
+                                stringResource(Res.string.permission_status_action)
+                            },
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = if (permissionManager.canScheduleExactAlarms()) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onErrorContainer
+                            },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                if (permissionManager.isMiuiOrHyperOs()) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { permissionManager.openMiuiAutostartSettings() },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(Res.string.onboarding_miui_title),
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = stringResource(Res.string.onboarding_miui_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.padding(start = 8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.onboarding_miui_autostart_btn),
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             }

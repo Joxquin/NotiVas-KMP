@@ -155,8 +155,58 @@ class AndroidAlarmScheduler(
                 val courseName = courseMap[assignment.courseId]?.name ?: "Curso"
                 scheduleAlarmsForAssignment(assignment, courseName)
             }
+
+            scheduleMorningBriefing()
         } catch (e: Exception) {
             Log.e("AndroidAlarmScheduler", "Error rescheduling all alarms", e)
+        }
+    }
+
+    suspend fun scheduleMorningBriefing() {
+        try {
+            if (!preferencesManager.notifMorning.first()) return
+
+            val now = ZonedDateTime.now()
+            var morningTime = now.withHour(8).withMinute(0).withSecond(0).withNano(0)
+            if (now.isAfter(morningTime)) {
+                morningTime = morningTime.plusDays(1)
+            }
+
+            val intent = Intent(context, AssignmentAlarmReceiver::class.java).apply {
+                putExtra(AssignmentAlarmReceiver.EXTRA_ASSIGNMENT_ID, -1L)
+                putExtra(AssignmentAlarmReceiver.EXTRA_ALERT_TYPE, AssignmentAlarmReceiver.ALERT_TYPE_MORNING)
+            }
+
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                8888,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        morningTime.toInstant().toEpochMilli(),
+                        pendingIntent
+                    )
+                } else {
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        morningTime.toInstant().toEpochMilli(),
+                        pendingIntent
+                    )
+                }
+            } else {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    morningTime.toInstant().toEpochMilli(),
+                    pendingIntent
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("AndroidAlarmScheduler", "Error scheduling morning briefing alarm", e)
         }
     }
 

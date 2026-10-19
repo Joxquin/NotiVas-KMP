@@ -30,7 +30,8 @@ class AssignmentAlarmReceiver : BroadcastReceiver() {
         val courseName = intent.getStringExtra(EXTRA_COURSE_NAME) ?: "Curso"
         val assignmentName = intent.getStringExtra(EXTRA_ASSIGNMENT_NAME) ?: "Tarea"
 
-        if (assignmentId == -1L) return
+        val isMorningBriefing = alertType == ALERT_TYPE_MORNING
+        if (assignmentId == -1L && !isMorningBriefing) return
 
         val (title, message) = when (alertType) {
             ALERT_TYPE_30M -> {
@@ -42,10 +43,25 @@ class AssignmentAlarmReceiver : BroadcastReceiver() {
             ALERT_TYPE_24H -> {
                 "Recordatorio Preventivo · $courseName" to "$assignmentName: Entrega programada para las próximas 24h"
             }
+            ALERT_TYPE_MORNING -> {
+                "Resumen Matutino · NotiVas" to "¡Tu plan del día está listo! Revisa tus entregas y prioridades académicas de hoy."
+            }
             else -> return
         }
 
         CoroutineScope(Dispatchers.IO).launch {
+            if (isMorningBriefing) {
+                if (preferencesManager.notifMorning.first()) {
+                    notificationHelper.showNotification(
+                        title = title,
+                        message = message,
+                        notificationId = 8000
+                    )
+                    // Reprogramar para el día siguiente
+                    alarmScheduler.scheduleMorningBriefing()
+                }
+                return@launch
+            }
             // Verificar el estado más fresco en Room para evitar notificaciones obsoletas o duplicadas
             val assignment = localStore.getAssignmentList().firstOrNull { it.id == assignmentId }
                 ?: return@launch
@@ -88,5 +104,6 @@ class AssignmentAlarmReceiver : BroadcastReceiver() {
         const val ALERT_TYPE_24H = "24h"
         const val ALERT_TYPE_3H = "3h"
         const val ALERT_TYPE_30M = "30m"
+        const val ALERT_TYPE_MORNING = "morning"
     }
 }
