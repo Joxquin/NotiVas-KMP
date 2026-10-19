@@ -24,16 +24,20 @@ class ReminderWorker(
             val notificationHelper = NotificationHelper(applicationContext)
             val alarmScheduler = AndroidAlarmScheduler(applicationContext, preferencesManager, localStore)
 
-            val token = preferencesManager.accessToken.first()
-            if (!token.isNullOrBlank()) {
+            val hasAuth = preferencesManager.getAuthCredential() != null
+            if (hasAuth) {
                 notificationHelper.showSyncNotification()
                 try {
+                    println("ReminderWorker [Sync] Iniciando fetchAndSaveData()")
                     canvasRepository.fetchAndSaveData()
-                } catch (_: Exception) {
-                    // Fallback a cache local
+                    println("ReminderWorker [Sync] fetchAndSaveData() completado con éxito")
+                } catch (e: Exception) {
+                    println("ReminderWorker [Sync] Error durante la sincronización: ${e.message}")
                 } finally {
                     notificationHelper.dismissSyncNotification()
                 }
+            } else {
+                println("ReminderWorker [Sync] No hay credenciales de autenticación disponibles")
             }
 
             val assignments = localStore.getAssignmentList()
