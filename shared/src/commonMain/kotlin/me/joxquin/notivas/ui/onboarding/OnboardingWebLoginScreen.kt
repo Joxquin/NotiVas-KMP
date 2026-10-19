@@ -127,7 +127,7 @@ fun OnboardingWebLoginScreen(
             ) {
                 OnboardingStepIndicator(
                     currentStep = 2,
-                    totalSteps = 3
+                    totalSteps = 5
                 )
             }
 

@@ -63,7 +63,7 @@ fun OnboardingTokenScreen(
             TopAppBar(
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        OnboardingStepIndicator(currentStep = 2, totalSteps = 4)
+                        OnboardingStepIndicator(currentStep = 2, totalSteps = 5)
                     }
                 },
                 navigationIcon = {

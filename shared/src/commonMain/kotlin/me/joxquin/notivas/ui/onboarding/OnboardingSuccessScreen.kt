@@ -398,7 +398,7 @@ fun OnboardingSuccessScreen(
                     )
                 ) {
                     Text(
-                        text = "Empezar a usar NotiVas",
+                        text = "Continuar",
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp

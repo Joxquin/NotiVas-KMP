@@ -17,6 +17,7 @@ enum class OnboardingStep {
     Token,
     Verifying,
     Success,
+    BackgroundSync,
     Error
 }
 
@@ -33,10 +34,12 @@ fun OnboardingFlow(
     val coursesCount by viewModel.coursesCount.collectAsState(initial = 0)
 
     var currentStep by remember { mutableStateOf(OnboardingStep.Domain) }
+    var hasSeenSuccess by remember { mutableStateOf(false) }
 
     val effectiveStep = when {
+        currentStep == OnboardingStep.BackgroundSync -> OnboardingStep.BackgroundSync
         isVerifying -> OnboardingStep.Verifying
-        verificationSuccess == true -> OnboardingStep.Success
+        verificationSuccess == true && !hasSeenSuccess -> OnboardingStep.Success
         verificationSuccess == false -> OnboardingStep.Error
         else -> currentStep
     }
@@ -85,7 +88,15 @@ fun OnboardingFlow(
                 OnboardingSuccessScreen(
                     userProfile = userProfile,
                     coursesCount = coursesCount,
-                    onStartApp = onComplete
+                    onStartApp = {
+                        hasSeenSuccess = true
+                        currentStep = OnboardingStep.BackgroundSync
+                    }
+                )
+            }
+            OnboardingStep.BackgroundSync -> {
+                OnboardingBackgroundSyncScreen(
+                    onFinish = onComplete
                 )
             }
             OnboardingStep.Error -> {

@@ -36,7 +36,7 @@ fun OnboardingVerifyingScreen() {
             TopAppBar(
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        OnboardingStepIndicator(currentStep = 3, totalSteps = 4)
+                        OnboardingStepIndicator(currentStep = 3, totalSteps = 5)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)

@@ -83,7 +83,7 @@ fun OnboardingDomainScreen(
             TopAppBar(
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        OnboardingStepIndicator(currentStep = 1, totalSteps = 4)
+                        OnboardingStepIndicator(currentStep = 1, totalSteps = 5)
                     }
                 },
                 navigationIcon = {
