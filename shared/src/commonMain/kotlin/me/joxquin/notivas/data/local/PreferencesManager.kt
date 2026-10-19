@@ -105,7 +105,7 @@ class PreferencesManager(
     private val _googleAiStudioApiKey = MutableStateFlow<String?>("")
     val googleAiStudioApiKey: Flow<String?> = _googleAiStudioApiKey.asStateFlow()
 
-    private val _googleAiStudioModel = MutableStateFlow("gemini-1.5-flash")
+    private val _googleAiStudioModel = MutableStateFlow("gemini-2.5-flash")
     val googleAiStudioModel: Flow<String> = _googleAiStudioModel.asStateFlow()
 
     private val _copilotEnabled = MutableStateFlow(true)
@@ -217,7 +217,11 @@ class PreferencesManager(
             _openRouterApiKey.value = snapshot.openRouterApiKey
             _openRouterModel.value = snapshot.openRouterModel
             _googleAiStudioApiKey.value = snapshot.googleAiStudioApiKey
-            _googleAiStudioModel.value = snapshot.googleAiStudioModel
+            _googleAiStudioModel.value = if (snapshot.googleAiStudioModel.contains("1.5")) {
+                "gemini-2.5-flash"
+            } else {
+                snapshot.googleAiStudioModel
+            }
             _copilotEnabled.value = snapshot.copilotEnabled
             _totalCopilotTokens.value = snapshot.totalCopilotTokens
             _dynamicColorEnabled.value = snapshot.dynamicColorEnabled
