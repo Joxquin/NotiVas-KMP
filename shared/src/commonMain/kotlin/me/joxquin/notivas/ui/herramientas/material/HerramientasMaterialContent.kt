@@ -23,10 +23,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,6 +46,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,11 +68,17 @@ fun HerramientasMaterialContent(
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenArchive: () -> Unit = {},
     onOpenTuneSettings: () -> Unit = {},
+    onOpenCatalogImport: () -> Unit = {},
+    onImportJsonClick: () -> Unit = {},
+    onExportJsonClick: () -> Unit = {},
+    onResetGroups: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
     val uiState = viewModel?.uiState?.collectAsState()?.value
     val forosUiState = forosViewModel?.uiState?.collectAsState()?.value
+
+    var menuExpanded by remember { mutableStateOf(false) }
 
     val isScrolled by remember {
         derivedStateOf {
@@ -126,12 +141,90 @@ fun HerramientasMaterialContent(
                     }
                 },
                 actions = {
-                    androidx.compose.material3.IconButton(onClick = onOpenTuneSettings) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Outlined.Tune,
-                            contentDescription = "Ajustes de Ponderación",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Tune,
+                                contentDescription = stringResource(Res.string.groups_menu_options_title),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false },
+                            shape = RoundedCornerShape(16.dp),
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.groups_menu_import_catalog)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.LibraryBooks,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    onOpenCatalogImport()
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.groups_menu_import_json)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.FolderOpen,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    onImportJsonClick()
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.groups_menu_export_json)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Download,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    onExportJsonClick()
+                                }
+                            )
+
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(Res.string.groups_menu_reset_groups),
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Restore,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    onResetGroups()
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

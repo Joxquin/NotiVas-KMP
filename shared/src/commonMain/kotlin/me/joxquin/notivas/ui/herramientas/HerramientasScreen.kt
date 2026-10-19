@@ -49,6 +49,10 @@ fun HerramientasScreen(
     onOpenArchive: () -> Unit = {},
     onOpenAssignmentDetail: ((me.joxquin.notivas.data.model.Assignment) -> Unit)? = null,
     onOpenTuneSettings: () -> Unit = {},
+    onOpenCatalogImport: () -> Unit = {},
+    onImportJsonClick: () -> Unit = {},
+    onExportJsonClick: () -> Unit = {},
+    onResetGroups: () -> Unit = {},
     onBack: () -> Unit = {},
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     lazyListState: LazyListState = rememberLazyListState(),
@@ -180,6 +184,10 @@ fun HerramientasScreen(
                         onOpenForoDetail = handleOpenForoDetail,
                         onOpenArchive = onOpenArchive,
                         onOpenTuneSettings = onOpenTuneSettings,
+                        onOpenCatalogImport = onOpenCatalogImport,
+                        onImportJsonClick = onImportJsonClick,
+                        onExportJsonClick = onExportJsonClick,
+                        onResetGroups = onResetGroups,
                         lazyListState = lazyListState
                     )
                 }

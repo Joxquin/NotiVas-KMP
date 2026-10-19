@@ -289,6 +289,13 @@
     <string name="bento_archive_subtitle">Descartadas y entregas pasadas (%1$d archivadas)</string>
     <string name="bento_archived_count">%1$d Archivadas</string>
 
+    <!-- Herramientas Settings Submenu -->
+    <string name="groups_menu_options_title">Opciones de Ponderación</string>
+    <string name="groups_menu_import_catalog">Importar desde catálogo oficial</string>
+    <string name="groups_menu_import_json">Importar archivo JSON (Storage)</string>
+    <string name="groups_menu_export_json">Guardar archivo JSON (Storage)</string>
+    <string name="groups_menu_reset_groups">Restablecer todos los grupos</string>
+
     <!-- Copilot extras -->
     <string name="copilot_model_prefix">Modelo: %1$s</string>
     <string name="copilot_courses_synced">%1$d cursos sincronizados</string>

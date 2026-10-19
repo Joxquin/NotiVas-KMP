@@ -289,6 +289,13 @@
     <string name="bento_archive_subtitle">Dismissed and past submissions (%1$d archived)</string>
     <string name="bento_archived_count">%1$d Archived</string>
 
+    <!-- Herramientas Settings Submenu -->
+    <string name="groups_menu_options_title">Weighting Options</string>
+    <string name="groups_menu_import_catalog">Import from official catalog</string>
+    <string name="groups_menu_import_json">Import JSON file (Storage)</string>
+    <string name="groups_menu_export_json">Export JSON file (Storage)</string>
+    <string name="groups_menu_reset_groups">Reset all groups</string>
+
     <!-- Copilot extras -->
     <string name="copilot_model_prefix">Model: %1$s</string>
     <string name="copilot_courses_synced">%1$d synced courses</string>

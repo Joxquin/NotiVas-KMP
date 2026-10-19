@@ -58,6 +58,7 @@ import me.joxquin.notivas.data.repository.CopilotChatRepository
 import me.joxquin.notivas.data.repository.CopilotRepository
 import me.joxquin.notivas.data.model.UpdateInfo
 import me.joxquin.notivas.data.repository.UpdateRepository
+import me.joxquin.notivas.util.rememberFilePickerLauncher
 import me.joxquin.notivas.ui.components.UpdateDialog
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.components.miuix.FloatingNavigationBar
@@ -320,6 +321,19 @@ fun MainAppShell(
     val forosUiState by forosViewModel.uiState.collectAsState()
     val activityUiState by activityViewModel.uiState.collectAsState()
     val selectedAssignmentForDraft by dashboardViewModel.selectedAssignmentForDraft.collectAsState()
+
+    val filePicker = rememberFilePickerLauncher(
+        onFileSelected = { content ->
+            if (content.isNotBlank()) {
+                notasViewModel.importGlobalGroupsFromJson(content.trim()) {}
+            }
+        },
+        onRequestSaveContent = { onReadyToWrite ->
+            notasViewModel.exportGlobalGroups { jsonContent ->
+                onReadyToWrite(jsonContent)
+            }
+        }
+    )
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         // En Miuix: Interceptar botón Atrás físico para volver de Roadmap -> Agenda -> Actividad -> Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
@@ -807,12 +821,43 @@ fun MainAppShell(
                                     }
                                 }
                             } else if (!showingNotasDetail && !showingArchiveDetail) {
-                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                    onClick = { showHerramientasTuneSheet = true }
+                                val importCatalogLabel = stringResource(Res.string.groups_menu_import_catalog)
+                                val importJsonLabel = stringResource(Res.string.groups_menu_import_json)
+                                val exportJsonLabel = stringResource(Res.string.groups_menu_export_json)
+                                val resetGroupsLabel = stringResource(Res.string.groups_menu_reset_groups)
+
+                                val herramientasDropdownEntries = remember(importCatalogLabel, importJsonLabel, exportJsonLabel, resetGroupsLabel) {
+                                    listOf(
+                                        top.yukonga.miuix.kmp.basic.DropdownEntry(
+                                            items = listOf(
+                                                top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                    text = importCatalogLabel,
+                                                    onClick = { showCatalogImportDialog = true }
+                                                ),
+                                                top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                    text = importJsonLabel,
+                                                    onClick = { filePicker.launchFilePicker() }
+                                                ),
+                                                top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                    text = exportJsonLabel,
+                                                    onClick = { filePicker.launchFileCreator("notivas_ponderacion.json") }
+                                                ),
+                                                top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                    text = resetGroupsLabel,
+                                                    onClick = { notasViewModel.resetAllSimulationGroups() }
+                                                )
+                                            )
+                                        )
+                                    )
+                                }
+
+                                top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu(
+                                    entries = herramientasDropdownEntries,
+                                    collapseOnSelection = true
                                 ) {
-                                    androidx.compose.material3.Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Outlined.Tune,
-                                        contentDescription = "Ajustes de Ponderación",
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Tune,
+                                        contentDescription = stringResource(Res.string.groups_menu_options_title),
                                         tint = MiuixTheme.colorScheme.onSurface,
                                         modifier = Modifier.size(18.dp)
                                     )
@@ -1144,6 +1189,10 @@ fun MainAppShell(
                                     )
                                 },
                                 onOpenTuneSettings = { showHerramientasTuneSheet = true },
+                                onOpenCatalogImport = { showCatalogImportDialog = true },
+                                onImportJsonClick = { filePicker.launchFilePicker() },
+                                onExportJsonClick = { filePicker.launchFileCreator("notivas_ponderacion.json") },
+                                onResetGroups = { notasViewModel.resetAllSimulationGroups() },
                                 onBack = {
                                     showingNotasDetail = false
                                     showingForosDetail = false
