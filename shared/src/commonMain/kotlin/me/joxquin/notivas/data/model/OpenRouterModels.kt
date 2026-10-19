@@ -52,7 +52,18 @@ data class OpenRouterProperty(
 data class OpenRouterToolCall(
     @SerialName("id") val id: String,
     @SerialName("type") val type: String = "function",
-    @SerialName("function") val function: OpenRouterFunctionCall
+    @SerialName("function") val function: OpenRouterFunctionCall,
+    @SerialName("extra_content") val extraContent: OpenRouterExtraContent? = null
+)
+
+@Serializable
+data class OpenRouterExtraContent(
+    @SerialName("google") val google: OpenRouterGoogleExtraContent? = null
+)
+
+@Serializable
+data class OpenRouterGoogleExtraContent(
+    @SerialName("thought_signature") val thoughtSignature: String? = null
 )
 
 @Serializable

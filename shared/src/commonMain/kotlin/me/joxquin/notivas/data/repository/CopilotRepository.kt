@@ -164,15 +164,33 @@ class CopilotRepository(
 
             // 1. Si el modelo solicitó ejecutar herramientas nativas
             if (!toolCalls.isNullOrEmpty()) {
+                val processedToolCalls = if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+                    toolCalls.map { call ->
+                        if (call.extraContent?.google?.thoughtSignature.isNullOrBlank()) {
+                            call.copy(
+                                extraContent = me.joxquin.notivas.data.model.OpenRouterExtraContent(
+                                    google = me.joxquin.notivas.data.model.OpenRouterGoogleExtraContent(
+                                        thoughtSignature = "skip_thought_signature_validator"
+                                    )
+                                )
+                            )
+                        } else {
+                            call
+                        }
+                    }
+                } else {
+                    toolCalls
+                }
+
                 messages.add(
                     OpenRouterMessage(
                         role = "assistant",
                         content = choiceMessage.content,
-                        toolCalls = toolCalls
+                        toolCalls = processedToolCalls
                     )
                 )
 
-                for (call in toolCalls) {
+                for (call in processedToolCalls) {
                     val fnName = call.function.name
                     val fnArgs = call.function.arguments
                     val execution = toolExecutor.executeTool(fnName, fnArgs, selectedCourseId)
