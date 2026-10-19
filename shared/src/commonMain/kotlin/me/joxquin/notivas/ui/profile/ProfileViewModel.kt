@@ -31,8 +31,11 @@ data class ProfileUiState(
     val pomodoroDurationMinutes: Int = 25,
     val syncIntervalMinutes: Long = 15L,
     val biometricLock: Boolean = false,
+    val copilotProvider: me.joxquin.notivas.data.local.CopilotProvider = me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER,
     val openRouterApiKey: String? = null,
     val openRouterModel: String = "google/gemini-2.5-flash",
+    val googleAiStudioApiKey: String? = null,
+    val googleAiStudioModel: String = "gemini-1.5-flash",
     val copilotEnabled: Boolean = true,
     val totalCopilotTokens: Long = 0L,
     val openRouterBalance: OpenRouterAccountBalance? = null,
@@ -110,8 +113,11 @@ class ProfileViewModel(
         preferencesManager.pomodoroDurationMinutes,
         preferencesManager.syncIntervalMinutes,
         preferencesManager.biometricLock,
+        preferencesManager.copilotProvider,
         preferencesManager.openRouterApiKey,
         preferencesManager.openRouterModel,
+        preferencesManager.googleAiStudioApiKey,
+        preferencesManager.googleAiStudioModel,
         preferencesManager.copilotEnabled,
         preferencesManager.totalCopilotTokens,
         _openRouterBalance,
@@ -143,21 +149,24 @@ class ProfileViewModel(
             pomodoroDurationMinutes = args[7] as Int,
             syncIntervalMinutes = args[8] as Long,
             biometricLock = args[9] as Boolean,
-            openRouterApiKey = args[10] as String?,
-            openRouterModel = args[11] as String,
-            copilotEnabled = args[12] as Boolean,
-            totalCopilotTokens = args[13] as Long,
-            openRouterBalance = args[14] as OpenRouterAccountBalance?,
-            isLoadingBalance = args[15] as Boolean,
-            isVerifyingToken = args[16] as Boolean,
-            dynamicColorEnabled = args[17] as Boolean,
-            themeStyle = args[18] as AppThemeStyle,
-            authMode = args[19] as AuthMode,
-            appLanguage = args[20] as AppLanguage,
-            googleDriveConnected = args[21] as Boolean,
-            googleDriveEmail = args[22] as String?,
-            googleDriveLastSyncTimestamp = args[23] as Long,
-            googleDriveCacheSize = args[24] as String
+            copilotProvider = args[10] as me.joxquin.notivas.data.local.CopilotProvider,
+            openRouterApiKey = args[11] as String?,
+            openRouterModel = args[12] as String,
+            googleAiStudioApiKey = args[13] as String?,
+            googleAiStudioModel = args[14] as String,
+            copilotEnabled = args[15] as Boolean,
+            totalCopilotTokens = args[16] as Long,
+            openRouterBalance = args[17] as OpenRouterAccountBalance?,
+            isLoadingBalance = args[18] as Boolean,
+            isVerifyingToken = args[19] as Boolean,
+            dynamicColorEnabled = args[20] as Boolean,
+            themeStyle = args[21] as AppThemeStyle,
+            authMode = args[22] as AuthMode,
+            appLanguage = args[23] as AppLanguage,
+            googleDriveConnected = args[24] as Boolean,
+            googleDriveEmail = args[25] as String?,
+            googleDriveLastSyncTimestamp = args[26] as Long,
+            googleDriveCacheSize = args[27] as String
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
 
@@ -233,6 +242,15 @@ class ProfileViewModel(
         viewModelScope.launch { preferencesManager.setBiometricLock(enabled) }
     }
 
+    fun setCopilotProvider(provider: me.joxquin.notivas.data.local.CopilotProvider) {
+        viewModelScope.launch {
+            preferencesManager.setCopilotProvider(provider)
+            if (provider == me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER) {
+                refreshOpenRouterBalance()
+            }
+        }
+    }
+
     fun setOpenRouterApiKey(key: String?) {
         viewModelScope.launch {
             preferencesManager.setOpenRouterApiKey(key)
@@ -242,6 +260,14 @@ class ProfileViewModel(
 
     fun setOpenRouterModel(model: String) {
         viewModelScope.launch { preferencesManager.setOpenRouterModel(model) }
+    }
+
+    fun setGoogleAiStudioApiKey(key: String?) {
+        viewModelScope.launch { preferencesManager.setGoogleAiStudioApiKey(key) }
+    }
+
+    fun setGoogleAiStudioModel(model: String) {
+        viewModelScope.launch { preferencesManager.setGoogleAiStudioModel(model) }
     }
 
     fun setCopilotEnabled(enabled: Boolean) {

@@ -264,18 +264,24 @@ fun AjustesScreen(
                     )
                 }
 
-                // 4. Configuración de IA (Copilot / OpenRouter)
+                // 4. Configuración de IA (Copilot / OpenRouter / Google AI Studio)
                 item {
                     CopilotSettingsSection(
                         enabled = uiState.copilotEnabled,
+                        provider = uiState.copilotProvider,
                         apiKey = uiState.openRouterApiKey,
                         selectedModel = uiState.openRouterModel,
+                        googleAiStudioApiKey = uiState.googleAiStudioApiKey,
+                        googleAiStudioModel = uiState.googleAiStudioModel,
                         totalTokens = uiState.totalCopilotTokens,
                         balance = uiState.openRouterBalance,
                         isLoadingBalance = uiState.isLoadingBalance,
                         onEnabledChange = { viewModel.setCopilotEnabled(it) },
+                        onProviderChange = { viewModel.setCopilotProvider(it) },
                         onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
                         onModelChange = { viewModel.setOpenRouterModel(it) },
+                        onGoogleAiStudioApiKeyChange = { viewModel.setGoogleAiStudioApiKey(it) },
+                        onGoogleAiStudioModelChange = { viewModel.setGoogleAiStudioModel(it) },
                         onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
                         onAnalyzeModel = { viewModel.analyzeCustomModel(it) },
                         themeStyle = AppThemeStyle.MIUIX
@@ -452,18 +458,24 @@ fun AjustesScreen(
                 )
             }
 
-            // 5. Configuración de IA (Copilot / OpenRouter)
+            // 5. Configuración de IA (Copilot / OpenRouter / Google AI Studio)
             item {
                 CopilotSettingsSection(
                     enabled = uiState.copilotEnabled,
+                    provider = uiState.copilotProvider,
                     apiKey = uiState.openRouterApiKey,
                     selectedModel = uiState.openRouterModel,
+                    googleAiStudioApiKey = uiState.googleAiStudioApiKey,
+                    googleAiStudioModel = uiState.googleAiStudioModel,
                     totalTokens = uiState.totalCopilotTokens,
                     balance = uiState.openRouterBalance,
                     isLoadingBalance = uiState.isLoadingBalance,
                     onEnabledChange = { viewModel.setCopilotEnabled(it) },
+                    onProviderChange = { viewModel.setCopilotProvider(it) },
                     onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
                     onModelChange = { viewModel.setOpenRouterModel(it) },
+                    onGoogleAiStudioApiKeyChange = { viewModel.setGoogleAiStudioApiKey(it) },
+                    onGoogleAiStudioModelChange = { viewModel.setGoogleAiStudioModel(it) },
                     onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
                     onAnalyzeModel = { viewModel.analyzeCustomModel(it) },
                     themeStyle = AppThemeStyle.MATERIAL

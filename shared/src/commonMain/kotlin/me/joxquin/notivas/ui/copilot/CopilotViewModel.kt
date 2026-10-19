@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -126,11 +127,34 @@ class CopilotViewModel(
         },
         combine(
             preferencesManager.copilotEnabled,
+            preferencesManager.copilotProvider,
             preferencesManager.openRouterApiKey,
             preferencesManager.openRouterModel,
+            preferencesManager.googleAiStudioApiKey,
+            preferencesManager.googleAiStudioModel,
             _errorMessage
-        ) { enabled, apiKey, model, error ->
-            Tuple4(enabled, !apiKey.isNullOrBlank(), model, error)
+        ) { args: Array<Any?> ->
+            val enabled = args[0] as Boolean
+            val provider = args[1] as me.joxquin.notivas.data.local.CopilotProvider
+            val openRouterKey = args[2] as String?
+            val openRouterModel = args[3] as String
+            val googleAiKey = args[4] as String?
+            val googleAiModel = args[5] as String
+            val error = args[6] as String?
+
+            val hasKey = if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+                !googleAiKey.isNullOrBlank()
+            } else {
+                !openRouterKey.isNullOrBlank()
+            }
+
+            val currentModel = if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+                googleAiModel
+            } else {
+                openRouterModel
+            }
+
+            Tuple4(enabled, hasKey, currentModel, error)
         },
         combine(
             _isMentionPopupVisible,
@@ -485,10 +509,15 @@ class CopilotViewModel(
                 onFailure = { error ->
                     val errorText = error.message ?: "Ocurrió un error inesperado."
                     _errorMessage.value = errorText
+                    val provider = preferencesManager.copilotProvider.first()
+                    val providerName = when (provider) {
+                        me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
+                        me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
+                    }
                     val assistantErrorMessage = CopilotMessageItem(
                         id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
                         role = CopilotRole.ASSISTANT,
-                        text = "No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu API Key de OpenRouter y tu conexión.",
+                        text = "No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu API Key de $providerName y tu conexión.",
                         timestamp = DateTimeUtil.nowEpochMillis()
                     )
                     _messages.value = _messages.value + assistantErrorMessage
