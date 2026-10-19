@@ -111,7 +111,7 @@ fun CopilotSettingsSection(
     apiKey: String?,
     selectedModel: String,
     googleAiStudioApiKey: String? = null,
-    googleAiStudioModel: String = "gemini-2.5-flash",
+    googleAiStudioModel: String = "gemini-3.5-flash-lite",
     totalTokens: Long,
     balance: OpenRouterAccountBalance?,
     isLoadingBalance: Boolean,
@@ -144,9 +144,9 @@ fun CopilotSettingsSection(
 
     val googleAiStudioModels = remember {
         listOf(
-            "gemini-2.5-flash" to "Gemini 2.5 Flash (Recomendado)",
-            "gemini-2.5-flash-lite" to "Gemini 2.5 Flash-Lite (Rápido)",
-            "gemini-3.5-flash" to "Gemini 3.5 Flash",
+            "gemini-3.5-flash-lite" to "Gemini 3.5 Flash-Lite (Gratis / Rápido)",
+            "gemini-3.5-flash" to "Gemini 3.5 Flash (Recomendado)",
+            "gemini-2.5-flash" to "Gemini 2.5 Flash",
             "gemini-3.1-pro-preview" to "Gemini 3.1 Pro"
         )
     }

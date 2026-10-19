@@ -32,7 +32,7 @@ data class PersistentPreferencesSnapshot(
     val openRouterApiKey: String? = "",
     val openRouterModel: String = "google/gemini-2.5-flash",
     val googleAiStudioApiKey: String? = "",
-    val googleAiStudioModel: String = "gemini-2.5-flash",
+    val googleAiStudioModel: String = "gemini-3.5-flash-lite",
     val copilotEnabled: Boolean = true,
     val totalCopilotTokens: Long = 0L,
     val dynamicColorEnabled: Boolean = true,

@@ -116,7 +116,7 @@
     <string name="google_ai_studio_model_title">Modelo Google AI Studio</string>
     <string name="google_ai_studio_model_dialog_title">Seleccionar Modelo Gemini</string>
     <string name="google_ai_studio_model_dialog_desc">Selecciona el modelo Gemini de Google AI Studio para tus consultas:</string>
-    <string name="google_ai_studio_custom_model_hint">ID del modelo (ej: gemini-2.5-flash)</string>
+    <string name="google_ai_studio_custom_model_hint">ID del modelo (ej: gemini-3.5-flash-lite)</string>
     <string name="google_ai_studio_balance_title">Tokens Locales Usados</string>
 
     <!-- Security and Session -->
