@@ -76,15 +76,19 @@ fun DashboardHeroCarousel(
     courseStats: List<CourseStat>,
     unconfiguredCount: Int,
     firstUnconfiguredCourse: Course?,
+    morningBriefing: me.joxquin.notivas.data.model.MorningBriefingData? = null,
+    onOpenRoadmap: () -> Unit = {},
     onCheckPerformance: () -> Unit,
     onConfigureFormulas: (Course?) -> Unit,
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
+    val hasBriefing = morningBriefing != null
+    val totalPages = if (hasBriefing) 3 else 2
     val pagerState = rememberPagerState(
-        initialPage = if (unconfiguredCount > 0) 1 else 0
-    ) { 2 }
+        initialPage = 0
+    ) { totalPages }
     val coroutineScope = rememberCoroutineScope()
 
     // Cálculo del promedio ponderado global
@@ -106,6 +110,33 @@ fun DashboardHeroCarousel(
             pageSpacing = 12.dp,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
+            val content: @Composable () -> Unit = {
+                when {
+                    hasBriefing && page == 0 -> {
+                        MorningBriefingSlideContent(
+                            briefing = morningBriefing!!,
+                            onOpenRoadmap = onOpenRoadmap,
+                            isMiuix = isMiuix
+                        )
+                    }
+                    (!hasBriefing && page == 0) || (hasBriefing && page == 1) -> {
+                        PerformanceSlideContent(
+                            overallAverage = overallAverage,
+                            onCheckPerformance = onCheckPerformance,
+                            isMiuix = isMiuix
+                        )
+                    }
+                    else -> {
+                        FormulasSlideContent(
+                            unconfiguredCount = unconfiguredCount,
+                            firstUnconfiguredCourse = firstUnconfiguredCourse,
+                            onConfigureFormulas = onConfigureFormulas,
+                            isMiuix = isMiuix
+                        )
+                    }
+                }
+            }
+
             if (isMiuix) {
                 MiuixCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -113,20 +144,7 @@ fun DashboardHeroCarousel(
                     insideMargin = PaddingValues(16.dp),
                     pressFeedbackType = PressFeedbackType.None
                 ) {
-                    if (page == 0) {
-                        PerformanceSlideContent(
-                            overallAverage = overallAverage,
-                            onCheckPerformance = onCheckPerformance,
-                            isMiuix = true
-                        )
-                    } else {
-                        FormulasSlideContent(
-                            unconfiguredCount = unconfiguredCount,
-                            firstUnconfiguredCourse = firstUnconfiguredCourse,
-                            onConfigureFormulas = onConfigureFormulas,
-                            isMiuix = true
-                        )
-                    }
+                    content()
                 }
             } else {
                 Card(
@@ -135,20 +153,7 @@ fun DashboardHeroCarousel(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(modifier = Modifier.padding(16.dp)) {
-                        if (page == 0) {
-                            PerformanceSlideContent(
-                                overallAverage = overallAverage,
-                                onCheckPerformance = onCheckPerformance,
-                                isMiuix = false
-                            )
-                        } else {
-                            FormulasSlideContent(
-                                unconfiguredCount = unconfiguredCount,
-                                firstUnconfiguredCourse = firstUnconfiguredCourse,
-                                onConfigureFormulas = onConfigureFormulas,
-                                isMiuix = false
-                            )
-                        }
+                        content()
                     }
                 }
             }
@@ -160,7 +165,7 @@ fun DashboardHeroCarousel(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            repeat(2) { index ->
+            repeat(totalPages) { index ->
                 val isSelected = pagerState.currentPage == index
                 val width by animateDpAsState(
                     targetValue = if (isSelected) 20.dp else 6.dp,

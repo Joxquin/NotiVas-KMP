@@ -232,6 +232,19 @@
     <string name="onboarding_domain_title">Selecciona tu Universidad</string>
     <string name="onboarding_login_sso">Inicio Institucional (SSO Web)</string>
     <string name="onboarding_login_token">Token Manual de Acceso</string>
+    <string name="onboarding_bg_sync_title">Sincronización y Notificaciones</string>
+    <string name="onboarding_bg_sync_subtitle">Configura estos permisos para recibir recordatorios puntuales y mantener tus cursos actualizados sin abrir la app</string>
+    <string name="onboarding_battery_title">Batería sin restricciones</string>
+    <string name="onboarding_battery_desc">Evita que Android congele las descargas de tareas y suspenda las alertas cuando la pantalla esté apagada</string>
+    <string name="onboarding_alarms_title">Alarmas y recordatorios exactos</string>
+    <string name="onboarding_alarms_desc">Permite avisarte al minuto exacto a las 24h, 3h y 30m previas a la hora de entrega de cada evaluación</string>
+    <string name="onboarding_miui_title">Ajustes de HyperOS / MIUI</string>
+    <string name="onboarding_miui_desc">En dispositivos Xiaomi se requiere activar \'Inicio automático\' y quitar el ahorro de batería agresivo</string>
+    <string name="onboarding_miui_autostart_btn">Inicio Automático</string>
+    <string name="onboarding_miui_battery_btn">Ahorro de Batería</string>
+    <string name="permission_status_granted">Configurado</string>
+    <string name="permission_status_action">Permitir</string>
+    <string name="onboarding_finish_btn">Comenzar a usar NotiVas</string>
 
     <!-- Bento Cards & Herramientas extras -->
     <string name="bento_progress_title">Progreso</string>
@@ -564,4 +577,32 @@
     <string name="search_no_results">No se encontraron resultados para \"%1$s\"</string>
     <string name="search_ask_copilot_format">Preguntar a Copilot IA sobre \"%1$s\"</string>
     <string name="search_quick_suggestions">Sugerencias y accesos directos</string>
+
+    <!-- Morning Briefing & Daily Roadmap -->
+    <string name="morning_briefing_pill">Resumen Matutino • Hoy 8:00 AM</string>
+    <string name="morning_briefing_greeting">¡Buen día, %1$s! Tienes %2$d entregas para hoy.</string>
+    <string name="morning_briefing_greeting_zero">¡Buen día, %1$s! No tienes entregas pendientes para hoy.</string>
+    <string name="morning_briefing_critical_tasks">%1$d críticas (&lt;12h)</string>
+    <string name="morning_briefing_upcoming_tasks">%1$d próximas (12-48h)</string>
+    <string name="morning_briefing_closing_today">%1$d cierran hoy</string>
+    <string name="morning_briefing_due_in_format">Vence en %1$s</string>
+    <string name="morning_briefing_due_at_format">Hoy %1$s</string>
+    <string name="morning_briefing_points_format">%1$s pts</string>
+    <string name="morning_briefing_weight_format">%1$s%% ponderado</string>
+    <string name="morning_briefing_updated_at">Actualizado a las %1$s (SQLite local)</string>
+    <string name="morning_briefing_view_plan">Ver plan del día</string>
+    <string name="daily_roadmap_title">Plan del Día</string>
+    <string name="daily_roadmap_executive_summary_title">Resumen Ejecutivo del Asistente</string>
+    <string name="daily_roadmap_timeline_title">Cronograma y Bloques del Día</string>
+    <string name="daily_roadmap_impact_title">Desglose de Impacto Académico</string>
+    <string name="daily_roadmap_points_stake_format">Hoy defines %1$s puntos acumulados del semestre</string>
+    <string name="daily_roadmap_at_risk_warning">Impacto Crítico en Promedio</string>
+    <string name="daily_roadmap_action_drive">Iniciar Borrador en Drive</string>
+    <string name="daily_roadmap_action_snooze">Silenciar alertas</string>
+    <string name="daily_roadmap_action_undo">Deshacer</string>
+    <string name="daily_roadmap_action_ask_ai">¿Cómo divido mi tiempo de estudio para hoy?</string>
+    <string name="daily_roadmap_action_explain_rubric">Explícame la rúbrica de la entrega de hoy</string>
+    <string name="morning_briefing_api_key_required_title">API Key de OpenRouter Requerida</string>
+    <string name="morning_briefing_api_key_required_desc">El Resumen Matutino Diario requiere una clave API activa de OpenRouter para generar resúmenes inteligentes y consejos del día.</string>
+    <string name="morning_briefing_configure_api_key">Configurar API Key</string>
 </resources>

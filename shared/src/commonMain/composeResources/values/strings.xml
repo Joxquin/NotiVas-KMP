@@ -232,6 +232,19 @@
     <string name="onboarding_domain_title">Select your University</string>
     <string name="onboarding_login_sso">Institutional Login (SSO Web)</string>
     <string name="onboarding_login_token">Manual Access Token</string>
+    <string name="onboarding_bg_sync_title">Background Sync &amp; Alerts</string>
+    <string name="onboarding_bg_sync_subtitle">Configure these permissions to receive timely reminders and keep courses synced without opening the app</string>
+    <string name="onboarding_battery_title">Unrestricted Battery</string>
+    <string name="onboarding_battery_desc">Prevents Android from freezing background sync and suspending reminders when the screen is off</string>
+    <string name="onboarding_alarms_title">Exact Alarms &amp; Reminders</string>
+    <string name="onboarding_alarms_desc">Allows alerting you at the exact minute for 24h, 3h, and 30m deadlines</string>
+    <string name="onboarding_miui_title">HyperOS / MIUI Settings</string>
+    <string name="onboarding_miui_desc">On Xiaomi devices, \'Autostart\' and unrestricted battery saver are required</string>
+    <string name="onboarding_miui_autostart_btn">Autostart</string>
+    <string name="onboarding_miui_battery_btn">Battery Saver</string>
+    <string name="permission_status_granted">Configured</string>
+    <string name="permission_status_action">Allow</string>
+    <string name="onboarding_finish_btn">Start using NotiVas</string>
 
     <!-- Bento Cards & Herramientas extras -->
     <string name="bento_progress_title">Progress</string>
@@ -564,6 +577,34 @@
     <string name="search_no_results">No results found for \"%1$s\"</string>
     <string name="search_ask_copilot_format">Ask Copilot AI about \"%1$s\"</string>
     <string name="search_quick_suggestions">Suggestions &amp; shortcuts</string>
+
+    <!-- Morning Briefing & Daily Roadmap -->
+    <string name="morning_briefing_pill">Morning Briefing • Today 8:00 AM</string>
+    <string name="morning_briefing_greeting">Good morning, %1$s! You have %2$d submissions today.</string>
+    <string name="morning_briefing_greeting_zero">Good morning, %1$s! You have no pending submissions today.</string>
+    <string name="morning_briefing_critical_tasks">%1$d critical (&lt;12h)</string>
+    <string name="morning_briefing_upcoming_tasks">%1$d upcoming (12-48h)</string>
+    <string name="morning_briefing_closing_today">%1$d closing today</string>
+    <string name="morning_briefing_due_in_format">Due in %1$s</string>
+    <string name="morning_briefing_due_at_format">Today %1$s</string>
+    <string name="morning_briefing_points_format">%1$s pts</string>
+    <string name="morning_briefing_weight_format">%1$s%% weighted</string>
+    <string name="morning_briefing_updated_at">Updated at %1$s (SQLite local)</string>
+    <string name="morning_briefing_view_plan">View daily plan</string>
+    <string name="daily_roadmap_title">Daily Plan</string>
+    <string name="daily_roadmap_executive_summary_title">Executive Summary</string>
+    <string name="daily_roadmap_timeline_title">Day Schedule &amp; Blocks</string>
+    <string name="daily_roadmap_impact_title">Academic Impact Breakdown</string>
+    <string name="daily_roadmap_points_stake_format">Today defines %1$s accumulated semester points</string>
+    <string name="daily_roadmap_at_risk_warning">Critical Impact on Average</string>
+    <string name="daily_roadmap_action_drive">Start Draft in Drive</string>
+    <string name="daily_roadmap_action_snooze">Snooze alerts</string>
+    <string name="daily_roadmap_action_undo">Undo</string>
+    <string name="daily_roadmap_action_ask_ai">Ask Copilot: Divide study time</string>
+    <string name="daily_roadmap_action_explain_rubric">Ask Copilot: Explain rubric</string>
+    <string name="morning_briefing_api_key_required_title">OpenRouter API Key Required</string>
+    <string name="morning_briefing_api_key_required_desc">The daily morning briefing requires an active OpenRouter API key to generate intelligent summaries and study advice.</string>
+    <string name="morning_briefing_configure_api_key">Configure API Key</string>
 </resources>
 
 

@@ -313,6 +313,7 @@ fun MainAppShell(
     var showingArchiveDetail by remember { mutableStateOf(false) }
     var showingActivityDetail by remember { mutableStateOf(false) }
     var showingScheduleDetail by remember { mutableStateOf(false) }
+    val showingMorningRoadmap by dashboardViewModel.showingMorningRoadmap.collectAsState()
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
@@ -321,9 +322,11 @@ fun MainAppShell(
     val selectedAssignmentForDraft by dashboardViewModel.selectedAssignmentForDraft.collectAsState()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        // En Miuix: Interceptar botón Atrás físico para volver de Agenda -> Actividad -> Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
-        BackHandler(enabled = showingScheduleDetail || showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || currentDestination != MainDestination.Inicio) {
-            if (showingScheduleDetail) {
+        // En Miuix: Interceptar botón Atrás físico para volver de Roadmap -> Agenda -> Actividad -> Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
+        BackHandler(enabled = showingMorningRoadmap || showingScheduleDetail || showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || currentDestination != MainDestination.Inicio) {
+            if (showingMorningRoadmap) {
+                dashboardViewModel.closeMorningRoadmap()
+            } else if (showingScheduleDetail) {
                 showingScheduleDetail = false
             } else if (showingActivityDetail) {
                 showingActivityDetail = false
@@ -393,6 +396,21 @@ fun MainAppShell(
                             } catch (_: Exception) {}
                         },
                         lazyListState = activityListState,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (showingMorningRoadmap) {
+                    me.joxquin.notivas.ui.dashboard.roadmap.MorningRoadmapScreen(
+                        viewModel = dashboardViewModel,
+                        onBack = { dashboardViewModel.closeMorningRoadmap() },
+                        onNavigateToCopilotWithPrompt = { prompt ->
+                            dashboardViewModel.closeMorningRoadmap()
+                            showingNotasDetail = false
+                            showingForosDetail = false
+                            mainPagerState.animateToPage(2)
+                            copilotViewModel.sendMessage(prompt)
+                        },
+                        themeStyle = AppThemeStyle.MIUIX,
+                        lazyListState = inicioListState,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else if (showingScheduleDetail) {
@@ -540,6 +558,7 @@ fun MainAppShell(
             // Capa 2: Barra Superior Canónica Unificada (Top Overlay)
             MiuixTopAppBar(
                 title = when {
+                    showingMorningRoadmap -> stringResource(Res.string.daily_roadmap_title)
                     showingScheduleDetail -> stringResource(Res.string.schedule_screen_title)
                     showingActivityDetail -> stringResource(Res.string.recent_activity_title)
                     selectedAssignmentForDraft != null -> stringResource(Res.string.assignment_detail_title)
@@ -555,16 +574,18 @@ fun MainAppShell(
                     else -> stringResource(Res.string.app_name)
                 },
                 isScrolled = when {
+                    showingMorningRoadmap -> isInicioScrolled
                     showingScheduleDetail -> isInicioScrolled
                     showingActivityDetail -> isActivityScrolled
                     selectedAssignmentForDraft != null -> true
                     currentDestination == MainDestination.Inicio -> isInicioScrolled
-                    currentDestination == MainDestination.Herramientas -> isHerramientasScrolled
+                    currentDestination == MainDestination.Herramientas -> herramientasScrollOffset > 0f
                     currentDestination == MainDestination.Ajustes -> isAjustesScrolled
                     currentDestination == MainDestination.Copilot -> true
                     else -> false
                 },
                 scrollOffset = when {
+                    showingMorningRoadmap -> inicioScrollOffset
                     showingScheduleDetail -> inicioScrollOffset
                     showingActivityDetail -> activityScrollOffset
                     selectedAssignmentForDraft != null -> 64f
@@ -575,9 +596,16 @@ fun MainAppShell(
                     else -> 0f
                 },
                 backdrop = contentBackdrop,
-                titleAlwaysVisible = showingScheduleDetail || showingActivityDetail || (selectedAssignmentForDraft != null) ||
+                titleAlwaysVisible = showingMorningRoadmap || showingScheduleDetail || showingActivityDetail || (selectedAssignmentForDraft != null) ||
                         (currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail || showingArchiveDetail)),
                 navigationIcon = when {
+                    showingMorningRoadmap -> {
+                        {
+                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
+                                onClick = { dashboardViewModel.closeMorningRoadmap() }
+                            )
+                        }
+                    }
                     showingScheduleDetail -> {
                         {
                             me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
@@ -650,6 +678,16 @@ fun MainAppShell(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
+                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                    onClick = { dashboardViewModel.refreshData() }
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Refresh,
+                                        contentDescription = "Sincronizar",
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                                 me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
                                     onClick = { showingScheduleDetail = true }
                                 ) {
@@ -820,8 +858,8 @@ fun MainAppShell(
                     }
             )
 
-            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador, actividad reciente, agenda o búsqueda
-            if (!showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null && !isDashboardSearchExpanded) {
+            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador, actividad reciente, agenda, roadmap o búsqueda
+            if (!showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null && !isDashboardSearchExpanded) {
                 FloatingNavigationBar(
                     currentDestination = currentDestination,
                     onNavigate = { destination ->
@@ -884,8 +922,10 @@ fun MainAppShell(
         }
 
         // Interceptar gesto/botón Atrás del sistema para Material 3:
-        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingScheduleDetail || showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || materialDestination != MainDestination.Inicio)) {
-            if (showingScheduleDetail) {
+        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingMorningRoadmap || showingScheduleDetail || showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || materialDestination != MainDestination.Inicio)) {
+            if (showingMorningRoadmap) {
+                dashboardViewModel.closeMorningRoadmap()
+            } else if (showingScheduleDetail) {
                 showingScheduleDetail = false
             } else if (showingActivityDetail) {
                 showingActivityDetail = false
@@ -912,7 +952,7 @@ fun MainAppShell(
             bottomBar = {
                 NotiVasNavigationBar(
                     currentDestination = materialDestination,
-                    isVisible = !isImeVisible && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null,
+                    isVisible = !isImeVisible && !showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null,
                     onNavigate = { destination ->
                         if (selectedAssignmentForDraft != null) {
                             dashboardViewModel.closeDraft()
@@ -924,7 +964,7 @@ fun MainAppShell(
                 )
             }
         ) { innerPadding ->
-            val targetBottom = if (!isImeVisible && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null) innerPadding.calculateBottomPadding() else 0.dp
+            val targetBottom = if (!isImeVisible && !showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null) innerPadding.calculateBottomPadding() else 0.dp
             val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
                 targetValue = targetBottom,
                 animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
@@ -936,7 +976,22 @@ fun MainAppShell(
                     .fillMaxSize()
                     .padding(bottom = animatedBottomPadding)
             ) {
-                if (showingScheduleDetail) {
+                if (showingMorningRoadmap) {
+                    me.joxquin.notivas.ui.dashboard.roadmap.MorningRoadmapScreen(
+                        viewModel = dashboardViewModel,
+                        onBack = { dashboardViewModel.closeMorningRoadmap() },
+                        onNavigateToCopilotWithPrompt = { prompt ->
+                            dashboardViewModel.closeMorningRoadmap()
+                            showingNotasDetail = false
+                            showingForosDetail = false
+                            navigateToMaterial(MainDestination.Copilot)
+                            copilotViewModel.sendMessage(prompt)
+                        },
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        lazyListState = inicioListState,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (showingScheduleDetail) {
                     me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen(
                         viewModel = dashboardViewModel,
                         themeStyle = AppThemeStyle.MATERIAL,

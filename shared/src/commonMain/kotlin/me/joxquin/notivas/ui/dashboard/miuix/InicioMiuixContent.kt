@@ -65,6 +65,7 @@ fun InicioMiuixContent(
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
     val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
+    val morningBriefing by viewModel.morningBriefing.collectAsState()
 
     var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
 
@@ -106,6 +107,10 @@ fun InicioMiuixContent(
 
     val recentSearches by viewModel.recentSearches.collectAsState()
     val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
+    var searchOffsetY by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(140.dp) }
+    var searchOverlayAnimStatus by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED)
+    }
 
     Box(
         modifier = modifier
@@ -159,24 +164,15 @@ fun InicioMiuixContent(
                 }
             }
 
-            // 1. Buscador Global + Vista Incrustada de Búsqueda
+            // 1. Buscador Global (Cápsula Ancla con medición de coordenada Y)
             item {
-                me.joxquin.notivas.ui.dashboard.components.search.DashboardEmbeddedSearchBar(
+                me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
                     query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    onSearchCommit = { viewModel.addRecentSearch(it) },
-                    recentSearches = recentSearches,
-                    onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
-                    onClearRecentHistory = { viewModel.clearRecentSearches() },
-                    courses = courses,
-                    courseStats = courseStats,
-                    assignments = allAssignments,
-                    onCourseClick = onNavigateToCourseProgreso,
-                    onAssignmentClick = { selectedAssignmentForSubmenu = it },
+                    onSearchClick = { viewModel.setSearchExpanded(true) },
+                    onPositionChanged = { searchOffsetY = it },
                     onAskAi = { query -> onNavigateToCopilot() },
                     themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-                    isExpanded = false,
-                    onExpandedChange = { viewModel.setSearchExpanded(it) }
+                    isVisible = searchOverlayAnimStatus == me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED && !isSearchExpanded
                 )
             }
 
@@ -186,6 +182,8 @@ fun InicioMiuixContent(
                     courseStats = courseStats,
                     unconfiguredCount = unconfiguredBannerState.first,
                     firstUnconfiguredCourse = unconfiguredBannerState.second,
+                    morningBriefing = morningBriefing,
+                    onOpenRoadmap = { viewModel.openMorningRoadmap() },
                     onCheckPerformance = { onNavigateToHerramientas() },
                     onConfigureFormulas = { course ->
                         if (course != null) {
@@ -218,26 +216,26 @@ fun InicioMiuixContent(
             }
         }
 
-        // Vista Incrustada de Búsqueda en Pantalla Completa
-        if (isSearchExpanded) {
-            me.joxquin.notivas.ui.dashboard.components.search.DashboardEmbeddedSearchBar(
-                query = searchQuery,
-                onQueryChange = { searchQuery = it },
-                onSearchCommit = { viewModel.addRecentSearch(it) },
-                recentSearches = recentSearches,
-                onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
-                onClearRecentHistory = { viewModel.clearRecentSearches() },
-                courses = courses,
-                courseStats = courseStats,
-                assignments = allAssignments,
-                onCourseClick = onNavigateToCourseProgreso,
-                onAssignmentClick = { selectedAssignmentForSubmenu = it },
-                onAskAi = { query -> onNavigateToCopilot() },
-                themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-                isExpanded = true,
-                onExpandedChange = { viewModel.setSearchExpanded(it) }
-            )
-        }
+        // Vista Incrustada de Búsqueda con Animación Ease Continua
+        me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(
+            isExpanded = isSearchExpanded,
+            onExpandedChange = { viewModel.setSearchExpanded(it) },
+            initialOffsetY = searchOffsetY,
+            query = searchQuery,
+            onQueryChange = { searchQuery = it },
+            onSearchCommit = { viewModel.addRecentSearch(it) },
+            recentSearches = recentSearches,
+            onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
+            onClearRecentHistory = { viewModel.clearRecentSearches() },
+            courses = courses,
+            courseStats = courseStats,
+            assignments = allAssignments,
+            onCourseClick = onNavigateToCourseProgreso,
+            onAssignmentClick = { selectedAssignmentForSubmenu = it },
+            onAskAi = { query -> onNavigateToCopilot() },
+            themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+            onAnimStatusChange = { searchOverlayAnimStatus = it }
+        )
 
         // Submenú Rápido de Opciones y Gestión de Tarea (WindowBottomSheet)
         me.joxquin.notivas.ui.dashboard.components.AssignmentQuickSubmenuSheet(

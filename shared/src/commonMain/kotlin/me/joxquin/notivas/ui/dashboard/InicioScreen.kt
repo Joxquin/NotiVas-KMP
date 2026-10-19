@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,6 +74,7 @@ fun InicioScreen(
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
     val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
+    val morningBriefing by viewModel.morningBriefing.collectAsState()
 
     var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
 
@@ -122,27 +124,44 @@ fun InicioScreen(
 
     val recentSearches by viewModel.recentSearches.collectAsState()
     val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
+    var searchOffsetY by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(140.dp) }
+    var searchOverlayAnimStatus by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED)
+    }
+
+    val topBarAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (searchOverlayAnimStatus.shouldExpand()) 0f else 1f,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
+        label = "InicioTopBarAlpha"
+    )
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (!isSearchExpanded) {
-                InicioTopAppBar(
-                    isScrolled = isScrolled,
-                    title = "NotiVas",
-                    onRefresh = { viewModel.refreshData() },
-                    onNavigateToActivity = onNavigateToActivity,
-                    onNavigateToSchedule = onNavigateToSchedule,
-                    onNavigateToAjustes = onNavigateToAjustes
-                )
-            }
+            InicioTopAppBar(
+                isScrolled = isScrolled,
+                title = "NotiVas",
+                onRefresh = { viewModel.refreshData() },
+                onNavigateToActivity = onNavigateToActivity,
+                onNavigateToSchedule = onNavigateToSchedule,
+                onNavigateToAjustes = onNavigateToAjustes,
+                modifier = Modifier.graphicsLayer {
+                    alpha = topBarAlpha
+                }
+            )
         },
         floatingActionButton = {
-            if (!isSearchExpanded) {
-                InicioQuickActionsFab(
-                    onNavigateToCopilot = onNavigateToCopilot,
-                    onNavigateToHerramientas = onNavigateToHerramientas
-                )
+            Box(
+                modifier = Modifier.graphicsLayer {
+                    alpha = topBarAlpha
+                }
+            ) {
+                if (topBarAlpha > 0.05f) {
+                    InicioQuickActionsFab(
+                        onNavigateToCopilot = onNavigateToCopilot,
+                        onNavigateToHerramientas = onNavigateToHerramientas
+                    )
+                }
             }
         },
         containerColor = MaterialTheme.colorScheme.surface
@@ -180,24 +199,15 @@ fun InicioScreen(
                     }
                 }
 
-                // ─── 1. Buscador Global + Vista Incrustada de Búsqueda ──────────
+                // ─── 1. Buscador Global (Cápsula Ancla con medición de coordenada Y) ──────────
                 item {
-                    me.joxquin.notivas.ui.dashboard.components.search.DashboardEmbeddedSearchBar(
+                    me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
                         query = searchQuery,
-                        onQueryChange = { searchQuery = it },
-                        onSearchCommit = { viewModel.addRecentSearch(it) },
-                        recentSearches = recentSearches,
-                        onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
-                        onClearRecentHistory = { viewModel.clearRecentSearches() },
-                        courses = courses,
-                        courseStats = courseStats,
-                        assignments = allAssignments,
-                        onCourseClick = onNavigateToCourseProgreso,
-                        onAssignmentClick = { selectedAssignmentForSubmenu = it },
+                        onSearchClick = { viewModel.setSearchExpanded(true) },
+                        onPositionChanged = { searchOffsetY = it },
                         onAskAi = { query -> onNavigateToCopilot() },
                         themeStyle = AppThemeStyle.MATERIAL,
-                        isExpanded = false,
-                        onExpandedChange = { viewModel.setSearchExpanded(it) }
+                        isVisible = searchOverlayAnimStatus == me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED && !isSearchExpanded
                     )
                 }
 
@@ -207,6 +217,8 @@ fun InicioScreen(
                         courseStats = courseStats,
                         unconfiguredCount = unconfiguredBannerState.first,
                         firstUnconfiguredCourse = unconfiguredBannerState.second,
+                        morningBriefing = morningBriefing,
+                        onOpenRoadmap = { viewModel.openMorningRoadmap() },
                         onCheckPerformance = { onNavigateToHerramientas() },
                         onConfigureFormulas = { course ->
                             if (course != null) {
@@ -239,26 +251,26 @@ fun InicioScreen(
                 }
             }
 
-            // Vista Incrustada de Búsqueda en Pantalla Completa
-            if (isSearchExpanded) {
-                me.joxquin.notivas.ui.dashboard.components.search.DashboardEmbeddedSearchBar(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    onSearchCommit = { viewModel.addRecentSearch(it) },
-                    recentSearches = recentSearches,
-                    onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
-                    onClearRecentHistory = { viewModel.clearRecentSearches() },
-                    courses = courses,
-                    courseStats = courseStats,
-                    assignments = allAssignments,
-                    onCourseClick = onNavigateToCourseProgreso,
-                    onAssignmentClick = { selectedAssignmentForSubmenu = it },
-                    onAskAi = { query -> onNavigateToCopilot() },
-                    themeStyle = AppThemeStyle.MATERIAL,
-                    isExpanded = true,
-                    onExpandedChange = { viewModel.setSearchExpanded(it) }
-                )
-            }
+            // Vista Incrustada de Búsqueda con Animación Ease Continua
+            me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(
+                isExpanded = isSearchExpanded,
+                onExpandedChange = { viewModel.setSearchExpanded(it) },
+                initialOffsetY = searchOffsetY,
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                onSearchCommit = { viewModel.addRecentSearch(it) },
+                recentSearches = recentSearches,
+                onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
+                onClearRecentHistory = { viewModel.clearRecentSearches() },
+                courses = courses,
+                courseStats = courseStats,
+                assignments = allAssignments,
+                onCourseClick = onNavigateToCourseProgreso,
+                onAssignmentClick = { selectedAssignmentForSubmenu = it },
+                onAskAi = { query -> onNavigateToCopilot() },
+                themeStyle = AppThemeStyle.MATERIAL,
+                onAnimStatusChange = { searchOverlayAnimStatus = it }
+            )
         }
 
         // Submenú Rápido de Opciones y Gestión de Tarea
