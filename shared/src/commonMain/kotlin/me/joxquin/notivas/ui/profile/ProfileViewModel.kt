@@ -35,7 +35,7 @@ data class ProfileUiState(
     val openRouterApiKey: String? = null,
     val openRouterModel: String = "google/gemini-2.5-flash",
     val googleAiStudioApiKey: String? = null,
-    val googleAiStudioModel: String = "gemini-1.5-flash",
+    val googleAiStudioModel: String = "gemini-2.5-flash",
     val copilotEnabled: Boolean = true,
     val totalCopilotTokens: Long = 0L,
     val openRouterBalance: OpenRouterAccountBalance? = null,
