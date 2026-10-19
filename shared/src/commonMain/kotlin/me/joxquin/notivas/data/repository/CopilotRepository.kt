@@ -225,6 +225,42 @@ class CopilotRepository(
             break
         }
 
+        // Si se agotaron los intentos de llamadas a herramientas y el modelo no generó su síntesis final,
+        // forzamos una última llamada sin tools exigiéndole la redacción final con los datos acumulados
+        if (finalReply.isNullOrBlank() && accumulatedSources.isNotEmpty()) {
+            try {
+                messages.add(
+                    OpenRouterMessage(
+                        role = "user",
+                        content = "Con toda la información obtenida arriba de Canvas LMS, responde ahora de forma completa, detallada y estructurada la consulta original del estudiante en Markdown (usando tablas, divisores y viñetas según corresponda)."
+                    )
+                )
+                val finalSynthesisResponse = openRouterApiService.chatCompletion(
+                    apiKey = apiKey,
+                    request = OpenRouterChatRequest(
+                        model = model,
+                        messages = messages,
+                        tools = null,
+                        temperature = 0.3,
+                        maxTokens = 4000
+                    )
+                )
+                val synthesisText = finalSynthesisResponse.choices?.firstOrNull()?.message?.content
+                if (!synthesisText.isNullOrBlank()) {
+                    finalReply = synthesisText.replace(Regex("(?s)<tool_call>.*?</tool_call>"), "").trim()
+                }
+                finalSynthesisResponse.usage?.let { u ->
+                    val pTok = u.promptTokens ?: 0
+                    val cTok = u.completionTokens ?: 0
+                    totalPromptTokens += pTok
+                    totalCompletionTokens += cTok
+                    totalTokens += u.totalTokens ?: (pTok + cTok)
+                }
+            } catch (e: Exception) {
+                println("Copilot [Aviso] Falló la síntesis forzada final: ${e.message}")
+            }
+        }
+
         if (finalReply.isNullOrBlank()) {
             finalReply = if (accumulatedSources.isNotEmpty()) {
                 buildString {
