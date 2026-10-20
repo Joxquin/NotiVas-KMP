@@ -348,17 +348,46 @@ class DashboardViewModel(
                             }
                             me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE -> {
                                 // Obtener URL de descarga del archivo de Canvas y descargarlo
-                                val downloadUrl = if (effectiveCandidate.canvasFileId != null) {
-                                    repository.getCanvasFileDownloadUrl(assignment.courseId, effectiveCandidate.canvasFileId)
-                                } else {
-                                    effectiveCandidate.url
+                                println("[DashboardViewModel] Procesando plantilla CANVAS_FILE: ${effectiveCandidate.title}, url=${effectiveCandidate.url}, canvasFileId=${effectiveCandidate.canvasFileId}")
+                                var fileBytes: ByteArray? = null
+
+                                var downloadUrl = effectiveCandidate.url.replace("&amp;", "&").trim()
+                                val fileIdFromUrl = Regex("""/files/(\d+)""").find(downloadUrl)?.groupValues?.get(1)?.toLongOrNull() ?: effectiveCandidate.canvasFileId
+                                if (fileIdFromUrl != null && !downloadUrl.contains("/download")) {
+                                    val verifier = Regex("""verifier=([^&"'>]+)""").find(downloadUrl)?.groupValues?.get(1)
+                                    if (downloadUrl.startsWith("http://") || downloadUrl.startsWith("https://")) {
+                                        val hostBase = downloadUrl.substringBefore("/courses/").substringBefore("/files/")
+                                        downloadUrl = "$hostBase/files/$fileIdFromUrl/download?download_frd=1${if (verifier != null) "&verifier=$verifier" else ""}"
+                                        println("[DashboardViewModel] URL transformada a endpoint directo de descarga: $downloadUrl")
+                                    }
                                 }
 
-                                val fileBytes = if (!downloadUrl.isNullOrBlank()) {
-                                    repository.downloadCanvasFileBytes(downloadUrl)
-                                } else null
+                                // 1. Descargar desde downloadUrl
+                                if (downloadUrl.startsWith("http://") || downloadUrl.startsWith("https://")) {
+                                    println("[DashboardViewModel] Descargando desde downloadUrl: $downloadUrl")
+                                    val bytes = repository.downloadCanvasFileBytes(downloadUrl)
+                                    if (bytes != null && bytes.isNotEmpty() && !isJsonContent(bytes)) {
+                                        fileBytes = bytes
+                                    } else {
+                                        println("[DashboardViewModel] Bytes obtenidos invalidos o es JSON (${bytes?.size} bytes).")
+                                    }
+                                }
 
-                                if (fileBytes != null && fileBytes.isNotEmpty()) {
+                                // 2. Si no se descargo o devolvio JSON pero tiene canvasFileId, resolver URL via API
+                                if (fileBytes == null && effectiveCandidate.canvasFileId != null) {
+                                    println("[DashboardViewModel] Resolviendo URL via getCanvasFileDownloadUrl para fileId=${effectiveCandidate.canvasFileId}...")
+                                    val resolvedUrl = repository.getCanvasFileDownloadUrl(assignment.courseId, effectiveCandidate.canvasFileId)
+                                    if (!resolvedUrl.isNullOrBlank()) {
+                                        println("[DashboardViewModel] URL resuelta: $resolvedUrl. Descargando...")
+                                        val bytes = repository.downloadCanvasFileBytes(resolvedUrl)
+                                        if (bytes != null && bytes.isNotEmpty() && !isJsonContent(bytes)) {
+                                            fileBytes = bytes
+                                        }
+                                    }
+                                }
+
+                                if (fileBytes != null && fileBytes.isNotEmpty() && !isJsonContent(fileBytes)) {
+                                    println("[DashboardViewModel] Archivo descargado exitosamente (${fileBytes.size} bytes). Subiendo y convirtiendo a Google Drive...")
                                     val isSheet = effectiveCandidate.fileExtension == "xlsx" || effectiveCandidate.fileExtension == "xls"
                                     val targetMime = if (isSheet) {
                                         me.joxquin.notivas.data.remote.GoogleDriveApiService.MIME_TYPE_GSHEET
@@ -371,15 +400,23 @@ class DashboardViewModel(
                                         me.joxquin.notivas.data.remote.GoogleDriveApiService.MIME_TYPE_DOCX
                                     }
 
-                                    googleDriveApiService.uploadAndConvertFile(
+                                    val uploaded = googleDriveApiService.uploadAndConvertFile(
                                         fileName = generatedFileName,
                                         parentFolderId = folderId,
                                         fileBytes = fileBytes,
                                         targetMimeType = targetMime,
                                         sourceMimeType = sourceMime
-                                    ) ?: googleDriveApiService.createBlankDocument(generatedFileName, folderId)
+                                    )
+                                    if (uploaded == null) {
+                                        println("[DashboardViewModel] uploadAndConvertFile devolvio null. Creando documento en blanco como fallback...")
+                                        _uiEffect.tryEmit(UiEffect.ShowToast("No se pudo convertir la plantilla en Google Docs. Se creo un documento base."))
+                                        googleDriveApiService.createBlankDocument(generatedFileName, folderId)
+                                    } else {
+                                        uploaded
+                                    }
                                 } else {
-                                    // Si no se pudo descargar el archivo binario, crear documento base
+                                    println("[DashboardViewModel] No se pudieron obtener los bytes del archivo Canvas. Fallback a documento en blanco.")
+                                    _uiEffect.tryEmit(UiEffect.ShowToast("No se pudo descargar la plantilla de Canvas. Se creo un documento en blanco."))
                                     googleDriveApiService.createBlankDocument(generatedFileName, folderId)
                                 }
                             }
@@ -711,5 +748,11 @@ class DashboardViewModel(
         viewModelScope.launch {
             _forceAiMorningRefresh.value += 1
         }
+    }
+
+    private fun isJsonContent(bytes: ByteArray): Boolean {
+        if (bytes.size > 65536) return false
+        val trimmed = bytes.take(20).toByteArray().decodeToString().trimStart()
+        return trimmed.startsWith("{") || trimmed.startsWith("[")
     }
 }

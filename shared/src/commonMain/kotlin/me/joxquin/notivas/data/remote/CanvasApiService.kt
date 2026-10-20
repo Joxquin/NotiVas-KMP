@@ -7,6 +7,11 @@ import io.ktor.client.request.get
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpHeaders
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.CanvasAssignmentDetailResponse
 import me.joxquin.notivas.data.model.CanvasAuthCredential
@@ -319,13 +324,73 @@ class CanvasApiService(
         downloadUrl: String,
         token: String
     ): ByteArray? {
-        return try {
-            client.get(downloadUrl) {
-                applyAuth(token)
-            }.body()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        var currentUrl = downloadUrl.replace("&amp;", "&").trim()
+        val jsonParser = Json { ignoreUnknownKeys = true; isLenient = true }
+
+        var attempts = 0
+        while (attempts < 4) {
+            attempts++
+            try {
+                val isExternalStorage = currentUrl.contains("inscloudgate.net") ||
+                        currentUrl.contains("amazonaws.com") ||
+                        currentUrl.contains("canvas-user-content.com") ||
+                        currentUrl.contains("google.com")
+
+                val response = client.get(currentUrl) {
+                    if (!isExternalStorage) {
+                        applyAuth(token)
+                    }
+                    headers[HttpHeaders.Accept] = "*/*"
+                    headers.remove(HttpHeaders.ContentType)
+                }
+
+                val bytes: ByteArray = response.body()
+                if (bytes.isEmpty()) {
+                    return null
+                }
+
+                val contentType = response.headers[HttpHeaders.ContentType] ?: ""
+                val isJson = contentType.contains("application/json", ignoreCase = true) ||
+                        (bytes.size < 65536 && bytes.take(20).toByteArray().decodeToString().trimStart().startsWith("{"))
+
+                if (isJson) {
+                    val jsonStr = bytes.decodeToString()
+                    println("[CanvasApiService] downloadFileBytes recibio JSON en vez de binario (${bytes.size} bytes). Parseando URL interna...")
+                    val jsonElement = try {
+                        jsonParser.parseToJsonElement(jsonStr)
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    val nextUrl = when (jsonElement) {
+                        is JsonObject -> {
+                            val attachment = jsonElement["attachment"] as? JsonObject
+                            attachment?.get("url")?.let { (it as? JsonPrimitive)?.contentOrNull }
+                                ?: attachment?.get("public_url")?.let { (it as? JsonPrimitive)?.contentOrNull }
+                                ?: jsonElement["url"]?.let { (it as? JsonPrimitive)?.contentOrNull }
+                                ?: jsonElement["public_url"]?.let { (it as? JsonPrimitive)?.contentOrNull }
+                        }
+                        else -> null
+                    }
+
+                    if (!nextUrl.isNullOrBlank() && nextUrl != currentUrl) {
+                        println("[CanvasApiService] Redirigiendo descarga a URL extraida del JSON: $nextUrl")
+                        currentUrl = nextUrl.replace("&amp;", "&")
+                        continue
+                    } else {
+                        println("[CanvasApiService] No se pudo encontrar una URL de descarga valida dentro del JSON recibido.")
+                        return null
+                    }
+                }
+
+                println("[CanvasApiService] Descarga exitosa de ${bytes.size} bytes desde $currentUrl")
+                return bytes
+            } catch (e: Exception) {
+                println("[CanvasApiService] Error descargando archivo desde $currentUrl: ${e.message}")
+                e.printStackTrace()
+                return null
+            }
         }
+        return null
     }
 }

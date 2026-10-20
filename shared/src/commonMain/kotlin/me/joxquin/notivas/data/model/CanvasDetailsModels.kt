@@ -96,6 +96,7 @@ data class CanvasFileDetail(
     @SerialName("display_name") val displayName: String? = null,
     @SerialName("filename") val filename: String? = null,
     @SerialName("url") val url: String? = null,
+    @SerialName("public_url") val publicUrl: String? = null,
     @SerialName("content-type") val contentType: String? = null,
     @SerialName("size") val size: Long? = null
 )
