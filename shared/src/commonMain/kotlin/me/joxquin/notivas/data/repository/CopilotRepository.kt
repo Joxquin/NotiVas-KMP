@@ -62,8 +62,9 @@ class CopilotRepository(
         }
 
         val model = preferencesManager.openRouterModel.first()
+        val appLanguage = preferencesManager.appLanguage.first()
         val courses = localStore.courses.first()
-        val systemPrompt = promptBuilder.buildSystemPrompt(courses, selectedCourseId)
+        val systemPrompt = promptBuilder.buildSystemPrompt(courses, selectedCourseId, appLanguage)
 
         val messages = promptBuilder.buildConversationMessages(systemPrompt, history, userPrompt)
 
@@ -283,6 +284,90 @@ class CopilotRepository(
             println("Copilot [Error] Error fetching OpenRouter balance: ${e.message}")
             null
         }
+    }
+
+    suspend fun analyzeModelCompatibility(modelId: String): me.joxquin.notivas.data.model.CustomModelAnalysisResult {
+        val cleanModel = modelId.trim()
+        if (cleanModel.isBlank()) {
+            return me.joxquin.notivas.data.model.CustomModelAnalysisResult(
+                modelId = modelId,
+                name = "Modelo no especificado",
+                status = me.joxquin.notivas.data.model.ModelCompatibilityStatus.INCOMPATIBLE,
+                message = "Debes ingresar un ID de modelo valido."
+            )
+        }
+
+        val apiKey = preferencesManager.openRouterApiKey.first()
+        val response = try {
+            openRouterApiService.getModelEndpoints(cleanModel, apiKey)
+        } catch (e: Exception) {
+            return me.joxquin.notivas.data.model.CustomModelAnalysisResult(
+                modelId = cleanModel,
+                name = cleanModel,
+                status = me.joxquin.notivas.data.model.ModelCompatibilityStatus.ERROR,
+                message = "Error de red al consultar el modelo: ${e.message ?: "Comprueba tu conexion"}"
+            )
+        }
+
+        if (response.error != null || response.data == null) {
+            val code = response.error?.code
+            val isNotFound = code == 404 || response.error?.message?.contains("Not Found", ignoreCase = true) == true
+            return me.joxquin.notivas.data.model.CustomModelAnalysisResult(
+                modelId = cleanModel,
+                name = cleanModel,
+                status = if (isNotFound) me.joxquin.notivas.data.model.ModelCompatibilityStatus.NOT_FOUND else me.joxquin.notivas.data.model.ModelCompatibilityStatus.ERROR,
+                message = if (isNotFound) "El modelo no fue encontrado en OpenRouter. Revisa el ID (ej: meta-llama/llama-3.3-70b-instruct)." else (response.error?.message ?: "Error al consultar modelo")
+            )
+        }
+
+        val data = response.data
+        val name = data.name ?: cleanModel
+        val description = data.description?.take(220)?.trim()
+        val architecture = data.architecture
+
+        val modality = architecture?.modality.orEmpty().lowercase()
+        val inputModalities = architecture?.inputModalities?.map { it.lowercase() } ?: emptyList()
+        val outputModalities = architecture?.outputModalities?.map { it.lowercase() } ?: emptyList()
+
+        val isTextOutput = outputModalities.contains("text") || modality.contains("->text")
+        val isTextInput = inputModalities.contains("text") || modality.startsWith("text")
+        val isMultimodal = inputModalities.any { it in listOf("image", "audio", "video") } || modality.contains("image")
+
+        val endpoints = data.endpoints
+        val contextLen = data.contextLength ?: endpoints.mapNotNull { it.contextLength }.maxOrNull()
+
+        // Verificar si algun endpoint soporta tool calling
+        val supportsToolCalling = endpoints.any { ep ->
+            val toolChoice = ep.supportsToolChoice
+            toolChoice?.get("function") == true || toolChoice?.get("auto") == true ||
+                    ep.supportedParameters.any { it.contains("tools", ignoreCase = true) || it.contains("tool_choice", ignoreCase = true) }
+        }
+
+        val isChatCapable = isTextInput && isTextOutput
+
+        val (status, msg) = when {
+            !isChatCapable -> {
+                me.joxquin.notivas.data.model.ModelCompatibilityStatus.INCOMPATIBLE to "Este modelo no es de chat/texto (modalidad: ${modality.ifBlank { "desconocida" }}). No funcionara en NotiVas."
+            }
+            supportsToolCalling -> {
+                me.joxquin.notivas.data.model.ModelCompatibilityStatus.OPTIMAL to "100% Compatible con NotiVas: Soporta chat conversacional y herramientas automaticas de Canvas LMS."
+            }
+            else -> {
+                me.joxquin.notivas.data.model.ModelCompatibilityStatus.COMPATIBLE to "Compatible con chat: Responde preguntas y redacta borradores, pero no soporta herramientas dinamicas de Canvas."
+            }
+        }
+
+        return me.joxquin.notivas.data.model.CustomModelAnalysisResult(
+            modelId = cleanModel,
+            name = name,
+            description = description,
+            contextLength = contextLen,
+            isChatCapable = isChatCapable,
+            supportsFunctionCalling = supportsToolCalling,
+            isMultimodal = isMultimodal,
+            status = status,
+            message = msg
+        )
     }
 
     private data class ParsedTextToolCall(

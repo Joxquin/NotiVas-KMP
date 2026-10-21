@@ -43,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import me.joxquin.notivas.data.local.AppThemeStyle
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -56,16 +57,26 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.ajustes.components.AjustesAppInfoFooter
 import me.joxquin.notivas.ui.ajustes.components.CopilotSettingsSection
+import me.joxquin.notivas.ui.ajustes.components.GoogleDriveSettingsSection
 import me.joxquin.notivas.ui.ajustes.components.GranularNotificationsSection
 import me.joxquin.notivas.ui.ajustes.components.SecurityAndKeystoreSettingsSection
 import me.joxquin.notivas.ui.ajustes.components.StudentIdentitySettingsCard
+import me.joxquin.notivas.ui.ajustes.components.LanguageSettingsSection
 import me.joxquin.notivas.ui.ajustes.components.ThemeAppearanceSettingsSection
 import me.joxquin.notivas.ui.profile.ProfileViewModel
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.settings_title
+import me.joxquin.notivas.shared.resources.settings_subtitle
+import me.joxquin.notivas.shared.resources.logout_dialog_title
+import me.joxquin.notivas.shared.resources.logout_dialog_text
+import me.joxquin.notivas.shared.resources.logout_confirm
+import me.joxquin.notivas.shared.resources.cancel
+import me.joxquin.notivas.shared.resources.sync
 
 @Composable
 fun AjustesHeaderSection(
@@ -77,7 +88,7 @@ fun AjustesHeaderSection(
             .padding(horizontal = 20.dp, vertical = 6.dp)
     ) {
         Text(
-            text = "Ajustes & Perfil",
+            text = stringResource(Res.string.settings_title),
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 26.sp
@@ -86,7 +97,7 @@ fun AjustesHeaderSection(
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-            text = "Gestión de cuenta Canvas LMS y preferencias del sistema",
+            text = stringResource(Res.string.settings_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -94,7 +105,7 @@ fun AjustesHeaderSection(
 }
 
 /**
- * Orquestador declarativo de la pantalla de Ajustes y Perfil (< 160 líneas).
+ * Orquestador declarativo de la pantalla de Ajustes y Perfil.
  * Soporta de manera reactiva los modos Material Design 3 Monet y HyperOS Miuix.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,13 +131,13 @@ fun AjustesScreen(
             },
             title = {
                 Text(
-                    text = "¿Desvincular cuenta?",
+                    text = stringResource(Res.string.logout_dialog_title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
             },
             text = {
                 Text(
-                    text = "Se cerrará tu sesión, se limpiará la base de datos local y se destruirá el token de acceso seguro.",
+                    text = stringResource(Res.string.logout_dialog_text),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -142,12 +153,12 @@ fun AjustesScreen(
                         contentColor = MaterialTheme.colorScheme.onError
                     )
                 ) {
-                    Text("Confirmar y salir")
+                    Text(stringResource(Res.string.logout_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -193,14 +204,14 @@ fun AjustesScreen(
                             }
                     ) {
                         MiuixText(
-                            text = "Ajustes & Perfil",
+                            text = stringResource(Res.string.settings_title),
                             fontSize = MiuixTheme.textStyles.title1.fontSize,
                             fontWeight = FontWeight.Normal,
                             color = MiuixTheme.colorScheme.onSurface
                         )
                         Spacer(Modifier.height(2.dp))
                         MiuixText(
-                            text = "Gestión de cuenta Canvas LMS y preferencias del sistema",
+                            text = stringResource(Res.string.settings_subtitle),
                             style = MiuixTheme.textStyles.body2,
                             color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                         )
@@ -216,7 +227,16 @@ fun AjustesScreen(
                     )
                 }
 
-                // 2. Sistema Visual & Temas
+                // 2. Idioma & Región
+                item {
+                    LanguageSettingsSection(
+                        appLanguage = uiState.appLanguage,
+                        onLanguageChange = { viewModel.setAppLanguage(it) },
+                        themeStyle = AppThemeStyle.MIUIX
+                    )
+                }
+
+                // 3. Sistema Visual & Temas
                 item {
                     ThemeAppearanceSettingsSection(
                         dynamicColorEnabled = uiState.dynamicColorEnabled,
@@ -256,6 +276,23 @@ fun AjustesScreen(
                         onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
                         onModelChange = { viewModel.setOpenRouterModel(it) },
                         onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
+                        onAnalyzeModel = { viewModel.analyzeCustomModel(it) },
+                        themeStyle = AppThemeStyle.MIUIX
+                    )
+                }
+
+                // 4.1 Google Drive y Borradores
+                item {
+                    GoogleDriveSettingsSection(
+                        connected = uiState.googleDriveConnected,
+                        email = uiState.googleDriveEmail,
+                        lastSyncText = uiState.lastSyncAgoText,
+                        cacheSize = uiState.googleDriveCacheSize,
+                        onAuthSuccess = { token, refresh, email ->
+                            viewModel.saveGoogleDriveAuth(token, refresh, email)
+                        },
+                        onUnlink = { viewModel.unlinkGoogleDrive() },
+                        onClearCache = { viewModel.clearDraftsCache() },
                         themeStyle = AppThemeStyle.MIUIX
                     )
                 }
@@ -377,7 +414,16 @@ fun AjustesScreen(
                 )
             }
 
-            // 3. Sistema Visual & Temas
+            // 3. Idioma & Región
+            item {
+                LanguageSettingsSection(
+                    appLanguage = uiState.appLanguage,
+                    onLanguageChange = { viewModel.setAppLanguage(it) },
+                    themeStyle = AppThemeStyle.MATERIAL
+                )
+            }
+
+            // 4. Sistema Visual & Temas
             item {
                 ThemeAppearanceSettingsSection(
                     dynamicColorEnabled = uiState.dynamicColorEnabled,
@@ -417,6 +463,23 @@ fun AjustesScreen(
                     onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
                     onModelChange = { viewModel.setOpenRouterModel(it) },
                     onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
+                    onAnalyzeModel = { viewModel.analyzeCustomModel(it) },
+                    themeStyle = AppThemeStyle.MATERIAL
+                )
+            }
+
+            // 5.1 Google Drive y Borradores
+            item {
+                GoogleDriveSettingsSection(
+                    connected = uiState.googleDriveConnected,
+                    email = uiState.googleDriveEmail,
+                    lastSyncText = uiState.lastSyncAgoText,
+                    cacheSize = uiState.googleDriveCacheSize,
+                    onAuthSuccess = { token, refresh, email ->
+                        viewModel.saveGoogleDriveAuth(token, refresh, email)
+                    },
+                    onUnlink = { viewModel.unlinkGoogleDrive() },
+                    onClearCache = { viewModel.clearDraftsCache() },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }

@@ -39,6 +39,8 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun CopilotInputBar(
@@ -102,7 +104,7 @@ fun CopilotInputBar(
                     Box(modifier = Modifier.weight(1f)) {
                         if (inputText.isEmpty()) {
                             Text(
-                                text = "Pregunta a Copilot o usa @curso...",
+                                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_input_placeholder_miuix),
                                 style = MiuixTheme.textStyles.footnote1,
                                 color = MiuixTheme.colorScheme.onSurfaceSecondary.copy(alpha = 0.7f)
                             )
@@ -142,7 +144,7 @@ fun CopilotInputBar(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Enviar",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_send),
                             tint = if (inputText.isNotBlank() && !isLoading && enabled) {
                                 MiuixTheme.colorScheme.onPrimary
                             } else {
@@ -184,7 +186,7 @@ fun CopilotInputBar(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AlternateEmail,
-                                contentDescription = "Mencionar curso",
+                                contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_mention_course),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -193,7 +195,7 @@ fun CopilotInputBar(
                         Box(modifier = Modifier.weight(1f)) {
                             if (inputText.isEmpty()) {
                                 Text(
-                                    text = "Pregunta a Copilot...",
+                                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_input_placeholder),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -230,7 +232,7 @@ fun CopilotInputBar(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Enviar",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_send),
                             tint = if (inputText.isNotBlank() && !isLoading && enabled) {
                                 MaterialTheme.colorScheme.onPrimary
                             } else {

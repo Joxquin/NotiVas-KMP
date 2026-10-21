@@ -72,6 +72,39 @@ class OnboardingViewModel(
         }
     }
 
+    fun verifySessionConnection(cookies: String, csrfToken: String?) {
+        viewModelScope.launch {
+            _isVerifying.value = true
+            _verificationSuccess.value = null
+            try {
+                val success = repository.verifyAndSaveSession(_universityUrl.value, cookies, csrfToken)
+                if (success) {
+                    try {
+                        val profile = repository.getProfile()
+                        _userProfile.value = profile
+                    } catch (_: Exception) { }
+
+                    try {
+                        repository.fetchAndSaveData()
+                    } catch (_: Exception) { }
+
+                    try {
+                        val count = repository.allCourses.first().size
+                        _coursesCount.value = count
+                    } catch (_: Exception) { }
+
+                    _verificationSuccess.value = true
+                } else {
+                    _verificationSuccess.value = false
+                }
+            } catch (_: Exception) {
+                _verificationSuccess.value = false
+            } finally {
+                _isVerifying.value = false
+            }
+        }
+    }
+
     fun finishOnboarding() {
         viewModelScope.launch {
             repository.completeOnboarding()

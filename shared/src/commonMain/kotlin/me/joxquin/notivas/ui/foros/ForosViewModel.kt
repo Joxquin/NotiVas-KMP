@@ -13,7 +13,8 @@ import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.repository.CanvasRepository
-import java.time.ZonedDateTime
+import me.joxquin.notivas.util.DateTimeUtil
+import kotlin.text.RegexOption
 
 enum class DiscussionFilterTab {
     TODOS,
@@ -65,6 +66,9 @@ data class ForosUiState(
     val isLoadingReplies: Boolean = false,
     val currentDraft: String = "",
     val isDraftSavedMessage: Boolean = false,
+    val isPublishing: Boolean = false,
+    val publishSuccessMessage: Boolean = false,
+    val publishErrorMessage: String? = null,
     val isGeneratingCopilot: Boolean = false,
     val copilotStrategy: CopilotForoStrategy? = null,
     val copilotErrorMessage: String? = null,
@@ -89,6 +93,9 @@ class ForosViewModel(
     private val _isLoadingReplies = MutableStateFlow(false)
     private val _currentDraft = MutableStateFlow("")
     private val _isDraftSavedMessage = MutableStateFlow(false)
+    private val _isPublishing = MutableStateFlow(false)
+    private val _publishSuccessMessage = MutableStateFlow(false)
+    private val _publishErrorMessage = MutableStateFlow<String?>(null)
 
     private val _isGeneratingCopilot = MutableStateFlow(false)
     private val _copilotStrategy = MutableStateFlow<CopilotForoStrategy?>(null)
@@ -160,16 +167,23 @@ class ForosViewModel(
         combine(
             _currentDraft,
             _isDraftSavedMessage,
+            _isPublishing,
+            _publishSuccessMessage,
+            _publishErrorMessage
+        ) { draft, savedMsg, publishing, pubSuccess, pubError ->
+            Tuple5(draft, savedMsg, publishing, pubSuccess, pubError)
+        },
+        combine(
             _isGeneratingCopilot,
             _copilotStrategy,
-            _copilotErrorMessage
-        ) { draft, savedMsg, generating, strategy, errorMsg ->
-            Tuple5(draft, savedMsg, generating, strategy, errorMsg)
-        },
-        _activeCopilotModel
-    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, generating, strategy, errorMsg), activeModel ->
+            _copilotErrorMessage,
+            _activeCopilotModel
+        ) { generating, strategy, errorMsg, activeModel ->
+            Tuple4(generating, strategy, errorMsg, activeModel)
+        }
+    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, publishing, pubSuccess, pubError), (generating, strategy, errorMsg, activeModel) ->
 
-        val now = ZonedDateTime.now()
+        val nowMs = DateTimeUtil.nowEpochMillis()
 
         // 1. Conteo global antes de filtrar
         var total = 0
@@ -184,7 +198,7 @@ class ForosViewModel(
             val isGraded = points != null && points > 0
             if (isGraded) withPoints++ else withoutPoints++
 
-            val isExpired = isTopicExpired(topic, now)
+            val isExpired = isTopicExpired(topic, nowMs)
             if (isExpired) expired++ else pending++
         }
 
@@ -204,7 +218,7 @@ class ForosViewModel(
             DiscussionFilterTab.SIN_PUNTOS -> list.filter {
                 (it.assignment?.pointsPossible ?: 0.0) == 0.0 && it.assignmentId == null
             }
-            DiscussionFilterTab.VENCIDOS -> list.filter { isTopicExpired(it, now) }
+            DiscussionFilterTab.VENCIDOS -> list.filter { isTopicExpired(it, nowMs) }
         }
 
         // 4. Filtrado por query de búsqueda
@@ -247,6 +261,9 @@ class ForosViewModel(
             isLoadingReplies = loadingReplies,
             currentDraft = draft,
             isDraftSavedMessage = savedMsg,
+            isPublishing = publishing,
+            publishSuccessMessage = pubSuccess,
+            publishErrorMessage = pubError,
             isGeneratingCopilot = generating,
             copilotStrategy = strategy,
             copilotErrorMessage = errorMsg,
@@ -395,6 +412,7 @@ class ForosViewModel(
                 appendLine("2. PROHIBIDO incluir despedidas o firmas al final (NO 'Saludos cordiales', 'Atentamente', 'Espero sus comentarios', etc.).")
                 appendLine("3. PROHIBIDO incluir preguntas de cierre conversacionales al usuario o compañeros.")
                 appendLine("4. 'suggestedDraft' debe ser EXCLUSIVAMENTE el desarrollo analítico, directo, sustantivo y estructurado que responde con el mayor rigor a la consigna académica y los criterios de evaluación.")
+                appendLine("5. 'suggestedDraft' debe redactarse en el mismo idioma de la consigna del profesor o del curso (ej. si la consigna o curso es en inglés, redacta en inglés; si es en español, en español).")
                 appendLine()
                 appendLine("Genera una respuesta en formato JSON EXACTO sin bloques markdown adicionales:")
                 appendLine("""
@@ -426,7 +444,7 @@ class ForosViewModel(
                     
                     // Función auxiliar para extraer valores de campos con regex si falla el parser estricto
                     fun extractField(fieldName: String, default: String): String {
-                        val pattern = Regex("\"$fieldName\"\\s*:\\s*\"((?:\\\\\"|[^\"])*)\"", RegexOption.DOT_MATCHES_ALL)
+                        val pattern = Regex("(?s)\"$fieldName\"\\s*:\\s*\"((?:\\\\\"|[^\"])*)\"")
                         val match = pattern.find(text)
                         return if (match != null) {
                             match.groupValues[1]
@@ -437,15 +455,15 @@ class ForosViewModel(
                                 .trim()
                         } else {
                             // Intento con comillas simples o bloques de texto
-                            val fallbackPattern = Regex("\"$fieldName\"\\s*:\\s*`([^`]*)`", RegexOption.DOT_MATCHES_ALL)
+                            val fallbackPattern = Regex("(?s)\"$fieldName\"\\s*:\\s*`([^`]*)`")
                             fallbackPattern.find(text)?.groupValues?.get(1)?.trim() ?: default
                         }
                     }
 
                     // Limpieza previa del JSON
                     val cleanedJson = text
-                        .replace(Regex("^```(?:json)?", RegexOption.MULTILINE), "")
-                        .replace(Regex("```$", RegexOption.MULTILINE), "")
+                        .replace(Regex("(?m)^```(?:json)?"), "")
+                        .replace(Regex("(?m)```$"), "")
                         .trim()
 
                     val jsonString = if (cleanedJson.contains("{") && cleanedJson.contains("}")) {
@@ -565,22 +583,84 @@ class ForosViewModel(
         _sortOption.value = option
     }
 
-    private fun isTopicExpired(topic: CanvasDiscussionTopic, now: ZonedDateTime): Boolean {
+    private fun isTopicExpired(topic: CanvasDiscussionTopic, nowMs: Long): Boolean {
         if (topic.locked == true) return true
         val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
         if (dueStr != null) {
-            try {
-                val dueDate = ZonedDateTime.parse(dueStr)
-                return now.isAfter(dueDate)
-            } catch (_: Exception) {}
+            val epochMs = DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis
+            if (epochMs != null) {
+                return nowMs > epochMs
+            }
         }
         return false
+    }
+
+    fun publishForumReply(topic: CanvasDiscussionTopic) {
+        val courseId = topic.courseId ?: return
+        val message = _currentDraft.value.trim()
+        if (message.isBlank()) {
+            _publishErrorMessage.value = "No se puede publicar una respuesta vacía."
+            return
+        }
+
+        if (_isPublishing.value) return
+
+        viewModelScope.launch {
+            _isPublishing.value = true
+            _publishErrorMessage.value = null
+            _publishSuccessMessage.value = false
+
+            val result = canvasRepository.postDiscussionEntry(
+                courseId = courseId,
+                topicId = topic.id,
+                message = message
+            )
+
+            result.fold(
+                onSuccess = { newEntry ->
+                    // Limpiar borrador local
+                    _currentDraft.value = ""
+                    _draftsMemory.remove(topic.id)
+                    _publishSuccessMessage.value = true
+                    _publishErrorMessage.value = null
+
+                    // Agregar entrada inmediatamente o recargar
+                    val currentReplies = _selectedDiscussionReplies.value.toMutableList()
+                    currentReplies.add(0, newEntry)
+                    _selectedDiscussionReplies.value = currentReplies
+
+                    // Refrescar entradas de la API para sincronizar
+                    loadDiscussionEntries(topic)
+
+                    // Ocultar mensaje de éxito tras 3 segundos
+                    kotlinx.coroutines.delay(3000)
+                    _publishSuccessMessage.value = false
+                },
+                onFailure = { error ->
+                    _publishErrorMessage.value = error.message ?: "Error al publicar la respuesta en Canvas."
+                    _publishSuccessMessage.value = false
+                }
+            )
+            _isPublishing.value = false
+        }
+    }
+
+    fun clearPublishMessages() {
+        _publishSuccessMessage.value = false
+        _publishErrorMessage.value = null
     }
 
     private fun getTopicDueDate(topic: CanvasDiscussionTopic): String? {
         return topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
     }
 }
+
+private data class Tuple4<A, B, C, D>(
+    val a: A,
+    val b: B,
+    val c: C,
+    val d: D
+)
 
 private data class Tuple5<A, B, C, D, E>(
     val a: A,

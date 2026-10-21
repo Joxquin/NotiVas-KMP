@@ -39,6 +39,31 @@ class PreferencesManager(
     val accessToken: Flow<String?> = _accessToken.asStateFlow()
     fun getAccessToken(): String? = _accessToken.value
 
+    private val _authMode = MutableStateFlow(me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION)
+    val authMode: Flow<me.joxquin.notivas.data.model.AuthMode> = _authMode.asStateFlow()
+    fun getAuthMode(): me.joxquin.notivas.data.model.AuthMode = _authMode.value
+
+    private val _sessionCookies = MutableStateFlow<String?>(null)
+    val sessionCookies: Flow<String?> = _sessionCookies.asStateFlow()
+    fun getSessionCookies(): String? = _sessionCookies.value
+
+    private val _csrfToken = MutableStateFlow<String?>(null)
+    val csrfToken: Flow<String?> = _csrfToken.asStateFlow()
+    fun getCsrfToken(): String? = _csrfToken.value
+
+    fun getAuthCredential(): me.joxquin.notivas.data.model.CanvasAuthCredential? {
+        return when (_authMode.value) {
+            me.joxquin.notivas.data.model.AuthMode.TOKEN -> {
+                _accessToken.value?.takeIf { it.isNotBlank() }?.let { me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken(it) }
+            }
+            me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION -> {
+                _sessionCookies.value?.takeIf { it.isNotBlank() }?.let {
+                    me.joxquin.notivas.data.model.CanvasAuthCredential.SessionCookies(it, _csrfToken.value)
+                } ?: _accessToken.value?.takeIf { it.isNotBlank() }?.let { me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken(it) }
+            }
+        }
+    }
+
     private val _isOnboardingCompleted = MutableStateFlow(false)
     val isOnboardingCompleted: Flow<Boolean> = _isOnboardingCompleted.asStateFlow()
     fun getIsOnboardingCompleted(): Boolean = _isOnboardingCompleted.value
@@ -86,10 +111,52 @@ class PreferencesManager(
     val themeStyle: Flow<AppThemeStyle> = _themeStyle.asStateFlow()
     fun getThemeStyle(): AppThemeStyle = _themeStyle.value
 
+    private val _appLanguage = MutableStateFlow(AppLanguage.SYSTEM)
+    val appLanguage: Flow<AppLanguage> = _appLanguage.asStateFlow()
+    fun getAppLanguage(): AppLanguage = _appLanguage.value
+
     private val _unconfiguredCoursesBannerDismissedUntil = MutableStateFlow(0L)
     val unconfiguredCoursesBannerDismissedUntil: Flow<Long> = _unconfiguredCoursesBannerDismissedUntil.asStateFlow()
     fun getUnconfiguredCoursesBannerDismissedUntil(): Long = _unconfiguredCoursesBannerDismissedUntil.value
 
+    private val _googleDriveConnected = MutableStateFlow(false)
+    val googleDriveConnected: Flow<Boolean> = _googleDriveConnected.asStateFlow()
+    fun isGoogleDriveConnected(): Boolean = _googleDriveConnected.value
+
+    private val _googleDriveEmail = MutableStateFlow<String?>(null)
+    val googleDriveEmail: Flow<String?> = _googleDriveEmail.asStateFlow()
+    fun getGoogleDriveEmail(): String? = _googleDriveEmail.value
+
+    private val _googleDriveLastSyncTimestamp = MutableStateFlow(0L)
+    val googleDriveLastSyncTimestamp: Flow<Long> = _googleDriveLastSyncTimestamp.asStateFlow()
+    fun getGoogleDriveLastSyncTimestamp(): Long = _googleDriveLastSyncTimestamp.value
+
+    private val _googleDriveAccessToken = MutableStateFlow<String?>(null)
+    val googleDriveAccessToken: Flow<String?> = _googleDriveAccessToken.asStateFlow()
+    fun getGoogleDriveAccessToken(): String? = _googleDriveAccessToken.value
+
+    private val _googleDriveRefreshToken = MutableStateFlow<String?>(null)
+    val googleDriveRefreshToken: Flow<String?> = _googleDriveRefreshToken.asStateFlow()
+    fun getGoogleDriveRefreshToken(): String? = _googleDriveRefreshToken.value
+
+    private val _discardedAssignmentIds = MutableStateFlow<Set<Long>>(emptySet())
+    val discardedAssignmentIds: Flow<Set<Long>> = _discardedAssignmentIds.asStateFlow()
+    fun getDiscardedAssignmentIds(): Set<Long> = _discardedAssignmentIds.value
+
+    suspend fun discardAssignment(assignmentId: Long) {
+        _discardedAssignmentIds.value = _discardedAssignmentIds.value + assignmentId
+        schedulePersist()
+    }
+
+    suspend fun restoreAssignment(assignmentId: Long) {
+        _discardedAssignmentIds.value = _discardedAssignmentIds.value - assignmentId
+        schedulePersist()
+    }
+
+    suspend fun clearDiscardedAssignments() {
+        _discardedAssignmentIds.value = emptySet()
+        schedulePersist()
+    }
 
     init {
         loadFromDisk()
@@ -101,6 +168,9 @@ class PreferencesManager(
             val snapshot = json.decodeFromString<PersistentPreferencesSnapshot>(content)
             _universityUrl.value = snapshot.universityUrl
             _accessToken.value = snapshot.accessToken
+            _authMode.value = snapshot.authMode
+            _sessionCookies.value = snapshot.sessionCookies
+            _csrfToken.value = snapshot.csrfToken
             _isOnboardingCompleted.value = snapshot.isOnboardingCompleted
             _syncIntervalMinutes.value = snapshot.syncIntervalMinutes
             _notif24h.value = snapshot.notif24h
@@ -116,7 +186,14 @@ class PreferencesManager(
             _totalCopilotTokens.value = snapshot.totalCopilotTokens
             _dynamicColorEnabled.value = snapshot.dynamicColorEnabled
             _themeStyle.value = snapshot.themeStyle
+            _appLanguage.value = snapshot.appLanguage
             _unconfiguredCoursesBannerDismissedUntil.value = snapshot.unconfiguredCoursesBannerDismissedUntil
+            _googleDriveConnected.value = snapshot.googleDriveConnected
+            _googleDriveEmail.value = snapshot.googleDriveEmail
+            _googleDriveLastSyncTimestamp.value = snapshot.googleDriveLastSyncTimestamp
+            _googleDriveAccessToken.value = snapshot.googleDriveAccessToken
+            _googleDriveRefreshToken.value = snapshot.googleDriveRefreshToken
+            _discardedAssignmentIds.value = snapshot.discardedAssignmentIds
         } catch (_: Exception) {
         } finally {
             _isLoaded.value = true
@@ -136,6 +213,9 @@ class PreferencesManager(
             val snapshot = PersistentPreferencesSnapshot(
                 universityUrl = _universityUrl.value,
                 accessToken = _accessToken.value,
+                authMode = _authMode.value,
+                sessionCookies = _sessionCookies.value,
+                csrfToken = _csrfToken.value,
                 isOnboardingCompleted = _isOnboardingCompleted.value,
                 syncIntervalMinutes = _syncIntervalMinutes.value,
                 notif24h = _notif24h.value,
@@ -151,7 +231,14 @@ class PreferencesManager(
                 totalCopilotTokens = _totalCopilotTokens.value,
                 dynamicColorEnabled = _dynamicColorEnabled.value,
                 themeStyle = _themeStyle.value,
-                unconfiguredCoursesBannerDismissedUntil = _unconfiguredCoursesBannerDismissedUntil.value
+                appLanguage = _appLanguage.value,
+                unconfiguredCoursesBannerDismissedUntil = _unconfiguredCoursesBannerDismissedUntil.value,
+                googleDriveConnected = _googleDriveConnected.value,
+                googleDriveEmail = _googleDriveEmail.value,
+                googleDriveLastSyncTimestamp = _googleDriveLastSyncTimestamp.value,
+                googleDriveAccessToken = _googleDriveAccessToken.value,
+                googleDriveRefreshToken = _googleDriveRefreshToken.value,
+                discardedAssignmentIds = _discardedAssignmentIds.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)
             PlatformFileSystem.writeString(prefsFile, jsonString)
@@ -159,6 +246,36 @@ class PreferencesManager(
         }
     }
 
+    suspend fun saveGoogleDriveTokens(
+        accessToken: String,
+        refreshToken: String?,
+        userEmail: String?
+    ) {
+        _googleDriveConnected.value = true
+        _googleDriveAccessToken.value = accessToken
+        if (refreshToken != null) {
+            _googleDriveRefreshToken.value = refreshToken
+        }
+        if (userEmail != null) {
+            _googleDriveEmail.value = userEmail
+        }
+        _googleDriveLastSyncTimestamp.value = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+        schedulePersist()
+    }
+
+    suspend fun updateGoogleDriveLastSync() {
+        _googleDriveLastSyncTimestamp.value = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+        schedulePersist()
+    }
+
+    suspend fun unlinkGoogleDrive() {
+        _googleDriveConnected.value = false
+        _googleDriveEmail.value = null
+        _googleDriveAccessToken.value = null
+        _googleDriveRefreshToken.value = null
+        _googleDriveLastSyncTimestamp.value = 0L
+        schedulePersist()
+    }
 
     suspend fun saveUniversityUrl(url: String) {
         _universityUrl.value = url
@@ -167,6 +284,19 @@ class PreferencesManager(
 
     suspend fun saveAccessToken(token: String) {
         _accessToken.value = token
+        _authMode.value = me.joxquin.notivas.data.model.AuthMode.TOKEN
+        schedulePersist()
+    }
+
+    suspend fun saveSessionCookies(cookies: String, csrfToken: String? = null) {
+        _sessionCookies.value = cookies
+        _csrfToken.value = csrfToken
+        _authMode.value = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION
+        schedulePersist()
+    }
+
+    suspend fun setAuthMode(mode: me.joxquin.notivas.data.model.AuthMode) {
+        _authMode.value = mode
         schedulePersist()
     }
 
@@ -246,6 +376,11 @@ class PreferencesManager(
         schedulePersist()
     }
 
+    suspend fun setAppLanguage(language: AppLanguage) {
+        _appLanguage.value = language
+        schedulePersist()
+    }
+
     suspend fun dismissUnconfiguredCoursesBannerFor7Days() {
         val sevenDaysMs = 7L * 24L * 60L * 60L * 1000L
         _unconfiguredCoursesBannerDismissedUntil.value = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + sevenDaysMs
@@ -253,10 +388,17 @@ class PreferencesManager(
     }
 
     suspend fun clear() {
-
         _accessToken.value = null
+        _sessionCookies.value = null
+        _csrfToken.value = null
+        _authMode.value = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION
         _universityUrl.value = null
         _isOnboardingCompleted.value = false
+        _googleDriveConnected.value = false
+        _googleDriveEmail.value = null
+        _googleDriveAccessToken.value = null
+        _googleDriveRefreshToken.value = null
+        _googleDriveLastSyncTimestamp.value = 0L
         PlatformFileSystem.deleteFile(prefsFile)
     }
 }

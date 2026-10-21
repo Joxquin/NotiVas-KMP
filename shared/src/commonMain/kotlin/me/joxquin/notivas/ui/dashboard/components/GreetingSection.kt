@@ -23,6 +23,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.model.UserProfile
 import me.joxquin.notivas.ui.dashboard.SyncStatus
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 import me.joxquin.notivas.ui.components.AsyncAvatarImage
 
@@ -46,13 +49,32 @@ fun GreetingSection(
     modifier: Modifier = Modifier
 ) {
     val rawName = profile?.name ?: ""
-    val studentFirstName = rawName.trim().split(" ").firstOrNull { it.isNotBlank() } ?: ""
-    val initials = rawName.split(" ")
-        .filter { it.isNotBlank() }
-        .take(2)
-        .map { it.first().uppercase() }
-        .joinToString("")
-        .ifBlank { "NV" }
+    val studentFirstName = remember(rawName) {
+        if (rawName.isBlank()) ""
+        else if ("," in rawName) {
+            val givenPart = rawName.substringAfter(",").trim()
+            val first = givenPart.split(" ").firstOrNull { it.isNotBlank() } ?: ""
+            first.lowercase().replaceFirstChar { it.uppercase() }
+        } else {
+            val first = rawName.trim().split(" ").firstOrNull { it.isNotBlank() } ?: ""
+            first.lowercase().replaceFirstChar { it.uppercase() }
+        }
+    }
+    val initials = remember(rawName, studentFirstName) {
+        if (rawName.isBlank()) "NV"
+        else if ("," in rawName) {
+            val surname = rawName.substringBefore(",").trim().split(" ").firstOrNull { it.isNotBlank() }?.firstOrNull()?.uppercase() ?: ""
+            val given = rawName.substringAfter(",").trim().split(" ").firstOrNull { it.isNotBlank() }?.firstOrNull()?.uppercase() ?: ""
+            "$given$surname".ifBlank { "NV" }
+        } else {
+            rawName.split(" ")
+                .filter { it.isNotBlank() }
+                .take(2)
+                .map { it.first().uppercase() }
+                .joinToString("")
+                .ifBlank { "NV" }
+        }
+    }
 
     val institutionOrCareer = if (institution.isNotBlank() && institution != "Canvas LMS") {
         institution
@@ -101,7 +123,11 @@ fun GreetingSection(
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                val greetingText = if (studentFirstName.isNotBlank()) "Hola, $studentFirstName" else "Hola"
+                val greetingText = if (studentFirstName.isNotBlank()) {
+                    stringResource(Res.string.greeting_hello_name, studentFirstName)
+                } else {
+                    stringResource(Res.string.greeting_hello)
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -137,9 +163,9 @@ fun GreetingSection(
         )
 
         val (statusText, statusColor) = when (syncStatus) {
-            SyncStatus.SYNCING -> "Sincronizando..." to MaterialTheme.colorScheme.tertiary
-            SyncStatus.SYNCED -> "Sincronizado" to Color(0xFF4CAF50)
-            SyncStatus.FAILED -> "Sin conexión" to MaterialTheme.colorScheme.error
+            SyncStatus.SYNCING -> stringResource(Res.string.sync_status_syncing) to MaterialTheme.colorScheme.tertiary
+            SyncStatus.SYNCED -> stringResource(Res.string.sync_status_synced) to Color(0xFF4CAF50)
+            SyncStatus.FAILED -> stringResource(Res.string.sync_status_offline) to MaterialTheme.colorScheme.error
         }
 
         Surface(

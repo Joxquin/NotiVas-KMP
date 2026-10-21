@@ -34,6 +34,8 @@ import top.yukonga.miuix.kmp.icon.extended.Ok
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 private val MiuixBlue = Color(0xFF3482FF)
 private val MiuixRed = Color(0xFFFF5449)
@@ -56,7 +58,7 @@ fun MiuixUrgentTasksCarousel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SmallTitle(
-                text = "PARA HOY Y MAÑANA",
+                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_tasks_title).uppercase(),
                 modifier = Modifier.weight(1f, fill = false)
             )
 
@@ -82,7 +84,7 @@ fun MiuixUrgentTasksCarousel(
                             .padding(horizontal = 7.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "${urgentAssignments.size} Críticas",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_critical_badge, urgentAssignments.size),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = MiuixRed
@@ -92,7 +94,7 @@ fun MiuixUrgentTasksCarousel(
                 }
 
                 Text(
-                    text = "Ver todas",
+                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.view_all),
                     fontSize = 12.sp,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                 )
@@ -123,7 +125,7 @@ fun MiuixUrgentTasksCarousel(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "¡Todo al día! No tienes entregas urgentes pendientes.",
+                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_tasks_all_clear),
                     fontSize = 13.sp,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                 )
@@ -162,20 +164,20 @@ private fun MiuixUrgentCarouselCard(
     val isDueTomorrow = dueComp != null && dueComp.date == tomorrow
 
     val timeBadgeText = when {
-        isOverdue -> "Vencida"
+        isOverdue -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_overdue)
         isWithin12Hours && diffMillis != null -> {
             val hoursLeft = (diffMillis / (3600 * 1000L)).toInt()
-            if (hoursLeft <= 0) "< 1h" else "En ${hoursLeft}h"
+            if (hoursLeft <= 0) org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_within_1h) else org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_hours_format, hoursLeft)
         }
 
-        isDueToday -> "Hoy"
-        isDueTomorrow -> "Mañana"
+        isDueToday -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_today)
+        isDueTomorrow -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_tomorrow)
         diffMillis != null && diffMillis > 0 -> {
             val hoursLeft = (diffMillis / (3600 * 1000L)).toInt()
-            "En ${hoursLeft}h"
+            org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_hours_format, hoursLeft)
         }
 
-        else -> "Pendiente"
+        else -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.pending_badge)
     }
 
     val barColor = when {
@@ -191,6 +193,7 @@ private fun MiuixUrgentCarouselCard(
     }
 
     val ptsText = item.assignment.pointsPossible?.let { "${it.toInt()} pts" }
+    val virtualText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_virtual)
 
     Box(
         modifier = Modifier
@@ -276,7 +279,7 @@ private fun MiuixUrgentCarouselCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "$ptsText • Virtual",
+                    text = "$ptsText • $virtualText",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
@@ -310,7 +313,7 @@ private fun MiuixUrgentCarouselCard(
                         modifier = Modifier.size(12.dp)
                     )
                     Text(
-                        text = "Pendiente",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.pending_badge),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = countdownPillColor.second

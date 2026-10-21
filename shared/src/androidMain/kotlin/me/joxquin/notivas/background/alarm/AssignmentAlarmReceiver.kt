@@ -34,13 +34,13 @@ class AssignmentAlarmReceiver : BroadcastReceiver() {
 
         val (title, message) = when (alertType) {
             ALERT_TYPE_30M -> {
-                "⚠️ Alerta Crítica · $courseName" to "$assignmentName: ¡Últimos 30 minutos para la entrega!"
+                "Alerta Crítica · $courseName" to "$assignmentName: ¡Últimos 30 minutos para la entrega!"
             }
             ALERT_TYPE_3H -> {
-                "⏰ Alerta de Urgencia · $courseName" to "$assignmentName: Quedan ~3 horas para la entrega"
+                "Alerta de Urgencia · $courseName" to "$assignmentName: Quedan ~3 horas para la entrega"
             }
             ALERT_TYPE_24H -> {
-                "📅 Recordatorio Preventivo · $courseName" to "$assignmentName: Entrega programada para las próximas 24h"
+                "Recordatorio Preventivo · $courseName" to "$assignmentName: Entrega programada para las próximas 24h"
             }
             else -> return
         }

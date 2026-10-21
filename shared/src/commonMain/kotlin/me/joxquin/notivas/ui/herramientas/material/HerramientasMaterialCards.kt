@@ -39,6 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 // ─── CARD 1: Hero Bento (Planificador & Tareas Canvas) ───────────────────────
 @Composable
@@ -51,15 +53,17 @@ fun MaterialHeroPlannerCard(
     val progressRatio = uiState?.evaluatedProgressRatio ?: 0f
     val projectedGrade = uiState?.projectedFinalGrade ?: 0f
 
-    val courseName = uiState?.latestGradedCourseName ?: uiState?.selectedCourse?.name ?: "Curso activo"
-    val taskName = uiState?.latestGradedAssignmentName ?: "Sin evaluaciones calificadas"
-    val taskScore = uiState?.latestGradedScoreFormatted ?: "Pendiente"
+    val defaultCourse = stringResource(Res.string.bento_active_course)
+    val defaultNoAssignments = stringResource(Res.string.bento_no_graded_assignments)
+    val courseName = uiState?.latestGradedCourseName ?: uiState?.selectedCourse?.name ?: defaultCourse
+    val taskName = uiState?.latestGradedAssignmentName ?: defaultNoAssignments
+    val taskScore = uiState?.latestGradedScoreFormatted ?: stringResource(Res.string.pending_badge)
 
     val (statusLabel, statusColor, statusBg) = when {
-        currentAvg >= 15.0f -> Triple("Buen rendimiento", Color(0xFF2E7D32), Color(0xFFE8F5E9))
-        currentAvg >= 12.0f -> Triple("Arriba del promedio", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
-        currentAvg > 0f -> Triple("En riesgo", MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.errorContainer)
-        else -> Triple("Sin evaluar", MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.surfaceContainerHigh)
+        currentAvg >= 15.0f -> Triple(stringResource(Res.string.status_good_performance), Color(0xFF2E7D32), Color(0xFFE8F5E9))
+        currentAvg >= 12.0f -> Triple(stringResource(Res.string.status_above_average), MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
+        currentAvg > 0f -> Triple(stringResource(Res.string.status_at_risk), MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.errorContainer)
+        else -> Triple(stringResource(Res.string.status_unevaluated), MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.surfaceContainerHigh)
     }
 
     val evaluatedPct = (progressRatio * 100f).toInt()
@@ -105,7 +109,7 @@ fun MaterialHeroPlannerCard(
 
                     Column(modifier = Modifier.weight(1f, fill = false)) {
                         Text(
-                            text = "Progreso",
+                            text = stringResource(Res.string.bento_progress_title),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
@@ -113,7 +117,7 @@ fun MaterialHeroPlannerCard(
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            text = "Notas y promedio actual",
+                            text = stringResource(Res.string.bento_progress_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -197,17 +201,17 @@ fun MaterialHeroPlannerCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Evaluada: $evaluatedPct%",
+                            text = stringResource(Res.string.bento_evaluated_prefix, evaluatedPct),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "Proyectada: $formattedProj",
+                            text = stringResource(Res.string.bento_projected_prefix, formattedProj),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "Promedio: $formattedAvg",
+                            text = stringResource(Res.string.bento_average_prefix, formattedAvg),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -266,7 +270,7 @@ fun MaterialWhatIfCard(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh
                     ) {
                         Text(
-                            text = "7 Cursos",
+                            text = stringResource(Res.string.bento_courses_count, 7),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
@@ -276,13 +280,13 @@ fun MaterialWhatIfCard(
 
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "Simulador",
+                    text = stringResource(Res.string.bento_simulator_title),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "Nota mínima y escenarios de aprobación",
+                    text = stringResource(Res.string.bento_simulator_subtitle),
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -299,7 +303,7 @@ fun MaterialWhatIfCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "PROYECCIÓN",
+                        text = stringResource(Res.string.bento_projection_label),
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -321,7 +325,7 @@ fun MaterialWhatIfCard(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Promedio ponderado estimado",
+                    text = stringResource(Res.string.bento_weighted_avg_desc),
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium
@@ -342,54 +346,52 @@ fun MaterialForosCard(
     onOpenTopic: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null
 ) {
     val discussions = forosUiState?.discussions ?: emptyList()
-    val now = java.time.ZonedDateTime.now()
+    val nowMs = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
 
     // Encontrar el foro activo más próximo a cerrar
     val nextClosingForum = discussions
         .filter { topic ->
             if (topic.locked == true) return@filter false
             val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: return@filter false
-            try {
-                val dueDate = java.time.ZonedDateTime.parse(dueStr)
-                dueDate.isAfter(now)
-            } catch (_: Exception) {
-                false
-            }
+            val epochMs = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis ?: return@filter false
+            epochMs > nowMs
         }
         .minByOrNull { topic ->
-            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt!!
-            java.time.ZonedDateTime.parse(dueStr).toInstant().toEpochMilli()
+            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: ""
+            me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis ?: Long.MAX_VALUE
         } ?: discussions.firstOrNull()
 
     val pendingCount = forosUiState?.pendingCount ?: discussions.size
-    val activeBadgesText = if (pendingCount > 0) "$pendingCount activos" else "Al día"
+    val activeBadgesText = if (pendingCount > 0) {
+        stringResource(Res.string.bento_foros_active_count, pendingCount)
+    } else {
+        stringResource(Res.string.bento_foros_all_caught_up)
+    }
 
-    var dueBadgeText = "Sin fecha de cierre"
+    var dueBadgeText = stringResource(Res.string.bento_foros_soon)
     var isUrgent = false
 
     if (nextClosingForum != null) {
         val dueStr = nextClosingForum.assignment?.dueAt ?: nextClosingForum.lockAt ?: nextClosingForum.assignment?.lockAt
         if (dueStr != null) {
-            try {
-                val dueDate = java.time.ZonedDateTime.parse(dueStr)
-                val duration = java.time.Duration.between(now, dueDate)
-                if (now.isAfter(dueDate) || nextClosingForum.locked == true) {
-                    dueBadgeText = "Cerrado"
+            val dueComponents = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)
+            if (dueComponents != null) {
+                val diffMs = dueComponents.epochMillis - nowMs
+                if (diffMs <= 0 || nextClosingForum.locked == true) {
+                    dueBadgeText = stringResource(Res.string.foro_due_closed)
                 } else {
-                    val hours = duration.toHours()
-                    val days = duration.toDays()
+                    val hours = diffMs / (1000 * 60 * 60)
+                    val days = hours / 24
                     if (hours in 0..24) {
                         isUrgent = true
-                        val minutes = duration.toMinutes()
-                        dueBadgeText = if (hours > 0) "Hoy (~$hours h)" else "Hoy (~$minutes min)"
+                        val minutes = diffMs / (1000 * 60)
+                        dueBadgeText = if (hours > 0) stringResource(Res.string.bento_foros_urgent_today_h, hours) else stringResource(Res.string.bento_foros_urgent_today_m, minutes)
                     } else if (days > 0) {
-                        dueBadgeText = "En $days días"
+                        dueBadgeText = stringResource(Res.string.bento_foros_in_days, days)
                     } else {
-                        dueBadgeText = "Pronto"
+                        dueBadgeText = stringResource(Res.string.bento_foros_soon)
                     }
                 }
-            } catch (_: Exception) {
-                dueBadgeText = "Fecha fijada"
             }
         }
     }
@@ -435,13 +437,13 @@ fun MaterialForosCard(
 
                     Column {
                         Text(
-                            text = "Foros Académicos",
+                            text = stringResource(Res.string.bento_foros_title),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(Modifier.height(1.dp))
                         Text(
-                            text = "Debates y respuestas con asistencia Copilot IA",
+                            text = stringResource(Res.string.bento_foros_subtitle),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -532,9 +534,13 @@ fun MaterialForosCard(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 val points = nextClosingForum.assignment?.pointsPossible
-                                val rubricInfo = if (points != null && points > 0) "Rúbrica: ${points.toInt()} pts" else "Participación activa"
+                                val rubricInfo = if (points != null && points > 0) {
+                                    stringResource(Res.string.bento_foros_rubric, points.toInt())
+                                } else {
+                                    stringResource(Res.string.bento_foros_active_part)
+                                }
                                 Text(
-                                    text = "✨ Copilot: $rubricInfo",
+                                    text = "Copilot: $rubricInfo",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Medium,
@@ -564,7 +570,7 @@ fun MaterialForosCard(
                         ) {
                             val repliesCount = nextClosingForum.discussionSubentryCount ?: 0
                             Text(
-                                text = "$repliesCount aportes registrados",
+                                text = stringResource(Res.string.bento_foros_replies_count, repliesCount),
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 10.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -572,7 +578,7 @@ fun MaterialForosCard(
                             )
 
                             Text(
-                                text = "Ir al debate →",
+                                text = stringResource(Res.string.bento_foros_go_to_discussion),
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary
@@ -588,11 +594,17 @@ fun MaterialForosCard(
 
 // ─── CARD 5: Historial & Archivo de Tareas ───────────────────────────────────
 @Composable
-fun MaterialArchiveCard(modifier: Modifier = Modifier) {
+fun MaterialArchiveCard(
+    count: Int = 12,
+    onClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
     Card(
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
         Row(
             modifier = Modifier
@@ -623,13 +635,13 @@ fun MaterialArchiveCard(modifier: Modifier = Modifier) {
 
                 Column {
                     Text(
-                        text = "Historial & Archivo de Tareas",
+                        text = stringResource(Res.string.bento_archive_title),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = "Descartadas y entregas pasadas (12 archivadas)",
+                        text = stringResource(Res.string.bento_archive_subtitle, count),
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -641,7 +653,7 @@ fun MaterialArchiveCard(modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.surfaceContainerHigh
             ) {
                 Text(
-                    text = "12 Archivadas",
+                    text = stringResource(Res.string.bento_archived_count, count),
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)

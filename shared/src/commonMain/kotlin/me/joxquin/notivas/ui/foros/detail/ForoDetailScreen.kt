@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -45,7 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.time.ZonedDateTime
+import me.joxquin.notivas.util.DateTimeUtil
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.foros.ForosViewModel
@@ -55,6 +56,8 @@ import me.joxquin.notivas.ui.foros.detail.components.ForoDetailEditorSection
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailHeroCard
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailRepliesSection
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,17 +76,13 @@ fun ForoDetailScreen(
     var showCopilotAssistant by remember { mutableStateOf(false) }
 
     val isExpired = remember(topic) {
-        val now = ZonedDateTime.now()
+        val nowMs = DateTimeUtil.nowEpochMillis()
         val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
         if (topic.locked == true) {
             true
         } else if (dueStr != null) {
-            try {
-                val dueDate = ZonedDateTime.parse(dueStr)
-                now.isAfter(dueDate)
-            } catch (e: Exception) {
-                false
-            }
+            val epochMs = DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis
+            if (epochMs != null) nowMs > epochMs else false
         } else {
             false
         }
@@ -147,9 +146,45 @@ fun ForoDetailScreen(
                         onSaveDraft = { viewModel.saveDraft() },
                         isDraftSaved = uiState.isDraftSavedMessage,
                         isExpired = isExpired,
+                        isPublishing = uiState.isPublishing,
+                        onPublishToCanvas = { viewModel.publishForumReply(topic) },
                         onOpenCopilotAssistant = { showCopilotAssistant = true },
                         themeStyle = themeStyle
                     )
+                }
+
+                if (uiState.publishSuccessMessage) {
+                    item(key = "foro_pub_success") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.foro_publish_success),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (uiState.publishErrorMessage != null) {
+                    item(key = "foro_pub_error") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = uiState.publishErrorMessage ?: "",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
                 }
 
                 item {
@@ -193,12 +228,12 @@ fun ForoDetailScreen(
                             }
                             Column {
                                 Text(
-                                    text = "Detalle del Foro",
+                                    text = stringResource(Res.string.foro_detail_title),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = topic.courseName ?: "Foro Académico Canvas",
+                                    text = topic.courseName ?: "Canvas",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1
@@ -210,7 +245,7 @@ fun ForoDetailScreen(
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
+                                contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -270,9 +305,45 @@ fun ForoDetailScreen(
                         onSaveDraft = { viewModel.saveDraft() },
                         isDraftSaved = uiState.isDraftSavedMessage,
                         isExpired = isExpired,
+                        isPublishing = uiState.isPublishing,
+                        onPublishToCanvas = { viewModel.publishForumReply(topic) },
                         onOpenCopilotAssistant = { showCopilotAssistant = true },
                         themeStyle = themeStyle
                     )
+                }
+
+                if (uiState.publishSuccessMessage) {
+                    item(key = "foro_pub_success_m3") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.foro_publish_success),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (uiState.publishErrorMessage != null) {
+                    item(key = "foro_pub_error_m3") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = uiState.publishErrorMessage ?: "",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
+                    }
                 }
 
                 item {

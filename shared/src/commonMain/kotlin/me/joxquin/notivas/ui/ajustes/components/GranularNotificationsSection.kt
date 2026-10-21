@@ -52,6 +52,30 @@ import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.settings_notif_section_title
+import me.joxquin.notivas.shared.resources.notif_24h_title
+import me.joxquin.notivas.shared.resources.notif_24h_desc
+import me.joxquin.notivas.shared.resources.notif_3h_title
+import me.joxquin.notivas.shared.resources.notif_3h_desc
+import me.joxquin.notivas.shared.resources.notif_30m_title
+import me.joxquin.notivas.shared.resources.notif_30m_desc
+import me.joxquin.notivas.shared.resources.notif_morning_title
+import me.joxquin.notivas.shared.resources.notif_morning_desc
+import me.joxquin.notivas.shared.resources.sync_interval_title
+import me.joxquin.notivas.shared.resources.sync_interval_desc
+import me.joxquin.notivas.shared.resources.sync_interval_dialog_title
+import me.joxquin.notivas.shared.resources.sync_interval_dialog_desc
+import me.joxquin.notivas.shared.resources.sync_interval_15m
+import me.joxquin.notivas.shared.resources.sync_interval_30m
+import me.joxquin.notivas.shared.resources.sync_interval_1h
+import me.joxquin.notivas.shared.resources.sync_interval_3h
+import me.joxquin.notivas.shared.resources.sync_interval_6h
+import me.joxquin.notivas.shared.resources.sync_interval_custom_format
+import me.joxquin.notivas.shared.resources.close
+import me.joxquin.notivas.shared.resources.change
+
 @Composable
 fun GranularNotificationsSection(
     notif24h: Boolean,
@@ -69,18 +93,24 @@ fun GranularNotificationsSection(
 ) {
     var showSyncIntervalDialog by remember { mutableStateOf(false) }
 
-    val syncOptions = remember {
+    val sync15 = stringResource(Res.string.sync_interval_15m)
+    val sync30 = stringResource(Res.string.sync_interval_30m)
+    val sync60 = stringResource(Res.string.sync_interval_1h)
+    val sync180 = stringResource(Res.string.sync_interval_3h)
+    val sync360 = stringResource(Res.string.sync_interval_6h)
+
+    val syncOptions = remember(sync15, sync30, sync60, sync180, sync360) {
         listOf(
-            15L to "Cada 15 minutos (Recomendado)",
-            30L to "Cada 30 minutos",
-            60L to "Cada 1 hora",
-            180L to "Cada 3 horas",
-            360L to "Cada 6 horas (Ahorro de batería)"
+            15L to sync15,
+            30L to sync30,
+            60L to sync60,
+            180L to sync180,
+            360L to sync360
         )
     }
 
     val currentLabel = syncOptions.firstOrNull { it.first == syncIntervalMinutes }?.second
-        ?: "Cada $syncIntervalMinutes minutos"
+        ?: stringResource(Res.string.sync_interval_custom_format, syncIntervalMinutes)
 
     if (showSyncIntervalDialog) {
         AlertDialog(
@@ -94,7 +124,7 @@ fun GranularNotificationsSection(
             },
             title = {
                 Text(
-                    text = "Frecuencia de sincronización",
+                    text = stringResource(Res.string.sync_interval_dialog_title),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold
                     )
@@ -103,7 +133,7 @@ fun GranularNotificationsSection(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Determina con qué frecuencia NotiVas consulta a Canvas en segundo plano para detectar nuevas tareas y notas.",
+                        text = stringResource(Res.string.sync_interval_dialog_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -157,7 +187,7 @@ fun GranularNotificationsSection(
             },
             confirmButton = {
                 TextButton(onClick = { showSyncIntervalDialog = false }) {
-                    Text("Cerrar")
+                    Text(stringResource(Res.string.close))
                 }
             }
         )
@@ -165,38 +195,38 @@ fun GranularNotificationsSection(
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         Column(modifier = modifier.fillMaxWidth()) {
-            SmallTitle(text = "ALERTAS Y NOTIFICACIONES")
+            SmallTitle(text = stringResource(Res.string.settings_notif_section_title))
             MiuixCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 SwitchPreference(
-                    title = "Recordatorio preventivo (24h)",
-                    summary = "24 horas antes del cierre de tarea",
+                    title = stringResource(Res.string.notif_24h_title),
+                    summary = stringResource(Res.string.notif_24h_desc),
                     checked = notif24h,
                     onCheckedChange = onNotif24hChange
                 )
                 SwitchPreference(
-                    title = "Alerta de urgencia (3h)",
-                    summary = "3 horas antes de la entrega",
+                    title = stringResource(Res.string.notif_3h_title),
+                    summary = stringResource(Res.string.notif_3h_desc),
                     checked = notif3h,
                     onCheckedChange = onNotif3hChange
                 )
                 SwitchPreference(
-                    title = "Alerta crítica (30 min)",
-                    summary = "30 minutos antes (ultimátum)",
+                    title = stringResource(Res.string.notif_30m_title),
+                    summary = stringResource(Res.string.notif_30m_desc),
                     checked = notif30m,
                     onCheckedChange = onNotif30mChange
                 )
                 SwitchPreference(
-                    title = "Briefing matutino (07:00 AM)",
-                    summary = "Resumen de entregas del día",
+                    title = stringResource(Res.string.notif_morning_title),
+                    summary = stringResource(Res.string.notif_morning_desc),
                     checked = notifMorning,
                     onCheckedChange = onNotifMorningChange
                 )
                 ArrowPreference(
-                    title = "Sincronización en segundo plano",
+                    title = stringResource(Res.string.sync_interval_title),
                     summary = currentLabel,
                     onClick = { showSyncIntervalDialog = true }
                 )
@@ -228,7 +258,7 @@ fun GranularNotificationsSection(
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
-                        text = "Notificaciones Canvas",
+                        text = stringResource(Res.string.settings_notif_section_title),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -239,8 +269,8 @@ fun GranularNotificationsSection(
                 // Item 1: 24h
                 MaterialNotificationToggleRow(
                     icon = Icons.Default.CalendarToday,
-                    title = "Recordatorio preventivo",
-                    subtitle = "24 horas antes del cierre",
+                    title = stringResource(Res.string.notif_24h_title),
+                    subtitle = stringResource(Res.string.notif_24h_desc),
                     checked = notif24h,
                     onCheckedChange = onNotif24hChange
                 )
@@ -250,8 +280,8 @@ fun GranularNotificationsSection(
                 // Item 2: 3h
                 MaterialNotificationToggleRow(
                     icon = Icons.Default.Alarm,
-                    title = "Alerta de urgencia",
-                    subtitle = "3 horas antes de la entrega",
+                    title = stringResource(Res.string.notif_3h_title),
+                    subtitle = stringResource(Res.string.notif_3h_desc),
                     checked = notif3h,
                     onCheckedChange = onNotif3hChange
                 )
@@ -261,8 +291,8 @@ fun GranularNotificationsSection(
                 // Item 3: 30m
                 MaterialNotificationToggleRow(
                     icon = Icons.Default.WarningAmber,
-                    title = "Alerta crítica",
-                    subtitle = "30 minutos antes (ultimátum)",
+                    title = stringResource(Res.string.notif_30m_title),
+                    subtitle = stringResource(Res.string.notif_30m_desc),
                     checked = notif30m,
                     onCheckedChange = onNotif30mChange
                 )
@@ -272,8 +302,8 @@ fun GranularNotificationsSection(
                 // Item 4: Morning Briefing
                 MaterialNotificationToggleRow(
                     icon = Icons.Default.WbSunny,
-                    title = "Briefing matutino diario",
-                    subtitle = "07:00 AM resumen de tareas del día",
+                    title = stringResource(Res.string.notif_morning_title),
+                    subtitle = stringResource(Res.string.notif_morning_desc),
                     checked = notifMorning,
                     onCheckedChange = onNotifMorningChange
                 )
@@ -315,7 +345,7 @@ fun GranularNotificationsSection(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "Sincronización periódica",
+                                text = stringResource(Res.string.sync_interval_title),
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     fontWeight = FontWeight.SemiBold
                                 ),
@@ -339,7 +369,7 @@ fun GranularNotificationsSection(
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
-                            text = "Cambiar",
+                            text = stringResource(Res.string.change),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),

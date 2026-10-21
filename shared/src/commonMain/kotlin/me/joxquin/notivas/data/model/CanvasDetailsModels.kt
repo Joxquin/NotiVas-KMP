@@ -78,6 +78,7 @@ data class CanvasModuleItem(
     @SerialName("html_url") val htmlUrl: String? = null,
     @SerialName("url") val url: String? = null,
     @SerialName("page_url") val pageUrl: String? = null,
+    @SerialName("external_url") val externalUrl: String? = null,
     @SerialName("content_id") val contentId: Long? = null
 )
 
@@ -165,3 +166,20 @@ data class CanvasDiscussionViewResponse(
     @SerialName("unread_entries") val unreadEntries: List<Long> = emptyList()
 )
 
+@Serializable
+enum class TemplateSourceType {
+    DRIVE_URL,
+    CANVAS_FILE,
+    CANVAS_PAGE
+}
+
+@Serializable
+data class TemplateCandidate(
+    val title: String,
+    val type: TemplateSourceType,
+    val url: String,
+    val moduleName: String? = null,
+    val fileExtension: String? = null,
+    val canvasFileId: Long? = null,
+    val isCurrentAssignmentModule: Boolean = false
+)

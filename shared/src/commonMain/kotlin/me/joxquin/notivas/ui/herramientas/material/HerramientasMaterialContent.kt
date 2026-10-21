@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.ui.foros.ForosViewModel
 import me.joxquin.notivas.ui.notas.NotasViewModel
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +57,7 @@ fun HerramientasMaterialContent(
     onOpenProgreso: () -> Unit = {},
     onOpenForos: () -> Unit = {},
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
+    onOpenArchive: () -> Unit = {},
     onOpenTuneSettings: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
@@ -157,7 +160,7 @@ fun HerramientasMaterialContent(
                         .padding(horizontal = 20.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "Herramientas",
+                        text = stringResource(Res.string.herramientas_title),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 28.sp
@@ -166,7 +169,7 @@ fun HerramientasMaterialContent(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Utilidades y módulos NotiVas",
+                        text = stringResource(Res.string.herramientas_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -175,7 +178,7 @@ fun HerramientasMaterialContent(
 
             item {
                 Text(
-                    text = "MÓDULOS ACTIVOS",
+                    text = stringResource(Res.string.herramientas_modules_header),
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
@@ -213,7 +216,10 @@ fun HerramientasMaterialContent(
 
             // ─── CARD 3: Historial & Archivo de Tareas ────────────────────────
             item {
-                MaterialArchiveCard(modifier = Modifier.padding(horizontal = 16.dp))
+                MaterialArchiveCard(
+                    onClick = onOpenArchive,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
 
             item {

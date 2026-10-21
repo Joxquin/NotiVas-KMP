@@ -27,6 +27,8 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 private val MiuixBlue = Color(0xFF3482FF)
 private val MiuixAmber = Color(0xFFFFB74D)
@@ -63,7 +65,7 @@ fun MiuixCourseSummaryList(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SmallTitle(
-                text = "CURSOS ACTIVOS",
+                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.courses_section_title).uppercase(),
                 modifier = Modifier.weight(1f, fill = false)
             )
 
@@ -73,7 +75,7 @@ fun MiuixCourseSummaryList(
                 modifier = Modifier.padding(end = 20.dp)
             ) {
                 Text(
-                    text = "${courses.size} inscritos",
+                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.courses_enrolled_format, courses.size),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
@@ -86,7 +88,7 @@ fun MiuixCourseSummaryList(
                 )
 
                 Text(
-                    text = "Gestionar",
+                    text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.manage),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = MiuixBlue,
@@ -216,7 +218,7 @@ private fun MiuixCourseGridCard(
                             .padding(horizontal = 5.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "$pendingCount pendientes",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.course_pending_format, pendingCount),
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Medium,
                             color = MiuixAmber
@@ -237,7 +239,7 @@ private fun MiuixCourseGridCard(
                             .padding(horizontal = 5.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "Al día ✓",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.course_up_to_date),
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Medium,
                             color = MiuixGreen

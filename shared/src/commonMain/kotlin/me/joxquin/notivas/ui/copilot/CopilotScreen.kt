@@ -66,6 +66,8 @@ import me.joxquin.notivas.ui.copilot.components.CopilotMentionPopup
 import me.joxquin.notivas.ui.copilot.components.CopilotMessageList
 import me.joxquin.notivas.ui.copilot.components.CopilotWarningBanner
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * Orquestador UDF declarativo para el Asistente Académico Copilot / Copilot IA.
@@ -234,12 +236,16 @@ fun CopilotScreen(
                         }
                         Column {
                             Text(
-                                text = "Copilot Académico",
+                                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_topbar_title),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (uiState.sessionTokens > 0) "${uiState.sessionTokens} tokens usados" else "Asistente IA para tus cursos",
+                                text = if (uiState.sessionTokens > 0) {
+                                    org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.tokens_used_format, uiState.sessionTokens)
+                                } else {
+                                    org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_topbar_subtitle)
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -250,7 +256,7 @@ fun CopilotScreen(
                     IconButton(onClick = { isHistorySheetVisible = true }) {
                         Icon(
                             imageVector = Icons.Default.History,
-                            contentDescription = "Historial",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_history_title),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp)
                         )
@@ -259,7 +265,7 @@ fun CopilotScreen(
                         IconButton(onClick = { viewModel.startNewSession() }) {
                             Icon(
                                 imageVector = Icons.Default.AddComment,
-                                contentDescription = "Nuevo Chat",
+                                contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_new_chat),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -268,7 +274,7 @@ fun CopilotScreen(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Configuración",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.nav_ajustes),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp)
                         )

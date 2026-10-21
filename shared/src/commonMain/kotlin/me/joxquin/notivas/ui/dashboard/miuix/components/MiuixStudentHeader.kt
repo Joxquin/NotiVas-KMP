@@ -32,6 +32,8 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 private val MiuixBlue = Color(0xFF3482FF)
 private val MiuixGreen = Color(0xFF66BB6A)
@@ -48,13 +50,32 @@ fun MiuixStudentHeader(
     modifier: Modifier = Modifier
 ) {
     val rawName = profile?.name ?: ""
-    val studentFirstName = rawName.trim().split(" ").firstOrNull { it.isNotBlank() } ?: ""
-    val initials = rawName.split(" ")
-        .filter { it.isNotBlank() }
-        .take(2)
-        .map { it.first().uppercase() }
-        .joinToString("")
-        .ifBlank { "AV" }
+    val studentFirstName = androidx.compose.runtime.remember(rawName) {
+        if (rawName.isBlank()) ""
+        else if ("," in rawName) {
+            val givenPart = rawName.substringAfter(",").trim()
+            val first = givenPart.split(" ").firstOrNull { it.isNotBlank() } ?: ""
+            first.lowercase().replaceFirstChar { it.uppercase() }
+        } else {
+            val first = rawName.trim().split(" ").firstOrNull { it.isNotBlank() } ?: ""
+            first.lowercase().replaceFirstChar { it.uppercase() }
+        }
+    }
+    val initials = androidx.compose.runtime.remember(rawName, studentFirstName) {
+        if (rawName.isBlank()) "AV"
+        else if ("," in rawName) {
+            val surname = rawName.substringBefore(",").trim().split(" ").firstOrNull { it.isNotBlank() }?.firstOrNull()?.uppercase() ?: ""
+            val given = rawName.substringAfter(",").trim().split(" ").firstOrNull { it.isNotBlank() }?.firstOrNull()?.uppercase() ?: ""
+            "$given$surname".ifBlank { "AV" }
+        } else {
+            rawName.split(" ")
+                .filter { it.isNotBlank() }
+                .take(2)
+                .map { it.first().uppercase() }
+                .joinToString("")
+                .ifBlank { "AV" }
+        }
+    }
 
     val institutionOrCareer = if (institution.isNotBlank() && institution != "Canvas LMS") {
         institution
@@ -118,7 +139,11 @@ fun MiuixStudentHeader(
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    val greetingText = if (studentFirstName.isNotBlank()) "Hola, $studentFirstName" else "Hola"
+                    val greetingText = if (studentFirstName.isNotBlank()) {
+                        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.greeting_hello_name, studentFirstName)
+                    } else {
+                        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.greeting_hello)
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -153,9 +178,9 @@ fun MiuixStudentHeader(
             )
 
             val (statusText, statusColor) = when (syncStatus) {
-                SyncStatus.SYNCING -> "Sincronizando..." to MiuixOrange
-                SyncStatus.SYNCED -> "Sincronizado" to MiuixGreen
-                SyncStatus.FAILED -> "Sin conexión" to MiuixRed
+                SyncStatus.SYNCING -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.sync_status_syncing) to MiuixOrange
+                SyncStatus.SYNCED -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.sync_status_synced) to MiuixGreen
+                SyncStatus.FAILED -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.sync_status_offline) to MiuixRed
             }
 
             Box(

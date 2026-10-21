@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App & General -->
+    <string name="app_name">NotiVas</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="close">Close</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="change">Change</string>
+    <string name="retry">Retry</string>
+    <string name="sync">Sync</string>
+    <string name="apply">Apply</string>
+    <string name="back">Back</string>
+    <string name="search">Search</string>
+    <string name="clear">Clear</string>
+    <string name="selected">Selected</string>
+    <string name="manage">Manage</string>
+    <string name="view_all">View all</string>
+    <string name="pending_badge">Pending</string>
+    <string name="unknown_error">Unknown error</string>
+
+    <!-- Navigation -->
+    <string name="nav_inicio">Home</string>
+    <string name="nav_herramientas">Tools</string>
+    <string name="nav_copilot">Copilot AI</string>
+    <string name="nav_ajustes">Settings</string>
+
+    <!-- Settings / Ajustes -->
+    <string name="settings_title">Settings &amp; Profile</string>
+    <string name="settings_subtitle">Canvas LMS account management and system preferences</string>
+    
+    <!-- Language Settings -->
+    <string name="settings_language_section_title">LANGUAGE &amp; REGION</string>
+    <string name="settings_language_title">App Language</string>
+    <string name="settings_language_dialog_title">Select Language</string>
+    <string name="settings_language_dialog_desc">Choose the display language for the entire application:</string>
+    <string name="language_system">System default</string>
+    <string name="language_system_summary">Follow device system language (English / Spanish)</string>
+    <string name="language_spanish">Español (Spanish)</string>
+    <string name="language_spanish_summary">Force Spanish interface</string>
+    <string name="language_english">English</string>
+    <string name="language_english_summary">Force English interface</string>
+
+    <!-- Visual System & Themes -->
+    <string name="settings_theme_section_title">VISUAL SYSTEM AND THEMES</string>
+    <string name="settings_theme_title">Design Style</string>
+    <string name="settings_theme_summary">Active visual experience</string>
+    <string name="settings_theme_dialog_title">Design Style</string>
+    <string name="settings_theme_dialog_desc">Select the UI visual engine and tokens for the application:</string>
+    <string name="theme_material">Material Design 3</string>
+    <string name="theme_material_desc">Expressive M3 tokens &amp; Monet dynamic palette</string>
+    <string name="theme_miuix">HyperOS Miuix</string>
+    <string name="theme_miuix_desc">Xiaomi HyperOS Miuix components, Squircle &amp; Glass</string>
+    <string name="dynamic_color_title">Dynamic color (Monet)</string>
+    <string name="dynamic_color_summary_on">Adaptive palette from wallpaper</string>
+    <string name="dynamic_color_summary_off">Default Stitch palette</string>
+
+    <!-- Notifications -->
+    <string name="settings_notif_section_title">NOTIFICATIONS &amp; REMINDERS</string>
+    <string name="notif_24h_title">24 hours before</string>
+    <string name="notif_24h_desc">Reminder of assignments due tomorrow</string>
+    <string name="notif_3h_title">3 hours before</string>
+    <string name="notif_3h_desc">Urgent alert for upcoming deliveries</string>
+    <string name="notif_30m_title">30 minutes before</string>
+    <string name="notif_30m_desc">Final countdown alert</string>
+    <string name="notif_morning_title">Daily Morning Briefing</string>
+    <string name="notif_morning_desc">Daily task summary at 8:00 AM</string>
+    <string name="sync_interval_title">Sync Frequency</string>
+    <string name="sync_interval_desc">How often Canvas data is checked in the background</string>
+    <string name="sync_interval_dialog_title">Sync frequency</string>
+    <string name="sync_interval_dialog_desc">Choose background synchronization interval for new assignments, updates, and grades:</string>
+    <string name="sync_interval_15m">Every 15 minutes (Recommended)</string>
+    <string name="sync_interval_30m">Every 30 minutes</string>
+    <string name="sync_interval_1h">Every 1 hour</string>
+    <string name="sync_interval_3h">Every 3 hours</string>
+    <string name="sync_interval_6h">Every 6 hours (Battery saving)</string>
+    <string name="sync_interval_custom_format">Every %1$d minutes</string>
+
+    <!-- AI Copilot Settings -->
+    <string name="settings_copilot_section_title">INTELLIGENCE &amp; COPILOT AI</string>
+    <string name="copilot_enable_title">Enable Copilot Assistant</string>
+    <string name="copilot_enable_desc">Contextual suggestions, chat analysis and tutoring</string>
+    <string name="openrouter_api_key_title">OpenRouter API Key</string>
+    <string name="openrouter_api_key_desc_not_set">Not configured (required)</string>
+    <string name="openrouter_api_key_dialog_title">OpenRouter API Key</string>
+    <string name="openrouter_api_key_dialog_desc">Enter your OpenRouter key to power the AI assistant with top frontier models (Gemini, Claude, GPT, Llama):</string>
+    <string name="openrouter_api_key_placeholder">sk-or-v1-...</string>
+    <string name="openrouter_api_key_get_key">Get free API key on OpenRouter</string>
+    <string name="openrouter_model_title">AI Model</string>
+    <string name="openrouter_model_dialog_title">Select AI Model</string>
+    <string name="openrouter_model_dialog_desc">Select the LLM model to process your queries:</string>
+    <string name="openrouter_balance_title">Account Balance</string>
+    <string name="openrouter_balance_subtitle">Total usage &amp; available credits</string>
+    <string name="openrouter_balance_usage">Usage: $%1$s / $%2$s USD</string>
+    <string name="tokens_used_format">Total tokens used: %1$d</string>
+    <string name="openrouter_analyze_model_btn">Analyze model</string>
+    <string name="openrouter_analyzing_model">Analyzing model...</string>
+    <string name="openrouter_custom_model_hint">Model ID (e.g. meta-llama/llama-3.3-70b-instruct)</string>
+    <string name="openrouter_custom_model_title">Custom ID (Manual)</string>
+    <string name="openrouter_model_optimal">100% Compatible with NotiVas: Supports conversational chat and automatic Canvas LMS tools.</string>
+    <string name="openrouter_model_compatible">Compatible with chat: Answers questions and drafts text, but does not support dynamic Canvas tools.</string>
+    <string name="openrouter_model_incompatible">Model not recommended: Does not support conversational text generation.</string>
+    <string name="openrouter_model_not_found">Model not found on OpenRouter. Check the model ID.</string>
+    <string name="openrouter_model_context">Context: %1$d tokens</string>
+    <string name="openrouter_model_info_title">Model Information</string>
+
+    <!-- Security and Session -->
+    <string name="settings_security_section_title">SECURITY &amp; CRITICAL ZONE</string>
+    <string name="biometric_lock_title">Biometric Lock</string>
+    <string name="biometric_lock_desc">Require fingerprint or face unlock to access</string>
+    <string name="biometric_unlock_title">Unlock NotiVas</string>
+    <string name="biometric_unlock_subtitle">Confirm your identity to continue</string>
+    <string name="biometric_unlock_action">Unlock</string>
+    <string name="biometric_retry_action">Try again</string>
+    <string name="biometric_lock_error_cancelled">Authentication cancelled</string>
+    <string name="biometric_lock_error_failed">Could not verify your identity. Try again.</string>
+    <string name="biometric_lock_error_unavailable">Biometric authentication is unavailable right now</string>
+    <string name="biometric_lock_unavailable_no_hardware">This device does not have a biometric sensor</string>
+    <string name="biometric_lock_unavailable_not_enrolled">Set up a fingerprint or face unlock in system settings first</string>
+    <string name="biometric_lock_unavailable_unsupported">Biometric lock is only available on mobile devices</string>
+    <string name="biometric_lock_verify_enable">Verify your identity to enable biometric lock</string>
+    <string name="biometric_lock_verify_disable">Verify your identity to disable biometric lock</string>
+    <string name="api_diagnostics_title">Canvas API Diagnostics</string>
+    <string name="api_diagnostics_summary">Sync %1$s · Latency: %2$d ms</string>
+    <string name="last_sync_label">Last sync: %1$s</string>
+    <string name="api_latency_label">API latency: %1$d ms</string>
+    <string name="logout_button">Unlink Canvas Account</string>
+    <string name="logout_button_desc">Delete token and locally cached data</string>
+    <string name="logout_dialog_title">Unlink account?</string>
+    <string name="logout_dialog_text">Your session will be closed, the local database will be cleared, and the secure token destroyed.</string>
+    <string name="logout_confirm">Confirm and exit</string>
+
+    <!-- Student Identity -->
+    <string name="student_id_title">STUDENT IDENTITY</string>
+    <string name="student_unlinked">Canvas Student</string>
+    <string name="student_avatar_cd">Profile photo</string>
+    <string name="student_verify_token">Verify Session</string>
+    <string name="student_verifying">Verifying…</string>
+    <string name="student_auth_mode_cookies">Web Session</string>
+    <string name="student_auth_mode_token">API Token</string>
+
+    <!-- Focus & Habits Section -->
+    <string name="focus_section_title">Focus &amp; Study Habits</string>
+    <string name="focus_section_desc">Calendar-linked automation</string>
+    <string name="focus_mode_title">Automatic Focus Mode</string>
+    <string name="focus_mode_desc">Enable Do Not Disturb if a task is due in under 4h</string>
+
+    <!-- App Info Footer -->
+    <string name="app_version_format">NotiVas v%1$s (%2$d)</string>
+    <string name="app_build_desc">Canvas LMS Native Client • Offline-First</string>
+
+    <!-- Dashboard / Inicio -->
+    <string name="greeting_hello">Hello</string>
+    <string name="greeting_hello_name">Hello, %1$s</string>
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_night">Good night</string>
+    <string name="sync_status_syncing">Syncing...</string>
+    <string name="sync_status_synced">Synced</string>
+    <string name="sync_status_offline">Offline</string>
+    <string name="urgent_tasks_title">For Today &amp; Tomorrow</string>
+    <string name="urgent_badge_count">%1$d urgent</string>
+    <string name="no_urgent_tasks">No pending assignments!</string>
+    <string name="urgent_due_today">Due today</string>
+    <string name="urgent_due_tomorrow">Due tomorrow</string>
+    <string name="urgent_due_days_format">Due in %1$d days</string>
+    <string name="courses_section_title">Active Courses</string>
+    <string name="courses_enrolled_format">%1$d enrolled</string>
+    <string name="weekly_schedule_title">Weekly Schedule</string>
+    <string name="no_tasks_for_selected_day">No assignments scheduled for this day</string>
+
+    <!-- Tools / Herramientas & Grades -->
+    <string name="herramientas_title">Academic Tools</string>
+    <string name="herramientas_subtitle">Weighting calculation, simulation, and academic forums</string>
+    <string name="herramientas_modules_header">ACTIVE MODULES</string>
+    <string name="grades_progreso_title">Course Progress</string>
+    <string name="grades_progreso_desc">Continuous evaluations, grades, and projected targets</string>
+    <string name="foros_hub_title">Academic Forums</string>
+    <string name="foros_hub_desc">Ask questions, collaborate, and prepare answers</string>
+    <string name="grades_simulation_title">Grade Simulator (What-If)</string>
+    <string name="grades_simulation_desc">Simulate final grades and evaluation scenarios</string>
+    <string name="current_average_label">Current Average</string>
+    <string name="desired_grade_label">Target Grade</string>
+    <string name="needed_score_label">Needed Score</string>
+    <string name="status_good_performance">Good performance</string>
+    <string name="status_above_average">Above average</string>
+    <string name="status_at_risk">At risk</string>
+    <string name="status_unevaluated">Unevaluated</string>
+    <string name="create_group_button">Create Evaluation Group</string>
+    <string name="import_template_button">Import Course Template</string>
+
+    <!-- Forums / Foros -->
+    <string name="foros_title">Academic Forums</string>
+    <string name="foros_subtitle_format">Canvas LMS • %1$d active</string>
+    <string name="foros_syncing">Syncing forums...</string>
+    <string name="foros_loading">Loading academic forums from Canvas LMS...</string>
+    <string name="foro_detail_title">Forum Detail</string>
+    <string name="foros_search_placeholder">Search discussions, topics or instructors...</string>
+    <string name="foros_search_empty_query">No discussions found for \'%1$s\'</string>
+    <string name="foros_empty_category">No discussions available in this category</string>
+    <string name="foros_empty_suggestion">Try changing course or filter to see more discussions.</string>
+    <string name="foros_filter_all">All</string>
+    <string name="foros_filter_unread">Unread</string>
+    <string name="foros_filter_pinned">Pinned</string>
+    <string name="foros_clear_search">Clear search</string>
+    <string name="foro_due_none">No closing date</string>
+    <string name="foro_due_closed">Closed</string>
+    <string name="foro_due_today_hours">Due today (~%1$d h)</string>
+    <string name="foro_due_today_minutes">Due today (~%1$d min)</string>
+    <string name="foro_due_days">Due in %1$d days</string>
+    <string name="foro_graded_closed">Graded • Closed</string>
+    <string name="foro_closed_expired">Closed / Expired</string>
+    <string name="foro_points_graded">%1$d Pts • Graded</string>
+    <string name="foro_formative">Formative / Ungraded</string>
+    <string name="foro_score_obtained">Score obtained</string>
+    <string name="foro_available_to_participate">Available to participate</string>
+    <string name="foro_closed_status">Forum closed</string>
+    <string name="no_forums_found">No discussions found</string>
+    <string name="foro_reply_placeholder">Write your response here...</string>
+    <string name="foro_send_reply">Send Reply</string>
+    <string name="foro_copilot_suggest">Copilot Draft</string>
+    <string name="foro_replies_count">%1$d replies</string>
+
+    <!-- Copilot AI Screen -->
+    <string name="copilot_title">Copilot AI</string>
+    <string name="copilot_new_chat">New Chat</string>
+    <string name="copilot_history_title">Chat History</string>
+    <string name="copilot_input_placeholder">Ask anything about your courses, homework, or schedule...</string>
+    <string name="copilot_send">Send</string>
+    <string name="copilot_thinking">Thinking...</string>
+    <string name="copilot_hero_title">How can I help you today?</string>
+    <string name="copilot_hero_subtitle">Your AI academic copilot with direct Canvas LMS context</string>
+    <string name="copilot_badge_courses">%1$d courses active</string>
+    <string name="copilot_suggestion_summary">Summarize my week\'s urgent deliveries</string>
+    <string name="copilot_suggestion_grades">What do I need to pass my courses?</string>
+    <string name="copilot_suggestion_forums">Draft a reply for my open forum</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to NotiVas</string>
+    <string name="onboarding_welcome_subtitle">Your modern, intelligent, offline-first Canvas LMS assistant</string>
+    <string name="onboarding_start_button">Get Started</string>
+    <string name="onboarding_domain_title">Select your University</string>
+    <string name="onboarding_login_sso">Institutional Login (SSO Web)</string>
+    <string name="onboarding_login_token">Manual Access Token</string>
+
+    <!-- Bento Cards & Herramientas extras -->
+    <string name="bento_progress_title">Progress</string>
+    <string name="bento_progress_subtitle">Grades &amp; current average</string>
+    <string name="bento_active_course">Active course</string>
+    <string name="bento_no_graded_assignments">No graded evaluations</string>
+    <string name="bento_evaluated_prefix">Evaluated: %1$d%%</string>
+    <string name="bento_projected_prefix">Projected: %1$s</string>
+    <string name="bento_average_prefix">Average: %1$s</string>
+    <string name="bento_simulator_title">Simulator</string>
+    <string name="bento_simulator_subtitle">Minimum grade and passing scenarios</string>
+    <string name="bento_courses_count">%1$d Courses</string>
+    <string name="bento_projection_label">PROJECTION</string>
+    <string name="bento_weighted_avg_desc">Estimated weighted average</string>
+    <string name="bento_foros_title">Academic Forums</string>
+    <string name="bento_foros_subtitle">Discussions &amp; replies with AI Copilot</string>
+    <string name="bento_foros_active_count">%1$d active</string>
+    <string name="bento_foros_all_caught_up">All caught up</string>
+    <string name="bento_foros_urgent_today_h">Today (~%1$d h)</string>
+    <string name="bento_foros_urgent_today_m">Today (~%1$d min)</string>
+    <string name="bento_foros_in_days">In %1$d days</string>
+    <string name="bento_foros_soon">Soon</string>
+    <string name="bento_foros_rubric">Rubric: %1$d pts</string>
+    <string name="bento_foros_active_part">Active participation</string>
+    <string name="bento_foros_replies_count">%1$d entries registered</string>
+    <string name="bento_foros_go_to_discussion">Go to discussion →</string>
+    <string name="bento_archive_title">Task History &amp; Archive</string>
+    <string name="bento_archive_subtitle">Dismissed and past submissions (%1$d archived)</string>
+    <string name="bento_archived_count">%1$d Archived</string>
+
+    <!-- Copilot extras -->
+    <string name="copilot_model_prefix">Model: %1$s</string>
+    <string name="copilot_courses_synced">%1$d synced courses</string>
+    <string name="copilot_hero_description">University assistant live-connected to your Canvas LMS assignments, rubrics, and grade simulator.</string>
+    <string name="copilot_suggestions_header">QUICK SUGGESTIONS</string>
+    <string name="copilot_suggestions_label">Suggestions</string>
+    <string name="copilot_suggestion_urgent_q">What tasks are due for submission this week?</string>
+    <string name="copilot_suggestion_rubrics_q">What are the requirements and rubrics for my next assignment?</string>
+    <string name="copilot_suggestion_final_exam_q">What score do I need on the final exam to pass my courses?</string>
+    <string name="copilot_rename_query_title">Rename Query</string>
+    <string name="copilot_no_past_queries">You have no previous queries</string>
+    <string name="copilot_tokens_count">%1$d tokens</string>
+    <string name="copilot_btn_save">Save</string>
+    <string name="copilot_btn_cancel">Cancel</string>
+    <string name="copilot_btn_new_query">New query</string>
+    <string name="copilot_action_rename">Rename</string>
+    <string name="copilot_action_delete">Delete</string>
+
+    <!-- Foros extras -->
+    <string name="foros_btn_enter_forum">Enter forum</string>
+    <string name="foros_author_default">Course Instructor</string>
+    <string name="foros_default_message_prompt">Access the discussion forum to read instructions and actively participate with classmates.</string>
+
+    <!-- Additional Dashboard & Miuix Strings -->
+    <string name="dashboard_academic_title">Academic Dashboard &amp; Canvas Tracking</string>
+    <string name="dashboard_this_week">This week</string>
+    <string name="unconfigured_banner_title">Formula Settings</string>
+    <string name="unconfigured_banner_desc_single">1 course without weighting or groups</string>
+    <string name="unconfigured_banner_desc_multiple">%1$d courses without weighting</string>
+    <string name="unconfigured_banner_btn">Configure formulas and groups</string>
+    <string name="urgent_critical_badge">%1$d Critical</string>
+    <string name="urgent_tasks_all_clear">All clear! You have no pending urgent tasks.</string>
+    <string name="urgent_due_overdue">Overdue</string>
+    <string name="urgent_due_within_1h">&lt; 1h</string>
+    <string name="urgent_due_hours_format">In %1$dh</string>
+    <string name="urgent_virtual">Virtual</string>
+    <string name="course_pending_format">%1$d pending</string>
+    <string name="course_up_to_date">On track</string>
+
+    <!-- Additional Copilot Strings -->
+    <string name="copilot_topbar_title">Academic Copilot</string>
+    <string name="copilot_topbar_subtitle">AI Assistant for your courses</string>
+    <string name="copilot_warning_disabled_title">Copilot Disabled</string>
+    <string name="copilot_warning_disabled_desc">Enable NotiVas Copilot in Settings</string>
+    <string name="copilot_warning_apikey_title">API Key Required</string>
+    <string name="copilot_warning_apikey_desc">Configure your OpenRouter Key in Settings</string>
+    <string name="copilot_warning_btn_settings">Settings</string>
+    <string name="copilot_input_placeholder_miuix">Ask Copilot or use @course...</string>
+    <string name="copilot_mention_course">Mention course</string>
+
+    <!-- Foros Filter Bottom Sheet & Sort Options -->
+    <string name="foros_filter_sheet_title">Filters &amp; Sorting</string>
+    <string name="foros_filter_sheet_subtitle">Customize your forum discussions list</string>
+    <string name="foros_filter_section_category">Category &amp; Status</string>
+    <string name="foros_filter_section_subject">Filter by Subject</string>
+    <string name="foros_filter_selected_course">Selected Course</string>
+    <string name="foros_filter_all_courses">All courses</string>
+    <string name="foros_filter_section_sort">Display Order</string>
+    <string name="foros_filter_sort_criteria">Criteria</string>
+    <string name="foros_filter_tab_all">All discussions</string>
+    <string name="foros_filter_tab_points">Graded discussions (Points)</string>
+    <string name="foros_filter_tab_no_points">Ungraded discussions</string>
+    <string name="foros_filter_tab_expired">Expired discussions</string>
+    <string name="foros_sort_due_asc">Due date (Upcoming)</string>
+    <string name="foros_sort_due_desc">Due date (Furthest)</string>
+    <string name="foros_sort_recent">Recently published</string>
+    <string name="foros_sort_replies">Most replies</string>
+    <string name="foros_sort_title_asc">Topic title (A - Z)</string>
+    <string name="foros_action_done">Done</string>
+
+    <!-- Foro Detail & Consigna & Editor & Replies -->
+    <string name="foro_consigna_header">CANVAS LMS OFFICIAL PROMPT</string>
+    <string name="foro_mandatory">Mandatory</string>
+    <string name="foro_optional">Optional</string>
+    <string name="foro_rubric_header_format">Evaluation Rubric (%1$d pts max)</string>
+    <string name="foro_rubric_criterion_default">Evaluation criterion</string>
+    <string name="foro_rubric_criterion_desc_default">Official criterion set in Canvas LMS</string>
+    <string name="foro_your_reply_header">Your Academic Response</string>
+    <string name="foro_draft_saved">Draft saved!</string>
+    <string name="foro_draft_local">Local draft</string>
+    <string name="foro_copilot_banner_title">Need to structure your argument?</string>
+    <string name="foro_copilot_banner_desc">Copilot analyzes the Canvas LMS prompt and rubric to assist you.</string>
+    <string name="foro_copilot_btn_structure">Structure response with Copilot</string>
+    <string name="foro_words_chars_count">%1$d words (%2$d characters)</string>
+    <string name="foro_min_suggested_words">Suggested minimum: 150</string>
+    <string name="foro_saved_badge">Saved!</string>
+    <string name="foro_save_draft_btn">Save Draft</string>
+    <string name="foro_publish_btn">Post to Canvas</string>
+    <string name="foro_publishing">Posting to Canvas...</string>
+    <string name="foro_publish_success">Reply posted successfully to Canvas!</string>
+    <string name="foro_publish_empty_error">Cannot post an empty response.</string>
+    <string name="foro_replies_recent_header">Recent contributions (%1$d replies)</string>
+    <string name="foro_view_all_replies">View all (%1$d)</string>
+    <string name="foro_show_less">Show less</string>
+    <string name="foro_no_replies_yet">No contributions in this forum yet. Be the first to reply!</string>
+
+    <string name="foro_loading_replies">Loading classmates\' replies...</string>
+    <string name="foro_no_replies_subtitle">Be the first in your class to post an academic response.</string>
+    <string name="foro_show_more_replies">Show %1$d more contributions</string>
+    <string name="foro_author_classmate">Classmate</string>
+    <string name="foro_author_classmate_role">Classmate</string>
+    <string name="foro_show_more">See more...</string>
+    <string name="foro_show_less_action">See less</string>
+
+    <!-- Copilot Assistant Sheet -->
+    <string name="copilot_assist_return_to_forum">Back to Forum</string>
+    <string name="copilot_assist_academic_copilot">ACADEMIC COPILOT</string>
+    <string name="copilot_assist_strategy_for">Strategy for %1$s</string>
+    <string name="copilot_assist_analyzing_with">Analyzing prompt with %1$s...</string>
+    <string name="copilot_assist_extracting">Extracting learning objectives and response structure</string>
+    <string name="copilot_assist_failed_strategy">Could not generate strategy</string>
+    <string name="copilot_assist_retry_btn">Retry</string>
+    <string name="copilot_assist_objective_detected">Objective Detected</string>
+    <string name="copilot_assist_technical_rigor">Technical Rigor</string>
+    <string name="copilot_assist_counterexample">Counterexample</string>
+    <string name="copilot_assist_interaction">Interaction</string>
+    <string name="copilot_assist_structure_header">RECOMMENDED ARGUMENTATIVE STRUCTURE</string>
+    <string name="copilot_assist_phases_count">3 Phases</string>
+    <string name="copilot_assist_tone_header">TONE &amp; PERSPECTIVE TUNER</string>
+    <string name="copilot_assist_tone_formal">More formal &amp; technical</string>
+    <string name="copilot_assist_tone_formal_prompt">Make the text more rigorous, formal and advanced academic level.</string>
+    <string name="copilot_assist_tone_concise">More concise (-30%)</string>
+    <string name="copilot_assist_tone_concise_prompt">Summarize the response making it 30% more concise and straight to the point.</string>
+    <string name="copilot_assist_tone_citations">Add citations &amp; theory</string>
+    <string name="copilot_assist_tone_citations_prompt">Include deep theoretical foundation and methodological references.</string>
+    <string name="copilot_assist_tone_counterexample">Emphasize counterexample</string>
+    <string name="copilot_assist_tone_counterexample_prompt">Elaborate on detailed counterexamples and edge cases.</string>
+    <string name="copilot_assist_draft_suggested">Suggested draft</string>
+    <string name="copilot_assist_words_count">%1$d words</string>
+    <string name="copilot_assist_academic_tone">Academic Tone</string>
+    <string name="copilot_assist_copied">Copied!</string>
+    <string name="copilot_assist_copy_text">Copy text</string>
+    <string name="copilot_assist_edit_draft">Edit draft</string>
+    <string name="copilot_assist_insert_btn">Insert in my response</string>
+
+    <!-- Assignment Detail & Synchronized Draft Flow -->
+    <string name="assignment_detail_title">Assignment Details</string>
+    <string name="assignment_detail_tab_draft">Draft</string>
+    <string name="assignment_detail_tab_instructions">Instructions</string>
+    <string name="assignment_detail_tab_options">Options</string>
+    <string name="draft_status_card_title">Draft Synchronization</string>
+    <string name="draft_status_ready_desc">Create or link an editable document in Google Drive linked with NotiVas.</string>
+    <string name="draft_btn_start_template_format">Start copy of: %1$s</string>
+    <string name="draft_btn_start_blank">Start Blank Draft</string>
+    <string name="draft_template_detected_badge">Template detected</string>
+    <string name="draft_free_submission_badge">Open submission</string>
+    <string name="draft_syncing_title">Creating in Google Drive...</string>
+    <string name="draft_syncing_step_1">Generating document in your cloud...</string>
+    <string name="draft_syncing_step_2">Saving in folder NotiVas / %1$s</string>
+    <string name="draft_syncing_step_3">Linking file with Canvas LMS...</string>
+    <string name="draft_synced_chip">Draft in progress • Edited just now</string>
+    <string name="draft_open_docs_btn">Open in Google Docs</string>
+    <string name="draft_submit_canvas_btn">Submit to Canvas</string>
+    <string name="draft_reset_simulation_btn">Reset state</string>
+    <string name="draft_folder_location">Location: Google Drive / NotiVas / %1$s</string>
+    <string name="task_actions_title">Management &amp; Options</string>
+    <string name="task_submenu_manage_draft">Manage Draft in Google Drive</string>
+    <string name="task_submenu_manage_draft_desc">Create synchronized document or open existing draft</string>
+    <string name="task_consigna_title">Instructions &amp; Prompts</string>
+    <string name="task_submenu_open_canvas">Open assignment in Canvas LMS</string>
+    <string name="task_submenu_view_rubric">View evaluation rubric</string>
+    <string name="task_submenu_archive">Archive assignment from Dashboard</string>
+    <string name="task_submenu_mark_completed">Mark as completed</string>
+    <string name="task_submenu_share">Share assignment link</string>
+    <string name="task_due_label">Due:</string>
+    <string name="task_points_label">Points:</string>
+    <string name="task_submission_types_label">Submission type:</string>
+    <string name="task_no_instructions">This assignment does not include additional instructor instructions.</string>
+
+    <!-- Google Drive & Drafts Settings -->
+    <string name="settings_drive_section_title">Google Drive &amp; Drafts</string>
+    <string name="drive_connected_status">Connected</string>
+    <string name="drive_disconnected_status">Not linked</string>
+    <string name="drive_privacy_notice">Permission restricted to the NotiVas folder. No access to the rest of your personal files.</string>
+    <string name="drive_last_sync_format">Synced %1$s</string>
+    <string name="drive_connect_btn">Connect Google Drive</string>
+    <string name="drive_unlink_btn">Unlink Account</string>
+    <string name="drive_reconnect_btn">Reconnect / Renew Access</string>
+    <string name="drive_clear_cache_btn">Clear Drafts Cache</string>
+    <string name="drive_unlink_dialog_title">Unlink Google Drive?</string>
+    <string name="drive_unlink_dialog_desc">Google Drive credentials will be removed from this device. Cloud documents will not be affected.</string>
+    <string name="drive_clear_cache_dialog_title">Clear drafts cache?</string>
+    <string name="drive_clear_cache_dialog_desc">Local copies of drafts used by the AI Copilot will be cleared to free up storage. Your documents in Google Drive remain safe.</string>
+    <string name="drive_cache_cleared_toast">Drafts cache cleared successfully.</string>
+    <string name="drive_cache_size_label">Cached drafts: %1$s</string>
+    <string name="onboarding_drive_link_title">Google Drive Integration</string>
+    <string name="onboarding_drive_link_desc">Automatically sync assignment templates and drafts with Google Docs</string>
+    <string name="onboarding_drive_link_btn">Link Google Drive Now</string>
+    <string name="onboarding_drive_skip_btn">Skip for now</string>
+    <string name="drive_auth_error_title">Error linking Google Drive</string>
+    <string name="task_detail_header_label">TASK DETAIL</string>
+    <string name="canvas_synced_badge">Canvas Synced</string>
+    <string name="canvas_graded_badge">Canvas Graded</string>
+    <string name="task_rubric_header">Canvas Rubric Criteria</string>
+    <string name="task_rubric_criteria_count">%1$d criteria</string>
+    <string name="task_action_save_later">Save for later</string>
+    <string name="task_action_go_to_editor">Go to Editor</string>
+    <string name="draft_drive_sync_subtitle">Sync with Google Drive</string>
+    <string name="draft_create_location_format">Will be created in: Google Drive / NotiVas / %1$s</string>
+    <string name="draft_btn_start_template_docx">Start DOCX template copy</string>
+    <string name="draft_official_template_subtitle">Canvas LMS official template</string>
+    <string name="task_menu_open_canvas">Open in Canvas LMS</string>
+    <string name="task_menu_explore_templates">Search template in modules</string>
+    <string name="task_menu_copy_canvas_link">Copy Canvas link</string>
+    <string name="template_picker_title">Course Templates</string>
+    <string name="template_picker_current_module_badge">Assignment module</string>
+    <string name="template_picker_loading">Scanning course modules...</string>
+    <string name="template_picker_empty">No templates or document links found in modules.</string>
+    <string name="template_picker_drive_desc">Remote file from Drive link</string>
+    <string name="template_picker_canvas_desc">Canvas course document</string>
+    <string name="draft_btn_start_template">Start copy of: %1$s</string>
+    <string name="draft_btn_start_blank_drive">Start blank draft in Google Drive</string>
+    <string name="draft_btn_explore_modules">Search template in course modules</string>
+    <string name="draft_status_submitted_title">Assignment Submitted</string>
+    <string name="draft_status_submitted_desc">Submission confirmed in Canvas LMS</string>
+    <string name="draft_creating_in_drive">Creating in Drive...</string>
+    <string name="draft_organizing_in_folder">Organizing in NotiVas / %1$s...</string>
+    <string name="draft_synced_cloud_status">Linked and synced document in Google Drive</string>
+    <string name="draft_syncing_cloud_status">Syncing with Google Drive...</string>
+    <string name="draft_cancel_action">Cancel</string>
+    <string name="draft_preparing_docs">Preparing Docs...</string>
+    <string name="draft_btn_send_to_canvas">Submit to Canvas</string>
+    <string name="task_rubric_empty">This assignment does not have an associated grading rubric configured by the teacher.</string>
+
+    <!-- Task History & Archive -->
+    <string name="archive_screen_title">History &amp; Archive</string>
+    <string name="archive_search_placeholder">Search archived or submitted...</string>
+    <string name="archive_tab_submitted">Submitted</string>
+    <string name="archive_tab_discarded">Discarded</string>
+    <string name="archive_tab_expired">Expired</string>
+    <string name="archive_summary_card_title">Submissions &amp; Archive Summary</string>
+    <string name="archive_semester_tag">Current Term</string>
+    <string name="archive_stat_ontime">On time</string>
+    <string name="archive_stat_ontime_rate">%1$d%% on time</string>
+    <string name="archive_stat_discarded">Discarded</string>
+    <string name="archive_stat_discarded_sub">No academic weight</string>
+    <string name="archive_stat_average">Average</string>
+    <string name="archive_stat_average_sub">Out of %1$s pts</string>
+    <string name="archive_sync_banner">%1$d records in local SQLite • Synced with Canvas</string>
+    <string name="archive_section_recents">Recent Submissions</string>
+    <string name="archive_items_count">%1$d items</string>
+    <string name="archive_action_view_submission">View submission</string>
+    <string name="archive_action_rubric">Rubric</string>
+    <string name="archive_action_restore_pending">Restore to pending</string>
+    <string name="archive_discarded_date">Discarded • %1$s</string>
+    <string name="archive_discarded_hint">Excluded with no academic penalty (0 pts weighted)</string>
+    <string name="archive_auto_archived">Auto-archived</string>
+    <string name="archive_copilot_assisted">Drafted with Copilot AI Assistance</string>
+    <string name="archive_graded_by">• Graded by %1$s</string>
+    <string name="archive_graded_badge">• Submission Accepted</string>
+    <string name="archive_max_score">• Maximum Score</string>
+    <string name="archive_storage_card_title">NotiVas Local Storage</string>
+    <string name="archive_storage_card_desc">Archived assignments and submitted work are preserved in your local SQLite database. You can free up space or export a PDF report anytime.</string>
+    <string name="archive_action_export_pdf">Export PDF</string>
+    <string name="archive_action_empty_trash">Empty trash</string>
+    <string name="archive_empty_submitted">No submitted assignments found.</string>
+    <string name="archive_empty_discarded">No discarded assignments in archive.</string>
+    <string name="archive_empty_expired">No expired assignments.</string>
+    <string name="archive_trash_cleared">Trash emptied successfully.</string>
+    <string name="archive_pdf_exported">Report exported to downloads.</string>
+    <string name="archive_restored_to_pending">Assignment restored to pending.</string>
+</resources>
+
+

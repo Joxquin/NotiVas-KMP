@@ -21,4 +21,26 @@ actual class SecureTokenVault actual constructor(private val preferencesManager:
         scope.launch { preferencesManager.clear() }
         return true
     }
+
+    actual fun saveGoogleDriveTokens(accessToken: String, refreshToken: String?, userEmail: String?): Boolean {
+        scope.launch { preferencesManager.saveGoogleDriveTokens(accessToken, refreshToken, userEmail) }
+        return true
+    }
+
+    actual fun getGoogleDriveAccessToken(): String? {
+        return preferencesManager.getGoogleDriveAccessToken()
+    }
+
+    actual fun getGoogleDriveRefreshToken(): String? {
+        return preferencesManager.getGoogleDriveRefreshToken()
+    }
+
+    actual fun getGoogleDriveEmail(): String? {
+        return preferencesManager.getGoogleDriveEmail()
+    }
+
+    actual fun clearGoogleDriveTokens(): Boolean {
+        scope.launch { preferencesManager.unlinkGoogleDrive() }
+        return true
+    }
 }

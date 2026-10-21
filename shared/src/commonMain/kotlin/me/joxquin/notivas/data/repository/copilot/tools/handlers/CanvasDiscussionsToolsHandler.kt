@@ -84,13 +84,16 @@ class CanvasDiscussionsToolsHandler(
         return when (toolName) {
             "get_course_discussions" -> {
                 val cid = args["course_id"]?.jsonPrimitive?.longOrNull ?: selectedCourseId ?: 0L
-                val canvasToken = preferencesManager.accessToken.first()
+                val authCred = preferencesManager.getAuthCredential()
                 val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
                 val courseName = courses.find { it.id == cid }?.name ?: "Curso $cid"
 
-                if (!canvasToken.isNullOrBlank() && cid != 0L) {
+                if (authCred != null && cid != 0L) {
                     try {
-                        val token = "Bearer $canvasToken"
+                        val token = when (authCred) {
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken -> "Bearer ${authCred.token}"
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.SessionCookies -> "Cookie: ${authCred.cookies}"
+                        }
                         val discussions = canvasApiService.getDiscussionTopics(domain, token, cid)
                         val source = CopilotSource(
                             title = "Foros y debates de $courseName",
@@ -112,7 +115,7 @@ class CanvasDiscussionsToolsHandler(
                         ToolExecutionResult("""{"error": "Error al obtener foros: ${e.message}"}""")
                     }
                 } else {
-                    ToolExecutionResult("""{"error": "No hay token de Canvas o curso no seleccionado."}""")
+                    ToolExecutionResult("""{"error": "No hay credenciales de Canvas o curso no seleccionado."}""")
                 }
             }
 
@@ -120,13 +123,16 @@ class CanvasDiscussionsToolsHandler(
                 val cid = args["course_id"]?.jsonPrimitive?.longOrNull ?: selectedCourseId ?: 0L
                 var topicId = args["topic_id"]?.jsonPrimitive?.longOrNull ?: 0L
                 val topicTitleQuery = args["topic_title"]?.jsonPrimitive?.content?.trim() ?: ""
-                val canvasToken = preferencesManager.accessToken.first()
+                val authCred = preferencesManager.getAuthCredential()
                 val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
                 val courseName = courses.find { it.id == cid }?.name ?: "Curso $cid"
 
-                if (!canvasToken.isNullOrBlank() && cid != 0L) {
+                if (authCred != null && cid != 0L) {
                     try {
-                        val token = "Bearer $canvasToken"
+                        val token = when (authCred) {
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.BearerToken -> "Bearer ${authCred.token}"
+                            is me.joxquin.notivas.data.model.CanvasAuthCredential.SessionCookies -> "Cookie: ${authCred.cookies}"
+                        }
                         if (topicId == 0L && topicTitleQuery.isNotBlank()) {
                             val allTopics = canvasApiService.getDiscussionTopics(domain, token, cid)
                             val match = allTopics.find { it.title.contains(topicTitleQuery, ignoreCase = true) }

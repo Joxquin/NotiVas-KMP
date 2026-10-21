@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +31,8 @@ import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixUrgentTasksCarousel
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixWeeklyCalendarStrip
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * Dashboard Académico Miuix:
@@ -49,6 +52,7 @@ fun InicioMiuixContent(
     modifier: Modifier = Modifier
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
+    val syncStatus by viewModel.syncStatus.collectAsState()
     val courses by viewModel.courses.collectAsState()
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
     val courseStats by viewModel.courseStats.collectAsState()
@@ -57,7 +61,23 @@ fun InicioMiuixContent(
     val weeklySchedule by viewModel.weeklySchedule.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
     val selectedDateAssignments by viewModel.selectedDateAssignments.collectAsState()
-    val syncStatus by viewModel.syncStatus.collectAsState()
+    val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
+
+    if (selectedAssignmentForDraft != null) {
+        me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
+            assignmentUi = selectedAssignmentForDraft!!,
+            onBack = { viewModel.closeDraft() },
+            viewModel = viewModel,
+            themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+            lazyListState = listState,
+            modifier = modifier
+        )
+        return
+    }
+
+    var selectedAssignmentForSubmenu by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf<me.joxquin.notivas.ui.dashboard.AssignmentUiModel?>(null)
+    }
 
     Box(
         modifier = modifier
@@ -102,7 +122,7 @@ fun InicioMiuixContent(
                     )
                     Spacer(Modifier.height(2.dp))
                     MiuixText(
-                        text = "Dashboard Académico y Seguimiento Canvas",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.dashboard_academic_title),
                         style = MiuixTheme.textStyles.body2,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )
@@ -136,7 +156,8 @@ fun InicioMiuixContent(
             // 2. Urgent Tasks Horizontal Snap Carousel (<12h, 12-48h, upcoming)
             item {
                 MiuixUrgentTasksCarousel(
-                    urgentAssignments = urgentAssignments
+                    urgentAssignments = urgentAssignments,
+                    onAssignmentClick = { selectedAssignmentForSubmenu = it }
                 )
             }
 
@@ -156,7 +177,8 @@ fun InicioMiuixContent(
                     SelectedDateAssignmentsSection(
                         selectedDate = date,
                         assignments = selectedDateAssignments,
-                        onClearDate = { viewModel.selectDate(null) }
+                        onClearDate = { viewModel.selectDate(null) },
+                        onAssignmentClick = { selectedAssignmentForSubmenu = it }
                     )
                 }
             }
@@ -170,5 +192,15 @@ fun InicioMiuixContent(
                 )
             }
         }
+
+        // Submenú Rápido de Opciones y Gestión de Tarea (WindowBottomSheet)
+        me.joxquin.notivas.ui.dashboard.components.AssignmentQuickSubmenuSheet(
+            assignmentUi = selectedAssignmentForSubmenu,
+            themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+            onDismissRequest = { selectedAssignmentForSubmenu = null },
+            onOpenDraftScreen = { assignment ->
+                viewModel.openDraft(assignment)
+            }
+        )
     }
 }

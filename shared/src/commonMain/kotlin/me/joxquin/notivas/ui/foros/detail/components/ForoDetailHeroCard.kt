@@ -37,8 +37,9 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import java.time.Duration
-import java.time.ZonedDateTime
+import me.joxquin.notivas.util.DateTimeUtil
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun ForoDetailHeroCard(
@@ -46,43 +47,45 @@ fun ForoDetailHeroCard(
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
-    val now = ZonedDateTime.now()
+    val nowMs = DateTimeUtil.nowEpochMillis()
     val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
     var isExpired = topic.locked == true
-    var dueText = "Sin fecha de cierre"
+    var dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_due_none)
     var isUrgent = false
 
     if (dueStr != null) {
-        try {
-            val dueDate = ZonedDateTime.parse(dueStr)
-            if (now.isAfter(dueDate)) {
+        val dueComponents = DateTimeUtil.parseIsoToComponents(dueStr)
+        if (dueComponents != null) {
+            val diffMs = dueComponents.epochMillis - nowMs
+            if (diffMs <= 0) {
                 isExpired = true
-                dueText = "Venció"
+                dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_due_closed)
             } else {
-                val duration = Duration.between(now, dueDate)
-                val days = duration.toDays()
-                val hours = duration.toHours() % 24
+                val totalHours = diffMs / (1000 * 60 * 60)
+                val days = totalHours / 24
+                val hours = totalHours % 24
                 when {
-                    days > 1 -> dueText = "Vence en $days días"
+                    days > 1 -> dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_due_days, days.toInt())
                     days == 1L -> {
-                        dueText = "Vence mañana"
+                        dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_tomorrow)
                         isUrgent = true
                     }
                     hours > 0 -> {
-                        dueText = "Vence en ${hours}h"
+                        dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_hours_format, hours.toInt())
                         isUrgent = true
                     }
                     else -> {
-                        dueText = "Vence pronto"
+                        dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.bento_foros_soon)
                         isUrgent = true
                     }
                 }
             }
-        } catch (_: Exception) {}
+        }
     }
 
     val authorInitials = rememberInitials(topic.author?.displayName ?: topic.userName ?: "Canvas")
-    val authorName = topic.author?.displayName ?: topic.userName ?: "Docente"
+    val defaultAuthor = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_author_default)
+    val authorName = topic.author?.displayName ?: topic.userName ?: defaultAuthor
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         Card(

@@ -47,6 +47,21 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionEntry
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.ui.copilot.components.formatMarkdown
+
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.foro_replies_recent_header
+import me.joxquin.notivas.shared.resources.foro_view_all_replies
+import me.joxquin.notivas.shared.resources.foro_show_less
+import me.joxquin.notivas.shared.resources.foro_loading_replies
+import me.joxquin.notivas.shared.resources.foro_no_replies_yet
+import me.joxquin.notivas.shared.resources.foro_no_replies_subtitle
+import me.joxquin.notivas.shared.resources.foro_show_more_replies
+import me.joxquin.notivas.shared.resources.foro_author_classmate
+import me.joxquin.notivas.shared.resources.foro_author_classmate_role
+import me.joxquin.notivas.shared.resources.foro_show_more
+import me.joxquin.notivas.shared.resources.foro_show_less_action
 
 @Composable
 fun ForoDetailRepliesSection(
@@ -90,7 +105,7 @@ fun ForoDetailRepliesSection(
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "Aportes recientes (${if (totalRepliesCount > 0) totalRepliesCount else replies.size} respuestas)",
+                    text = stringResource(Res.string.foro_replies_recent_header, if (totalRepliesCount > 0) totalRepliesCount else replies.size),
                     style = MaterialTheme.typography.titleSmall.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
                     color = onSurfaceVariant
                 )
@@ -110,7 +125,7 @@ fun ForoDetailRepliesSection(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = if (isAllRepliesExpanded) "Contraer" else "Ver todas (${replies.size})",
+                            text = if (isAllRepliesExpanded) stringResource(Res.string.foro_show_less) else stringResource(Res.string.foro_view_all_replies, replies.size),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -141,7 +156,7 @@ fun ForoDetailRepliesSection(
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), color = primaryColor)
                     Text(
-                        text = "Cargando respuestas de compañeros...",
+                        text = stringResource(Res.string.foro_loading_replies),
                         style = MaterialTheme.typography.bodySmall,
                         color = onSurfaceVariant
                     )
@@ -161,13 +176,13 @@ fun ForoDetailRepliesSection(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "Aún no hay respuestas publicadas",
+                        text = stringResource(Res.string.foro_no_replies_yet),
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                         color = onSurface,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "Sé el primero de tu clase en publicar una intervención académica.",
+                        text = stringResource(Res.string.foro_no_replies_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -207,7 +222,7 @@ fun ForoDetailRepliesSection(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (isAllRepliesExpanded) "Mostrar menos aportes" else "Mostrar ${replies.size - initialRepliesCount} aportes más",
+                            text = if (isAllRepliesExpanded) stringResource(Res.string.foro_show_less) else stringResource(Res.string.foro_show_more_replies, replies.size - initialRepliesCount),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 12.sp
@@ -234,16 +249,11 @@ private fun ReplyCardItem(
     themeStyle: AppThemeStyle
 ) {
     val cleanText = remember(entry.message) {
-        entry.message
-            ?.replace(Regex("<[^>]*>"), "")
-            ?.replace("&nbsp;", " ")
-            ?.replace("&amp;", "&")
-            ?.replace("&lt;", "<")
-            ?.replace("&gt;", ">")
-            ?.trim() ?: ""
+        entry.message?.let { me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.cleanHtml(it) } ?: ""
     }
 
-    val authorName = entry.user?.displayName ?: entry.userName ?: "Compañero"
+    val defaultAuthorName = stringResource(Res.string.foro_author_classmate)
+    val authorName = entry.user?.displayName ?: entry.userName ?: defaultAuthorName
     val initials = remember(authorName) {
         val parts = authorName.trim().split(" ").filter { it.isNotBlank() }
         when {
@@ -303,7 +313,7 @@ private fun ReplyCardItem(
                             color = onSurface
                         )
                         Text(
-                            text = "Compañero de clase",
+                            text = stringResource(Res.string.foro_author_classmate_role),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                             color = onSurfaceVariant
                         )
@@ -344,8 +354,9 @@ private fun ReplyCardItem(
                     .fillMaxWidth()
                     .clickable { isTextExpanded = !isTextExpanded }
             ) {
+                val formattedText = remember(cleanText) { formatMarkdown(cleanText) }
                 Text(
-                    text = cleanText,
+                    text = formattedText,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
                     color = onSurfaceVariant,
                     maxLines = if (isTextExpanded) Int.MAX_VALUE else 3,
@@ -356,7 +367,7 @@ private fun ReplyCardItem(
                 if (cleanText.length > 120 || cleanText.lines().size > 3) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = if (isTextExpanded) "Ver menos" else "Ver más...",
+                        text = if (isTextExpanded) stringResource(Res.string.foro_show_less_action) else stringResource(Res.string.foro_show_more),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold

@@ -46,6 +46,18 @@ import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.settings_security_section_title
+import me.joxquin.notivas.shared.resources.biometric_lock_title
+import me.joxquin.notivas.shared.resources.biometric_lock_desc
+import me.joxquin.notivas.shared.resources.api_diagnostics_title
+import me.joxquin.notivas.shared.resources.api_diagnostics_summary
+import me.joxquin.notivas.shared.resources.last_sync_label
+import me.joxquin.notivas.shared.resources.api_latency_label
+import me.joxquin.notivas.shared.resources.logout_button
+import me.joxquin.notivas.shared.resources.logout_button_desc
+
 @Composable
 fun SecurityAndKeystoreSettingsSection(
     biometricLock: Boolean,
@@ -58,25 +70,25 @@ fun SecurityAndKeystoreSettingsSection(
 ) {
     if (themeStyle == AppThemeStyle.MIUIX) {
         Column(modifier = modifier.fillMaxWidth()) {
-            SmallTitle(text = "SEGURIDAD Y CUENTA")
+            SmallTitle(text = stringResource(Res.string.settings_security_section_title))
             MiuixCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 SwitchPreference(
-                    title = "Cifrado biométrico de sesión",
-                    summary = "Protege el acceso a tus calificaciones",
+                    title = stringResource(Res.string.biometric_lock_title),
+                    summary = stringResource(Res.string.biometric_lock_desc),
                     checked = biometricLock,
                     onCheckedChange = onBiometricLockChange
                 )
                 ArrowPreference(
-                    title = "Diagnóstico de API Canvas",
-                    summary = "Sync $lastSyncText · Latencia: $apiLatencyMs ms"
+                    title = stringResource(Res.string.api_diagnostics_title),
+                    summary = stringResource(Res.string.api_diagnostics_summary, lastSyncText, apiLatencyMs)
                 )
                 ArrowPreference(
-                    title = "Desvincular cuenta Canvas",
-                    summary = "Elimina token y datos en caché local",
+                    title = stringResource(Res.string.logout_button),
+                    summary = stringResource(Res.string.logout_button_desc),
                     onClick = onRequestLogout
                 )
             }
@@ -106,7 +118,7 @@ fun SecurityAndKeystoreSettingsSection(
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
-                        text = "Seguridad y Privacidad",
+                        text = stringResource(Res.string.settings_security_section_title),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -117,8 +129,8 @@ fun SecurityAndKeystoreSettingsSection(
                 // Biometric lock row
                 MaterialNotificationToggleRow(
                     icon = Icons.Default.Fingerprint,
-                    title = "Cifrado biométrico de sesión",
-                    subtitle = "BiometricPrompt · Android Keystore",
+                    title = stringResource(Res.string.biometric_lock_title),
+                    subtitle = stringResource(Res.string.biometric_lock_desc),
                     checked = biometricLock,
                     onCheckedChange = onBiometricLockChange
                 )
@@ -150,12 +162,12 @@ fun SecurityAndKeystoreSettingsSection(
                             )
                             Column {
                                 Text(
-                                    text = "Diagnóstico de API Canvas",
+                                    text = stringResource(Res.string.api_diagnostics_title),
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Último sync exitoso $lastSyncText",
+                                    text = stringResource(Res.string.last_sync_label, lastSyncText),
                                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -197,7 +209,7 @@ fun SecurityAndKeystoreSettingsSection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Desvincular cuenta y destruir token local",
+                        text = stringResource(Res.string.logout_button),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold
                         )

@@ -27,6 +27,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.settings_notif_section_title
+import me.joxquin.notivas.shared.resources.notif_24h_title
+import me.joxquin.notivas.shared.resources.notif_24h_desc
+import me.joxquin.notivas.shared.resources.notif_3h_title
+import me.joxquin.notivas.shared.resources.notif_3h_desc
+import me.joxquin.notivas.shared.resources.notif_30m_title
+import me.joxquin.notivas.shared.resources.notif_30m_desc
+import me.joxquin.notivas.shared.resources.notif_morning_title
+import me.joxquin.notivas.shared.resources.notif_morning_desc
+
 @Composable
 fun CanvasAlertsSettingsSection(
     notif24h: Boolean,
@@ -75,14 +87,9 @@ fun CanvasAlertsSettingsSection(
                 }
                 Column {
                     Text(
-                        text = "Alertas de Entregas Canvas",
+                        text = stringResource(Res.string.settings_notif_section_title),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Temporizadores preventivos automáticos",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -93,32 +100,32 @@ fun CanvasAlertsSettingsSection(
             ) {
                 // Item 1: 24h
                 AjusteSwitchRow(
-                    title = "Recordatorio preventivo (24h antes)",
-                    subtitle = "Notificación con resumen de ponderación y rúbrica",
+                    title = stringResource(Res.string.notif_24h_title),
+                    subtitle = stringResource(Res.string.notif_24h_desc),
                     checked = notif24h,
                     onCheckedChange = onNotif24hChange
                 )
 
                 // Item 2: 3h
                 AjusteSwitchRow(
-                    title = "Alerta de urgencia (3h antes)",
-                    subtitle = "Dispara alarma y sugerencia de modo concentración",
+                    title = stringResource(Res.string.notif_3h_title),
+                    subtitle = stringResource(Res.string.notif_3h_desc),
                     checked = notif3h,
                     onCheckedChange = onNotif3hChange
                 )
 
                 // Item 3: 30 min
                 AjusteSwitchRow(
-                    title = "Alerta crítica (30 min antes)",
-                    subtitle = "Aviso sonoro prioritario saltando modo No Molestar",
+                    title = stringResource(Res.string.notif_30m_title),
+                    subtitle = stringResource(Res.string.notif_30m_desc),
                     checked = notif30m,
                     onCheckedChange = onNotif30mChange
                 )
 
                 // Item 4: Morning briefing
                 AjusteSwitchRow(
-                    title = "Briefing matutino diario (07:00 AM)",
-                    subtitle = "Resumen de tareas y cronograma del día en tu barra",
+                    title = stringResource(Res.string.notif_morning_title),
+                    subtitle = stringResource(Res.string.notif_morning_desc),
                     checked = notifMorning,
                     onCheckedChange = onNotifMorningChange
                 )

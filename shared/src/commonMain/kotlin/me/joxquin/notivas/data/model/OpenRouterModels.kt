@@ -148,3 +148,55 @@ data class OpenRouterKeyData(
     @SerialName("limit") val limit: Double? = null,
     @SerialName("is_free_tier") val isFreeTier: Boolean? = null
 )
+
+@Serializable
+data class OpenRouterModelEndpointsResponse(
+    @SerialName("data") val data: OpenRouterModelData? = null,
+    @SerialName("error") val error: OpenRouterError? = null
+)
+
+@Serializable
+data class OpenRouterModelData(
+    @SerialName("id") val id: String? = null,
+    @SerialName("name") val name: String? = null,
+    @SerialName("description") val description: String? = null,
+    @SerialName("context_length") val contextLength: Int? = null,
+    @SerialName("architecture") val architecture: OpenRouterArchitecture? = null,
+    @SerialName("endpoints") val endpoints: List<OpenRouterEndpointItem> = emptyList()
+)
+
+@Serializable
+data class OpenRouterArchitecture(
+    @SerialName("modality") val modality: String? = null,
+    @SerialName("input_modalities") val inputModalities: List<String> = emptyList(),
+    @SerialName("output_modalities") val outputModalities: List<String> = emptyList()
+)
+
+@Serializable
+data class OpenRouterEndpointItem(
+    @SerialName("context_length") val contextLength: Int? = null,
+    @SerialName("supports_tool_choice") val supportsToolChoice: Map<String, Boolean>? = null,
+    @SerialName("supported_parameters") val supportedParameters: List<String> = emptyList()
+)
+
+@Serializable
+enum class ModelCompatibilityStatus {
+    OPTIMAL,
+    COMPATIBLE,
+    INCOMPATIBLE,
+    NOT_FOUND,
+    ERROR
+}
+
+@Serializable
+data class CustomModelAnalysisResult(
+    val modelId: String,
+    val name: String,
+    val description: String? = null,
+    val contextLength: Int? = null,
+    val isChatCapable: Boolean = true,
+    val supportsFunctionCalling: Boolean = false,
+    val isMultimodal: Boolean = false,
+    val status: ModelCompatibilityStatus = ModelCompatibilityStatus.COMPATIBLE,
+    val message: String = ""
+)

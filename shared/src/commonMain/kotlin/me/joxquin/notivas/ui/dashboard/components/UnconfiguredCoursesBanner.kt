@@ -36,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.model.Course
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun UnconfiguredCoursesBanner(
@@ -92,16 +94,16 @@ fun UnconfiguredCoursesBanner(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Configuración de Fórmulas",
+                                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.unconfigured_banner_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                             Text(
                                 text = if (unconfiguredCount == 1) {
-                                    "1 curso sin grupos ni pesos definidos"
+                                    org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.unconfigured_banner_desc_single)
                                 } else {
-                                    "$unconfiguredCount cursos sin ponderaciones"
+                                    org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.unconfigured_banner_desc_multiple, unconfiguredCount)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
@@ -115,7 +117,7 @@ fun UnconfiguredCoursesBanner(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Descartar aviso",
+                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.close),
                             tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
                             modifier = Modifier.size(18.dp)
                         )
@@ -139,7 +141,7 @@ fun UnconfiguredCoursesBanner(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Configurar fórmulas y grupos",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.unconfigured_banner_btn),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onTertiary

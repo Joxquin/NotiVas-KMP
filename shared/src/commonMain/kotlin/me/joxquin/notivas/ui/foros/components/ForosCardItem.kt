@@ -40,8 +40,9 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import java.time.Duration
-import java.time.ZonedDateTime
+import me.joxquin.notivas.util.DateTimeUtil
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun ForosCardItem(
@@ -50,33 +51,31 @@ fun ForosCardItem(
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
-    val now = ZonedDateTime.now()
+    val nowMs = DateTimeUtil.nowEpochMillis()
     val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
     var isExpired = topic.locked == true
-    var dueText = "Sin fecha de cierre"
+    var dueText = stringResource(Res.string.foro_due_none)
     var isUrgent = false
 
     if (dueStr != null) {
-        try {
-            val dueDate = ZonedDateTime.parse(dueStr)
-            if (now.isAfter(dueDate)) {
+        val dueComponents = DateTimeUtil.parseIsoToComponents(dueStr)
+        if (dueComponents != null) {
+            val diffMs = dueComponents.epochMillis - nowMs
+            if (diffMs <= 0) {
                 isExpired = true
-                dueText = "Cerrado"
+                dueText = stringResource(Res.string.foro_due_closed)
             } else {
-                val duration = Duration.between(now, dueDate)
-                val hours = duration.toHours()
-                val days = duration.toDays()
+                val hours = diffMs / (1000 * 60 * 60)
+                val days = hours / 24
 
                 if (hours <= 24) {
                     isUrgent = true
-                    val minutes = duration.toMinutes()
-                    dueText = if (hours > 0) "Vence hoy (~$hours h)" else "Vence hoy (~$minutes min)"
+                    val minutes = diffMs / (1000 * 60)
+                    dueText = if (hours > 0) stringResource(Res.string.foro_due_today_hours, hours) else stringResource(Res.string.foro_due_today_minutes, minutes)
                 } else {
-                    dueText = "Vence en $days días"
+                    dueText = stringResource(Res.string.foro_due_days, days)
                 }
             }
-        } catch (_: Exception) {
-            dueText = "Fecha de entrega indicada"
         }
     }
 
@@ -92,7 +91,7 @@ fun ForosCardItem(
     }
 
     val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-    val authorName = topic.author?.displayName ?: topic.userName ?: "Profesor del curso"
+    val authorName = topic.author?.displayName ?: topic.userName ?: stringResource(Res.string.foros_author_default)
     val repliesCount = topic.discussionSubentryCount ?: 0
 
     // Limpieza rápida de HTML en el preview del mensaje
@@ -101,7 +100,7 @@ fun ForosCardItem(
         ?.replace(Regex("&nbsp;"), " ")
         ?.trim()
         ?.takeIf { it.isNotBlank() }
-        ?: "Accede al foro de debate para consultar la consigna y participar activamente con tus compañeros."
+        ?: stringResource(Res.string.foros_default_message_prompt)
 
     Card(
         shape = RoundedCornerShape(18.dp),
@@ -128,7 +127,7 @@ fun ForosCardItem(
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
                     Text(
-                        text = topic.courseName ?: "Curso Canvas",
+                        text = topic.courseName ?: "Canvas",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
@@ -148,7 +147,7 @@ fun ForosCardItem(
                         color = Color(0xFFE53935).copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = if (isGraded) "Calificado • Cerrado" else "Cerrado / Vencido",
+                            text = if (isGraded) stringResource(Res.string.foro_graded_closed) else stringResource(Res.string.foro_closed_expired),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
@@ -163,7 +162,7 @@ fun ForosCardItem(
                         color = if (isUrgent) Color(0xFFE53935).copy(alpha = 0.15f) else primaryColor.copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = "${points?.toInt() ?: points} Pts • Calificado",
+                            text = stringResource(Res.string.foro_points_graded, points?.toInt() ?: 0),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
@@ -178,7 +177,7 @@ fun ForosCardItem(
                         color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHighest
                     ) {
                         Text(
-                            text = "Formativo / Sin puntos",
+                            text = stringResource(Res.string.foro_formative),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium
@@ -241,7 +240,7 @@ fun ForosCardItem(
 
                         Column {
                             Text(
-                                text = "Calificación obtenida",
+                                text = stringResource(Res.string.foro_score_obtained),
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                 color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -292,7 +291,7 @@ fun ForosCardItem(
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
-                        text = "$repliesCount intervenciones",
+                        text = stringResource(Res.string.foro_replies_count, repliesCount),
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -339,12 +338,12 @@ fun ForosCardItem(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isUrgent) Color(0xFFE53935) else primaryColor)
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(if (isUrgent) Color(0xFFE53935) else primaryColor)
                             )
                             Text(
-                                text = "Disponible para participar",
+                                text = stringResource(Res.string.foro_available_to_participate),
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                 color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
                             )
@@ -352,7 +351,7 @@ fun ForosCardItem(
                     }
                 } else {
                     Text(
-                        text = "Foro cerrado",
+                        text = stringResource(Res.string.foro_closed_status),
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.outline
                     )
@@ -371,7 +370,7 @@ fun ForosCardItem(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "Ingresar al foro",
+                            text = stringResource(Res.string.foros_btn_enter_forum),
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold

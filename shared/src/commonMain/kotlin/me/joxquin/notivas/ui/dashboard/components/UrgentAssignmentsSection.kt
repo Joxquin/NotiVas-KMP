@@ -39,12 +39,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 
 @Composable
 fun UrgentAssignmentsSection(
     urgentAssignments: List<AssignmentUiModel>,
     onViewAll: () -> Unit,
+    onAssignmentClick: (AssignmentUiModel) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 12.dp)) {
@@ -60,7 +63,7 @@ fun UrgentAssignmentsSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Para Hoy y Mañana",
+                    text = stringResource(Res.string.urgent_tasks_title),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -72,7 +75,7 @@ fun UrgentAssignmentsSection(
                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                     ) {
                         Text(
-                            text = "$count urgentes",
+                            text = stringResource(Res.string.urgent_badge_count, count),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                         )
@@ -88,7 +91,7 @@ fun UrgentAssignmentsSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Ver todo",
+                    text = stringResource(Res.string.view_all),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -150,7 +153,10 @@ fun UrgentAssignmentsSection(
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 items(urgentAssignments, key = { it.assignment.id }) { item ->
-                    UrgentCard(item = item)
+                    UrgentCard(
+                        item = item,
+                        onClick = { onAssignmentClick(item) }
+                    )
                 }
             }
         }

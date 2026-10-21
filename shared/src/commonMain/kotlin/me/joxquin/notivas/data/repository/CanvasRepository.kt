@@ -11,12 +11,14 @@ import kotlinx.coroutines.withContext
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.CanvasAuthCredential
 import me.joxquin.notivas.data.model.CanvasModule
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.model.PlannerItem
 import me.joxquin.notivas.data.model.SimulationGroup
 import me.joxquin.notivas.data.model.SimulationGroupWithItems
 import me.joxquin.notivas.data.model.SimulationItem
+import me.joxquin.notivas.data.model.SubmissionDetails
 import me.joxquin.notivas.data.model.UserProfile
 import me.joxquin.notivas.data.remote.CanvasApiService
 
@@ -34,6 +36,14 @@ class CanvasRepository(
     val allAssignments: Flow<List<Assignment>> = localStore.getAllAssignments()
     val allPlannerItems: Flow<List<PlannerItem>> = localStore.getAllPlannerItems()
     val universityUrl: Flow<String?> = preferencesManager.universityUrl
+
+    private fun getAuthToken(): String? {
+        val credential = preferencesManager.getAuthCredential() ?: return null
+        return when (credential) {
+            is CanvasAuthCredential.BearerToken -> "Bearer ${credential.token}"
+            is CanvasAuthCredential.SessionCookies -> "Cookie: ${credential.cookies}"
+        }
+    }
 
     fun getAssignmentsForCourse(courseId: Long): Flow<List<Assignment>> =
         localStore.getAssignmentsByCourse(courseId)
@@ -218,12 +228,12 @@ class CanvasRepository(
         localStore.linkItemWithCanvasAssignment(itemId, assignmentId, name, manualScore)
 
     suspend fun fetchCourseModules(courseId: Long): List<CanvasModule> = withContext(Dispatchers.IO) {
-        val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()
+        val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         return@withContext try {
             apiService.getModulesWithItems(
                 baseUrl = baseUrl,
-                token = "Bearer $rawToken",
+                token = token,
                 courseId = courseId
             )
         } catch (e: Exception) {
@@ -231,10 +241,168 @@ class CanvasRepository(
         }
     }
 
+    /**
+     * Extrae y compila plantillas y documentos candidatos del curso:
+     * 1. Detecta enlaces directos a Google Docs/Drive o archivos en la consigna de la tarea.
+     * 2. Recorre todos los módulos del curso buscando archivos (.docx, .doc, .xlsx, .pdf, .gdoc) o enlaces externos.
+     */
+    suspend fun getCourseTemplateCandidates(
+        courseId: Long,
+        assignmentId: Long? = null,
+        assignmentDescription: String? = null
+    ): List<me.joxquin.notivas.data.model.TemplateCandidate> = withContext(Dispatchers.IO) {
+        val candidates = mutableListOf<me.joxquin.notivas.data.model.TemplateCandidate>()
+        var currentModuleName: String? = null
+
+        // 1. Analizar módulos del curso primero para poder identificar el módulo de la tarea
+        val moduleCandidates = mutableListOf<me.joxquin.notivas.data.model.TemplateCandidate>()
+        try {
+            val modules = fetchCourseModules(courseId)
+            for (module in modules) {
+                val items = module.items ?: emptyList()
+                val containsAssignment = if (assignmentId != null) {
+                    items.any { item ->
+                        (item.type == "Assignment" || item.type == "SubHeader") &&
+                                (item.contentId == assignmentId || item.id == assignmentId)
+                    }
+                } else false
+
+                if (containsAssignment) {
+                    currentModuleName = module.name
+                }
+
+                for (item in items) {
+                    when (item.type) {
+                        "File" -> {
+                            val lowerTitle = item.title.lowercase()
+                            val isDoc = lowerTitle.endsWith(".docx") || lowerTitle.endsWith(".doc") ||
+                                    lowerTitle.endsWith(".xlsx") || lowerTitle.endsWith(".pdf")
+                            if (isDoc) {
+                                val ext = lowerTitle.substringAfterLast(".", "")
+                                moduleCandidates.add(
+                                    me.joxquin.notivas.data.model.TemplateCandidate(
+                                        title = item.title,
+                                        type = me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE,
+                                        url = item.url ?: item.htmlUrl ?: "",
+                                        moduleName = module.name,
+                                        fileExtension = ext,
+                                        canvasFileId = item.contentId ?: item.id,
+                                        isCurrentAssignmentModule = containsAssignment
+                                    )
+                                )
+                            }
+                        }
+                        "ExternalUrl" -> {
+                            val url = item.externalUrl ?: item.url ?: item.htmlUrl ?: ""
+                            val lowerUrl = url.lowercase()
+                            val isDrive = lowerUrl.contains("docs.google.com") || lowerUrl.contains("drive.google.com")
+                            val isDocExt = lowerUrl.endsWith(".docx") || lowerUrl.endsWith(".doc") ||
+                                    lowerUrl.endsWith(".xlsx") || lowerUrl.endsWith(".pdf")
+                            val ext = when {
+                                lowerUrl.contains("spreadsheets") || lowerUrl.endsWith(".xlsx") -> "gsheet"
+                                lowerUrl.endsWith(".pdf") -> "pdf"
+                                else -> "gdoc"
+                            }
+                            moduleCandidates.add(
+                                me.joxquin.notivas.data.model.TemplateCandidate(
+                                    title = item.title,
+                                    type = if (isDrive) me.joxquin.notivas.data.model.TemplateSourceType.DRIVE_URL else me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE,
+                                    url = url,
+                                    moduleName = module.name,
+                                    fileExtension = ext,
+                                    isCurrentAssignmentModule = containsAssignment
+                                )
+                            )
+                        }
+                        "Page" -> {
+                            val pageUrl = item.pageUrl ?: item.url?.substringAfterLast("/") ?: ""
+                            val lowerTitle = item.title.lowercase()
+                            val looksLikeGuideOrTemplate = lowerTitle.contains("guía") ||
+                                    lowerTitle.contains("guia") ||
+                                    lowerTitle.contains("lab") ||
+                                    lowerTitle.contains("plantilla") ||
+                                    lowerTitle.contains("formato") ||
+                                    lowerTitle.contains("recurso")
+
+                            if (looksLikeGuideOrTemplate && pageUrl.isNotBlank()) {
+                                moduleCandidates.add(
+                                    me.joxquin.notivas.data.model.TemplateCandidate(
+                                        title = item.title,
+                                        type = me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_PAGE,
+                                        url = item.htmlUrl ?: item.url ?: "",
+                                        moduleName = module.name,
+                                        fileExtension = "gdoc",
+                                        isCurrentAssignmentModule = containsAssignment
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // Si se determinó el módulo de la tarea, asegurar que todos sus candidatos tengan el flag activo
+        val resolvedModuleCandidates = if (!currentModuleName.isNullOrBlank()) {
+            moduleCandidates.map { c ->
+                if (c.moduleName == currentModuleName) c.copy(isCurrentAssignmentModule = true) else c
+            }
+        } else {
+            moduleCandidates
+        }
+
+        // 2. Analizar enlaces o adjuntos en la descripción de la tarea actual
+        if (!assignmentDescription.isNullOrBlank()) {
+            val driveUrlRegex = Regex("""https://(?:docs|drive)\.google\.com/[^\s"'>]+""")
+            driveUrlRegex.findAll(assignmentDescription).forEach { match ->
+                val url = match.value
+                val isSpreadsheet = url.contains("spreadsheets")
+                candidates.add(
+                    me.joxquin.notivas.data.model.TemplateCandidate(
+                        title = if (isSpreadsheet) "Hoja de cálculo en Google Drive" else "Documento en Google Drive",
+                        type = me.joxquin.notivas.data.model.TemplateSourceType.DRIVE_URL,
+                        url = url,
+                        moduleName = currentModuleName ?: "Consigna de la Tarea",
+                        fileExtension = if (isSpreadsheet) "gsheet" else "gdoc",
+                        isCurrentAssignmentModule = true
+                    )
+                )
+            }
+
+            val docxRegex = Regex("""([\w\-_]+\.(?:docx|doc|xlsx|pdf))""", RegexOption.IGNORE_CASE)
+            docxRegex.findAll(assignmentDescription).forEach { match ->
+                val fileName = match.value
+                val ext = fileName.substringAfterLast(".", "").lowercase()
+                // Si este archivo coincide con alguno ya descubierto en los módulos, heredar sus datos reales
+                val matchingModuleCandidate = resolvedModuleCandidates.find {
+                    it.title.equals(fileName, ignoreCase = true) || it.title.contains(fileName.substringBeforeLast("."), ignoreCase = true)
+                }
+
+                candidates.add(
+                    me.joxquin.notivas.data.model.TemplateCandidate(
+                        title = fileName,
+                        type = me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE,
+                        url = matchingModuleCandidate?.url ?: fileName,
+                        moduleName = currentModuleName ?: "Consigna de la Tarea",
+                        fileExtension = ext,
+                        canvasFileId = matchingModuleCandidate?.canvasFileId,
+                        isCurrentAssignmentModule = true
+                    )
+                )
+            }
+        }
+
+        candidates.addAll(resolvedModuleCandidates)
+
+        // Retornar lista deduplicada dando prioridad a los que tengan canvasFileId o Drive URL
+        candidates.distinctBy { it.url.ifBlank { it.title } }
+    }
+
     suspend fun fetchAndSaveData() = withContext(Dispatchers.IO) {
-        val rawToken = preferencesManager.accessToken.first() ?: return@withContext
+        val token = getAuthToken() ?: return@withContext
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext
-        val token = "Bearer $rawToken"
 
         try {
             // 1. Fetch Planner Items
@@ -281,6 +449,7 @@ class CanvasRepository(
                                 a.copy(
                                     dueAt = effectiveDueAt,
                                     status = status,
+                                    isCompleted = isSubmitted,
                                     submittedAt = sub?.submittedAt,
                                     gradedAt = sub?.gradedAt,
                                     score = sub?.score,
@@ -337,13 +506,26 @@ class CanvasRepository(
         }
     }
 
+    suspend fun verifyAndSaveSession(url: String, cookies: String, csrfToken: String? = null): Boolean = withContext(Dispatchers.IO) {
+        try {
+            apiService.verifyToken(url, "Cookie: $cookies")
+            preferencesManager.saveUniversityUrl(url)
+            preferencesManager.saveSessionCookies(cookies, csrfToken)
+            true
+        } catch (e: Exception) {
+            println("CanvasRepository: verifyAndSaveSession failed for url='$url': ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+
     suspend fun completeOnboarding() {
         preferencesManager.setOnboardingCompleted(true)
     }
 
     suspend fun getProfile(): UserProfile = withContext(Dispatchers.IO) {
         val baseUrl = preferencesManager.universityUrl.first() ?: ""
-        val token = "Bearer ${preferencesManager.accessToken.first()}"
+        val token = getAuthToken() ?: throw IllegalStateException("No auth credential found")
         try {
             val remoteProfile = apiService.getProfile(baseUrl, token)
             localStore.saveUserProfile(remoteProfile)
@@ -378,10 +560,9 @@ class CanvasRepository(
     }
 
     suspend fun getDiscussionsForCourses(): List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = withContext(Dispatchers.IO) {
-        val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()
+        val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         val courses = localStore.getAllCourses().first()
-        val token = "Bearer $rawToken"
 
         coroutineScope {
             courses.map { course ->
@@ -408,9 +589,8 @@ class CanvasRepository(
     }
 
     suspend fun getDiscussionEntries(courseId: Long, topicId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(Dispatchers.IO) {
-        val rawToken = preferencesManager.accessToken.first() ?: return@withContext emptyList()
+        val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
-        val token = "Bearer $rawToken"
         try {
             apiService.getDiscussionEntries(
                 baseUrl = baseUrl,
@@ -420,6 +600,132 @@ class CanvasRepository(
             )
         } catch (_: Exception) {
             emptyList()
+        }
+    }
+
+    suspend fun postDiscussionEntry(
+        courseId: Long,
+        topicId: Long,
+        message: String
+    ): Result<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(Dispatchers.IO) {
+        val credential = preferencesManager.getAuthCredential()
+            ?: return@withContext Result.failure(Exception("No autenticado en Canvas"))
+        val baseUrl = preferencesManager.universityUrl.first()
+            ?: return@withContext Result.failure(Exception("URL institucional no configurada"))
+
+        val token = when (credential) {
+            is CanvasAuthCredential.BearerToken -> "Bearer ${credential.token}"
+            is CanvasAuthCredential.SessionCookies -> "Cookie: ${credential.cookies}"
+        }
+        val csrfToken = when (credential) {
+            is CanvasAuthCredential.BearerToken -> null
+            is CanvasAuthCredential.SessionCookies -> credential.csrfToken
+        }
+
+        try {
+            val formattedMessage = me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.textToHtml(message)
+            val result = apiService.postDiscussionEntry(
+                baseUrl = baseUrl,
+                token = token,
+                courseId = courseId,
+                topicId = topicId,
+                message = formattedMessage,
+                csrfToken = csrfToken
+            )
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun submitAssignment(
+        courseId: Long,
+        assignmentId: Long,
+        submissionType: String = "online_url",
+        url: String? = null,
+        bodyText: String? = null
+    ): Result<SubmissionDetails> = withContext(Dispatchers.IO) {
+        val credential = preferencesManager.getAuthCredential()
+            ?: return@withContext Result.failure(Exception("No autenticado en Canvas"))
+        val baseUrl = preferencesManager.universityUrl.first()
+            ?: return@withContext Result.failure(Exception("URL institucional no configurada"))
+
+        val token = when (credential) {
+            is CanvasAuthCredential.BearerToken -> "Bearer ${credential.token}"
+            is CanvasAuthCredential.SessionCookies -> "Cookie: ${credential.cookies}"
+        }
+        val csrfToken = when (credential) {
+            is CanvasAuthCredential.BearerToken -> null
+            is CanvasAuthCredential.SessionCookies -> credential.csrfToken
+        }
+
+        try {
+            val formattedBody = bodyText?.let { me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.textToHtml(it) }
+            val result = apiService.submitAssignmentSubmission(
+                baseUrl = baseUrl,
+                token = token,
+                courseId = courseId,
+                assignmentId = assignmentId,
+                submissionType = submissionType,
+                url = url,
+                bodyText = formattedBody,
+                csrfToken = csrfToken
+            )
+            // Actualizar assignment localmente de inmediato con prevalencia canónica de entrega
+            val assignments = localStore.getAssignmentsByCourse(courseId).first()
+            val existing = assignments.find { it.id == assignmentId }
+            if (existing != null) {
+                val updated = existing.copy(
+                    isCompleted = true,
+                    status = "completed",
+                    submittedAt = result.submittedAt ?: me.joxquin.notivas.util.DateTimeUtil.nowLocalDate().toIsoDateString(),
+                    submission = result
+                )
+                localStore.insertAssignments(listOf(updated))
+            }
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun observeAssignmentDraft(assignmentId: Long): Flow<me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity?> =
+        localStore.observeDraftByAssignmentId(assignmentId)
+
+    fun observeAllAssignmentDrafts(): Flow<List<me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity>> =
+        localStore.observeAllDrafts()
+
+    suspend fun getAssignmentDraft(assignmentId: Long): me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity? =
+        localStore.getDraftByAssignmentId(assignmentId)
+
+    fun saveAssignmentDraft(draft: me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity) =
+        localStore.saveAssignmentDraft(draft)
+
+    suspend fun deleteAssignmentDraft(assignmentId: Long) =
+        localStore.deleteAssignmentDraft(assignmentId)
+
+    suspend fun deleteAllAssignmentDrafts() =
+        localStore.deleteAllAssignmentDrafts()
+
+    suspend fun downloadCanvasFileBytes(fileDownloadUrl: String): ByteArray? = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext null
+        try {
+            apiService.downloadFileBytes(fileDownloadUrl, token)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun getCanvasFileDownloadUrl(courseId: Long, fileId: Long): String? = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext null
+        val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext null
+        try {
+            val fileDetail = apiService.getFileDetails(baseUrl, token, courseId, fileId)
+            fileDetail.url
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 

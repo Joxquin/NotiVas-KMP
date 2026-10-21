@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SmartToy
@@ -38,7 +39,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +59,34 @@ import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.settings_copilot_section_title
+import me.joxquin.notivas.shared.resources.copilot_enable_title
+import me.joxquin.notivas.shared.resources.copilot_enable_desc
+import me.joxquin.notivas.shared.resources.openrouter_api_key_title
+import me.joxquin.notivas.shared.resources.openrouter_api_key_desc_not_set
+import me.joxquin.notivas.shared.resources.openrouter_api_key_dialog_title
+import me.joxquin.notivas.shared.resources.openrouter_api_key_dialog_desc
+import me.joxquin.notivas.shared.resources.openrouter_api_key_placeholder
+import me.joxquin.notivas.shared.resources.openrouter_model_title
+import me.joxquin.notivas.shared.resources.openrouter_model_dialog_title
+import me.joxquin.notivas.shared.resources.openrouter_model_dialog_desc
+import me.joxquin.notivas.shared.resources.openrouter_balance_title
+import me.joxquin.notivas.shared.resources.tokens_used_format
+import me.joxquin.notivas.shared.resources.openrouter_analyze_model_btn
+import me.joxquin.notivas.shared.resources.openrouter_analyzing_model
+import me.joxquin.notivas.shared.resources.openrouter_custom_model_hint
+import me.joxquin.notivas.shared.resources.openrouter_custom_model_title
+import me.joxquin.notivas.shared.resources.openrouter_model_context
+import me.joxquin.notivas.shared.resources.openrouter_model_info_title
+import me.joxquin.notivas.shared.resources.save
+import me.joxquin.notivas.shared.resources.delete
+import me.joxquin.notivas.shared.resources.cancel
+import me.joxquin.notivas.shared.resources.close
+import me.joxquin.notivas.shared.resources.change
+import me.joxquin.notivas.shared.resources.sync
+
 @Composable
 fun CopilotSettingsSection(
     enabled: Boolean,
@@ -68,6 +99,7 @@ fun CopilotSettingsSection(
     onApiKeyChange: (String?) -> Unit,
     onModelChange: (String) -> Unit,
     onRefreshBalance: () -> Unit,
+    onAnalyzeModel: (suspend (String) -> me.joxquin.notivas.data.model.CustomModelAnalysisResult)? = null,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
 ) {
@@ -76,11 +108,11 @@ fun CopilotSettingsSection(
 
     val popularModels = remember {
         listOf(
-            "google/gemini-2.5-flash" to "Gemini 2.5 Flash (Recomendado)",
-            "google/gemini-2.0-flash-exp:free" to "Gemini 2.0 Flash (Gratis)",
-            "meta-llama/llama-3.3-70b-instruct:free" to "Llama 3.3 70B (Gratis)",
-            "anthropic/claude-3.5-haiku" to "Claude 3.5 Haiku (Precisión)",
-            "openai/gpt-4o-mini" to "GPT-4o Mini (Equilibrado)"
+            "google/gemini-2.5-flash" to "Gemini 2.5 Flash",
+            "google/gemini-2.0-flash-exp:free" to "Gemini 2.0 Flash (Free)",
+            "meta-llama/llama-3.3-70b-instruct:free" to "Llama 3.3 70B (Free)",
+            "anthropic/claude-3.5-haiku" to "Claude 3.5 Haiku",
+            "openai/gpt-4o-mini" to "GPT-4o Mini"
         )
     }
 
@@ -88,8 +120,9 @@ fun CopilotSettingsSection(
         popularModels.find { it.first == selectedModel }?.second ?: selectedModel
     }
 
+    val notConfiguredLabel = stringResource(Res.string.openrouter_api_key_desc_not_set)
     val keyMasked = if (apiKey.isNullOrBlank()) {
-        "Sin configurar (requerido)"
+        notConfiguredLabel
     } else {
         val visibleChars = 4
         if (apiKey.length > visibleChars * 2) {
@@ -115,7 +148,7 @@ fun CopilotSettingsSection(
             },
             title = {
                 Text(
-                    text = "OpenRouter API Key",
+                    text = stringResource(Res.string.openrouter_api_key_dialog_title),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold
                     )
@@ -124,7 +157,7 @@ fun CopilotSettingsSection(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = "Ingresa tu API Key de OpenRouter (openrouter.ai/keys). Se almacenará de forma encriptada y privada en este dispositivo.",
+                        text = stringResource(Res.string.openrouter_api_key_dialog_desc),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -133,14 +166,15 @@ fun CopilotSettingsSection(
                         value = inputKey,
                         onValueChange = { inputKey = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("API Key (sk-or-v1-...)") },
+                        label = { Text(stringResource(Res.string.openrouter_api_key_title)) },
+                        placeholder = { Text(stringResource(Res.string.openrouter_api_key_placeholder)) },
                         singleLine = true,
                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                 Icon(
                                     imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (isPasswordVisible) "Ocultar" else "Mostrar"
+                                    contentDescription = null
                                 )
                             }
                         },
@@ -157,7 +191,7 @@ fun CopilotSettingsSection(
                     },
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Guardar")
+                    Text(stringResource(Res.string.save))
                 }
             },
             dismissButton = {
@@ -172,12 +206,91 @@ fun CopilotSettingsSection(
                                 contentColor = MaterialTheme.colorScheme.error
                             )
                         ) {
-                            Text("Eliminar")
+                            Text(stringResource(Res.string.delete))
                         }
                     }
                     TextButton(onClick = { showApiKeyDialog = false }) {
-                        Text("Cancelar")
+                        Text(stringResource(Res.string.cancel))
                     }
+                }
+            }
+        )
+    }
+
+    // Dialog flotante de informacion del modelo
+    var modelInfoResult by remember { mutableStateOf<me.joxquin.notivas.data.model.CustomModelAnalysisResult?>(null) }
+    if (modelInfoResult != null) {
+        val info = modelInfoResult!!
+        val infoContainerColor = when (info.status) {
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.OPTIMAL ->
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.COMPATIBLE ->
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.INCOMPATIBLE,
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.NOT_FOUND ->
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+            me.joxquin.notivas.data.model.ModelCompatibilityStatus.ERROR ->
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        }
+
+        AlertDialog(
+            onDismissRequest = { modelInfoResult = null },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(Res.string.openrouter_model_info_title),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            },
+            text = {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = infoContainerColor),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = info.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        if (info.contextLength != null && info.contextLength > 0) {
+                            Text(
+                                text = stringResource(Res.string.openrouter_model_context, info.contextLength),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Text(
+                            text = info.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { modelInfoResult = null },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(stringResource(Res.string.close))
                 }
             }
         )
@@ -185,6 +298,7 @@ fun CopilotSettingsSection(
 
     // Dialog: Seleccionar Modelo LLM
     if (showModelDialog) {
+        val coroutineScope = rememberCoroutineScope()
         var selectedOption by remember { mutableStateOf(selectedModel) }
         var isCustom by remember {
             mutableStateOf(popularModels.none { it.first == selectedModel })
@@ -192,9 +306,12 @@ fun CopilotSettingsSection(
         var customInput by remember {
             mutableStateOf(if (isCustom) selectedModel else "")
         }
+        var isSavingAndAnalyzing by remember { mutableStateOf(false) }
 
         AlertDialog(
-            onDismissRequest = { showModelDialog = false },
+            onDismissRequest = {
+                if (!isSavingAndAnalyzing) showModelDialog = false
+            },
             icon = {
                 Icon(
                     imageVector = Icons.Default.SmartToy,
@@ -204,7 +321,7 @@ fun CopilotSettingsSection(
             },
             title = {
                 Text(
-                    text = "Seleccionar Modelo LLM",
+                    text = stringResource(Res.string.openrouter_model_dialog_title),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold
                     )
@@ -215,12 +332,19 @@ fun CopilotSettingsSection(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    Text(
+                        text = stringResource(Res.string.openrouter_model_dialog_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+
                     popularModels.forEach { (modelId, label) ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .clickable {
+                                .clickable(enabled = !isSavingAndAnalyzing) {
                                     isCustom = false
                                     selectedOption = modelId
                                 }
@@ -232,7 +356,8 @@ fun CopilotSettingsSection(
                                 onClick = {
                                     isCustom = false
                                     selectedOption = modelId
-                                }
+                                },
+                                enabled = !isSavingAndAnalyzing
                             )
                             Text(
                                 text = label,
@@ -243,21 +368,22 @@ fun CopilotSettingsSection(
                         }
                     }
 
-                    // Opción personalizada
+                    // Opcion personalizada
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { isCustom = true }
+                            .clickable(enabled = !isSavingAndAnalyzing) { isCustom = true }
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = isCustom,
-                            onClick = { isCustom = true }
+                            onClick = { isCustom = true },
+                            enabled = !isSavingAndAnalyzing
                         )
                         Text(
-                            text = "Personalizado (Ingresar ID)",
+                            text = stringResource(Res.string.openrouter_custom_model_title),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = 8.dp)
@@ -269,8 +395,9 @@ fun CopilotSettingsSection(
                             value = customInput,
                             onValueChange = { customInput = it },
                             modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Model ID (ej. meta-llama/...)") },
+                            label = { Text(stringResource(Res.string.openrouter_custom_model_hint)) },
                             singleLine = true,
+                            enabled = !isSavingAndAnalyzing,
                             shape = RoundedCornerShape(12.dp)
                         )
                     }
@@ -282,17 +409,46 @@ fun CopilotSettingsSection(
                         val finalModel = if (isCustom) customInput.trim() else selectedOption
                         if (finalModel.isNotBlank()) {
                             onModelChange(finalModel)
+                            if (isCustom && onAnalyzeModel != null) {
+                                coroutineScope.launch {
+                                    isSavingAndAnalyzing = true
+                                    try {
+                                        val result = onAnalyzeModel(finalModel)
+                                        showModelDialog = false
+                                        modelInfoResult = result
+                                    } finally {
+                                        isSavingAndAnalyzing = false
+                                    }
+                                }
+                            } else {
+                                showModelDialog = false
+                            }
+                        } else {
+                            showModelDialog = false
                         }
-                        showModelDialog = false
                     },
+                    enabled = !isSavingAndAnalyzing,
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Seleccionar")
+                    if (isSavingAndAnalyzing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(Modifier.size(8.dp))
+                        Text(stringResource(Res.string.openrouter_analyzing_model))
+                    } else {
+                        Text(stringResource(Res.string.save))
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showModelDialog = false }) {
-                    Text("Cancelar")
+                TextButton(
+                    onClick = { showModelDialog = false },
+                    enabled = !isSavingAndAnalyzing
+                ) {
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -300,40 +456,40 @@ fun CopilotSettingsSection(
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         Column(modifier = modifier.fillMaxWidth()) {
-            SmallTitle(text = "ASISTENTE IA ACADÉMICO")
+            SmallTitle(text = stringResource(Res.string.settings_copilot_section_title))
             MiuixCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 SwitchPreference(
-                    title = "NotiVas Copilot",
-                    summary = "Asistente académico inteligente con IA",
+                    title = stringResource(Res.string.copilot_enable_title),
+                    summary = stringResource(Res.string.copilot_enable_desc),
                     checked = enabled,
                     onCheckedChange = onEnabledChange
                 )
                 ArrowPreference(
-                    title = "OpenRouter API Key",
+                    title = stringResource(Res.string.openrouter_api_key_title),
                     summary = keyMasked,
                     onClick = { showApiKeyDialog = true }
                 )
                 ArrowPreference(
-                    title = "Modelo LLM",
+                    title = stringResource(Res.string.openrouter_model_title),
                     summary = currentModelLabel,
                     onClick = { showModelDialog = true }
                 )
 
                 if (!apiKey.isNullOrBlank()) {
                     val balanceStr = when {
-                        balance == null && isLoadingBalance -> "Consultando..."
-                        balance == null -> "No disponible"
-                        balance.isFreeTier == true -> "Tier Gratis"
+                        balance == null && isLoadingBalance -> "..."
+                        balance == null -> "—"
+                        balance.isFreeTier == true -> "Free Tier"
                         balance.remainingCredits != null -> "$${balance.remainingCredits}"
-                        else -> "Activo"
+                        else -> "Active"
                     }
                     ArrowPreference(
-                        title = "Créditos: $balanceStr",
-                        summary = "Tokens: $totalTokens acumulados",
+                        title = "${stringResource(Res.string.openrouter_balance_title)}: $balanceStr",
+                        summary = stringResource(Res.string.tokens_used_format, totalTokens),
                         onClick = onRefreshBalance,
                         endActions = {
                             if (isLoadingBalance) {
@@ -345,7 +501,7 @@ fun CopilotSettingsSection(
                             } else {
                                 Icon(
                                     imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Actualizar saldo",
+                                    contentDescription = stringResource(Res.string.sync),
                                     tint = MiuixTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -382,7 +538,7 @@ fun CopilotSettingsSection(
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
-                        text = "Asistente IA (Copilot)",
+                        text = stringResource(Res.string.settings_copilot_section_title),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -393,8 +549,8 @@ fun CopilotSettingsSection(
                 // Switch maestro
                 MaterialNotificationToggleRow(
                     icon = Icons.Default.SmartToy,
-                    title = "NotiVas Copilot",
-                    subtitle = "Asistente académico con modelos LLM",
+                    title = stringResource(Res.string.copilot_enable_title),
+                    subtitle = stringResource(Res.string.copilot_enable_desc),
                     checked = enabled,
                     onCheckedChange = onEnabledChange
                 )
@@ -436,7 +592,7 @@ fun CopilotSettingsSection(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "OpenRouter API Key",
+                                text = stringResource(Res.string.openrouter_api_key_title),
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     fontWeight = FontWeight.SemiBold
                                 ),
@@ -460,7 +616,7 @@ fun CopilotSettingsSection(
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
-                            text = if (apiKey.isNullOrBlank()) "Configurar" else "Editar",
+                            text = if (apiKey.isNullOrBlank()) stringResource(Res.string.change) else stringResource(Res.string.change),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),
@@ -507,7 +663,7 @@ fun CopilotSettingsSection(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "Modelo LLM",
+                                text = stringResource(Res.string.openrouter_model_title),
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     fontWeight = FontWeight.SemiBold
                                 ),
@@ -531,7 +687,7 @@ fun CopilotSettingsSection(
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
-                            text = "Cambiar",
+                            text = stringResource(Res.string.change),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),
@@ -560,7 +716,7 @@ fun CopilotSettingsSection(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Consumo y Créditos",
+                                    text = stringResource(Res.string.openrouter_balance_title),
                                     style = MaterialTheme.typography.labelLarge.copy(
                                         fontWeight = FontWeight.Bold
                                     ),
@@ -581,7 +737,7 @@ fun CopilotSettingsSection(
                                     } else {
                                         Icon(
                                             imageVector = Icons.Default.Refresh,
-                                            contentDescription = "Actualizar saldo",
+                                            contentDescription = stringResource(Res.string.sync),
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(16.dp)
                                         )
@@ -600,17 +756,17 @@ fun CopilotSettingsSection(
                                 ) {
                                     Column(modifier = Modifier.padding(10.dp)) {
                                         Text(
-                                            text = "Saldo restante",
+                                            text = stringResource(Res.string.openrouter_balance_title),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         Spacer(modifier = Modifier.height(2.dp))
                                         val balanceStr = when {
-                                            balance == null && isLoadingBalance -> "Consultando..."
-                                            balance == null -> "No disponible"
-                                            balance.isFreeTier == true -> "Tier Gratis"
+                                            balance == null && isLoadingBalance -> "..."
+                                            balance == null -> "—"
+                                            balance.isFreeTier == true -> "Free Tier"
                                             balance.remainingCredits != null -> "$${balance.remainingCredits}"
-                                            else -> "Activo"
+                                            else -> "Active"
                                         }
                                         Text(
                                             text = balanceStr,
@@ -629,7 +785,7 @@ fun CopilotSettingsSection(
                                 ) {
                                     Column(modifier = Modifier.padding(10.dp)) {
                                         Text(
-                                            text = "Tokens totales",
+                                            text = stringResource(Res.string.tokens_used_format, totalTokens),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )

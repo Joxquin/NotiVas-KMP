@@ -45,13 +45,22 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(connection: SQLiteConnection) {
+        try {
+            connection.execSQL("CREATE TABLE IF NOT EXISTS `assignment_drafts` (`assignment_id` INTEGER NOT NULL, `file_name` TEXT NOT NULL, `drive_url` TEXT NOT NULL, `drive_file_id` TEXT, `account_email` TEXT NOT NULL, `detected_template` TEXT, `course_folder` TEXT NOT NULL, `draft_status` TEXT NOT NULL, `last_edited_time` TEXT NOT NULL, `updated_at_timestamp` INTEGER NOT NULL, PRIMARY KEY(`assignment_id`), FOREIGN KEY(`assignment_id`) REFERENCES `assignments`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+            connection.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_assignment_drafts_assignment_id` ON `assignment_drafts` (`assignment_id`)")
+        } catch (_: Throwable) {}
+    }
+}
+
 fun createRoomDatabase(
     builder: RoomDatabase.Builder<NotivasDatabase> = getDatabaseBuilder()
 ): NotivasDatabase {
     return builder
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .fallbackToDestructiveMigration(dropAllTables = true)
         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()

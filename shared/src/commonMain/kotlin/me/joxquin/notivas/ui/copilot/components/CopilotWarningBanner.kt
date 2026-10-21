@@ -33,6 +33,8 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun CopilotWarningBanner(
@@ -44,11 +46,15 @@ fun CopilotWarningBanner(
 ) {
     if (hasApiKey && !isCopilotDisabled) return
 
-    val title = if (isCopilotDisabled) "Copilot Desactivado" else "API Key Requerida"
-    val subtitle = if (isCopilotDisabled) {
-        "Activa NotiVas Copilot en Ajustes"
+    val title = if (isCopilotDisabled) {
+        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_warning_disabled_title)
     } else {
-        "Configura tu OpenRouter Key en Ajustes"
+        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_warning_apikey_title)
+    }
+    val subtitle = if (isCopilotDisabled) {
+        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_warning_disabled_desc)
+    } else {
+        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_warning_apikey_desc)
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
@@ -124,7 +130,7 @@ fun CopilotWarningBanner(
                         .padding(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "Ajustes",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_warning_btn_settings),
                         style = MiuixTheme.textStyles.footnote1.copy(fontWeight = FontWeight.SemiBold),
                         color = MiuixTheme.colorScheme.onError
                     )
@@ -191,7 +197,10 @@ fun CopilotWarningBanner(
                         contentColor = MaterialTheme.colorScheme.onError
                     )
                 ) {
-                    Text("Ajustes", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_warning_btn_settings),
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }

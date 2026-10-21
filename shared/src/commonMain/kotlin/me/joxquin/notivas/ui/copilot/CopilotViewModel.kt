@@ -488,7 +488,7 @@ class CopilotViewModel(
                     val assistantErrorMessage = CopilotMessageItem(
                         id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
                         role = CopilotRole.ASSISTANT,
-                        text = "⚠️ No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu API Key de OpenRouter y tu conexión.",
+                        text = "No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu API Key de OpenRouter y tu conexión.",
                         timestamp = DateTimeUtil.nowEpochMillis()
                     )
                     _messages.value = _messages.value + assistantErrorMessage

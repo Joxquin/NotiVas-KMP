@@ -8,15 +8,22 @@ class CopilotPromptBuilder {
 
     fun buildSystemPrompt(
         courses: List<Course>,
-        selectedCourseId: Long?
+        selectedCourseId: Long?,
+        appLanguage: me.joxquin.notivas.data.local.AppLanguage = me.joxquin.notivas.data.local.AppLanguage.SYSTEM
     ): String {
         val coursesSummary = courses.joinToString("; ") { "ID: ${it.id} - ${it.name} (${it.courseCode ?: "N/A"})" }
         val today = DateTimeUtil.nowLocalDate()
         val todayStr = "${DateTimeUtil.formatFullDate(today)} (${today.toIsoDateString()})"
 
+        val langInstruction = when (appLanguage) {
+            me.joxquin.notivas.data.local.AppLanguage.ENGLISH -> "IDIOMA DE RESPUESTA: Responde principalmente en inglés (English), manteniendo claridad y formato académico. "
+            me.joxquin.notivas.data.local.AppLanguage.SPANISH -> "IDIOMA DE RESPUESTA: Responde en español con formato Markdown limpio (viñetas, negritas, tablas si es necesario). "
+            me.joxquin.notivas.data.local.AppLanguage.SYSTEM -> "IDIOMA DE RESPUESTA: Responde en el mismo idioma en que el usuario te consulte o interactúe (español o inglés por defecto). "
+        }
+
         return buildString {
             append("Eres NotiVas Copilot, un asistente académico inteligente, autónomo y proactivo para estudiantes universitarios integrados con Canvas LMS. ")
-            append("Respondes en español con formato Markdown limpio (viñetas, negritas, tablas si es necesario). ")
+            append(langInstruction)
             append("FECHA ACTUAL DEL SISTEMA: $todayStr. Úsala para calcular entregas de 'hoy', 'esta semana', 'próxima semana' o fechas pasadas. ")
             append("Cuentas con herramientas para consultar información local y en vivo de Canvas LMS. ")
             append("LISTA DE CURSOS INSCRITOS: [$coursesSummary]. ")

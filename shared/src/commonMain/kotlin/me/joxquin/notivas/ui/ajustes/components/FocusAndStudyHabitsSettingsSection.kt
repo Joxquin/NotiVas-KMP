@@ -30,6 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.focus_section_title
+import me.joxquin.notivas.shared.resources.focus_section_desc
+import me.joxquin.notivas.shared.resources.focus_mode_title
+import me.joxquin.notivas.shared.resources.focus_mode_desc
+
 @Composable
 fun FocusAndStudyHabitsSettingsSection(
     autoFocusMode: Boolean,
@@ -74,12 +81,12 @@ fun FocusAndStudyHabitsSettingsSection(
                 }
                 Column {
                     Text(
-                        text = "Enfoque & Hábitos de Estudio",
+                        text = stringResource(Res.string.focus_section_title),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Automatización vinculada al calendario",
+                        text = stringResource(Res.string.focus_section_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -88,8 +95,8 @@ fun FocusAndStudyHabitsSettingsSection(
 
             // Switch Modo Enfoque
             AjusteSwitchRow(
-                title = "Modo Enfoque automático",
-                subtitle = "Activar perfil \"No Molestar\" si una entrega vence en menos de 4h",
+                title = stringResource(Res.string.focus_mode_title),
+                subtitle = stringResource(Res.string.focus_mode_desc),
                 checked = autoFocusMode,
                 onCheckedChange = onAutoFocusModeChange
             )

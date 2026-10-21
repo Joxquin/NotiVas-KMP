@@ -58,6 +58,8 @@ import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,7 +82,7 @@ fun ForosFilterBottomSheet(
 ) {
     if (themeStyle == AppThemeStyle.MIUIX) {
         WindowBottomSheet(
-            title = "Filtros y Ordenamiento",
+            title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_sheet_title),
             show = show,
             onDismissRequest = onDismissRequest,
             startAction = {
@@ -90,7 +92,7 @@ fun ForosFilterBottomSheet(
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
                         imageVector = MiuixIcons.MiuixClose,
-                        contentDescription = "Cerrar",
+                        contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.close),
                         tint = MiuixTheme.colorScheme.onBackground
                     )
                 }
@@ -102,7 +104,7 @@ fun ForosFilterBottomSheet(
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
                         imageVector = MiuixIcons.Ok,
-                        contentDescription = "Listo",
+                        contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_action_done),
                         tint = MiuixTheme.colorScheme.primary
                     )
                 }
@@ -117,7 +119,7 @@ fun ForosFilterBottomSheet(
                 // Sección 1: Estado del Foro
                 item {
                     SmallTitle(
-                        text = "Categoría y Estado",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_category),
                         insideMargin = PaddingValues(16.dp, 8.dp)
                     )
                     Card(
@@ -129,10 +131,10 @@ fun ForosFilterBottomSheet(
                         DiscussionFilterTab.entries.forEach { tab ->
                             val isSelected = selectedTab == tab
                             val label = when (tab) {
-                                DiscussionFilterTab.TODOS -> "Todos los foros"
-                                DiscussionFilterTab.CON_PUNTOS -> "Foros con calificación (Puntos)"
-                                DiscussionFilterTab.SIN_PUNTOS -> "Foros sin calificación"
-                                DiscussionFilterTab.VENCIDOS -> "Foros vencidos"
+                                DiscussionFilterTab.TODOS -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_tab_all)
+                                DiscussionFilterTab.CON_PUNTOS -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_tab_points)
+                                DiscussionFilterTab.SIN_PUNTOS -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_tab_no_points)
+                                DiscussionFilterTab.VENCIDOS -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_tab_expired)
                             }
                             val count = when (tab) {
                                 DiscussionFilterTab.TODOS -> totalCount
@@ -194,14 +196,15 @@ fun ForosFilterBottomSheet(
 
                 // Sección 2: Curso
                 item {
-                    val courseOptions = listOf("Todos los cursos") + courses.map { it.name }
+                    val allCoursesLabel = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_all_courses)
+                    val courseOptions = listOf(allCoursesLabel) + courses.map { it.name }
                     val currentCourseIndex = if (selectedCourseId == null) 0 else {
                         val idx = courses.indexOfFirst { it.id == selectedCourseId }
                         if (idx >= 0) idx + 1 else 0
                     }
 
                     SmallTitle(
-                        text = "Filtro por Asignatura",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_subject),
                         insideMargin = PaddingValues(16.dp, 8.dp)
                     )
                     Card(
@@ -211,7 +214,7 @@ fun ForosFilterBottomSheet(
                         )
                     ) {
                         WindowDropdownPreference(
-                            title = "Curso Seleccionado",
+                            title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_selected_course),
                             items = courseOptions,
                             selectedIndex = currentCourseIndex,
                             onSelectedIndexChange = { index ->
@@ -228,11 +231,19 @@ fun ForosFilterBottomSheet(
 
                 // Sección 3: Criterio de Ordenamiento
                 item {
-                    val sortOptions = DiscussionSortOption.entries.map { it.displayName }
+                    val sortOptions = DiscussionSortOption.entries.map { option ->
+                        when (option) {
+                            DiscussionSortOption.DUE_DATE_ASC -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_due_asc)
+                            DiscussionSortOption.DUE_DATE_DESC -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_due_desc)
+                            DiscussionSortOption.RECENT_POSTED -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_recent)
+                            DiscussionSortOption.MOST_REPLIES -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_replies)
+                            DiscussionSortOption.TITLE_ASC -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_title_asc)
+                        }
+                    }
                     val currentSortIndex = DiscussionSortOption.entries.indexOf(sortOption).coerceAtLeast(0)
 
                     SmallTitle(
-                        text = "Orden de Visualización",
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_sort),
                         insideMargin = PaddingValues(16.dp, 8.dp)
                     )
                     Card(
@@ -242,7 +253,7 @@ fun ForosFilterBottomSheet(
                         )
                     ) {
                         WindowDropdownPreference(
-                            title = "Criterio",
+                            title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_sort_criteria),
                             items = sortOptions,
                             selectedIndex = currentSortIndex,
                             onSelectedIndexChange = { index ->
@@ -303,12 +314,12 @@ fun ForosFilterBottomSheet(
                                 }
                                 Column {
                                     Text(
-                                        text = "Filtros y Ordenamiento",
+                                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_sheet_title),
                                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "Personaliza la lista de foros",
+                                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_sheet_subtitle),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -318,7 +329,7 @@ fun ForosFilterBottomSheet(
                             IconButton(onClick = onDismissRequest) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Cerrar",
+                                    contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.close),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -332,7 +343,7 @@ fun ForosFilterBottomSheet(
                     // Categoría / Estado
                     item {
                         Text(
-                            text = "Categoría del Foro",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_category),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -341,10 +352,10 @@ fun ForosFilterBottomSheet(
                             DiscussionFilterTab.entries.forEach { tab ->
                                 val isSelected = selectedTab == tab
                                 val label = when (tab) {
-                                    DiscussionFilterTab.TODOS -> "Todos los foros"
-                                    DiscussionFilterTab.CON_PUNTOS -> "Foros con puntos"
-                                    DiscussionFilterTab.SIN_PUNTOS -> "Foros sin puntos"
-                                    DiscussionFilterTab.VENCIDOS -> "Foros vencidos"
+                                    DiscussionFilterTab.TODOS -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_tab_all)
+                                    DiscussionFilterTab.CON_PUNTOS -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_tab_points)
+                                    DiscussionFilterTab.SIN_PUNTOS -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_tab_no_points)
+                                    DiscussionFilterTab.VENCIDOS -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_tab_expired)
                                 }
                                 val count = when (tab) {
                                     DiscussionFilterTab.TODOS -> totalCount
@@ -415,13 +426,14 @@ fun ForosFilterBottomSheet(
                     // Curso
                     item {
                         Text(
-                            text = "Filtrar por Curso",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_subject),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.height(8.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            val allCoursesOption = Course(id = -1L, name = "Todos los cursos", courseCode = "")
+                            val allCoursesLabel = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_all_courses)
+                            val allCoursesOption = Course(id = -1L, name = allCoursesLabel, courseCode = "")
                             val courseList = listOf(allCoursesOption) + courses
 
                             courseList.forEach { course ->
@@ -474,7 +486,7 @@ fun ForosFilterBottomSheet(
                     // Ordenamiento
                     item {
                         Text(
-                            text = "Criterio de Ordenamiento",
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_sort),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -482,6 +494,13 @@ fun ForosFilterBottomSheet(
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             DiscussionSortOption.entries.forEach { option ->
                                 val isSelected = sortOption == option
+                                val optionDisplayName = when (option) {
+                                    DiscussionSortOption.DUE_DATE_ASC -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_due_asc)
+                                    DiscussionSortOption.DUE_DATE_DESC -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_due_desc)
+                                    DiscussionSortOption.RECENT_POSTED -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_recent)
+                                    DiscussionSortOption.MOST_REPLIES -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_replies)
+                                    DiscussionSortOption.TITLE_ASC -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_sort_title_asc)
+                                }
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
@@ -498,7 +517,7 @@ fun ForosFilterBottomSheet(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = option.displayName,
+                                            text = optionDisplayName,
                                             style = MaterialTheme.typography.bodyMedium.copy(
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                             ),

@@ -30,6 +30,11 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.foros_search_placeholder
+import me.joxquin.notivas.shared.resources.foros_clear_search
+
 @Composable
 fun ForosSearchAndFilters(
     searchQuery: String,
@@ -37,6 +42,8 @@ fun ForosSearchAndFilters(
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
+    val searchPlaceholder = stringResource(Res.string.foros_search_placeholder)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -50,7 +57,7 @@ fun ForosSearchAndFilters(
                 onSearch = { onSearchQueryChange(it) },
                 expanded = false,
                 onExpandedChange = {},
-                label = "Buscar foros, temas o profesores...",
+                label = searchPlaceholder,
                 modifier = Modifier.fillMaxWidth(),
                 color = MiuixTheme.colorScheme.surfaceContainerHigh
             )
@@ -89,7 +96,7 @@ fun ForosSearchAndFilters(
                         decorationBox = { innerTextField ->
                             if (searchQuery.isEmpty()) {
                                 Text(
-                                    text = "Buscar foros, temas o profesores...",
+                                    text = searchPlaceholder,
                                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -101,7 +108,7 @@ fun ForosSearchAndFilters(
                     if (searchQuery.isNotEmpty()) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Limpiar búsqueda",
+                            contentDescription = stringResource(Res.string.foros_clear_search),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .size(18.dp)
