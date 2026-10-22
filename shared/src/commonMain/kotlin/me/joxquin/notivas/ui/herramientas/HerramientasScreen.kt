@@ -76,6 +76,21 @@ fun HerramientasScreen(
         }
     }
 
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        HerramientasMiuixContent(
+            viewModel = viewModel,
+            forosViewModel = forosViewModel,
+            onOpenProgreso = onOpenProgreso,
+            onOpenForos = onOpenForos,
+            onOpenForoDetail = handleOpenForoDetail,
+            onOpenArchive = onOpenArchive,
+            onOpenTuneSettings = onOpenTuneSettings,
+            lazyListState = lazyListState,
+            modifier = modifier
+        )
+        return
+    }
+
     AnimatedContent(
         targetState = currentSubDestination,
         transitionSpec = {

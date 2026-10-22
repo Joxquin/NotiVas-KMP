@@ -121,8 +121,21 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import androidx.compose.foundation.layout.fillMaxHeight
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -139,24 +152,40 @@ fun TaskHistoryArchiveScreen(
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
 
     if (isMiuix) {
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val backdrop = rememberMiuixBlurBackdrop()
+        val scrollBehavior = MiuixScrollBehavior()
 
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
-        ) {
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    top = statusBarTop + 68.dp,
-                    bottom = 120.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    MiuixPageTopAppBar(
+                        title = stringResource(Res.string.archive_screen_title),
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            BackNavigationIcon(onClick = onBack)
+                        }
+                    )
+                }
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = miuixPageContentPadding(innerPadding)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .miuixBackdropModifier(backdrop)
             ) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                 // ─── 1. Search & Tab Filter Track ───────────────────────────────
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -269,6 +298,13 @@ fun TaskHistoryArchiveScreen(
                         }
                     }
                 }
+            }
+
+                VerticalScrollBar(
+                    adapter = rememberScrollBarAdapter(lazyListState),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    trackPadding = contentPadding
+                )
             }
         }
     } else {
