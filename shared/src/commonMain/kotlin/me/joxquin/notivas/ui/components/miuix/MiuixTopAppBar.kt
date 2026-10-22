@@ -5,7 +5,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,19 +17,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Alarm
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -45,14 +40,16 @@ import top.yukonga.miuix.kmp.blur.BlurDefaults
 import top.yukonga.miuix.kmp.blur.ProgressiveBlur
 import top.yukonga.miuix.kmp.blur.progressiveTextureBlur
 
+import top.yukonga.miuix.kmp.basic.TopAppBarDefaults
+
 object MiuixTopAppBarDefaults {
-    val HeaderHeight = 64.dp
+    val HeaderHeight = TopAppBarDefaults.CollapsedHeight
 }
 
 /**
- * Botón de acción circular estándar para la barra superior de HyperOS Miuix.
- * Mantiene la consistencia visual de fondo circular, borde y tinte idéntico
- * al icono de notificaciones/reloj del Dashboard.
+ * Botón de acción canónico para la barra superior de HyperOS Miuix.
+ * Utiliza el componente oficial IconButton de compose-miuix-ui con forma squircle
+ * y retroalimentación háptica nativa idéntica a la implementación de referencia.
  */
 @Composable
 fun MiuixTopAppBarAction(
@@ -60,17 +57,11 @@ fun MiuixTopAppBarAction(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    Box(
+    IconButton(
+        onClick = onClick,
         modifier = modifier
-            .size(38.dp)
-            .clip(CircleShape)
-            .background(MiuixTheme.colorScheme.surfaceVariant)
-            .border(0.5.dp, MiuixTheme.colorScheme.dividerLine, CircleShape),
-        contentAlignment = Alignment.Center
     ) {
-        IconButton(onClick = onClick) {
-            content()
-        }
+        content()
     }
 }
 
@@ -91,6 +82,7 @@ fun MiuixTopAppBar(
     backdrop: Backdrop? = null,
     isBlurActive: Boolean = true,
     titleAlwaysVisible: Boolean = false,
+    contentAlpha: Float = 1f,
     onNavigationClick: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
@@ -141,7 +133,10 @@ fun MiuixTopAppBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(MiuixTopAppBarDefaults.HeaderHeight)
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer {
+                        alpha = contentAlpha
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 // Controles de Acción Izquierda
