@@ -76,11 +76,35 @@ import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Create
 import top.yukonga.miuix.kmp.icon.extended.Filter
+import top.yukonga.miuix.kmp.icon.extended.Recent
 import top.yukonga.miuix.kmp.icon.extended.Refresh
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import top.yukonga.miuix.kmp.nav.core.NavDisplay
+import top.yukonga.miuix.kmp.nav.core.NavDisplayEffects
+import top.yukonga.miuix.kmp.nav.core.NavCornerClipMode
+import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
+import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
+import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
+import me.joxquin.notivas.ui.navigation.miuix.CrossActivityTransition
+import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixNavigator
+import me.joxquin.notivas.ui.navigation.miuix.MiuixNavigator
+import me.joxquin.notivas.ui.navigation.miuix.MiuixRoute
+import me.joxquin.notivas.ui.notas.NotasScreen
+import me.joxquin.notivas.ui.foros.ForosScreen
+import me.joxquin.notivas.ui.activity.RecentActivityScreen
+import me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen
+import me.joxquin.notivas.ui.dashboard.roadmap.MorningRoadmapScreen
+import me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen
+import me.joxquin.notivas.ui.herramientas.archive.TaskHistoryArchiveScreen
+import me.joxquin.notivas.ui.foros.detail.ForoDetailScreen
+import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
+import me.joxquin.notivas.data.model.Assignment
 
 @Stable
 class MainPagerState(
@@ -179,13 +203,6 @@ fun MainAppShell(
         MainPagerState(pagerState, coroutineScope)
     }
 
-    // Interceptar gesto/botón Atrás del sistema para HyperOS Miuix:
-    // Si no estamos en Inicio (página 0), volver a Inicio.
-    // Si ya estamos en Inicio, el BackHandler se deshabilita para que el sistema cierre/minimice la app.
-    BackHandler(enabled = themeStyle == AppThemeStyle.MIUIX && mainPagerState.selectedPage != 0) {
-        mainPagerState.animateToPage(0)
-    }
-
     val currentDestination by remember {
         derivedStateOf { destinations.getOrElse(mainPagerState.selectedPage) { MainDestination.Inicio } }
     }
@@ -246,7 +263,7 @@ fun MainAppShell(
     val inicioListState = androidx.compose.foundation.lazy.rememberLazyListState()
     val isInicioScrolled by remember {
         derivedStateOf {
-            inicioListState.firstVisibleItemIndex > 0 || inicioListState.firstVisibleItemScrollOffset > 40
+            inicioListState.firstVisibleItemIndex > 0 || inicioListState.firstVisibleItemScrollOffset > 72
         }
     }
     val inicioScrollOffset by remember {
@@ -336,626 +353,559 @@ fun MainAppShell(
     )
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        // En Miuix: Interceptar botón Atrás físico para volver de Roadmap -> Agenda -> Actividad -> Borrador -> Detalle del Foro -> Hub de Foros -> Hub de Herramientas o a Inicio
-        BackHandler(enabled = showingMorningRoadmap || showingScheduleDetail || showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || currentDestination != MainDestination.Inicio) {
+        val miuixBackStack = rememberNavBackStack<MiuixRoute>(MiuixRoute.Main)
+        val miuixNavigator = remember(miuixBackStack) { MiuixNavigator(miuixBackStack) }
+        val navCornerRadius = rememberNavSystemCornerRadius()
+        val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+        val backdropColor = MiuixTheme.colorScheme.surface
+
+        val navDisplayEffects = remember<NavDisplayEffects>(navCornerRadius, backdropColor, isDarkTheme) {
+            NavDisplayEffects(
+                enableCornerClip = true,
+                cornerClipRadius = if (navCornerRadius <= 0.dp) 32.dp else navCornerRadius,
+                cornerClipMode = NavCornerClipMode.All,
+                dimAmount = if (isDarkTheme) 0.8f else 0.2f,
+                backdropColor = backdropColor,
+            )
+        }
+
+        fun handleMiuixBack(): Boolean {
+            val current = miuixNavigator.current()
+            when (current) {
+                is MiuixRoute.MorningRoadmap -> dashboardViewModel.closeMorningRoadmap()
+                is MiuixRoute.AssignmentDraft -> dashboardViewModel.closeDraft()
+                is MiuixRoute.ForoDetail -> forosViewModel.clearSelectedDiscussion()
+                else -> {}
+            }
+            return miuixNavigator.pop()
+        }
+
+        // Sincronizar estado reactivo de Roadmap con la navegacion de HyperOS
+        LaunchedEffect(showingMorningRoadmap) {
             if (showingMorningRoadmap) {
-                dashboardViewModel.closeMorningRoadmap()
-            } else if (showingScheduleDetail) {
-                showingScheduleDetail = false
-            } else if (showingActivityDetail) {
-                showingActivityDetail = false
-            } else if (selectedAssignmentForDraft != null) {
-                dashboardViewModel.closeDraft()
-            } else if (currentDestination == MainDestination.Herramientas) {
-                if (showingForosDetail && forosUiState.selectedDiscussion != null) {
-                    forosViewModel.clearSelectedDiscussion()
-                } else if (showingNotasDetail || showingForosDetail || showingArchiveDetail) {
-                    showingNotasDetail = false
-                    showingForosDetail = false
-                    showingArchiveDetail = false
-                } else {
-                    mainPagerState.animateToPage(0)
+                if (miuixNavigator.current() !is MiuixRoute.MorningRoadmap) {
+                    miuixNavigator.push(MiuixRoute.MorningRoadmap)
                 }
-            } else if (currentDestination != MainDestination.Inicio) {
+            } else {
+                if (miuixNavigator.current() is MiuixRoute.MorningRoadmap) {
+                    miuixNavigator.pop()
+                }
+            }
+        }
+
+        // Sincronizar estado reactivo de Borrador de Tarea con la navegacion de HyperOS
+        LaunchedEffect(selectedAssignmentForDraft) {
+            val draft = selectedAssignmentForDraft
+            if (draft != null) {
+                val targetRoute = MiuixRoute.AssignmentDraft(draft.assignment.id, draft.courseName)
+                if (miuixNavigator.current() != targetRoute) {
+                    miuixNavigator.push(targetRoute)
+                }
+            } else {
+                if (miuixNavigator.current() is MiuixRoute.AssignmentDraft) {
+                    miuixNavigator.pop()
+                }
+            }
+        }
+
+        // Interceptar boton Atras fisico/gestual para HyperOS MIUIX:
+        // Si hay vistas hijas apiladas en el backstack, retroceder con animacion HyperOS.
+        // Si estamos en la raiz (MiuixRoute.Main), animar al Inicio si estamos en otra pestaña.
+        val isMainBackHandlerEnabled by remember {
+            derivedStateOf {
+                miuixNavigator.canPop ||
+                    (miuixNavigator.current() is MiuixRoute.Main && mainPagerState.selectedPage != 0)
+            }
+        }
+
+        BackHandler(enabled = isMainBackHandlerEnabled) {
+            if (miuixNavigator.canPop) {
+                handleMiuixBack()
+            } else if (mainPagerState.selectedPage != 0) {
                 mainPagerState.animateToPage(0)
             }
         }
 
-        // ─── ARQUITECTURA DE 3 CAPAS HYPEROS MIUIX ───────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
+        CompositionLocalProvider(
+            LocalMiuixNavigator provides miuixNavigator
         ) {
-            // Capa 1: Contenido de la Pantalla Activa con HorizontalPager o Borrador de Tarea
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .layerBackdrop(contentBackdrop)
+            NavDisplay(
+                backStack = miuixBackStack,
+                modifier = Modifier.fillMaxSize(),
+                onBack = { handleMiuixBack() },
+                transition = CrossActivityTransition,
+                effects = navDisplayEffects,
             ) {
-                if (showingActivityDetail) {
-                    me.joxquin.notivas.ui.activity.RecentActivityScreen(
-                        viewModel = activityViewModel,
-                        themeStyle = AppThemeStyle.MIUIX,
-                        onBack = { showingActivityDetail = false },
-                        onNavigateToAssignment = { assignmentId ->
-                            showingActivityDetail = false
-                            coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
-                                if (assignment != null) {
-                                    val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
-                                    dashboardViewModel.openDraft(
-                                        me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
-                                            assignment = assignment,
-                                            courseName = courseName
+                entry<MiuixRoute.Main> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MiuixTheme.colorScheme.surface)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .layerBackdrop(contentBackdrop)
+                        ) {
+                            HorizontalPager(
+                                state = mainPagerState.pagerState,
+                                userScrollEnabled = false,
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.Top,
+                                beyondViewportPageCount = 1
+                            ) { page ->
+                                when (destinations[page]) {
+                                    MainDestination.Inicio -> {
+                                        InicioScreen(
+                                            viewModel = dashboardViewModel,
+                                            themeStyle = AppThemeStyle.MIUIX,
+                                            listState = inicioListState,
+                                            onNavigateToCopilot = {
+                                                showingNotasDetail = false
+                                                showingForosDetail = false
+                                                mainPagerState.animateToPage(2)
+                                            },
+                                            onNavigateToHerramientas = {
+                                                showingNotasDetail = false
+                                                showingForosDetail = false
+                                                mainPagerState.animateToPage(1)
+                                            },
+                                            onNavigateToAjustes = {
+                                                showingNotasDetail = false
+                                                showingForosDetail = false
+                                                mainPagerState.animateToPage(3)
+                                            },
+                                            onNavigateToActivity = {
+                                                miuixNavigator.push(MiuixRoute.RecentActivity)
+                                            },
+                                            onNavigateToSchedule = {
+                                                miuixNavigator.push(MiuixRoute.Schedule)
+                                            },
+                                            onNavigateToRoadmap = {
+                                                miuixNavigator.push(MiuixRoute.MorningRoadmap)
+                                            },
+                                            onOpenAssignmentDraft = { assignmentUi ->
+                                                dashboardViewModel.openDraft(assignmentUi)
+                                                miuixNavigator.push(
+                                                    MiuixRoute.AssignmentDraft(
+                                                        assignmentUi.assignment.id,
+                                                        assignmentUi.courseName
+                                                    )
+                                                )
+                                            },
+                                            onNavigateToCourseProgreso = { course ->
+                                                notasViewModel.selectCourse(course)
+                                                miuixNavigator.push(MiuixRoute.CourseProgreso(course.id))
+                                            }
                                         )
-                                    )
+                                    }
+
+                                    MainDestination.Herramientas -> {
+                                        me.joxquin.notivas.ui.herramientas.HerramientasScreen(
+                                            viewModel = notasViewModel,
+                                            forosViewModel = forosViewModel,
+                                            archiveViewModel = archiveViewModel,
+                                            showingNotasDetail = false,
+                                            showingForosDetail = false,
+                                            showingArchiveDetail = false,
+                                            onOpenProgreso = {
+                                                val selectedCourseId = notasViewModel.uiState.value.selectedCourse?.id ?: 0L
+                                                miuixNavigator.push(MiuixRoute.CourseProgreso(selectedCourseId))
+                                            },
+                                            onOpenForos = {
+                                                miuixNavigator.push(MiuixRoute.ForosHub)
+                                            },
+                                            onOpenForoDetail = { topic ->
+                                                forosViewModel.selectDiscussion(topic)
+                                                miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                                            },
+                                            onOpenArchive = {
+                                                miuixNavigator.push(MiuixRoute.TaskHistoryArchive)
+                                            },
+                                            onOpenAssignmentDetail = { assignment ->
+                                                val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                                                val assignmentUi = me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
+                                                    assignment = assignment,
+                                                    courseName = courseName
+                                                )
+                                                dashboardViewModel.openDraft(assignmentUi)
+                                                miuixNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                                            },
+                                            onOpenTuneSettings = { showHerramientasTuneSheet = true },
+                                            onBack = {},
+                                            themeStyle = AppThemeStyle.MIUIX,
+                                            lazyListState = herramientasListState
+                                        )
+                                    }
+
+                                    MainDestination.Copilot -> {
+                                        me.joxquin.notivas.ui.copilot.CopilotScreen(
+                                            viewModel = copilotViewModel,
+                                            themeStyle = AppThemeStyle.MIUIX,
+                                            lazyListState = copilotListState,
+                                            onNavigateToSettings = {
+                                                mainPagerState.animateToPage(3)
+                                            }
+                                        )
+                                    }
+
+                                    MainDestination.Ajustes -> {
+                                        me.joxquin.notivas.ui.ajustes.AjustesScreen(
+                                            viewModel = profileViewModel,
+                                            themeStyle = AppThemeStyle.MIUIX,
+                                            lazyListState = ajustesListState
+                                        )
+                                    }
                                 }
                             }
-                        },
-                        onNavigateToForum = { topicId ->
-                            showingActivityDetail = false
-                            val topic = forosUiState.discussions.find { it.id == topicId }
-                            if (topic != null) {
-                                forosViewModel.selectDiscussion(topic)
-                                showingNotasDetail = false
-                                showingArchiveDetail = false
-                                showingForosDetail = true
-                                mainPagerState.animateToPage(1)
-                            }
-                        },
-                        onOpenUrl = { url ->
-                            try {
-                                uriHandler.openUri(url)
-                            } catch (_: Exception) {}
-                        },
-                        lazyListState = activityListState,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else if (showingMorningRoadmap) {
-                    me.joxquin.notivas.ui.dashboard.roadmap.MorningRoadmapScreen(
-                        viewModel = dashboardViewModel,
-                        onBack = { dashboardViewModel.closeMorningRoadmap() },
-                        onNavigateToCopilotWithPrompt = { prompt ->
-                            dashboardViewModel.closeMorningRoadmap()
-                            showingNotasDetail = false
-                            showingForosDetail = false
-                            mainPagerState.animateToPage(2)
-                            copilotViewModel.sendMessage(prompt)
-                        },
-                        themeStyle = AppThemeStyle.MIUIX,
-                        lazyListState = inicioListState,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else if (showingScheduleDetail) {
-                    me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen(
-                        viewModel = dashboardViewModel,
-                        themeStyle = AppThemeStyle.MIUIX,
-                        onBack = { showingScheduleDetail = false },
-                        onAssignmentClick = { assignmentUi ->
-                            dashboardViewModel.openDraft(assignmentUi)
-                        },
-                        lazyListState = inicioListState,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else if (selectedAssignmentForDraft != null) {
-                    me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
-                        assignmentUi = selectedAssignmentForDraft!!,
-                        onBack = { dashboardViewModel.closeDraft() },
-                        viewModel = dashboardViewModel,
-                        themeStyle = AppThemeStyle.MIUIX,
-                        lazyListState = inicioListState,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    HorizontalPager(
-                        state = mainPagerState.pagerState,
-                        userScrollEnabled = false,
-                        modifier = Modifier.fillMaxSize(),
-                        verticalAlignment = Alignment.Top,
-                        beyondViewportPageCount = 1
-                    ) { page ->
-                        when (destinations[page]) {
-                            MainDestination.Inicio -> {
-                                InicioScreen(
-                                    viewModel = dashboardViewModel,
-                                    themeStyle = AppThemeStyle.MIUIX,
-                                    listState = inicioListState,
-                                    onNavigateToCopilot = {
-                                        showingNotasDetail = false
-                                        showingForosDetail = false
-                                        mainPagerState.animateToPage(2)
-                                    },
-                                    onNavigateToHerramientas = {
-                                        showingNotasDetail = false
-                                        showingForosDetail = false
-                                        mainPagerState.animateToPage(1)
-                                    },
-                                    onNavigateToAjustes = {
-                                        showingNotasDetail = false
-                                        showingForosDetail = false
-                                        mainPagerState.animateToPage(3)
-                                    },
-                                    onNavigateToActivity = {
-                                        showingScheduleDetail = false
-                                        showingActivityDetail = true
-                                    },
-                                    onNavigateToSchedule = {
-                                        showingActivityDetail = false
-                                        showingScheduleDetail = true
-                                    },
-                                    onNavigateToCourseProgreso = { course ->
-                                        notasViewModel.selectCourse(course)
-                                        showingForosDetail = false
-                                        showingNotasDetail = true
-                                        mainPagerState.animateToPage(1)
-                                    }
-                                )
-                            }
+                        }
 
+                        val copilotUiState by copilotViewModel.uiState.collectAsState()
+                        val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
+                        val isDashboardSearchExpandingOrExpanded = currentDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
+                        val topBarContentAlpha = if (isDashboardSearchExpandingOrExpanded) 0f else 1f
 
-                            MainDestination.Herramientas -> {
-                                me.joxquin.notivas.ui.herramientas.HerramientasScreen(
-                                    viewModel = notasViewModel,
-                                    forosViewModel = forosViewModel,
-                                    archiveViewModel = archiveViewModel,
-                                    showingNotasDetail = showingNotasDetail,
-                                    showingForosDetail = showingForosDetail,
-                                    showingArchiveDetail = showingArchiveDetail,
-                                    onOpenProgreso = {
-                                        showingForosDetail = false
-                                        showingArchiveDetail = false
-                                        showingNotasDetail = true
-                                    },
-                                    onOpenForos = {
-                                        showingNotasDetail = false
-                                        showingArchiveDetail = false
-                                        showingForosDetail = true
-                                    },
-                                    onOpenArchive = {
-                                        showingNotasDetail = false
-                                        showingForosDetail = false
-                                        showingArchiveDetail = true
-                                    },
-                                    onOpenAssignmentDetail = { assignment ->
-                                        val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
-                                        dashboardViewModel.openDraft(
-                                            me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
-                                                assignment = assignment,
-                                                courseName = courseName
+                        // Capa 2: Barra Superior Canonica Unificada (Top Overlay) para la ruta principal
+                        MiuixTopAppBar(
+                            title = when (currentDestination) {
+                                MainDestination.Inicio -> stringResource(Res.string.app_name)
+                                MainDestination.Herramientas -> stringResource(Res.string.herramientas_title)
+                                MainDestination.Copilot -> stringResource(Res.string.copilot_title)
+                                MainDestination.Ajustes -> stringResource(Res.string.settings_title)
+                                else -> stringResource(Res.string.app_name)
+                            },
+                            isScrolled = when {
+                                currentDestination == MainDestination.Inicio -> isInicioScrolled
+                                currentDestination == MainDestination.Herramientas -> herramientasScrollOffset > 0f
+                                currentDestination == MainDestination.Ajustes -> isAjustesScrolled
+                                currentDestination == MainDestination.Copilot -> true
+                                else -> false
+                            },
+                            scrollOffset = when {
+                                currentDestination == MainDestination.Inicio -> inicioScrollOffset
+                                currentDestination == MainDestination.Herramientas -> herramientasScrollOffset
+                                currentDestination == MainDestination.Ajustes -> ajustesScrollOffset
+                                currentDestination == MainDestination.Copilot -> if (isCopilotScrolled) copilotScrollOffset else 52f
+                                else -> 0f
+                            },
+                            backdrop = contentBackdrop,
+                            titleAlwaysVisible = false,
+                            navigationIcon = when (currentDestination) {
+                                MainDestination.Copilot -> {
+                                    {
+                                        me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                            onClick = { copilotViewModel.showHistorySheet() }
+                                        ) {
+                                            top.yukonga.miuix.kmp.basic.Icon(
+                                                imageVector = MiuixIcons.Recent,
+                                                contentDescription = "Historial",
+                                                tint = MiuixTheme.colorScheme.onBackground
                                             )
-                                        )
-                                    },
-                                    onOpenTuneSettings = { showHerramientasTuneSheet = true },
-                                    onBack = {
-                                        showingNotasDetail = false
-                                        showingForosDetail = false
-                                        showingArchiveDetail = false
-                                    },
-                                    themeStyle = AppThemeStyle.MIUIX,
-                                    lazyListState = herramientasListState
-                                )
-                            }
-
-                            MainDestination.Copilot -> {
-                                me.joxquin.notivas.ui.copilot.CopilotScreen(
-                                    viewModel = copilotViewModel,
-                                    themeStyle = AppThemeStyle.MIUIX,
-                                    lazyListState = copilotListState,
-                                    onNavigateToSettings = {
-                                        showingNotasDetail = false
-                                        showingForosDetail = false
-                                        mainPagerState.animateToPage(3)
+                                        }
                                     }
-                                )
-                            }
+                                }
+                                else -> null
+                            },
+                            actions = {
+                                when {
+                                    isDashboardSearchExpandingOrExpanded -> {}
+                                    currentDestination == MainDestination.Inicio -> {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                                onClick = { dashboardViewModel.refreshData() }
+                                            ) {
+                                                top.yukonga.miuix.kmp.basic.Icon(
+                                                    imageVector = MiuixIcons.Refresh,
+                                                    contentDescription = "Sincronizar",
+                                                    tint = MiuixTheme.colorScheme.onBackground
+                                                )
+                                            }
+                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                                onClick = { miuixNavigator.push(MiuixRoute.Schedule) }
+                                            ) {
+                                                top.yukonga.miuix.kmp.basic.Icon(
+                                                    imageVector = MiuixIcons.Weeks,
+                                                    contentDescription = stringResource(Res.string.schedule_screen_title),
+                                                    tint = MiuixTheme.colorScheme.onBackground
+                                                )
+                                            }
+                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                                onClick = { miuixNavigator.push(MiuixRoute.RecentActivity) }
+                                            ) {
+                                                top.yukonga.miuix.kmp.basic.Icon(
+                                                    imageVector = MiuixIcons.Alarm,
+                                                    contentDescription = stringResource(Res.string.recent_activity_title),
+                                                    tint = MiuixTheme.colorScheme.onBackground
+                                                )
+                                            }
+                                        }
+                                    }
+                                    currentDestination == MainDestination.Copilot -> {
+                                        me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                            onClick = { copilotViewModel.startNewSession() }
+                                        ) {
+                                            top.yukonga.miuix.kmp.basic.Icon(
+                                                imageVector = MiuixIcons.Create,
+                                                contentDescription = "Nuevo Chat",
+                                                tint = MiuixTheme.colorScheme.onBackground
+                                            )
+                                        }
+                                    }
+                                    currentDestination == MainDestination.Ajustes -> {
+                                        me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                            onClick = { profileViewModel.verifyToken() }
+                                        ) {
+                                            top.yukonga.miuix.kmp.basic.Icon(
+                                                imageVector = MiuixIcons.Refresh,
+                                                contentDescription = "Sincronizar",
+                                                tint = MiuixTheme.colorScheme.onBackground
+                                            )
+                                        }
+                                    }
+                                    currentDestination == MainDestination.Herramientas -> {
+                                        val importCatalogLabel = stringResource(Res.string.groups_menu_import_catalog)
+                                        val importJsonLabel = stringResource(Res.string.groups_menu_import_json)
+                                        val exportJsonLabel = stringResource(Res.string.groups_menu_export_json)
+                                        val resetGroupsLabel = stringResource(Res.string.groups_menu_reset_groups)
 
-                            MainDestination.Ajustes -> {
-                                me.joxquin.notivas.ui.ajustes.AjustesScreen(
-                                    viewModel = profileViewModel,
-                                    themeStyle = AppThemeStyle.MIUIX,
-                                    lazyListState = ajustesListState
-                                )
+                                        val herramientasDropdownEntries = remember(importCatalogLabel, importJsonLabel, exportJsonLabel, resetGroupsLabel) {
+                                            listOf(
+                                                top.yukonga.miuix.kmp.basic.DropdownEntry(
+                                                    items = listOf(
+                                                        top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                            text = importCatalogLabel,
+                                                            onClick = { showCatalogImportDialog = true }
+                                                        ),
+                                                        top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                            text = importJsonLabel,
+                                                            onClick = { filePicker.launchFilePicker() }
+                                                        ),
+                                                        top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                            text = exportJsonLabel,
+                                                            onClick = { filePicker.launchFileCreator("notivas_ponderacion.json") }
+                                                        ),
+                                                        top.yukonga.miuix.kmp.basic.DropdownItem(
+                                                            text = resetGroupsLabel,
+                                                            onClick = { notasViewModel.resetAllSimulationGroups() }
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        }
+
+                                        top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu(
+                                            entries = herramientasDropdownEntries,
+                                            collapseOnSelection = true
+                                        ) {
+                                            top.yukonga.miuix.kmp.basic.Icon(
+                                                imageVector = MiuixIcons.Tune,
+                                                contentDescription = stringResource(Res.string.groups_menu_options_title),
+                                                tint = MiuixTheme.colorScheme.onBackground
+                                            )
+                                        }
+                                    }
+                                    else -> {}
+                                }
+                            },
+                            bottomContent = null,
+                            onNavigationClick = null,
+                            contentAlpha = topBarContentAlpha,
+                            modifier = Modifier.align(Alignment.TopCenter)
+                        )
+
+                        // Capa 3: FloatingNavigationBar ("Liquid Glass")
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !isDashboardSearchExpandingOrExpanded,
+                            enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(200)) +
+                                    androidx.compose.animation.slideInVertically(animationSpec = androidx.compose.animation.core.tween(300)) { it },
+                            exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(150)) +
+                                    androidx.compose.animation.slideOutVertically(animationSpec = androidx.compose.animation.core.tween(250)) { it },
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        ) {
+                            FloatingNavigationBar(
+                                currentDestination = currentDestination,
+                                onNavigate = { destination ->
+                                    showingNotasDetail = false
+                                    showingForosDetail = false
+                                    val targetIndex = destinations.indexOf(destination)
+                                    if (targetIndex != -1) {
+                                        mainPagerState.animateToPage(targetIndex)
+                                    }
+                                },
+                                backdrop = contentBackdrop
+                            )
+                        }
+
+                        // Feedback Toast / Banner Flotante en MIUIX
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = toastMessage != null,
+                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
+                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 90.dp, start = 20.dp, end = 20.dp)
+                        ) {
+                            toastMessage?.let { msg ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .squircleSurface(
+                                            color = if (msg.contains("Error", ignoreCase = true) || msg.contains("Fallo", ignoreCase = true) || msg.contains("No se pudo", ignoreCase = true))
+                                                androidx.compose.ui.graphics.Color(0xFFE53935)
+                                            else if (msg.contains("exitosamente", ignoreCase = true) || msg.contains("listo", ignoreCase = true) || msg.contains("cancelada", ignoreCase = true))
+                                                androidx.compose.ui.graphics.Color(0xFF388E3C)
+                                            else
+                                                MiuixTheme.colorScheme.primary,
+                                            cornerRadius = 18.dp
+                                        )
+                                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = msg,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        fontSize = 13.sp,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                        maxLines = 3
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            val copilotUiState by copilotViewModel.uiState.collectAsState()
-            val isDashboardSearchExpanded by dashboardViewModel.isSearchExpanded.collectAsState()
-            val topBarAlpha by androidx.compose.animation.core.animateFloatAsState(
-                targetValue = if (currentDestination == MainDestination.Inicio && isDashboardSearchExpanded) 0f else 1f,
-                animationSpec = androidx.compose.animation.core.tween(200)
-            )
-
-            // Capa 2: Barra Superior Canónica Unificada (Top Overlay)
-            MiuixTopAppBar(
-                title = when {
-                    showingMorningRoadmap -> stringResource(Res.string.daily_roadmap_title)
-                    showingScheduleDetail -> stringResource(Res.string.schedule_screen_title)
-                    showingActivityDetail -> stringResource(Res.string.recent_activity_title)
-                    selectedAssignmentForDraft != null -> stringResource(Res.string.assignment_detail_title)
-                    currentDestination == MainDestination.Herramientas && showingArchiveDetail -> stringResource(Res.string.archive_screen_title)
-                    currentDestination == MainDestination.Herramientas && showingNotasDetail -> stringResource(Res.string.grades_progreso_title)
-                    currentDestination == MainDestination.Herramientas && showingForosDetail -> {
-                        if (forosUiState.selectedDiscussion != null) stringResource(Res.string.foro_detail_title) else stringResource(Res.string.foros_hub_title)
-                    }
-                    currentDestination == MainDestination.Inicio -> stringResource(Res.string.app_name)
-                    currentDestination == MainDestination.Herramientas -> stringResource(Res.string.herramientas_title)
-                    currentDestination == MainDestination.Copilot -> stringResource(Res.string.copilot_title)
-                    currentDestination == MainDestination.Ajustes -> stringResource(Res.string.settings_title)
-                    else -> stringResource(Res.string.app_name)
-                },
-                isScrolled = when {
-                    showingMorningRoadmap -> isInicioScrolled
-                    showingScheduleDetail -> isInicioScrolled
-                    showingActivityDetail -> isActivityScrolled
-                    selectedAssignmentForDraft != null -> true
-                    currentDestination == MainDestination.Inicio -> isInicioScrolled
-                    currentDestination == MainDestination.Herramientas -> herramientasScrollOffset > 0f
-                    currentDestination == MainDestination.Ajustes -> isAjustesScrolled
-                    currentDestination == MainDestination.Copilot -> true
-                    else -> false
-                },
-                scrollOffset = when {
-                    showingMorningRoadmap -> inicioScrollOffset
-                    showingScheduleDetail -> inicioScrollOffset
-                    showingActivityDetail -> activityScrollOffset
-                    selectedAssignmentForDraft != null -> 64f
-                    currentDestination == MainDestination.Inicio -> inicioScrollOffset
-                    currentDestination == MainDestination.Herramientas -> herramientasScrollOffset
-                    currentDestination == MainDestination.Ajustes -> ajustesScrollOffset
-                    currentDestination == MainDestination.Copilot -> if (isCopilotScrolled) copilotScrollOffset else 64f
-                    else -> 0f
-                },
-                backdrop = contentBackdrop,
-                titleAlwaysVisible = showingMorningRoadmap || showingScheduleDetail || showingActivityDetail || (selectedAssignmentForDraft != null) ||
-                        (currentDestination == MainDestination.Herramientas && (showingNotasDetail || showingForosDetail || showingArchiveDetail)),
-                navigationIcon = when {
-                    showingMorningRoadmap -> {
-                        {
-                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
-                                onClick = { dashboardViewModel.closeMorningRoadmap() }
-                            )
-                        }
-                    }
-                    showingScheduleDetail -> {
-                        {
-                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
-                                onClick = { showingScheduleDetail = false }
-                            )
-                        }
-                    }
-                    showingActivityDetail -> {
-                        {
-                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
-                                onClick = { showingActivityDetail = false }
-                            )
-                        }
-                    }
-                    selectedAssignmentForDraft != null -> {
-                        {
-                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
-                                onClick = { dashboardViewModel.closeDraft() }
-                            )
-                        }
-                    }
-                    currentDestination == MainDestination.Herramientas && showingArchiveDetail -> {
-                        {
-                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
-                                onClick = { showingArchiveDetail = false }
-                            )
-                        }
-                    }
-                    currentDestination == MainDestination.Herramientas && showingNotasDetail -> {
-                        {
-                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
-                                onClick = { showingNotasDetail = false }
-                            )
-                        }
-                    }
-                    currentDestination == MainDestination.Herramientas && showingForosDetail -> {
-                        {
-                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(
-                                onClick = {
-                                    if (forosUiState.selectedDiscussion != null) {
-                                        forosViewModel.clearSelectedDiscussion()
-                                    } else {
-                                        showingForosDetail = false
-                                    }
+                entry<MiuixRoute.RecentActivity>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                    RecentActivityScreen(
+                        viewModel = activityViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        lazyListState = activityListState,
+                        onBack = { handleMiuixBack() },
+                        onNavigateToAssignment = { assignmentId: Long ->
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                                    val assignmentUi = AssignmentUiModel(
+                                        assignment = assignment,
+                                        courseName = courseName
+                                    )
+                                    dashboardViewModel.openDraft(assignmentUi)
+                                    miuixNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
                                 }
-                            )
+                            }
+                        },
+                        onNavigateToForum = { topicId: Long ->
+                            val topic = forosUiState.discussions.find { it.id == topicId }
+                            if (topic != null) {
+                                forosViewModel.selectDiscussion(topic)
+                                miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                            }
+                        },
+                        onOpenUrl = { url: String ->
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (_: Exception) {}
                         }
-                    }
-                    currentDestination == MainDestination.Copilot -> {
-                        {
-                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                onClick = { copilotViewModel.showHistorySheet() }
-                            ) {
-                                androidx.compose.material3.Icon(
-                                    imageVector = androidx.compose.material.icons.Icons.Default.History,
-                                    contentDescription = "Historial",
-                                    tint = MiuixTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                entry<MiuixRoute.Schedule>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                    ScheduleScreen(
+                        viewModel = dashboardViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() },
+                        onAssignmentClick = { assignmentUi: AssignmentUiModel ->
+                            dashboardViewModel.openDraft(assignmentUi)
+                            miuixNavigator.push(MiuixRoute.AssignmentDraft(assignmentUi.assignment.id, assignmentUi.courseName))
+                        }
+                    )
+                }
+
+                entry<MiuixRoute.MorningRoadmap>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                    MorningRoadmapScreen(
+                        viewModel = dashboardViewModel,
+                        onBack = { handleMiuixBack() },
+                        onNavigateToCopilotWithPrompt = { prompt: String ->
+                            handleMiuixBack()
+                            mainPagerState.animateToPage(2)
+                            copilotViewModel.sendMessage(prompt)
+                        },
+                        onOpenDraft = { assignmentUi ->
+                            dashboardViewModel.openDraft(assignmentUi)
+                            miuixNavigator.push(
+                                MiuixRoute.AssignmentDraft(
+                                    assignmentUi.assignment.id,
+                                    assignmentUi.courseName
                                 )
-                            }
-                        }
-                    }
-                    else -> null
-                },
-                actions = {
-                    when {
-                        showingScheduleDetail || showingActivityDetail -> {}
-                        currentDestination == MainDestination.Inicio && selectedAssignmentForDraft == null && !isDashboardSearchExpanded -> {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                    onClick = { dashboardViewModel.refreshData() }
-                                ) {
-                                    top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Refresh,
-                                        contentDescription = "Sincronizar",
-                                        tint = MiuixTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                    onClick = { showingScheduleDetail = true }
-                                ) {
-                                    top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Weeks,
-                                        contentDescription = stringResource(Res.string.schedule_screen_title),
-                                        tint = MiuixTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                    onClick = { showingActivityDetail = true }
-                                ) {
-                                    top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Alarm,
-                                        contentDescription = stringResource(Res.string.recent_activity_title),
-                                        tint = MiuixTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-                        selectedAssignmentForDraft != null -> {
-                            val assignment = selectedAssignmentForDraft?.assignment
-                            val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-                            val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
-                            val openCanvasLabel = stringResource(Res.string.task_menu_open_canvas)
-                            val exploreTemplatesLabel = stringResource(Res.string.task_menu_explore_templates)
-                            val copyCanvasLinkLabel = stringResource(Res.string.task_menu_copy_canvas_link)
-
-                            val dropdownEntries = remember(assignment, openCanvasLabel, exploreTemplatesLabel, copyCanvasLinkLabel) {
-                                listOf(
-                                    top.yukonga.miuix.kmp.basic.DropdownEntry(
-                                        items = listOf(
-                                            top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                text = openCanvasLabel,
-                                                onClick = {
-                                                    assignment?.htmlUrl?.let { url ->
-                                                        try { uriHandler.openUri(url) } catch (_: Exception) {}
-                                                    }
-                                                }
-                                            ),
-                                            top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                text = exploreTemplatesLabel,
-                                                onClick = {
-                                                    if (assignment != null) {
-                                                        dashboardViewModel.openTemplatePicker(
-                                                            courseId = assignment.courseId,
-                                                            assignmentId = assignment.id,
-                                                            assignmentDescription = assignment.description
-                                                        )
-                                                    }
-                                                }
-                                            ),
-                                            top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                text = copyCanvasLinkLabel,
-                                                onClick = {
-                                                    assignment?.htmlUrl?.let { url ->
-                                                        clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(url))
-                                                    }
-                                                }
-                                            )
-                                        )
-                                    )
-                                )
-                            }
-
-                            top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu(
-                                entries = dropdownEntries,
-                                collapseOnSelection = true
-                            ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = MiuixIcons.Tune,
-                                    contentDescription = "Options",
-                                    tint = MiuixTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                        currentDestination == MainDestination.Copilot -> {
-                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                onClick = { copilotViewModel.startNewSession() }
-                            ) {
-                                androidx.compose.material3.Icon(
-                                    imageVector = androidx.compose.material.icons.Icons.Default.AddComment,
-                                    contentDescription = "Nuevo Chat",
-                                    tint = MiuixTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-
-                        currentDestination == MainDestination.Ajustes -> {
-                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                onClick = { profileViewModel.verifyToken() }
-                            ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = MiuixIcons.Refresh,
-                                    contentDescription = "Sincronizar",
-                                    tint = MiuixTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-
-                        currentDestination == MainDestination.Herramientas -> {
-                            if (showingForosDetail) {
-                                if (forosUiState.selectedDiscussion == null) {
-                                    me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                        onClick = { forosViewModel.setShowFilterBottomSheet(true) }
-                                    ) {
-                                        top.yukonga.miuix.kmp.basic.Icon(
-                                            imageVector = MiuixIcons.Filter,
-                                            contentDescription = "Filtros y Ordenamiento",
-                                            tint = MiuixTheme.colorScheme.onSurface,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            } else if (!showingNotasDetail && !showingArchiveDetail) {
-                                val importCatalogLabel = stringResource(Res.string.groups_menu_import_catalog)
-                                val importJsonLabel = stringResource(Res.string.groups_menu_import_json)
-                                val exportJsonLabel = stringResource(Res.string.groups_menu_export_json)
-                                val resetGroupsLabel = stringResource(Res.string.groups_menu_reset_groups)
-
-                                val herramientasDropdownEntries = remember(importCatalogLabel, importJsonLabel, exportJsonLabel, resetGroupsLabel) {
-                                    listOf(
-                                        top.yukonga.miuix.kmp.basic.DropdownEntry(
-                                            items = listOf(
-                                                top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                    text = importCatalogLabel,
-                                                    onClick = { showCatalogImportDialog = true }
-                                                ),
-                                                top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                    text = importJsonLabel,
-                                                    onClick = { filePicker.launchFilePicker() }
-                                                ),
-                                                top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                    text = exportJsonLabel,
-                                                    onClick = { filePicker.launchFileCreator("notivas_ponderacion.json") }
-                                                ),
-                                                top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                    text = resetGroupsLabel,
-                                                    onClick = { notasViewModel.resetAllSimulationGroups() }
-                                                )
-                                            )
-                                        )
-                                    )
-                                }
-
-                                top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu(
-                                    entries = herramientasDropdownEntries,
-                                    collapseOnSelection = true
-                                ) {
-                                    top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Tune,
-                                        contentDescription = stringResource(Res.string.groups_menu_options_title),
-                                        tint = MiuixTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        else -> {}
-                    }
-                },
-                bottomContent = when {
-                    showingActivityDetail -> {
-                        {
-                            me.joxquin.notivas.ui.activity.components.ActivitySearchAndFilters(
-                                searchQuery = activityUiState.searchQuery,
-                                onSearchQueryChange = { query: String -> activityViewModel.onSearchQueryChange(query) },
-                                themeStyle = AppThemeStyle.MIUIX,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 6.dp)
                             )
-                        }
-                    }
-                    selectedAssignmentForDraft == null && currentDestination == MainDestination.Herramientas && showingForosDetail && forosUiState.selectedDiscussion == null -> {
-                        {
-                            me.joxquin.notivas.ui.foros.components.ForosSearchAndFilters(
-                                searchQuery = forosUiState.searchQuery,
-                                onSearchQueryChange = { query: String -> forosViewModel.onSearchQueryChange(query) },
-                                themeStyle = AppThemeStyle.MIUIX,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 6.dp)
-                            )
-                        }
-                    }
-                    else -> null
-                },
-                onNavigationClick = null,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .graphicsLayer {
-                        alpha = topBarAlpha
-                    }
-            )
+                        },
+                        themeStyle = AppThemeStyle.MIUIX
+                    )
+                }
 
-            // Capa 3: FloatingNavigationBar Independiente ("Liquid Glass") - Oculto durante el borrador, actividad reciente, agenda, roadmap o búsqueda
-            if (!showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null && !isDashboardSearchExpanded) {
-                FloatingNavigationBar(
-                    currentDestination = currentDestination,
-                    onNavigate = { destination ->
-                        if (selectedAssignmentForDraft != null) {
-                            dashboardViewModel.closeDraft()
-                        }
-                        showingNotasDetail = false
-                        showingForosDetail = false
-                        val targetIndex = destinations.indexOf(destination)
-                        if (targetIndex != -1) {
-                            mainPagerState.animateToPage(targetIndex)
-                        }
-                    },
-                    backdrop = contentBackdrop,
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                )
-            }
-
-            // Feedback Toast / Banner Flotante en MIUIX
-            androidx.compose.animation.AnimatedVisibility(
-                visible = toastMessage != null,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 90.dp, start = 20.dp, end = 20.dp)
-            ) {
-                toastMessage?.let { msg ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .squircleSurface(
-                                color = if (msg.contains("Error", ignoreCase = true) || msg.contains("Fallo", ignoreCase = true) || msg.contains("No se pudo", ignoreCase = true))
-                                    androidx.compose.ui.graphics.Color(0xFFE53935)
-                                else if (msg.contains("exitosamente", ignoreCase = true) || msg.contains("listo", ignoreCase = true) || msg.contains("cancelada", ignoreCase = true))
-                                    androidx.compose.ui.graphics.Color(0xFF388E3C)
-                                else
-                                    top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.primary,
-                                cornerRadius = 18.dp
-                            )
-                            .padding(vertical = 12.dp, horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = msg,
-                            color = androidx.compose.ui.graphics.Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                            maxLines = 3
+                entry<MiuixRoute.AssignmentDraft>(swipeDismiss = NavSwipeDirection.LeftToRight) { route: MiuixRoute.AssignmentDraft ->
+                    val currentDraft = selectedAssignmentForDraft ?: remember(route) {
+                        dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == route.assignmentId }
+                    }
+                    if (currentDraft != null) {
+                        AssignmentDraftScreen(
+                            assignmentUi = currentDraft,
+                            onBack = { handleMiuixBack() },
+                            viewModel = dashboardViewModel,
+                            themeStyle = AppThemeStyle.MIUIX
                         )
                     }
+                }
+
+                entry<MiuixRoute.TaskHistoryArchive>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                    TaskHistoryArchiveScreen(
+                        viewModel = archiveViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() },
+                        onOpenAssignmentDetail = { assignment: Assignment ->
+                            val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                            val assignmentUi = AssignmentUiModel(
+                                assignment = assignment,
+                                courseName = courseName
+                            )
+                            dashboardViewModel.openDraft(assignmentUi)
+                            miuixNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                        }
+                    )
+                }
+
+                entry<MiuixRoute.ForoDetail>(swipeDismiss = NavSwipeDirection.LeftToRight) { route: MiuixRoute.ForoDetail ->
+                    val topic = forosUiState.discussions.find { it.id == route.topicId } ?: forosUiState.selectedDiscussion
+                    if (topic != null) {
+                        ForoDetailScreen(
+                            viewModel = forosViewModel,
+                            themeStyle = AppThemeStyle.MIUIX,
+                            onBack = { handleMiuixBack() }
+                        )
+                    }
+                }
+
+                entry<MiuixRoute.CourseProgreso>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                    NotasScreen(
+                        viewModel = notasViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.ForosHub>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                    ForosScreen(
+                        viewModel = forosViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() },
+                        onOpenTopic = { topic ->
+                            forosViewModel.selectDiscussion(topic)
+                            miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                        }
+                    )
                 }
             }
         }
@@ -966,9 +916,26 @@ fun MainAppShell(
             materialDestination = destination
         }
 
+        val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
+        val isMaterialDashboardSearchExpandingOrExpanded = materialDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
+
         // Interceptar gesto/botón Atrás del sistema para Material 3:
-        BackHandler(enabled = themeStyle == AppThemeStyle.MATERIAL && (showingMorningRoadmap || showingScheduleDetail || showingActivityDetail || selectedAssignmentForDraft != null || showingNotasDetail || showingForosDetail || showingArchiveDetail || materialDestination != MainDestination.Inicio)) {
-            if (showingMorningRoadmap) {
+        BackHandler(
+            enabled = themeStyle == AppThemeStyle.MATERIAL && (
+                isMaterialDashboardSearchExpandingOrExpanded ||
+                showingMorningRoadmap ||
+                showingScheduleDetail ||
+                showingActivityDetail ||
+                selectedAssignmentForDraft != null ||
+                showingNotasDetail ||
+                showingForosDetail ||
+                showingArchiveDetail ||
+                materialDestination != MainDestination.Inicio
+            )
+        ) {
+            if (isMaterialDashboardSearchExpandingOrExpanded) {
+                dashboardViewModel.setSearchExpanded(false)
+            } else if (showingMorningRoadmap) {
                 dashboardViewModel.closeMorningRoadmap()
             } else if (showingScheduleDetail) {
                 showingScheduleDetail = false
@@ -992,12 +959,13 @@ fun MainAppShell(
         }
 
         val isImeVisible = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
+        val isMaterialBottomBarVisible = !isImeVisible && !showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null && !isMaterialDashboardSearchExpandingOrExpanded
 
         Scaffold(
             bottomBar = {
                 NotiVasNavigationBar(
                     currentDestination = materialDestination,
-                    isVisible = !isImeVisible && !showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null,
+                    isVisible = isMaterialBottomBarVisible,
                     onNavigate = { destination ->
                         if (selectedAssignmentForDraft != null) {
                             dashboardViewModel.closeDraft()
@@ -1009,7 +977,7 @@ fun MainAppShell(
                 )
             }
         ) { innerPadding ->
-            val targetBottom = if (!isImeVisible && !showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null) innerPadding.calculateBottomPadding() else 0.dp
+            val targetBottom = if (isMaterialBottomBarVisible) innerPadding.calculateBottomPadding() else 0.dp
             val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
                 targetValue = targetBottom,
                 animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
