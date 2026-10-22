@@ -30,7 +30,7 @@ kotlin {
        minSdk = libs.versions.android.minSdk.get().toInt()
     
        compilerOptions {
-           jvmTarget = JvmTarget.JVM_11
+           jvmTarget = JvmTarget.JVM_21
        }
        androidResources {
            enable = true
@@ -51,6 +51,7 @@ kotlin {
             implementation(libs.compose.uiTooling)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.work.runtime.ktx)
+            implementation(libs.androidx.biometric)
             implementation(libs.play.services.auth)
         }
         commonMain.dependencies {
@@ -74,6 +75,7 @@ kotlin {
             implementation(libs.miuix.blur)
             implementation(libs.miuix.squircle)
             implementation(libs.miuix.icons)
+            implementation(libs.miuix.nav)
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
             implementation(libs.coil.compose)
