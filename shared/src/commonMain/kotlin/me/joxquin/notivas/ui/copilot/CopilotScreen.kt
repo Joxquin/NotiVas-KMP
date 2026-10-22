@@ -149,6 +149,16 @@ fun CopilotScreen(
                     bottomPadding = animatedBottomPadding,
                     modifier = Modifier.fillMaxSize()
                 )
+
+                top.yukonga.miuix.kmp.basic.VerticalScrollBar(
+                    adapter = top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter(listState),
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(
+                            top = statusBarTop + 68.dp,
+                            bottom = animatedBottomPadding + 60.dp
+                        )
+                )
             }
 
             // Capa 2: Controles flotantes inferiores (Warning Banner si aplica, Popup de @ y Cápsula de entrada)

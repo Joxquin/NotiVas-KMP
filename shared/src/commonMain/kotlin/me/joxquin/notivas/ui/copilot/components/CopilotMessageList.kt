@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.repository.CopilotMessageItem
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 @Composable
 fun CopilotMessageList(
@@ -74,11 +76,21 @@ fun CopilotMessageList(
             )
         }
     } else {
+        val scrollModifier = if (themeStyle == AppThemeStyle.MIUIX) {
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+                .scrollEndHaptic()
+                .overScrollVertical()
+        } else {
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+        }
+
         LazyColumn(
             state = listState,
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
+            modifier = modifier.then(scrollModifier),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = PaddingValues(top = topInset, bottom = bottomInset)
         ) {
@@ -102,8 +114,8 @@ fun CopilotMessageList(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(Color(0xFF1B1C20))
-                                    .border(1.dp, Color(0x18FFFFFF), RoundedCornerShape(16.dp))
+                                    .background(MiuixTheme.colorScheme.surfaceContainer)
+                                    .border(1.dp, MiuixTheme.colorScheme.dividerLine, RoundedCornerShape(16.dp))
                                     .padding(horizontal = 14.dp, vertical = 10.dp)
                             ) {
                                 Row(
@@ -113,12 +125,12 @@ fun CopilotMessageList(
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(16.dp),
                                         strokeWidth = 2.dp,
-                                        color = Color(0xFF3482FF)
+                                        color = MiuixTheme.colorScheme.primary
                                     )
                                     Text(
                                         text = "Copilot está pensando...",
                                         style = MiuixTheme.textStyles.footnote2,
-                                        color = Color(0xFF9E9EA7)
+                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                                     )
                                 }
                             }
