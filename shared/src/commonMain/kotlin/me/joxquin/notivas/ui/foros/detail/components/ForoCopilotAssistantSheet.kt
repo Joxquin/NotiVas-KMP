@@ -139,6 +139,9 @@ fun ForoCopilotAssistantSheet(
 
     val cleanModelDisplayName = remember(activeModelName) {
         when {
+            activeModelName.contains("gemini-3.5-flash-lite", ignoreCase = true) -> "Gemini 3.5 Flash-Lite"
+            activeModelName.contains("gemini-3.5-flash", ignoreCase = true) -> "Gemini 3.5 Flash"
+            activeModelName.contains("gemini-3.1-pro", ignoreCase = true) -> "Gemini 3.1 Pro"
             activeModelName.contains("gemini-2.5-flash", ignoreCase = true) -> "Gemini 2.5 Flash"
             activeModelName.contains("gemini-2.5-pro", ignoreCase = true) -> "Gemini 2.5 Pro"
             activeModelName.contains("claude-3-5-sonnet", ignoreCase = true) -> "Claude 3.5 Sonnet"
@@ -202,23 +205,12 @@ fun ForoCopilotAssistantSheet(
                     shape = RoundedCornerShape(9999.dp),
                     color = primaryColor.copy(alpha = 0.15f)
                 ) {
-                    Row(
+                    Text(
+                        text = cleanModelDisplayName,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(7.dp)
-                                .clip(CircleShape)
-                                .background(primaryColor)
-                        )
-                        Text(
-                            text = cleanModelDisplayName,
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp),
-                            color = primaryColor
-                        )
-                    }
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                        color = primaryColor
+                    )
                 }
             }
 

@@ -100,7 +100,13 @@ class ForosViewModel(
     private val _isGeneratingCopilot = MutableStateFlow(false)
     private val _copilotStrategy = MutableStateFlow<CopilotForoStrategy?>(null)
     private val _copilotErrorMessage = MutableStateFlow<String?>(null)
-    private val _activeCopilotModel = MutableStateFlow("google/gemini-2.5-flash")
+    private val _activeCopilotModel = MutableStateFlow(
+        if (preferencesManager?.getCopilotProvider() == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+            preferencesManager.getGoogleAiStudioModel()
+        } else {
+            preferencesManager?.getOpenRouterModel() ?: "gemini-3.5-flash-lite"
+        }
+    )
 
     // Almacenamiento local de borradores y estrategias por ID de foro en memoria del ViewModel
     private val _draftsMemory = mutableMapOf<Long, String>()
@@ -136,10 +142,24 @@ class ForosViewModel(
     }
 
     init {
-        preferencesManager?.openRouterModel?.let { modelFlow ->
+        preferencesManager?.let { prefs ->
             viewModelScope.launch {
-                modelFlow.collect { modelName ->
-                    _activeCopilotModel.value = modelName
+                combine(
+                    prefs.copilotProvider,
+                    prefs.googleAiStudioModel,
+                    prefs.openRouterModel
+                ) { provider, googleModel, openRouterModel ->
+                    if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+                        googleModel
+                    } else {
+                        openRouterModel
+                    }
+                }.collect { modelName ->
+                    if (_activeCopilotModel.value != modelName) {
+                        _activeCopilotModel.value = modelName
+                        _copilotStrategiesMemory.clear()
+                        _copilotStrategy.value = null
+                    }
                 }
             }
         }
@@ -552,7 +572,7 @@ class ForosViewModel(
                     }
                 }.onFailure { ex ->
                     if (_selectedDiscussion.value?.id == topic.id) {
-                        _copilotErrorMessage.value = ex.message ?: "Error al conectar con la IA de OpenRouter."
+                        _copilotErrorMessage.value = ex.message ?: "Error al conectar con el asistente de IA."
                     }
                 }
             } catch (e: Exception) {

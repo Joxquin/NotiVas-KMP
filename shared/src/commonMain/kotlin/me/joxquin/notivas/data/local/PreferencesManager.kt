@@ -91,6 +91,7 @@ class PreferencesManager(
 
     private val _biometricLock = MutableStateFlow(false)
     val biometricLock: Flow<Boolean> = _biometricLock.asStateFlow()
+    fun getBiometricLock(): Boolean = _biometricLock.value
 
     private val _copilotProvider = MutableStateFlow(CopilotProvider.OPENROUTER)
     val copilotProvider: Flow<CopilotProvider> = _copilotProvider.asStateFlow()
@@ -101,12 +102,14 @@ class PreferencesManager(
 
     private val _openRouterModel = MutableStateFlow("google/gemini-2.5-flash")
     val openRouterModel: Flow<String> = _openRouterModel.asStateFlow()
+    fun getOpenRouterModel(): String = _openRouterModel.value
 
     private val _googleAiStudioApiKey = MutableStateFlow<String?>("")
     val googleAiStudioApiKey: Flow<String?> = _googleAiStudioApiKey.asStateFlow()
 
     private val _googleAiStudioModel = MutableStateFlow("gemini-3.5-flash-lite")
     val googleAiStudioModel: Flow<String> = _googleAiStudioModel.asStateFlow()
+    fun getGoogleAiStudioModel(): String = _googleAiStudioModel.value
 
     private val _copilotEnabled = MutableStateFlow(true)
     val copilotEnabled: Flow<Boolean> = _copilotEnabled.asStateFlow()
