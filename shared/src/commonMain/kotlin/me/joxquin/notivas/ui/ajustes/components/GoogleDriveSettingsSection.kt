@@ -59,6 +59,7 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowDialog
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
@@ -94,142 +95,217 @@ fun GoogleDriveSettingsSection(
 
     // Diálogo de Error de Autenticación
     if (authErrorMsg != null) {
-        AlertDialog(
-            onDismissRequest = { authErrorMsg = null },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.CloudOff,
-                    contentDescription = null,
-                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(Res.string.drive_auth_error_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
-            },
-            text = {
-                Text(
-                    text = authErrorMsg ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = { authErrorMsg = null },
-                    colors = if (themeStyle == AppThemeStyle.MIUIX) {
-                        ButtonDefaults.buttonColors(
-                            containerColor = MiuixTheme.colorScheme.primary,
-                            contentColor = MiuixTheme.colorScheme.onPrimary
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            WindowDialog(
+                show = authErrorMsg != null,
+                title = stringResource(Res.string.drive_auth_error_title),
+                summary = authErrorMsg ?: "",
+                onDismissRequest = { authErrorMsg = null },
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        MiuixTextButton(
+                            text = stringResource(Res.string.close),
+                            onClick = { authErrorMsg = null },
+                            modifier = Modifier.weight(1f),
+                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
                         )
-                    } else {
-                        ButtonDefaults.buttonColors()
                     }
-                ) {
-                    Text(stringResource(Res.string.close))
                 }
-            }
-        )
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { authErrorMsg = null },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.CloudOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.drive_auth_error_title),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                text = {
+                    Text(
+                        text = authErrorMsg ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { authErrorMsg = null },
+                        colors = ButtonDefaults.buttonColors()
+                    ) {
+                        Text(stringResource(Res.string.close))
+                    }
+                }
+            )
+        }
     }
 
     // Diálogo de Confirmación: Desvincular
     if (showUnlinkDialog) {
-        AlertDialog(
-            onDismissRequest = { showUnlinkDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.LinkOff,
-                    contentDescription = null,
-                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(Res.string.drive_unlink_dialog_title),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(Res.string.drive_unlink_dialog_desc),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        showUnlinkDialog = false
-                        onUnlink()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error,
-                        contentColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onError else MaterialTheme.colorScheme.onError
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            WindowDialog(
+                show = showUnlinkDialog,
+                title = stringResource(Res.string.drive_unlink_dialog_title),
+                summary = stringResource(Res.string.drive_unlink_dialog_desc),
+                onDismissRequest = { showUnlinkDialog = false },
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MiuixTextButton(
+                            text = stringResource(Res.string.cancel),
+                            onClick = { showUnlinkDialog = false },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        MiuixTextButton(
+                            text = stringResource(Res.string.drive_unlink_btn),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                showUnlinkDialog = false
+                                onUnlink()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = MiuixButtonDefaults.textButtonColors(
+                                color = MiuixTheme.colorScheme.errorContainer,
+                                textColor = MiuixTheme.colorScheme.onErrorContainer
+                            )
+                        )
+                    }
+                }
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { showUnlinkDialog = false },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.LinkOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
                     )
-                ) {
-                    Text(stringResource(Res.string.drive_unlink_btn))
+                },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.drive_unlink_dialog_title),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(Res.string.drive_unlink_dialog_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            showUnlinkDialog = false
+                            onUnlink()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text(stringResource(Res.string.drive_unlink_btn))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showUnlinkDialog = false }) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showUnlinkDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
+            )
+        }
     }
 
     // Diálogo de Confirmación: Vaciar Caché
     if (showClearCacheDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearCacheDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.CleaningServices,
-                    contentDescription = null,
-                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(Res.string.drive_clear_cache_dialog_title),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(Res.string.drive_clear_cache_dialog_desc),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        showClearCacheDialog = false
-                        onClearCache()
-                    },
-                    colors = if (themeStyle == AppThemeStyle.MIUIX) {
-                        ButtonDefaults.buttonColors(
-                            containerColor = MiuixTheme.colorScheme.primary,
-                            contentColor = MiuixTheme.colorScheme.onPrimary
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            WindowDialog(
+                show = showClearCacheDialog,
+                title = stringResource(Res.string.drive_clear_cache_dialog_title),
+                summary = stringResource(Res.string.drive_clear_cache_dialog_desc),
+                onDismissRequest = { showClearCacheDialog = false },
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MiuixTextButton(
+                            text = stringResource(Res.string.cancel),
+                            onClick = { showClearCacheDialog = false },
+                            modifier = Modifier.weight(1f)
                         )
-                    } else {
-                        ButtonDefaults.buttonColors()
+                        Spacer(Modifier.width(16.dp))
+                        MiuixTextButton(
+                            text = stringResource(Res.string.drive_clear_cache_btn),
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                showClearCacheDialog = false
+                                onClearCache()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
+                        )
                     }
-                ) {
-                    Text(stringResource(Res.string.drive_clear_cache_btn))
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearCacheDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { showClearCacheDialog = false },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.CleaningServices,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.drive_clear_cache_dialog_title),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(Res.string.drive_clear_cache_dialog_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            showClearCacheDialog = false
+                            onClearCache()
+                        },
+                        colors = ButtonDefaults.buttonColors()
+                    ) {
+                        Text(stringResource(Res.string.drive_clear_cache_btn))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showClearCacheDialog = false }) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {

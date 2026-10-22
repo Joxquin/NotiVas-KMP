@@ -867,10 +867,9 @@ fun CopilotSettingsSection(
                             onClick = onRefreshBalance,
                             endActions = {
                                 if (isLoadingBalance) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MiuixTheme.colorScheme.primary
+                                    top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator(
+                                        color = MiuixTheme.colorScheme.primary,
+                                        size = 16.dp
                                     )
                                 } else {
                                     Icon(

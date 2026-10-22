@@ -47,11 +47,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
+import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
@@ -120,44 +124,75 @@ fun GranularNotificationsSection(
     }
 
     if (showApiKeyRequiredDialog) {
-        AlertDialog(
-            onDismissRequest = { showApiKeyRequiredDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Key,
-                    contentDescription = null,
-                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(Res.string.morning_briefing_api_key_required_title),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(Res.string.morning_briefing_api_key_required_desc),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showApiKeyRequiredDialog = false
-                        onNavigateToCopilotSettings()
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            WindowDialog(
+                show = showApiKeyRequiredDialog,
+                title = stringResource(Res.string.morning_briefing_api_key_required_title),
+                summary = stringResource(Res.string.morning_briefing_api_key_required_desc),
+                onDismissRequest = { showApiKeyRequiredDialog = false },
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MiuixTextButton(
+                            text = stringResource(Res.string.cancel),
+                            onClick = { showApiKeyRequiredDialog = false },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        MiuixTextButton(
+                            text = stringResource(Res.string.morning_briefing_configure_api_key),
+                            onClick = {
+                                showApiKeyRequiredDialog = false
+                                onNavigateToCopilotSettings()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
+                        )
                     }
-                ) {
-                    Text(stringResource(Res.string.morning_briefing_configure_api_key))
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showApiKeyRequiredDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { showApiKeyRequiredDialog = false },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Key,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.morning_briefing_api_key_required_title),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(Res.string.morning_briefing_api_key_required_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showApiKeyRequiredDialog = false
+                            onNavigateToCopilotSettings()
+                        }
+                    ) {
+                        Text(stringResource(Res.string.morning_briefing_configure_api_key))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showApiKeyRequiredDialog = false }) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 
     val sync15 = stringResource(Res.string.sync_interval_15m)
@@ -179,7 +214,7 @@ fun GranularNotificationsSection(
     val currentLabel = syncOptions.firstOrNull { it.first == syncIntervalMinutes }?.second
         ?: stringResource(Res.string.sync_interval_custom_format, syncIntervalMinutes)
 
-    if (showSyncIntervalDialog) {
+    if (showSyncIntervalDialog && themeStyle == AppThemeStyle.MATERIAL) {
         AlertDialog(
             onDismissRequest = { showSyncIntervalDialog = false },
             icon = {
@@ -292,10 +327,15 @@ fun GranularNotificationsSection(
                     checked = notifMorning,
                     onCheckedChange = handleMorningToggle
                 )
-                ArrowPreference(
+                val selectedSyncIndex = syncOptions.indexOfFirst { it.first == syncIntervalMinutes }.coerceAtLeast(0)
+                WindowDropdownPreference(
                     title = stringResource(Res.string.sync_interval_title),
                     summary = currentLabel,
-                    onClick = { showSyncIntervalDialog = true }
+                    items = syncOptions.map { it.second },
+                    selectedIndex = selectedSyncIndex,
+                    onSelectedIndexChange = { index ->
+                        onSyncIntervalChange(syncOptions[index].first)
+                    }
                 )
                 ArrowPreference(
                     title = stringResource(Res.string.onboarding_battery_title),

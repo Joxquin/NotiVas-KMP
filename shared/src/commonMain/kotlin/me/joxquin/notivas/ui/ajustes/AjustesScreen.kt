@@ -67,7 +67,18 @@ import me.joxquin.notivas.ui.ajustes.components.LanguageSettingsSection
 import me.joxquin.notivas.ui.ajustes.components.ThemeAppearanceSettingsSection
 import me.joxquin.notivas.ui.profile.ProfileViewModel
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixAutoSettleScrollConnection
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.window.WindowDialog
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.settings_title
@@ -120,51 +131,94 @@ fun AjustesScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Logout,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(Res.string.logout_dialog_title),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(Res.string.logout_dialog_text),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showLogoutDialog = false
-                        viewModel.logout()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            WindowDialog(
+                show = showLogoutDialog,
+                title = stringResource(Res.string.logout_dialog_title),
+                summary = stringResource(Res.string.logout_dialog_text),
+                onDismissRequest = { showLogoutDialog = false },
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MiuixTextButton(
+                            text = stringResource(Res.string.cancel),
+                            onClick = { showLogoutDialog = false },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        MiuixTextButton(
+                            text = stringResource(Res.string.logout_confirm),
+                            onClick = {
+                                showLogoutDialog = false
+                                viewModel.logout()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = MiuixButtonDefaults.textButtonColors(
+                                color = MiuixTheme.colorScheme.errorContainer,
+                                textColor = MiuixTheme.colorScheme.onErrorContainer
+                            )
+                        )
+                    }
+                }
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                icon = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
                     )
-                ) {
-                    Text(stringResource(Res.string.logout_confirm))
+                },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.logout_dialog_title),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(Res.string.logout_dialog_text),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showLogoutDialog = false
+                            viewModel.logout()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text(stringResource(Res.string.logout_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showLogoutDialog = false }) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
+            )
+        }
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
+        val contentPadding = PaddingValues(
+            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
+            bottom = 100.dp
+        )
+        val autoSettleConnection = rememberMiuixAutoSettleScrollConnection(
+            listState = lazyListState,
+            thresholdDp = 72.dp
+        )
+
         Box(
             modifier = modifier
                 .fillMaxSize()
@@ -172,32 +226,35 @@ fun AjustesScreen(
         ) {
             LazyColumn(
                 state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-                    bottom = 100.dp
-                ),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .scrollEndHaptic()
+                    .overScrollVertical()
+                    .nestedScroll(autoSettleConnection),
+                contentPadding = contentPadding,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // 0. Large Title Canónico HyperOS Miuix (32.sp)
                 item {
                     val firstIndex = lazyListState.firstVisibleItemIndex
                     val firstOffset = lazyListState.firstVisibleItemScrollOffset
-                    val largeTitleAlpha = if (firstIndex == 0) {
-                        (1f - (firstOffset / 90f)).coerceIn(0f, 1f)
-                    } else {
-                        0f
-                    }
-                    val largeTitleTranslationY = if (firstIndex == 0) {
-                        -firstOffset * 0.25f
-                    } else {
-                        -25f
-                    }
+                    val isHeaderCollapsed = firstIndex > 0 || firstOffset >= 72
+
+                    val largeTitleAlpha by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (isHeaderCollapsed) 0f else 1f,
+                        animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
+                        label = "LargeTitleAlpha"
+                    )
+                    val largeTitleTranslationY by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (isHeaderCollapsed) -20f else 0f,
+                        animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
+                        label = "LargeTitleTranslationY"
+                    )
 
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 4.dp)
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
                             .graphicsLayer {
                                 alpha = largeTitleAlpha
                                 translationY = largeTitleTranslationY
@@ -323,6 +380,14 @@ fun AjustesScreen(
                     )
                 }
             }
+
+            VerticalScrollBar(
+                adapter = rememberScrollBarAdapter(lazyListState),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight(),
+                trackPadding = contentPadding
+            )
         }
         return
     }

@@ -349,7 +349,7 @@ private fun MiuixStudentIdentityCard(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = MiuixTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(11.dp)
                         )
                     }
@@ -431,10 +431,9 @@ private fun MiuixStudentIdentityCard(
                     }
 
                     if (uiState.isVerifyingToken) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(14.dp),
-                            strokeWidth = 2.dp,
-                            color = MiuixTheme.colorScheme.primary
+                        top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator(
+                            color = MiuixTheme.colorScheme.primary,
+                            size = 16.dp
                         )
                     }
                 }

@@ -9,7 +9,15 @@ data class OpenRouterChatRequest(
     @SerialName("messages") val messages: List<OpenRouterMessage>,
     @SerialName("tools") val tools: List<OpenRouterTool>? = null,
     @SerialName("temperature") val temperature: Double? = null,
-    @SerialName("max_tokens") val maxTokens: Int? = null
+    @SerialName("max_tokens") val maxTokens: Int? = null,
+    @SerialName("reasoning") val reasoning: OpenRouterReasoning? = null
+)
+
+@Serializable
+data class OpenRouterReasoning(
+    @SerialName("effort") val effort: String? = null,
+    @SerialName("max_tokens") val maxTokens: Int? = null,
+    @SerialName("exclude") val exclude: Boolean? = null
 )
 
 @Serializable
