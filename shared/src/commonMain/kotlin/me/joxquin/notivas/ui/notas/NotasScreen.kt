@@ -61,7 +61,20 @@ import me.joxquin.notivas.ui.notas.components.HeroSummaryCard
 import me.joxquin.notivas.ui.notas.components.ImportTemplateDialog
 import me.joxquin.notivas.ui.notas.components.LinkPlaceholderDialog
 import me.joxquin.notivas.ui.notas.components.NotasHeaderSection
+import me.joxquin.notivas.shared.resources.*
+import org.jetbrains.compose.resources.stringResource
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,68 +101,102 @@ fun NotasScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
-        ) {
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-                    bottom = 120.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+        val backdrop = rememberMiuixBlurBackdrop()
+        val scrollBehavior = MiuixScrollBehavior()
+
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    MiuixPageTopAppBar(
+                        title = stringResource(Res.string.grades_progreso_title),
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            BackNavigationIcon(onClick = onBack)
+                        }
+                    )
+                }
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = miuixPageContentPadding(
+                innerPadding = innerPadding,
+                extraTop = 8.dp,
+                extraBottom = 24.dp
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MiuixTheme.colorScheme.surface)
+                    .miuixBackdropModifier(backdrop)
             ) {
-                // ─── 1. Selector de Curso Dropdown ──────────────────────────────
-                item {
-                    NotasHeaderSection(
-                        courses = uiState.courses,
-                        selectedCourse = uiState.selectedCourse,
-                        onCourseSelect = { viewModel.selectCourse(it) },
-                        themeStyle = themeStyle
-                    )
-                }
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                        // ─── 1. Selector de Curso Dropdown ──────────────────────────────
+                        item {
+                            NotasHeaderSection(
+                                courses = uiState.courses,
+                                selectedCourse = uiState.selectedCourse,
+                                onCourseSelect = { viewModel.selectCourse(it) },
+                                themeStyle = themeStyle
+                            )
+                        }
 
-                // ─── 2. Resumen Hero Académico & Evaluaciones Calificadas ───────
-                item {
-                    HeroSummaryCard(
-                        currentAverage = uiState.currentAverage,
-                        progressRatio = uiState.evaluatedProgressRatio,
-                        riskLevel = uiState.riskLevel,
-                        projectedGrade = uiState.projectedFinalGrade,
-                        gradedEvaluations = uiState.evaluations.filter { it.isGraded },
-                        themeStyle = themeStyle
-                    )
-                }
+                        // ─── 2. Resumen Hero Académico & Evaluaciones Calificadas ───────
+                        item {
+                            HeroSummaryCard(
+                                currentAverage = uiState.currentAverage,
+                                progressRatio = uiState.evaluatedProgressRatio,
+                                riskLevel = uiState.riskLevel,
+                                projectedGrade = uiState.projectedFinalGrade,
+                                gradedEvaluations = uiState.evaluations.filter { it.isGraded },
+                                themeStyle = themeStyle
+                            )
+                        }
 
-                // ─── 3. Grupos y Porcentaje (Simulador Ponderado) ───────────────
-                item {
-                    GruposPorcentajeCard(
-                        simulationGroups = uiState.simulationGroups,
-                        totalConfiguredWeight = uiState.totalConfiguredWeight,
-                        onAddGroup = { showCreateGroupBottomSheet = true },
-                        onAddItem = { groupId ->
-                            selectedGroupForAddAssignment = uiState.simulationGroups.find { it.group.id == groupId }?.group
-                        },
-                        onEditGroup = { group -> selectedGroupForEdit = group },
-                        onUpdateItemScore = { id, score -> viewModel.updateSimulationItemScore(id, score) },
-                        onDeleteGroup = { viewModel.deleteSimulationGroup(it) },
-                        onDeleteItem = { viewModel.deleteSimulationItem(it) },
-                        onLinkPlaceholder = { item -> selectedItemForLink = item },
-                        onImportTemplateClick = { showImportTemplateDialog = true },
-                        themeStyle = themeStyle
-                    )
-                }
+                        // ─── 3. Grupos y Porcentaje (Simulador Ponderado) ───────────────
+                        item {
+                            GruposPorcentajeCard(
+                                simulationGroups = uiState.simulationGroups,
+                                totalConfiguredWeight = uiState.totalConfiguredWeight,
+                                onAddGroup = { showCreateGroupBottomSheet = true },
+                                onAddItem = { groupId ->
+                                    selectedGroupForAddAssignment = uiState.simulationGroups.find { it.group.id == groupId }?.group
+                                },
+                                onEditGroup = { group -> selectedGroupForEdit = group },
+                                onUpdateItemScore = { id, score -> viewModel.updateSimulationItemScore(id, score) },
+                                onDeleteGroup = { viewModel.deleteSimulationGroup(it) },
+                                onDeleteItem = { viewModel.deleteSimulationItem(it) },
+                                onLinkPlaceholder = { item -> selectedItemForLink = item },
+                                onImportTemplateClick = { showImportTemplateDialog = true },
+                                themeStyle = themeStyle
+                            )
+                        }
 
-                item {
-                    Spacer(Modifier.height(16.dp))
+                        item {
+                            Spacer(Modifier.height(16.dp))
+                        }
+                    }
+
+                    VerticalScrollBar(
+                        adapter = rememberScrollBarAdapter(lazyListState),
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(
+                                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
+                                bottom = 24.dp
+                            )
+                    )
                 }
             }
-        }
     } else {
         val topAppBarContainerColor by animateColorAsState(
             targetValue = if (isScrolled) {
