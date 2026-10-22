@@ -55,7 +55,20 @@ import me.joxquin.notivas.ui.foros.detail.components.ForoDetailConsignaCard
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailEditorSection
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailHeroCard
 import me.joxquin.notivas.ui.foros.detail.components.ForoDetailRepliesSection
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import androidx.compose.foundation.layout.fillMaxHeight
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
@@ -95,22 +108,40 @@ fun ForoDetailScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
-        ) {
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-                    bottom = 120.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+        val backdrop = rememberMiuixBlurBackdrop()
+        val scrollBehavior = MiuixScrollBehavior()
+
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    MiuixPageTopAppBar(
+                        title = topic.title.orEmpty(),
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            BackNavigationIcon(onClick = onBack)
+                        }
+                    )
+                }
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = miuixPageContentPadding(innerPadding)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .miuixBackdropModifier(backdrop)
             ) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
                 // 1. Encabezado Hero del Foro
                 item(key = "foro_hero") {
                     ForoDetailHeroCard(
@@ -190,6 +221,13 @@ fun ForoDetailScreen(
                 item {
                     Spacer(Modifier.height(16.dp))
                 }
+            }
+
+            VerticalScrollBar(
+                    adapter = rememberScrollBarAdapter(lazyListState),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    trackPadding = contentPadding
+                )
             }
         }
     } else {

@@ -69,13 +69,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.ui.components.BackHandler
+import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.foros.components.ForosCardItem
 import me.joxquin.notivas.ui.foros.components.ForosFilterBottomSheet
 import me.joxquin.notivas.ui.foros.components.ForosSearchAndFilters
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Tune
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +98,7 @@ fun ForosScreen(
     onBack: () -> Unit,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     lazyListState: LazyListState = rememberLazyListState(),
+    onOpenTopic: ((CanvasDiscussionTopic) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onBack)
@@ -98,114 +113,175 @@ fun ForosScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
-        ) {
-            val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val backdrop = rememberMiuixBlurBackdrop()
+        val scrollBehavior = MiuixScrollBehavior()
 
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = statusBarTop + 68.dp + 56.dp,
-                    bottom = 120.dp,
-                    start = 0.dp,
-                    end = 0.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                // Estado de Carga
-                if (uiState.isLoading && uiState.discussions.isEmpty()) {
-                    item(key = "foros_loading") {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 40.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    MiuixPageTopAppBar(
+                        title = stringResource(Res.string.foros_hub_title),
+                        subtitle = if (uiState.isLoading) stringResource(Res.string.foros_syncing) else stringResource(Res.string.foros_subtitle_format, uiState.pendingCount),
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            BackNavigationIcon(onClick = onBack)
+                        },
+                        actions = {
+                            top.yukonga.miuix.kmp.basic.IconButton(
+                                onClick = { viewModel.setShowFilterBottomSheet(true) }
                             ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(32.dp),
-                                    color = MiuixTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = stringResource(Res.string.foros_loading),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Tune,
+                                    contentDescription = stringResource(Res.string.foros_filter_sheet_title),
+                                    tint = MiuixTheme.colorScheme.onBackground
                                 )
                             }
+                        },
+                        bottomContent = {
+                            ForosSearchAndFilters(
+                                searchQuery = uiState.searchQuery,
+                                onSearchQueryChange = { viewModel.onSearchQueryChange(it) },
+                                themeStyle = themeStyle,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 6.dp)
+                            )
                         }
-                    }
-                } else if (uiState.filteredDiscussions.isEmpty()) {
-                    // Estado Vacío
-                    item(key = "foros_empty") {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 50.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = MiuixTheme.colorScheme.surfaceContainer,
-                                    modifier = Modifier.size(56.dp)
+                    )
+                }
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = miuixPageContentPadding(
+                innerPadding = innerPadding,
+                extraTop = 8.dp,
+                extraStart = 0.dp,
+                extraEnd = 0.dp,
+                extraBottom = 24.dp
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MiuixTheme.colorScheme.surface)
+                    .miuixBackdropModifier(backdrop)
+            ) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                        // Estado de Carga
+                        if (uiState.isLoading && uiState.discussions.isEmpty()) {
+                            item(key = "foros_loading") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 40.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Default.Forum,
-                                            contentDescription = null,
-                                            tint = MiuixTheme.colorScheme.primary,
-                                            modifier = Modifier.size(28.dp)
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(32.dp),
+                                            color = MiuixTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = stringResource(Res.string.foros_loading),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                                         )
                                     }
                                 }
+                            }
+                        } else if (uiState.filteredDiscussions.isEmpty()) {
+                            // Estado Vacío
+                            item(key = "foros_empty") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp, vertical = 50.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(16.dp),
+                                            color = MiuixTheme.colorScheme.surfaceContainer,
+                                            modifier = Modifier.size(56.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Forum,
+                                                    contentDescription = null,
+                                                    tint = MiuixTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(28.dp)
+                                                )
+                                            }
+                                        }
 
-                                Text(
-                                    text = if (uiState.searchQuery.isNotBlank()) stringResource(Res.string.foros_search_empty_query, uiState.searchQuery) else stringResource(Res.string.foros_empty_category),
-                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = MiuixTheme.colorScheme.onSurface,
-                                    textAlign = TextAlign.Center
-                                )
+                                        Text(
+                                            text = if (uiState.searchQuery.isNotBlank()) stringResource(Res.string.foros_search_empty_query, uiState.searchQuery) else stringResource(Res.string.foros_empty_category),
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MiuixTheme.colorScheme.onSurface,
+                                            textAlign = TextAlign.Center
+                                        )
 
-                                Text(
-                                    text = stringResource(Res.string.foros_empty_suggestion),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                    textAlign = TextAlign.Center
+                                        Text(
+                                            text = stringResource(Res.string.foros_empty_suggestion),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            // Lista de Tarjetas de Foros
+                            items(
+                                items = uiState.filteredDiscussions,
+                                key = { "${it.courseId}_${it.id}" }
+                            ) { topic ->
+                                ForosCardItem(
+                                    topic = topic,
+                                    onClick = {
+                                        if (onOpenTopic != null) {
+                                            onOpenTopic(topic)
+                                        } else {
+                                            viewModel.selectDiscussion(topic)
+                                        }
+                                    },
+                                    themeStyle = themeStyle,
+                                    modifier = Modifier.padding(horizontal = 12.dp)
                                 )
                             }
                         }
-                    }
-                } else {
-                    // Lista de Tarjetas de Foros
-                    items(
-                        items = uiState.filteredDiscussions,
-                        key = { "${it.courseId}_${it.id}" }
-                    ) { topic ->
-                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            ForosCardItem(
-                                topic = topic,
-                                onClick = { viewModel.selectDiscussion(topic) },
-                                themeStyle = themeStyle
-                            )
+
+                        item {
+                            Spacer(Modifier.height(16.dp))
                         }
                     }
-                }
 
-                item {
-                    Spacer(Modifier.height(16.dp))
+                    VerticalScrollBar(
+                        adapter = rememberScrollBarAdapter(lazyListState),
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(
+                                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
+                                bottom = 24.dp
+                            )
+                    )
                 }
             }
-        }
     } else {
         // ─── MATERIAL DESIGN 3 (SCAFFOLD + TOP APP BAR CON BUSCADOR) ───────────
         val topAppBarContainerColor by animateColorAsState(
@@ -389,7 +465,13 @@ fun ForosScreen(
                         Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                             ForosCardItem(
                                 topic = topic,
-                                onClick = { viewModel.selectDiscussion(topic) },
+                                onClick = {
+                                    if (onOpenTopic != null) {
+                                        onOpenTopic(topic)
+                                    } else {
+                                        viewModel.selectDiscussion(topic)
+                                    }
+                                },
                                 themeStyle = themeStyle
                             )
                         }

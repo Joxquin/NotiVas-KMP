@@ -38,7 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
+import androidx.compose.foundation.layout.PaddingValues
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
+import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import me.joxquin.notivas.util.DateTimeUtil
 import org.jetbrains.compose.resources.stringResource
@@ -102,17 +105,9 @@ fun ForosCardItem(
         ?.takeIf { it.isNotBlank() }
         ?: stringResource(Res.string.foros_default_message_prompt)
 
-    Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = cardBg),
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
+    val cardContent = @Composable {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Fila superior: Curso + Badge de Puntos / Estado
@@ -385,6 +380,30 @@ fun ForosCardItem(
                         )
                     }
                 }
+            }
+        }
+    }
+
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        MiuixCard(
+            modifier = modifier.fillMaxWidth(),
+            colors = MiuixCardDefaults.defaultColors(color = cardBg),
+            insideMargin = PaddingValues(16.dp),
+            pressFeedbackType = PressFeedbackType.Sink,
+            onClick = onClick
+        ) {
+            cardContent()
+        }
+    } else {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = cardBg),
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+        ) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                cardContent()
             }
         }
     }

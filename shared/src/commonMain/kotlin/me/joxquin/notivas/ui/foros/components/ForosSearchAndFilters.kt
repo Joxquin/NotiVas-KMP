@@ -44,10 +44,12 @@ fun ForosSearchAndFilters(
 ) {
     val searchPlaceholder = stringResource(Res.string.foros_search_placeholder)
 
+    val horizontalMargin = if (themeStyle == AppThemeStyle.MIUIX) 12.dp else 16.dp
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = horizontalMargin)
     ) {
         // Buscador nativo Miuix o Material 3 (Siempre visible y anclado debajo del TopAppBar)
         if (themeStyle == AppThemeStyle.MIUIX) {

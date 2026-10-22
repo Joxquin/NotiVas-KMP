@@ -43,6 +43,7 @@ import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.ui.copilot.components.formatMarkdown
 
 @Composable
 fun ForoDetailConsignaCard(
@@ -58,6 +59,9 @@ fun ForoDetailConsignaCard(
         topic.message?.let { me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.cleanHtml(it) }
             ?.ifBlank { null }
             ?: "Sin descripción detallada provista por el docente."
+    }
+    val formattedMessage = remember(cleanMessage) {
+        formatMarkdown(cleanMessage)
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
@@ -121,7 +125,7 @@ fun ForoDetailConsignaCard(
 
                 // Cuerpo de la Consigna
                 Text(
-                    text = cleanMessage,
+                    text = formattedMessage,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
                     color = MiuixTheme.colorScheme.onSurface
                 )
@@ -264,7 +268,7 @@ fun ForoDetailConsignaCard(
                 }
 
                 Text(
-                    text = cleanMessage,
+                    text = formattedMessage,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
                     color = MaterialTheme.colorScheme.onSurface
                 )
