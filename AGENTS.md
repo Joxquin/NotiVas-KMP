@@ -9,35 +9,30 @@ Este documento establece los estándares y patrones obligatorios para la creaci�
 La aplicación opera bajo dos paradigmas de diseño visual con arquitecturas de navegación diferentes:
 
 ### A. HyperOS MIUIX (`AppThemeStyle.MIUIX`)
-En MIUIX se utiliza una **arquitectura desacoplada en 3 capas** en [MainAppShell.kt](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/MainAppShell.kt):
-1. **Capa 1 (Fondo y Contenido):** Paginador principal (`HorizontalPager`) o vistas a pantalla completa (`AssignmentDraftScreen`).
-2. **Capa 2 (Encabezado Unificado - Top Overlay):** Un único [MiuixTopAppBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixTopAppBar.kt) anclado en `Alignment.TopCenter`, fuera del paginador y de las vistas hijas.
-3. **Capa 3 (Navegación Flotante):** [FloatingNavigationBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/FloatingNavigationBar.kt) ("Liquid Glass") anclada en `Alignment.BottomCenter`.
+En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implementación de referencia de `/home/joxquin/miuix/example`:
+1. **Host Principal (`NavDisplay` con `CrossActivityTransition`):**
+   - Gobernado por [NavBackStack](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/navigation/miuix/MiuixNavigator.kt) y [MiuixRoute](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/navigation/miuix/MiuixRoute.kt).
+   - Transiciones oficiales de ventana HyperOS con [CrossActivityTransition](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/navigation/miuix/CrossActivityTransition.kt) (curva `FastOutExtraSlowIn`, escala a 0.9, desplazamiento de 96dp, `dimAmount` dinámico y resorte `FLING_BOUNCE` al soltar gestos de retroceso).
+   - Recorte de esquinas adaptativo al sistema (`NavCornerClipMode.All` con `rememberNavSystemCornerRadius()`).
 
-#### Reglas obligatorias para nuevas vistas en MIUIX:
-- **No instanciar un TopAppBar dentro de la pantalla hija en modo MIUIX.**
-  La vista hija (`Screen`) no debe crear su propio `TopAppBar` si ya está dentro del flujo principal gobernado por `MainAppShell`. Su contenedor raíz debe ser un simple `Box` o `Column` con padding superior compensatorio:
-  ```kotlin
-  val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-  LazyColumn(
-      state = lazyListState,
-      modifier = Modifier.fillMaxSize(),
-      contentPadding = PaddingValues(
-          top = statusBarTop + 68.dp, // Espacio reservado para el MiuixTopAppBar flotante
-          bottom = 120.dp,            // Espacio reservado para la barra de navegación flotante
-          start = 16.dp,
-          end = 16.dp
-      )
-  )
-  ```
-- **Control centralizado en `MainAppShell.kt`:**
-  - **Título dinámico:** Vincular el título al estado del submódulo activo (ej. `showingArchiveDetail`, `showingNotasDetail`, `showingForosDetail`, `selectedAssignmentForDraft`).
-  - **Botón de regreso (`navigationIcon`):** Proporcionar `BackNavigationIcon` invocando el callback de cierre del submódulo.
-  - **Visibilidad forzada del título (`titleAlwaysVisible`):** Habilitar `titleAlwaysVisible = true` cuando se encuentre en una sub-pantalla de detalle.
-  - **Acciones contextuales (`actions`):** Registrar los iconos de acción (ej. menús desplegables `WindowIconDropdownMenu`, filtros o acciones de sincronización) dentro del bloque `actions` de `MiuixTopAppBar`.
-- **Vistas modales / Detalle a pantalla completa (ej. `AssignmentDraftScreen`):**
-  - Deben ser elevadas a la Capa 1 de `MainAppShell` para que al abrirse desde cualquier submódulo (Inicio, Herramientas, Archivo, etc.) se rendericen inmediatamente en el nivel raíz.
-  - Durante la visualización de una vista modal/borrador, se debe ocultar la `FloatingNavigationBar` y actualizar `MiuixTopAppBar` con su botón de retroceso correspondiente.
+2. **Ruta Raíz (`MiuixRoute.Main`):**
+   - Aloja el paginador horizontal (`HorizontalPager`) de las 4 pestañas canónicas (Inicio, Herramientas, Copilot, Ajustes).
+   - Aloja el encabezado [MiuixTopAppBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixTopAppBar.kt) anclado en `Alignment.TopCenter` para los 4 destinos raíz.
+   - Aloja la [FloatingNavigationBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/FloatingNavigationBar.kt) ("Liquid Glass") anclada en `Alignment.BottomCenter`.
+   - Al navegar a una pantalla secundaria, `NavDisplay` escala y difumina automáticamente `MiuixRoute.Main` al fondo, retirando de forma natural la barra flotante.
+
+3. **Pantallas Secundarias Modulares (`Screen`):**
+   - Cada pantalla secundaria (`RecentActivityScreen`, `ScheduleScreen`, `MorningRoadmapScreen`, `AssignmentDraftScreen`, `TaskHistoryArchiveScreen`, `ForoDetailScreen`) es un destino registrado en `NavDisplay`.
+   - Cada pantalla secundaria implementa su propio `Scaffold` modular de MIUIX con:
+     - `MiuixBlurredBar` con desenfoque (`rememberMiuixBlurBackdrop`).
+     - `MiuixPageTopAppBar` con su propio título, `BackNavigationIcon(onClick = onBack)` y acciones contextuales.
+     - Barra de desplazamiento háptica nativa [VerticalScrollBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixPageUtils.kt).
+     - Modificadores de scroll overscroll `miuixPageScrollModifiers` y padding `miuixPageContentPadding`.
+
+4. **Navegación Reactiva e Idempotente (`MiuixNavigator`):**
+   - Acceso en cualquier punto del árbol de composición vía `LocalMiuixNavigator.current`.
+   - Métodos seguros: `navigator.push(MiuixRoute.RecentActivity)`, `navigator.pop()`, `navigator.replace(...)`.
+   - Soporte nativo para swipe-to-dismiss con `entry(swipeDismiss = NavSwipeDirection.LeftToRight)`.
 
 ---
 
@@ -181,3 +176,17 @@ Card(
 5. **¿Navegación e interacción verificadas?** Asegurar que las tarjetas clickeables tengan su callback `onClick` conectado al flujo de navegación adecuado.
 6. **¿Strings i18n?** Asegurar que todos los textos provengan de `composeResources/values/strings.xml` y `composeResources/values-es/strings.xml`.
 7. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
+
+<!-- graphify-rules-start (managed by `graphify init`) -->
+## Use Graphify before grep
+
+This repository is indexed by Graphify: a code graph over its call, dependency, and test structure, exposed through a connected Graphify MCP server. Before reaching for grep or reading files, use the Graphify tools your MCP client lists (their exact names and descriptions are in the server's tool list) for what the graph knows and a text search does not:
+
+- find where a symbol, function, or class is defined (instead of grepping for it)
+- understand how something works, or where a behavior is handled
+- find who calls a function, or what it calls
+- see what a change affects (its blast radius) and which tests cover it
+- map a file's dependencies and dependents
+
+Fall back to grep or file reads only for what the graph does not model: literal string or comment matches, non-indexed files, or reading a file you have already located. If no Graphify tools are listed, check the MCP server connection.
+<!-- graphify-rules-end -->
