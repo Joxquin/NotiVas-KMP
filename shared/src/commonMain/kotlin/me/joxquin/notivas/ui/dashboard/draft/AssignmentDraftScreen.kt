@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.*
+import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusCard
@@ -57,8 +58,25 @@ import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentBottomActionBa
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentConsignaCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentDetailHeroCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentRubricCard
-import org.jetbrains.compose.resources.stringResource
+import top.yukonga.miuix.kmp.basic.DropdownEntry
+import top.yukonga.miuix.kmp.basic.DropdownItem
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Tune
+import top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import androidx.compose.foundation.layout.fillMaxHeight
 
 /**
  * Pantalla dedicada de Detalle de Tarea y Gestión de Borrador Sincronizado.
@@ -139,93 +157,161 @@ fun AssignmentDraftScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
-        ) {
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-                    bottom = 120.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // 1. Encabezado Hero del Detalle de Tarea
-                item(key = "task_hero") {
-                    AssignmentDetailHeroCard(
-                        assignment = assignment,
-                        courseName = courseName,
-                        themeStyle = themeStyle
-                    )
-                }
+        val backdrop = rememberMiuixBlurBackdrop()
+        val scrollBehavior = MiuixScrollBehavior()
+        val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+        val openCanvasLabel = stringResource(Res.string.task_menu_open_canvas)
+        val exploreTemplatesLabel = stringResource(Res.string.task_menu_explore_templates)
+        val copyCanvasLinkLabel = stringResource(Res.string.task_menu_copy_canvas_link)
 
-                // 2. Tarjeta de Borrador Google Drive Sincronizado
-                item(key = "task_draft") {
-                    DraftStatusCard(
-                        assignment = assignment,
-                        courseName = courseName,
-                        themeStyle = themeStyle,
-                        draftInfo = draftInfo,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        onStartDraft = { isTemplate, templateName ->
-                            viewModel?.startOrCloneDraft(
-                                assignment = assignment,
-                                courseName = courseName,
-                                templateName = if (isTemplate) templateName else null
-                            )
-                        },
-                        onExploreTemplates = handleExploreTemplates,
-                        onCancelDraft = {
-                            viewModel?.cancelDraft(assignment.id)
-                        },
-                        onOpenDocs = { url ->
-                            viewModel?.onOpenDocsRequested(url) ?: run {
-                                try { uriHandler.openUri(url) } catch (_: Exception) {}
+        val dropdownEntries = remember(assignment, openCanvasLabel, exploreTemplatesLabel, copyCanvasLinkLabel) {
+            listOf(
+                DropdownEntry(
+                    items = listOf(
+                        DropdownItem(
+                            text = openCanvasLabel,
+                            onClick = { onOpenCanvas() }
+                        ),
+                        DropdownItem(
+                            text = exploreTemplatesLabel,
+                            onClick = handleExploreTemplates
+                        ),
+                        DropdownItem(
+                            text = copyCanvasLinkLabel,
+                            onClick = {
+                                assignment.htmlUrl?.let { url ->
+                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(url))
+                                }
                             }
+                        )
+                    )
+                )
+            )
+        }
+
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    MiuixPageTopAppBar(
+                        title = assignment.name,
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            BackNavigationIcon(onClick = onBack)
                         },
-                        onSubmitToCanvas = {
-                            val targetUrl = draftInfo?.driveUrl.orEmpty()
-                            viewModel?.submitDraftToCanvas(
-                                assignment = assignment,
-                                driveUrl = targetUrl,
-                                onSuccess = { onOpenCanvas() }
-                            ) ?: onOpenCanvas()
+                        actions = {
+                            WindowIconDropdownMenu(
+                                entries = dropdownEntries,
+                                collapseOnSelection = true
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Tune,
+                                    contentDescription = stringResource(Res.string.assignment_detail_tab_options),
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
+                            }
                         }
                     )
                 }
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = miuixPageContentPadding(innerPadding)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .miuixBackdropModifier(backdrop)
+            ) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 1. Encabezado Hero del Detalle de Tarea
+                    item(key = "task_hero") {
+                        AssignmentDetailHeroCard(
+                            assignment = assignment,
+                            courseName = courseName,
+                            themeStyle = themeStyle
+                        )
+                    }
 
-                // 3. Consigna de Canvas
-                item(key = "task_consigna") {
-                    AssignmentConsignaCard(
-                        assignment = assignment,
-                        themeStyle = themeStyle
-                    )
+                    // 2. Tarjeta de Borrador Google Drive Sincronizado
+                    item(key = "task_draft") {
+                        DraftStatusCard(
+                            assignment = assignment,
+                            courseName = courseName,
+                            themeStyle = themeStyle,
+                            draftInfo = draftInfo,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            onStartDraft = { isTemplate, templateName ->
+                                viewModel?.startOrCloneDraft(
+                                    assignment = assignment,
+                                    courseName = courseName,
+                                    templateName = if (isTemplate) templateName else null
+                                )
+                            },
+                            onExploreTemplates = handleExploreTemplates,
+                            onCancelDraft = {
+                                viewModel?.cancelDraft(assignment.id)
+                            },
+                            onOpenDocs = { url ->
+                                viewModel?.onOpenDocsRequested(url) ?: run {
+                                    try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                }
+                            },
+                            onSubmitToCanvas = {
+                                val targetUrl = draftInfo?.driveUrl.orEmpty()
+                                viewModel?.submitDraftToCanvas(
+                                    assignment = assignment,
+                                    driveUrl = targetUrl,
+                                    onSuccess = { onOpenCanvas() }
+                                ) ?: onOpenCanvas()
+                            }
+                        )
+                    }
+
+                    // 3. Consigna de Canvas
+                    item(key = "task_consigna") {
+                        AssignmentConsignaCard(
+                            assignment = assignment,
+                            themeStyle = themeStyle
+                        )
+                    }
+
+                    // 4. Criterios de Rúbrica Canvas (Cuadrícula 2x2)
+                    item(key = "task_rubric") {
+                        AssignmentRubricCard(
+                            assignment = assignment,
+                            themeStyle = themeStyle
+                        )
+                    }
+
+                    // 5. Botones de Acción (Guardar para después / Ir al Editor)
+                    item(key = "task_actions") {
+                        AssignmentBottomActionBar(
+                            onSaveForLater = onBack,
+                            onGoToEditor = onOpenCanvas,
+                            themeStyle = themeStyle,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+
+                    item {
+                        Spacer(Modifier.height(8.dp))
+                    }
                 }
 
-                // 4. Criterios de Rúbrica Canvas (Cuadrícula 2x2)
-                item(key = "task_rubric") {
-                    AssignmentRubricCard(
-                        assignment = assignment,
-                        themeStyle = themeStyle
-                    )
-                }
-
-                // 5. Botones de Acción (Guardar para después / Ir al Editor)
-                item(key = "task_actions") {
-                    AssignmentBottomActionBar(
-                        onSaveForLater = onBack,
-                        onGoToEditor = onOpenCanvas,
-                        themeStyle = themeStyle,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-
-                item {
-                    Spacer(Modifier.height(8.dp))
-                }
+                VerticalScrollBar(
+                    adapter = rememberScrollBarAdapter(lazyListState),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    trackPadding = contentPadding
+                )
             }
         }
     } else {

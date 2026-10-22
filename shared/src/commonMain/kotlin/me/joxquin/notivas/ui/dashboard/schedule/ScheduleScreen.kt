@@ -75,8 +75,21 @@ import me.joxquin.notivas.util.DateTimeUtil
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import androidx.compose.foundation.layout.fillMaxHeight
 
 @Composable
 fun ScheduleScreen(
@@ -124,95 +137,125 @@ fun ScheduleScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        LazyColumn(
-            state = lazyListState,
-            modifier = modifier.fillMaxSize().background(MiuixTheme.colorScheme.surface),
-            contentPadding = PaddingValues(
-                top = statusBarTop + 68.dp, // Espacio para MiuixTopAppBar flotante
-                bottom = 120.dp,
-                start = 16.dp,
-                end = 16.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ─── 1. Selector de Mes y Días Semanales (Estilo Stitch) ────────────
-            item {
-                MiuixCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = MiuixCardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
-                    insideMargin = PaddingValues(16.dp),
-                    pressFeedbackType = PressFeedbackType.None
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = monthYearText,
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MiuixTheme.colorScheme.onSurface
-                            )
-                        }
+        val backdrop = rememberMiuixBlurBackdrop()
+        val scrollBehavior = MiuixScrollBehavior()
 
-                        // Tira horizontal de los 7 días
-                        Row(
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    MiuixPageTopAppBar(
+                        title = stringResource(Res.string.schedule_screen_title),
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            BackNavigationIcon(onClick = onBack)
+                        }
+                    )
+                }
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = miuixPageContentPadding(innerPadding)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .miuixBackdropModifier(backdrop)
+            ) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // ─── 1. Selector de Mes y Días Semanales (Estilo Stitch) ────────────
+                    item {
+                        MiuixCard(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            colors = MiuixCardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+                            insideMargin = PaddingValues(16.dp),
+                            pressFeedbackType = PressFeedbackType.None
                         ) {
-                            weeklySchedule.forEach { day ->
-                                val isSelected = day.date == effectiveDate
-                                ScheduleDayPill(
-                                    day = day,
-                                    isSelected = isSelected,
-                                    isMiuix = true,
-                                    onClick = { viewModel.selectDate(day.date) }
-                                )
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = monthYearText,
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MiuixTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                // Tira horizontal de los 7 días
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    weeklySchedule.forEach { day ->
+                                        val isSelected = day.date == effectiveDate
+                                        ScheduleDayPill(
+                                            day = day,
+                                            isSelected = isSelected,
+                                            isMiuix = true,
+                                            onClick = { viewModel.selectDate(day.date) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
 
-            // ─── 2. Lista de Tareas y Cronograma de Horas del Día ───────────────
-            if (dayAssignments.isEmpty()) {
-                item {
-                    MiuixCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = MiuixCardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
-                        insideMargin = PaddingValues(32.dp),
-                        pressFeedbackType = PressFeedbackType.None
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CalendarMonth,
-                                contentDescription = null,
-                                tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                modifier = Modifier.size(36.dp)
-                            )
-                            Text(
-                                text = stringResource(Res.string.no_tasks_for_selected_day),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                    // ─── 2. Lista de Tareas y Cronograma de Horas del Día ───────────────
+                    if (dayAssignments.isEmpty()) {
+                        item {
+                            MiuixCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = MiuixCardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+                                insideMargin = PaddingValues(32.dp),
+                                pressFeedbackType = PressFeedbackType.None
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarMonth,
+                                        contentDescription = null,
+                                        tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.no_tasks_for_selected_day),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        items(dayAssignments, key = { it.assignment.id }) { item ->
+                            ScheduleAssignmentTimelineCard(
+                                item = item,
+                                isMiuix = true,
+                                onClick = { onAssignmentClick(item) }
                             )
                         }
                     }
                 }
-            } else {
-                items(dayAssignments, key = { it.assignment.id }) { item ->
-                    ScheduleAssignmentTimelineCard(
-                        item = item,
-                        isMiuix = true,
-                        onClick = { onAssignmentClick(item) }
-                    )
-                }
+
+                VerticalScrollBar(
+                    adapter = rememberScrollBarAdapter(lazyListState),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    trackPadding = contentPadding
+                )
             }
         }
     } else {

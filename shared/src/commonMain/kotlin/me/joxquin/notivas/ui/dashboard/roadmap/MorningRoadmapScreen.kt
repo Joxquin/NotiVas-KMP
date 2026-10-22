@@ -37,7 +37,9 @@ import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
+import me.joxquin.notivas.ui.copilot.components.formatMarkdown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -91,10 +93,25 @@ import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Refresh
+import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import androidx.compose.foundation.layout.fillMaxHeight
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,6 +120,7 @@ fun MorningRoadmapScreen(
     viewModel: DashboardViewModel,
     onBack: () -> Unit,
     onNavigateToCopilotWithPrompt: (String) -> Unit = {},
+    onOpenDraft: ((me.joxquin.notivas.ui.dashboard.AssignmentUiModel) -> Unit)? = null,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     lazyListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
@@ -125,23 +143,51 @@ fun MorningRoadmapScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
-        ) {
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = statusBarTop + 68.dp,
-                    bottom = 120.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+        val backdrop = rememberMiuixBlurBackdrop()
+        val scrollBehavior = MiuixScrollBehavior()
+
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    MiuixPageTopAppBar(
+                        title = stringResource(Res.string.daily_roadmap_title),
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            BackNavigationIcon(onClick = onBack)
+                        },
+                        actions = {
+                            top.yukonga.miuix.kmp.basic.IconButton(
+                                onClick = { viewModel.refreshMorningBriefingAi() }
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Refresh,
+                                    contentDescription = "Actualizar",
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+                    )
+                }
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = miuixPageContentPadding(innerPadding)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .miuixBackdropModifier(backdrop)
             ) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                 briefing?.let { data ->
                     // 1. Resumen Ejecutivo del Asistente (IA / Heurística Local)
                     item {
@@ -172,7 +218,7 @@ fun MorningRoadmapScreen(
                                     )
                                 }
                                 Text(
-                                    text = data.executiveSummary,
+                                    text = formatMarkdown(data.executiveSummary),
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         color = MiuixTheme.colorScheme.onSurface,
                                         lineHeight = 22.sp
@@ -261,91 +307,57 @@ fun MorningRoadmapScreen(
                                     val assignmentUi = viewModel.allAssignmentsUi.value.find { it.assignment.id == item.assignmentId }
                                     if (assignmentUi != null) {
                                         viewModel.openDraft(assignmentUi)
+                                        onOpenDraft?.invoke(assignmentUi)
                                     }
                                 },
                                 onSnooze = { handleSnooze(item.title) }
                             )
                         }
                     }
-
-                    // 4. Acciones Rápidas (One-Tap Actions)
-                    item {
-                        SmallTitle(text = "Acciones Rápidas")
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            data.heroTask?.let { heroUi ->
-                                TextButton(
-                                    text = stringResource(Res.string.daily_roadmap_action_drive),
-                                    onClick = {
-                                        viewModel.startOrCloneDraft(
-                                            assignment = heroUi.assignment,
-                                            courseName = heroUi.courseName,
-                                            templateCandidate = null
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                                )
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                TextButton(
-                                    text = "¿Cómo divido mi tiempo?",
-                                    onClick = {
-                                        onNavigateToCopilotWithPrompt("¿Cómo me sugieres dividir mi tiempo de estudio para las tareas de hoy?")
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                )
-                                TextButton(
-                                    text = "Explicar rúbrica",
-                                    onClick = {
-                                        val heroTitle = data.heroTask?.assignment?.name ?: "mi tarea de hoy"
-                                        onNavigateToCopilotWithPrompt("Explícame los criterios clave y rúbrica para '$heroTitle'")
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                        }
-                    }
                 }
             }
 
-            // Snackbar de deshacer
-            AnimatedVisibility(
-                visible = showUndoSnackbar,
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 120.dp, start = 16.dp, end = 16.dp)
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MiuixTheme.colorScheme.surfaceContainerHighest,
-                    shadowElevation = 4.dp
+            VerticalScrollBar(
+                    adapter = rememberScrollBarAdapter(lazyListState),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    trackPadding = contentPadding
+                )
+
+                // Snackbar de deshacer
+                AnimatedVisibility(
+                    visible = showUndoSnackbar,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MiuixTheme.colorScheme.surfaceContainerHighest,
+                        shadowElevation = 4.dp
                     ) {
-                        Text(
-                            text = "Alerta silenciada: ${snoozedAssignmentTitle ?: ""}",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = MiuixTheme.colorScheme.onSurface
-                            ),
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(
-                            text = stringResource(Res.string.daily_roadmap_action_undo),
-                            onClick = { showUndoSnackbar = false },
-                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Alerta silenciada: ${snoozedAssignmentTitle ?: ""}",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MiuixTheme.colorScheme.onSurface
+                                ),
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            TextButton(
+                                text = stringResource(Res.string.daily_roadmap_action_undo),
+                                onClick = { showUndoSnackbar = false },
+                                colors = MiuixButtonDefaults.textButtonColorsPrimary()
+                            )
+                        }
                     }
                 }
             }
@@ -363,6 +375,15 @@ fun MorningRoadmapScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(Res.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.refreshMorningBriefingAi() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Actualizar",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -420,7 +441,7 @@ fun MorningRoadmapScreen(
                                     )
                                 }
                                 Text(
-                                    text = data.executiveSummary,
+                                    text = formatMarkdown(data.executiveSummary),
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         color = MaterialTheme.colorScheme.onSurface,
                                         lineHeight = 22.sp
@@ -521,70 +542,11 @@ fun MorningRoadmapScreen(
                                     val assignmentUi = viewModel.allAssignmentsUi.value.find { it.assignment.id == item.assignmentId }
                                     if (assignmentUi != null) {
                                         viewModel.openDraft(assignmentUi)
+                                        onOpenDraft?.invoke(assignmentUi)
                                     }
                                 },
                                 onSnooze = { handleSnooze(item.title) }
                             )
-                        }
-                    }
-
-                    // 4. Acciones Rápidas
-                    item {
-                        Text(
-                            text = "Acciones Rápidas",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            ),
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            data.heroTask?.let { heroUi ->
-                                Button(
-                                    onClick = {
-                                        viewModel.startOrCloneDraft(
-                                            assignment = heroUi.assignment,
-                                            courseName = heroUi.courseName,
-                                            templateCandidate = null
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                ) {
-                                    Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(stringResource(Res.string.daily_roadmap_action_drive))
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Button(
-                                    onClick = {
-                                        onNavigateToCopilotWithPrompt("¿Cómo me sugieres dividir mi tiempo de estudio para las tareas de hoy?")
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.filledTonalButtonColors()
-                                ) {
-                                    Text("Dividir tiempo", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                }
-                                Button(
-                                    onClick = {
-                                        val heroTitle = data.heroTask?.assignment?.name ?: "mi tarea de hoy"
-                                        onNavigateToCopilotWithPrompt("Explícame los criterios clave y rúbrica para '$heroTitle'")
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.filledTonalButtonColors()
-                                ) {
-                                    Text("Ver rúbrica", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                }
-                            }
                         }
                     }
                 }

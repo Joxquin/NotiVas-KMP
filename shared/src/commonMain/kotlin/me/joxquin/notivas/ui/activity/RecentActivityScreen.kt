@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,8 +69,18 @@ import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 
 @Composable
 fun RecentActivityScreen(
@@ -91,52 +102,101 @@ fun RecentActivityScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        LazyColumn(
-            state = lazyListState,
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                top = statusBarTop + 68.dp + 56.dp, // Espacio compensado para MiuixTopAppBar + InputField en bottomContent
-                bottom = 120.dp,
-                start = 16.dp,
-                end = 16.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Chips horizontales de filtrado rápido
-            item {
-                ActivityFilterChipsRow(
-                    selectedFilter = uiState.selectedFilter,
-                    totalCount = uiState.totalCount,
-                    onFilterSelected = { viewModel.onFilterSelected(it) },
-                    isMiuix = true
-                )
-            }
+        val backdrop = me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop()
+        val scrollBehavior = top.yukonga.miuix.kmp.basic.MiuixScrollBehavior()
 
-            // Contenido agrupado por fecha
-            if (uiState.groupedActivities.isEmpty()) {
-                item {
-                    EmptyActivityPlaceholder(isMiuix = true)
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar(
+                        title = stringResource(Res.string.recent_activity_title),
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(onClick = onBack)
+                        },
+                        bottomContent = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                            ) {
+                                InputField(
+                                    query = uiState.searchQuery,
+                                    onQueryChange = { viewModel.onSearchQueryChange(it) },
+                                    onSearch = { viewModel.onSearchQueryChange(it) },
+                                    label = stringResource(Res.string.recent_activity_search_hint),
+                                    expanded = false,
+                                    onExpandedChange = {},
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                    )
                 }
-            } else {
-                uiState.groupedActivities.forEach { (group, items) ->
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding(
+                innerPadding = innerPadding,
+                outerPadding = PaddingValues(bottom = 24.dp),
+            )
+            Box(
+                modifier = if (backdrop != null) {
+                    Modifier.fillMaxSize().layerBackdrop(backdrop)
+                } else {
+                    Modifier.fillMaxSize()
+                }
+            ) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier.miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Chips horizontales de filtrado rápido
                     item {
-                        ActivityGroupHeader(
-                            group = group,
-                            count = items.size,
+                        ActivityFilterChipsRow(
+                            selectedFilter = uiState.selectedFilter,
+                            totalCount = uiState.totalCount,
+                            onFilterSelected = { viewModel.onFilterSelected(it) },
                             isMiuix = true
                         )
                     }
 
-                    items(items, key = { it.id }) { log ->
-                        MiuixActivityCard(
-                            log = log,
-                            onCardClick = {
-                                handleItemClick(log, onNavigateToAssignment, onNavigateToForum, onOpenUrl)
+                    // Contenido agrupado por fecha
+                    if (uiState.groupedActivities.isEmpty()) {
+                        item {
+                            EmptyActivityPlaceholder(isMiuix = true)
+                        }
+                    } else {
+                        uiState.groupedActivities.forEach { (group, items) ->
+                            item {
+                                ActivityGroupHeader(
+                                    group = group,
+                                    count = items.size,
+                                    isMiuix = true
+                                )
                             }
-                        )
+
+                            items(items, key = { it.id }) { log ->
+                                MiuixActivityCard(
+                                    log = log,
+                                    onCardClick = {
+                                        handleItemClick(log, onNavigateToAssignment, onNavigateToForum, onOpenUrl)
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
+                top.yukonga.miuix.kmp.basic.VerticalScrollBar(
+                    adapter = top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter(lazyListState),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    trackPadding = contentPadding
+                )
             }
         }
     } else {
