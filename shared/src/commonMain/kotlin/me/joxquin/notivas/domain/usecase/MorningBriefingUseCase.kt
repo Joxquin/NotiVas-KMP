@@ -35,7 +35,12 @@ class MorningBriefingUseCase(
         val nowMillis = DateTimeUtil.nowEpochMillis()
         val today = DateTimeUtil.nowLocalDate()
         val todayIso = today.toIsoDateString()
-        val studentName = userProfile?.name?.substringBefore(" ") ?: "Estudiante"
+        val rawName = userProfile?.name?.trim()
+        val studentName = when {
+            rawName.isNullOrBlank() -> "Estudiante"
+            rawName.contains(",") -> rawName.substringAfter(",").trim().substringBefore(" ").lowercase().replaceFirstChar { it.uppercase() }
+            else -> rawName.substringBefore(" ").trim().lowercase().replaceFirstChar { it.uppercase() }
+        }
 
         val courseMap = courses.associateBy { it.id }
 
@@ -151,18 +156,39 @@ class MorningBriefingUseCase(
             atRiskCourses = atRiskCourses.toList()
         )
 
-        // Intento de enriquecimiento con OpenRouter AI
+        // Intento de enriquecimiento con IA según el proveedor configurado (Google AI Studio u OpenRouter)
         var finalSummary = heuristicSummary
         var isAi = false
 
-        val apiKey = preferencesManager.openRouterApiKey.first()
+        val provider = preferencesManager.copilotProvider.first()
+        val apiKey: String?
+        val model: String
+        val customBaseUrl: String?
+
+        if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+            apiKey = preferencesManager.googleAiStudioApiKey.first()
+            model = preferencesManager.googleAiStudioModel.first()
+            customBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai"
+        } else {
+            apiKey = preferencesManager.openRouterApiKey.first()
+            model = preferencesManager.openRouterModel.first()
+            customBaseUrl = null
+        }
+
         if (!apiKey.isNullOrBlank()) {
-            if (cachedDateIso == todayIso && cachedAiSummary != null && !forceAiRefresh) {
-                finalSummary = cachedAiSummary!!
+            if (forceAiRefresh) {
+                cachedAiSummary = null
+                cachedDateIso = null
+            }
+            val validCached = sanitizeAiSummary(cachedAiSummary)
+            if (cachedDateIso == todayIso && validCached != null && !forceAiRefresh) {
+                finalSummary = validCached
                 isAi = true
             } else {
                 val aiSummary = generateAiSummary(
                     apiKey = apiKey,
+                    model = model,
+                    customBaseUrl = customBaseUrl,
                     studentName = studentName,
                     criticalCount = criticalCount,
                     upcomingCount = upcomingCount,
@@ -171,11 +197,16 @@ class MorningBriefingUseCase(
                     totalPoints = totalPoints,
                     atRiskCourses = atRiskCourses.toList()
                 )
-                if (aiSummary != null) {
+                val sanitized = sanitizeAiSummary(aiSummary)
+                if (sanitized != null) {
                     cachedDateIso = todayIso
-                    cachedAiSummary = aiSummary
-                    finalSummary = aiSummary
+                    cachedAiSummary = sanitized
+                    finalSummary = sanitized
                     isAi = true
+                } else {
+                    cachedAiSummary = null
+                    finalSummary = heuristicSummary
+                    isAi = false
                 }
             }
         }
@@ -224,6 +255,8 @@ class MorningBriefingUseCase(
 
     private suspend fun generateAiSummary(
         apiKey: String,
+        model: String,
+        customBaseUrl: String?,
         studentName: String,
         criticalCount: Int,
         upcomingCount: Int,
@@ -233,38 +266,98 @@ class MorningBriefingUseCase(
         atRiskCourses: List<String>
     ): String? {
         return try {
-            val systemPrompt = """
-                Eres el Copiloto Académico de NotiVas. Genera un único párrafo ejecutivo (máximo 45 palabras) con tono motivador, conciso y estratégico para el estudiante.
-                Resalta cuál es su prioridad #1 del día, advierte con tacto si hay cursos en riesgo y ofrece un consejo de enfoque inmediato.
-                No uses emojis ni listas. Solo texto puro de calidad profesional.
-            """.trimIndent()
+            val systemPrompt = "Eres el asistente académico de NotiVas. Escribe directamente un único párrafo conciso y motivador (2 o 3 oraciones en español) para orientar al estudiante al inicio de su día académico con base en los datos provistos. Sé claro, cálido y profesional. Prohibido incluir encabezados o títulos como '# Saludo', viñetas, listas o emojis."
 
-            val userContent = """
-                Estudiante: $studentName
-                Tareas críticas (<12h): $criticalCount
-                Tareas próximas: $upcomingCount
-                Prioridad principal: ${heroTaskTitle ?: "Ninguna"} (${heroCourse ?: "N/A"})
-                Puntos en juego: ${totalPoints.roundToInt()}
-                Cursos con promedio en riesgo: ${atRiskCourses.joinToString().ifEmpty { "Ninguno" }}
-            """.trimIndent()
+            val userContent = buildString {
+                append("Estudiante: $studentName\n")
+                if (heroTaskTitle != null) {
+                    append("Prioridad principal de hoy: $heroTaskTitle ($heroCourse)\n")
+                } else {
+                    append("Hoy no hay tareas con entrega inmediata.\n")
+                }
+                if (criticalCount > 0) {
+                    append("Tareas críticas por vencer (<12h): $criticalCount\n")
+                }
+                if (upcomingCount > 0) {
+                    append("Tareas en las próximas 48h: $upcomingCount\n")
+                }
+                if (atRiskCourses.isNotEmpty()) {
+                    append("Cursos con atención requerida: ${atRiskCourses.joinToString()}\n")
+                }
+            }
 
-            val selectedModel = preferencesManager.openRouterModel.first() ?: "google/gemini-2.0-flash-001"
-            val response = openRouterApiService.chatCompletion(
-                apiKey = apiKey,
-                request = OpenRouterChatRequest(
-                    model = selectedModel,
-                    messages = listOf(
-                        OpenRouterMessage(role = "system", content = systemPrompt),
-                        OpenRouterMessage(role = "user", content = userContent)
-                    ),
-                    temperature = 0.5,
-                    maxTokens = 120
-                )
+            println("[MorningBriefing] Generando resumen con proveedor=${if (customBaseUrl != null) "Google AI Studio" else "OpenRouter"}, model=$model, url=$customBaseUrl")
+            val request = OpenRouterChatRequest(
+                model = model,
+                messages = listOf(
+                    OpenRouterMessage(role = "system", content = systemPrompt),
+                    OpenRouterMessage(role = "user", content = userContent)
+                ),
+                temperature = 0.3,
+                maxTokens = 400,
+                reasoning = if (customBaseUrl == null) {
+                    me.joxquin.notivas.data.model.OpenRouterReasoning(
+                        effort = "none",
+                        exclude = true
+                    )
+                } else null
             )
 
-            response.choices?.firstOrNull()?.message?.content?.trim()
+            val response = try {
+                openRouterApiService.chatCompletion(apiKey = apiKey, request = request, customBaseUrl = customBaseUrl)
+            } catch (e: Exception) {
+                println("[MorningBriefing] Error en chatCompletion inicial (${e.message}), reintentando sin reasoning...")
+                openRouterApiService.chatCompletion(apiKey = apiKey, request = request.copy(reasoning = null), customBaseUrl = customBaseUrl)
+            }
+
+            val content = response.choices?.firstOrNull()?.message?.content?.trim()
+            println("[MorningBriefing] Respuesta recibida de $model: ${content?.take(70)}...")
+            content
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun sanitizeAiSummary(raw: String?): String? {
+        if (raw.isNullOrBlank()) return null
+        var text = raw.replace(Regex("""<think>[\s\S]*?</think>"""), "").trim()
+
+        // Eliminar encabezados markdown al inicio tipo "# Saludo...", "## Resumen..."
+        text = text.replace(Regex("""^#+\s*.*?\n+"""), "").trim()
+
+        // Descartar inmediatamente si contiene metatexto, razonamiento o borradores
+        val forbiddenTokens = listOf(
+            "Drafting",
+            "Attempt",
+            "Check constraints",
+            "Analyze the Request",
+            "**Role",
+            "**Task",
+            "**Constraints",
+            "**Key Elements",
+            "words)",
+            "Single paragraph?",
+            "Holes,",
+            "Hol hol",
+            "* *Attempt",
+            "Let's count"
+        )
+        for (token in forbiddenTokens) {
+            if (text.contains(token, ignoreCase = true)) {
+                return null
+            }
+        }
+
+        // Si empieza con listas o viñetas o contiene viñetas en líneas, descartar
+        if (text.startsWith("*") || text.startsWith("-") || text.startsWith("1.") ||
+            text.contains("\n*") || text.contains("\n-") || text.contains("\n1.")
+        ) {
+            return null
+        }
+
+        // Eliminar emojis
+        text = text.replace(Regex("""[\p{So}\p{Cn}\p{Cs}]"""), "").trim()
+
+        return if (text.length >= 25) text else null
     }
 }

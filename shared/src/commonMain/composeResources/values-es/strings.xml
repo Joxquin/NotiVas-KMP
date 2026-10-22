@@ -612,7 +612,7 @@
     <string name="morning_briefing_weight_format">%1$s%% ponderado</string>
     <string name="morning_briefing_updated_at">Actualizado a las %1$s (SQLite local)</string>
     <string name="morning_briefing_view_plan">Ver plan del día</string>
-    <string name="daily_roadmap_title">Plan del Día</string>
+    <string name="daily_roadmap_title">Resumen Matutino</string>
     <string name="daily_roadmap_executive_summary_title">Resumen Ejecutivo del Asistente</string>
     <string name="daily_roadmap_timeline_title">Cronograma y Bloques del Día</string>
     <string name="daily_roadmap_impact_title">Desglose de Impacto Académico</string>

@@ -612,7 +612,7 @@
     <string name="morning_briefing_weight_format">%1$s%% weighted</string>
     <string name="morning_briefing_updated_at">Updated at %1$s (SQLite local)</string>
     <string name="morning_briefing_view_plan">View daily plan</string>
-    <string name="daily_roadmap_title">Daily Plan</string>
+    <string name="daily_roadmap_title">Morning Briefing</string>
     <string name="daily_roadmap_executive_summary_title">Executive Summary</string>
     <string name="daily_roadmap_timeline_title">Day Schedule &amp; Blocks</string>
     <string name="daily_roadmap_impact_title">Academic Impact Breakdown</string>

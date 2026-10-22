@@ -44,7 +44,6 @@ import me.joxquin.notivas.shared.resources.morning_briefing_closing_today
 import me.joxquin.notivas.shared.resources.morning_briefing_critical_tasks
 import me.joxquin.notivas.shared.resources.morning_briefing_pill
 import me.joxquin.notivas.shared.resources.morning_briefing_upcoming_tasks
-import me.joxquin.notivas.shared.resources.morning_briefing_updated_at
 import me.joxquin.notivas.shared.resources.morning_briefing_view_plan
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
@@ -57,13 +56,16 @@ fun MorningBriefingSlideContent(
     isMiuix: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val pillBg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHighest
+    val pillBg =
+        if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHighest
     val pillText = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
     val titleColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-    val summaryColor = if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
+    val summaryColor =
+        if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
     val criticalColor = if (isMiuix) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error
     val upcomingColor = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
-    val cardBg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer
+    val cardBg =
+        if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer
 
     Column(
         modifier = modifier
@@ -157,7 +159,10 @@ fun MorningBriefingSlideContent(
                                 .background(criticalColor)
                         )
                         Text(
-                            text = stringResource(Res.string.morning_briefing_critical_tasks, briefing.criticalTasksCount),
+                            text = stringResource(
+                                Res.string.morning_briefing_critical_tasks,
+                                briefing.criticalTasksCount
+                            ),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = criticalColor
@@ -184,7 +189,10 @@ fun MorningBriefingSlideContent(
                                 .background(upcomingColor)
                         )
                         Text(
-                            text = stringResource(Res.string.morning_briefing_upcoming_tasks, briefing.upcomingTasksCount),
+                            text = stringResource(
+                                Res.string.morning_briefing_upcoming_tasks,
+                                briefing.upcomingTasksCount
+                            ),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = upcomingColor
@@ -296,21 +304,6 @@ fun MorningBriefingSlideContent(
                     }
                 }
             }
-        }
-
-        // 5. Pie y Acceso: Estado de datos
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(Res.string.morning_briefing_updated_at, briefing.lastUpdatedAt),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = summaryColor.copy(alpha = 0.8f),
-                    fontSize = 11.sp
-                )
-            )
         }
     }
 }
