@@ -12,7 +12,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.PreferencesManager
+import me.joxquin.notivas.ui.components.miuix.SearchStatus
 import me.joxquin.notivas.data.local.db.dao.SimulationDao
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
@@ -120,8 +123,28 @@ class DashboardViewModel(
     private val _isSearchExpanded = MutableStateFlow(false)
     val isSearchExpanded: StateFlow<Boolean> = _isSearchExpanded.asStateFlow()
 
+    private val _searchStatus = MutableStateFlow(SearchStatus(label = ""))
+    val searchStatus: StateFlow<SearchStatus> = _searchStatus.asStateFlow()
+
+    private val _searchOffsetY = MutableStateFlow(0.dp)
+    val searchOffsetY: StateFlow<Dp> = _searchOffsetY.asStateFlow()
+
+    fun setSearchOffsetY(offsetY: Dp) {
+        _searchOffsetY.value = offsetY
+    }
+
+    fun updateSearchStatus(status: SearchStatus) {
+        _searchStatus.value = status
+        _isSearchExpanded.value = status.shouldExpand()
+    }
+
     fun setSearchExpanded(expanded: Boolean) {
         _isSearchExpanded.value = expanded
+        _searchStatus.value = if (expanded) {
+            _searchStatus.value.copy(current = SearchStatus.Status.EXPANDED)
+        } else {
+            _searchStatus.value.copy(current = SearchStatus.Status.COLLAPSED)
+        }
     }
 
     fun addRecentSearch(query: String) {
@@ -734,13 +757,13 @@ class DashboardViewModel(
         allAssignmentsUi,
         courseStats,
         _forceAiMorningRefresh
-    ) { profile, courseList, assignments, stats, _ ->
+    ) { profile, courseList, assignments, stats, refreshCount ->
         morningBriefingUseCase.buildMorningBriefing(
             userProfile = profile,
             courses = courseList,
             allAssignments = assignments,
             courseStats = stats,
-            forceAiRefresh = false
+            forceAiRefresh = refreshCount > 0
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 

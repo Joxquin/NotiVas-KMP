@@ -57,6 +57,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
@@ -65,8 +67,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import me.joxquin.notivas.ui.components.miuix.SearchStatus
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.shared.resources.Res
@@ -78,6 +82,9 @@ import me.joxquin.notivas.ui.dashboard.CourseStat
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.basic.Search
+import top.yukonga.miuix.kmp.icon.basic.SearchCleanup
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -102,10 +109,13 @@ fun DashboardSearchBarAnchor(
     val placeholderColor = if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
 
     if (isMiuix) {
-        // En MIUIX: utilizar InputField deshabilitado para consistencia 1:1 de padding, altura e iconos
+        // En MIUIX: Cápsula idéntica a SearchBarFake canónico
+        // Puesto que se aloja dentro de LazyColumn(contentPadding = 16.dp), la cápsula ancla
+        // comienza exactamente a 16.dp de cada borde de la pantalla (ScreenWidth - 32.dp).
         Box(
             modifier = modifier
                 .fillMaxWidth()
+                .padding(bottom = 6.dp)
                 .graphicsLayer {
                     alpha = if (isVisible) 1f else 0f
                 }
@@ -130,18 +140,20 @@ fun DashboardSearchBarAnchor(
                 onQueryChange = {},
                 label = placeholder,
                 leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                        tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                        modifier = Modifier.padding(start = 12.dp, end = 4.dp).size(20.dp)
+                    top.yukonga.miuix.kmp.basic.Icon(
+                        imageVector = MiuixIcons.Basic.Search,
+                        contentDescription = "Buscar",
+                        modifier = Modifier
+                            .size(44.dp)
+                            .padding(start = 16.dp, end = 8.dp),
+                        tint = MiuixTheme.colorScheme.onSurfaceContainerHigh
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
                 color = MiuixTheme.colorScheme.surfaceContainerHigh,
                 enabled = false,
                 onSearch = {},
-                expanded = true,
+                expanded = false,
                 onExpandedChange = {}
             )
         }
@@ -201,6 +213,15 @@ fun DashboardSearchBarAnchor(
     }
 }
 
+/** Reserves [inset] above the content, read during layout so a changing value never recomposes the caller. */
+internal fun Modifier.topInset(inset: () -> Dp): Modifier = layout { measurable, constraints ->
+    val insetPx = inset().roundToPx()
+    val placeable = measurable.measure(constraints.offset(vertical = -insetPx))
+    layout(placeable.width, placeable.height + insetPx) {
+        placeable.placeRelative(0, insetPx)
+    }
+}
+
 /**
  * Overlay de búsqueda con animación Ease (interpolación vertical continua).
  * Sube desde la coordenada [initialOffsetY] hasta la parte superior de la pantalla,
@@ -247,18 +268,19 @@ fun DashboardAnimatedSearchOverlay(
 
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
     val focusRequester = remember { FocusRequester() }
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
     val placeholder = stringResource(Res.string.dashboard_search_hint)
     val cancelText = stringResource(Res.string.cancel)
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     val targetTopPadding = if (animStatus.shouldExpand()) {
-        statusBarTop + 8.dp
+        statusBarTop + 12.dp
     } else {
-        max(initialOffsetY, statusBarTop + 8.dp)
+        max(initialOffsetY, statusBarTop + 12.dp)
     }
 
-    val animatedTopPadding by animateDpAsState(
+    val topPadding by animateDpAsState(
         targetValue = targetTopPadding,
         animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing),
         label = "DashboardSearchTopPadding",
@@ -274,15 +296,21 @@ fun DashboardAnimatedSearchOverlay(
 
     val surfaceAlpha by animateFloatAsState(
         targetValue = if (animStatus.shouldExpand()) 1f else 0f,
-        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
         label = "DashboardSearchSurfaceAlpha"
     )
 
     val surfaceColor = if (isMiuix) MiuixTheme.colorScheme.surface else MaterialTheme.colorScheme.surface
 
-    me.joxquin.notivas.ui.components.BackHandler(enabled = animStatus.shouldExpand()) {
+    fun collapseSearch() {
+        focusManager.clearFocus()
         animStatus = SearchAnimStatus.COLLAPSING
         onQueryChange("")
+        onExpandedChange(false)
+    }
+
+    me.joxquin.notivas.ui.components.BackHandler(enabled = animStatus.shouldExpand()) {
+        collapseSearch()
     }
 
     LaunchedEffect(animStatus) {
@@ -298,18 +326,26 @@ fun DashboardAnimatedSearchOverlay(
             .fillMaxSize()
             .zIndex(100f)
             .background(surfaceColor.copy(alpha = surfaceAlpha))
+            .then(
+                if (animStatus.shouldExpand()) {
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    )
+                } else Modifier
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = animatedTopPadding)
+                .topInset { topPadding }
         ) {
             // Header del Buscador Animado
             if (isMiuix) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                        .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(modifier = Modifier.weight(1f)) {
@@ -318,34 +354,45 @@ fun DashboardAnimatedSearchOverlay(
                             onQueryChange = onQueryChange,
                             label = placeholder,
                             leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = null,
-                                    tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                    modifier = Modifier.padding(start = 12.dp, end = 4.dp).size(20.dp)
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Basic.Search,
+                                    contentDescription = "Buscar",
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .padding(start = 16.dp, end = 8.dp),
+                                    tint = MiuixTheme.colorScheme.onSurfaceContainerHigh
                                 )
                             },
                             trailingIcon = {
                                 if (query.isNotEmpty()) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Basic.SearchCleanup,
                                         contentDescription = "Limpiar",
                                         tint = MiuixTheme.colorScheme.onSurface,
                                         modifier = Modifier
-                                            .padding(end = 12.dp)
-                                            .size(20.dp)
-                                            .clickable { onQueryChange("") }
+                                            .size(44.dp)
+                                            .padding(start = 8.dp, end = 16.dp)
+                                            .clickable(
+                                                interactionSource = null,
+                                                indication = null,
+                                                onClick = { onQueryChange("") }
+                                            )
                                     )
                                 }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(
+                                    start = 16.dp,
+                                    end = if (animStatus.shouldExpand()) 6.dp else 16.dp
+                                )
+                                .padding(bottom = 6.dp)
                                 .focusRequester(focusRequester),
                             color = MiuixTheme.colorScheme.surfaceContainerHigh,
                             onSearch = {
                                 if (query.isNotBlank()) onSearchCommit(query)
                             },
-                            expanded = true,
+                            expanded = animStatus.shouldExpand(),
                             onExpandedChange = {}
                         )
                     }
@@ -360,37 +407,41 @@ fun DashboardAnimatedSearchOverlay(
                             fontWeight = FontWeight.SemiBold,
                             color = MiuixTheme.colorScheme.primary,
                             modifier = Modifier
-                                .padding(start = 12.dp, end = 4.dp)
+                                .padding(start = 4.dp, end = 16.dp, bottom = 6.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
-                                    onClick = {
-                                        animStatus = SearchAnimStatus.COLLAPSING
-                                        onQueryChange("")
-                                    }
+                                    onClick = { collapseSearch() }
                                 )
                         )
                     }
                 }
             } else {
                 // Header Material 3 Expressive
+                val materialStartPadding by animateDpAsState(
+                    targetValue = if (animStatus.shouldExpand()) 8.dp else 16.dp,
+                    animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing),
+                    label = "MaterialSearchStartPadding"
+                )
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 8.dp, end = 16.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        .padding(
+                            start = materialStartPadding,
+                            end = 16.dp,
+                            bottom = 8.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     AnimatedVisibility(
                         visible = animStatus.shouldExpand(),
-                        enter = fadeIn() + expandHorizontally(),
-                        exit = fadeOut() + shrinkHorizontally()
+                        enter = fadeIn(animationSpec = tween(150)) + expandHorizontally(animationSpec = tween(250)),
+                        exit = fadeOut(animationSpec = tween(150)) + shrinkHorizontally(animationSpec = tween(250))
                     ) {
                         IconButton(
-                            onClick = {
-                                animStatus = SearchAnimStatus.COLLAPSING
-                                onQueryChange("")
-                            }
+                            onClick = { collapseSearch() },
+                            modifier = Modifier.padding(end = 4.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -414,6 +465,13 @@ fun DashboardAnimatedSearchOverlay(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
+                            )
+
                             BasicTextField(
                                 value = query,
                                 onValueChange = onQueryChange,
@@ -431,8 +489,11 @@ fun DashboardAnimatedSearchOverlay(
                                     if (query.isEmpty()) {
                                         Text(
                                             text = placeholder,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            style = TextStyle(
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Normal,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
                                         )
                                     }
                                     innerTextField()
@@ -466,7 +527,7 @@ fun DashboardAnimatedSearchOverlay(
             ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 32.dp)
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp)
                 ) {
                     if (query.isBlank()) {
                         item {

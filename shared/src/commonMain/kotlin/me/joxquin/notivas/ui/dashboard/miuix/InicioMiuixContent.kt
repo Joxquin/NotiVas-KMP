@@ -19,10 +19,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.components.SelectedDateAssignmentsSection
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
@@ -54,6 +61,8 @@ fun InicioMiuixContent(
     onNavigateToCopilot: () -> Unit = {},
     onNavigateToHerramientas: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
+    onNavigateToRoadmap: () -> Unit = {},
+    onOpenAssignmentDraft: ((me.joxquin.notivas.ui.dashboard.AssignmentUiModel) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
@@ -64,7 +73,6 @@ fun InicioMiuixContent(
     val courseStats by viewModel.courseStats.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
-    val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
     val morningBriefing by viewModel.morningBriefing.collectAsState()
 
     var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
@@ -89,17 +97,6 @@ fun InicioMiuixContent(
         }
     }
 
-    if (selectedAssignmentForDraft != null) {
-        me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
-            assignmentUi = selectedAssignmentForDraft!!,
-            onBack = { viewModel.closeDraft() },
-            viewModel = viewModel,
-            themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-            lazyListState = listState,
-            modifier = modifier
-        )
-        return
-    }
 
     var selectedAssignmentForSubmenu by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf<me.joxquin.notivas.ui.dashboard.AssignmentUiModel?>(null)
@@ -107,6 +104,7 @@ fun InicioMiuixContent(
 
     val recentSearches by viewModel.recentSearches.collectAsState()
     val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
+    val searchStatus by viewModel.searchStatus.collectAsState()
     var searchOffsetY by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(140.dp) }
     var searchOverlayAnimStatus by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf(me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED)
@@ -117,26 +115,37 @@ fun InicioMiuixContent(
             .fillMaxSize()
             .background(MiuixTheme.colorScheme.surface)
     ) {
+        val autoSettleConnection = me.joxquin.notivas.ui.components.miuix.rememberMiuixAutoSettleScrollConnection(
+            listState = listState,
+            thresholdDp = 72.dp
+        )
+
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .scrollEndHaptic()
+                .overScrollVertical()
+                .nestedScroll(autoSettleConnection),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 0. Welcome Header (32.sp) con scroll fade
+            // 0. Welcome Header (32.sp) con scroll fade sincronizado con el TopAppBar
             item {
                 val firstIndex = listState.firstVisibleItemIndex
                 val firstOffset = listState.firstVisibleItemScrollOffset
-                val largeTitleAlpha = if (firstIndex == 0) {
-                    (1f - (firstOffset / 90f)).coerceIn(0f, 1f)
-                } else {
-                    0f
-                }
-                val largeTitleTranslationY = if (firstIndex == 0) {
-                    -firstOffset * 0.25f
-                } else {
-                    -25f
-                }
+                val isHeaderCollapsed = firstIndex > 0 || firstOffset >= 72
+
+                val largeTitleAlpha by androidx.compose.animation.core.animateFloatAsState(
+                    targetValue = if (isHeaderCollapsed) 0f else 1f,
+                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
+                    label = "LargeTitleAlpha"
+                )
+                val largeTitleTranslationY by androidx.compose.animation.core.animateFloatAsState(
+                    targetValue = if (isHeaderCollapsed) -20f else 0f,
+                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
+                    label = "LargeTitleTranslationY"
+                )
 
                 val studentName = userProfile?.name ?: "Estudiante"
 
@@ -168,11 +177,17 @@ fun InicioMiuixContent(
             item {
                 me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
                     query = searchQuery,
-                    onSearchClick = { viewModel.setSearchExpanded(true) },
-                    onPositionChanged = { searchOffsetY = it },
+                    onSearchClick = {
+                        viewModel.updateSearchStatus(searchStatus.copy(current = me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING))
+                        viewModel.setSearchExpanded(true)
+                    },
+                    onPositionChanged = {
+                        searchOffsetY = it
+                        viewModel.setSearchOffsetY(it)
+                    },
                     onAskAi = { query -> onNavigateToCopilot() },
                     themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-                    isVisible = searchOverlayAnimStatus == me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED && !isSearchExpanded
+                    isVisible = searchStatus.isCollapsed() && searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded
                 )
             }
 
@@ -183,7 +198,10 @@ fun InicioMiuixContent(
                     unconfiguredCount = unconfiguredBannerState.first,
                     firstUnconfiguredCourse = unconfiguredBannerState.second,
                     morningBriefing = morningBriefing,
-                    onOpenRoadmap = { viewModel.openMorningRoadmap() },
+                    onOpenRoadmap = {
+                        viewModel.openMorningRoadmap()
+                        onNavigateToRoadmap()
+                    },
                     onCheckPerformance = { onNavigateToHerramientas() },
                     onConfigureFormulas = { course ->
                         if (course != null) {
@@ -216,6 +234,12 @@ fun InicioMiuixContent(
             }
         }
 
+        VerticalScrollBar(
+            adapter = rememberScrollBarAdapter(listState),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            trackPadding = contentPadding
+        )
+
         // Vista Incrustada de Búsqueda con Animación Ease Continua
         me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(
             isExpanded = isSearchExpanded,
@@ -234,7 +258,18 @@ fun InicioMiuixContent(
             onAssignmentClick = { selectedAssignmentForSubmenu = it },
             onAskAi = { query -> onNavigateToCopilot() },
             themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-            onAnimStatusChange = { searchOverlayAnimStatus = it }
+            onAnimStatusChange = {
+                searchOverlayAnimStatus = it
+                val mappedStatus = when (it) {
+                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.EXPANDED -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDED
+                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.EXPANDING -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING
+                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSING -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.COLLAPSING
+                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.COLLAPSED
+                }
+                if (searchStatus.current != mappedStatus) {
+                    viewModel.updateSearchStatus(searchStatus.copy(current = mappedStatus))
+                }
+            }
         )
 
         // Submenú Rápido de Opciones y Gestión de Tarea (WindowBottomSheet)
@@ -243,7 +278,9 @@ fun InicioMiuixContent(
             themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
             onDismissRequest = { selectedAssignmentForSubmenu = null },
             onOpenDraftScreen = { assignment ->
+                selectedAssignmentForSubmenu = null
                 viewModel.openDraft(assignment)
+                onOpenAssignmentDraft?.invoke(assignment)
             }
         )
     }

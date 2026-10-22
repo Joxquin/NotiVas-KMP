@@ -49,6 +49,8 @@ fun InicioScreen(
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToActivity: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
+    onNavigateToRoadmap: () -> Unit = {},
+    onOpenAssignmentDraft: ((AssignmentUiModel) -> Unit)? = null,
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -60,6 +62,9 @@ fun InicioScreen(
             onNavigateToCourseProgreso = onNavigateToCourseProgreso,
             onNavigateToCopilot = onNavigateToCopilot,
             onNavigateToHerramientas = onNavigateToHerramientas,
+            onNavigateToSchedule = onNavigateToSchedule,
+            onNavigateToRoadmap = onNavigateToRoadmap,
+            onOpenAssignmentDraft = onOpenAssignmentDraft,
             modifier = modifier
         )
         return
@@ -124,6 +129,7 @@ fun InicioScreen(
 
     val recentSearches by viewModel.recentSearches.collectAsState()
     val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
+    val searchStatus by viewModel.searchStatus.collectAsState()
     var searchOffsetY by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(140.dp) }
     var searchOverlayAnimStatus by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf(me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED)
@@ -135,38 +141,39 @@ fun InicioScreen(
         label = "InicioTopBarAlpha"
     )
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            InicioTopAppBar(
-                isScrolled = isScrolled,
-                title = "NotiVas",
-                onRefresh = { viewModel.refreshData() },
-                onNavigateToActivity = onNavigateToActivity,
-                onNavigateToSchedule = onNavigateToSchedule,
-                onNavigateToAjustes = onNavigateToAjustes,
-                modifier = Modifier.graphicsLayer {
-                    alpha = topBarAlpha
+    Box(modifier = modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                InicioTopAppBar(
+                    isScrolled = isScrolled,
+                    title = "NotiVas",
+                    onRefresh = { viewModel.refreshData() },
+                    onNavigateToActivity = onNavigateToActivity,
+                    onNavigateToSchedule = onNavigateToSchedule,
+                    onNavigateToAjustes = onNavigateToAjustes,
+                    actionsEnabled = !searchOverlayAnimStatus.shouldExpand(),
+                    modifier = Modifier.graphicsLayer {
+                        alpha = topBarAlpha
+                    }
+                )
+            },
+            floatingActionButton = {
+                Box(
+                    modifier = Modifier.graphicsLayer {
+                        alpha = topBarAlpha
+                    }
+                ) {
+                    if (topBarAlpha > 0.05f) {
+                        InicioQuickActionsFab(
+                            onNavigateToCopilot = onNavigateToCopilot,
+                            onNavigateToHerramientas = onNavigateToHerramientas
+                        )
+                    }
                 }
-            )
-        },
-        floatingActionButton = {
-            Box(
-                modifier = Modifier.graphicsLayer {
-                    alpha = topBarAlpha
-                }
-            ) {
-                if (topBarAlpha > 0.05f) {
-                    InicioQuickActionsFab(
-                        onNavigateToCopilot = onNavigateToCopilot,
-                        onNavigateToHerramientas = onNavigateToHerramientas
-                    )
-                }
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.surface
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+            },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) { innerPadding ->
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(
@@ -207,7 +214,7 @@ fun InicioScreen(
                         onPositionChanged = { searchOffsetY = it },
                         onAskAi = { query -> onNavigateToCopilot() },
                         themeStyle = AppThemeStyle.MATERIAL,
-                        isVisible = searchOverlayAnimStatus == me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED && !isSearchExpanded
+                        isVisible = searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded
                     )
                 }
 
@@ -250,28 +257,39 @@ fun InicioScreen(
                     )
                 }
             }
-
-            // Vista Incrustada de Búsqueda con Animación Ease Continua
-            me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(
-                isExpanded = isSearchExpanded,
-                onExpandedChange = { viewModel.setSearchExpanded(it) },
-                initialOffsetY = searchOffsetY,
-                query = searchQuery,
-                onQueryChange = { searchQuery = it },
-                onSearchCommit = { viewModel.addRecentSearch(it) },
-                recentSearches = recentSearches,
-                onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
-                onClearRecentHistory = { viewModel.clearRecentSearches() },
-                courses = courses,
-                courseStats = courseStats,
-                assignments = allAssignments,
-                onCourseClick = onNavigateToCourseProgreso,
-                onAssignmentClick = { selectedAssignmentForSubmenu = it },
-                onAskAi = { query -> onNavigateToCopilot() },
-                themeStyle = AppThemeStyle.MATERIAL,
-                onAnimStatusChange = { searchOverlayAnimStatus = it }
-            )
         }
+
+        // Vista Incrustada de Búsqueda con Animación Ease Continua (por encima de Scaffold)
+        me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(
+            isExpanded = isSearchExpanded,
+            onExpandedChange = { viewModel.setSearchExpanded(it) },
+            initialOffsetY = searchOffsetY,
+            query = searchQuery,
+            onQueryChange = { searchQuery = it },
+            onSearchCommit = { viewModel.addRecentSearch(it) },
+            recentSearches = recentSearches,
+            onRemoveRecentQuery = { viewModel.removeRecentSearch(it) },
+            onClearRecentHistory = { viewModel.clearRecentSearches() },
+            courses = courses,
+            courseStats = courseStats,
+            assignments = allAssignments,
+            onCourseClick = onNavigateToCourseProgreso,
+            onAssignmentClick = { selectedAssignmentForSubmenu = it },
+            onAskAi = { query -> onNavigateToCopilot() },
+            themeStyle = AppThemeStyle.MATERIAL,
+            onAnimStatusChange = {
+                searchOverlayAnimStatus = it
+                val mappedStatus = when (it) {
+                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.EXPANDED -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDED
+                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.EXPANDING -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING
+                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSING -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.COLLAPSING
+                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.COLLAPSED
+                }
+                if (searchStatus.current != mappedStatus) {
+                    viewModel.updateSearchStatus(searchStatus.copy(current = mappedStatus))
+                }
+            }
+        )
 
         // Submenú Rápido de Opciones y Gestión de Tarea
         me.joxquin.notivas.ui.dashboard.components.AssignmentQuickSubmenuSheet(
@@ -279,7 +297,9 @@ fun InicioScreen(
             themeStyle = AppThemeStyle.MATERIAL,
             onDismissRequest = { selectedAssignmentForSubmenu = null },
             onOpenDraftScreen = { assignment ->
+                selectedAssignmentForSubmenu = null
                 viewModel.openDraft(assignment)
+                onOpenAssignmentDraft?.invoke(assignment)
             }
         )
     }

@@ -47,6 +47,7 @@ fun InicioTopAppBar(
     onNavigateToActivity: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
     onNavigateToAjustes: () -> Unit = {},
+    actionsEnabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val topAppBarContainerColor by animateColorAsState(
@@ -96,21 +97,23 @@ fun InicioTopAppBar(
             }
         },
         actions = {
-            IconButton(onClick = onNavigateToSchedule) {
-                Icon(
-                    imageVector = Icons.Default.CalendarMonth,
-                    contentDescription = "Agenda",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            IconButton(onClick = onNavigateToActivity) {
-                Icon(
-                    imageVector = Icons.Filled.History,
-                    contentDescription = "Actividad Reciente",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
-                )
+            if (actionsEnabled) {
+                IconButton(onClick = onNavigateToSchedule) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Agenda",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                IconButton(onClick = onNavigateToActivity) {
+                    Icon(
+                        imageVector = Icons.Filled.History,
+                        contentDescription = "Actividad Reciente",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
