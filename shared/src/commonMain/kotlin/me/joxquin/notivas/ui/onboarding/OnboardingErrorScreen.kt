@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudOff
+import me.joxquin.notivas.ui.onboarding.components.OnboardingStepIndicator
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Domain
 import androidx.compose.material.icons.filled.HelpOutline
@@ -54,10 +57,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import me.joxquin.notivas.ui.theme.AmberDark
-import me.joxquin.notivas.ui.theme.AmberPrimary
-import me.joxquin.notivas.ui.theme.TerracottaContainer
-import me.joxquin.notivas.ui.theme.TerracottaTertiary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,24 +76,42 @@ fun OnboardingErrorScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.End,
+                    .statusBarsPadding()
+                    .height(64.dp)
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(
-                    onClick = onHelpClick
-                ) {
+                IconButton(onClick = onChangeDomain) {
                     Icon(
-                        imageVector = Icons.Default.HelpOutline,
-                        contentDescription = "Ayuda",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Atras",
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Ayuda",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(onClick = onHelpClick) {
+                        Icon(
+                            imageVector = Icons.Default.HelpOutline,
+                            contentDescription = "Ayuda",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Ayuda",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    OnboardingStepIndicator(
+                        currentStep = 2,
+                        totalSteps = 4
                     )
                 }
             }
@@ -119,19 +136,19 @@ fun OnboardingErrorScreen(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(TerracottaContainer)
+                        .background(MaterialTheme.colorScheme.errorContainer)
                         .border(
-                            width = 6.dp,
-                            color = TerracottaContainer.copy(alpha = 0.35f),
+                            width = 4.dp,
+                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
                             shape = RoundedCornerShape(24.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.CloudOff,
-                        contentDescription = "Error de conexión",
+                        contentDescription = "Error de conexion",
                         modifier = Modifier.size(40.dp),
-                        tint = TerracottaTertiary
+                        tint = MaterialTheme.colorScheme.error
                     )
                 }
 
@@ -190,14 +207,14 @@ fun OnboardingErrorScreen(
                             Icon(
                                 imageVector = Icons.Default.ContentPaste,
                                 contentDescription = "Pegar",
-                                tint = AmberDark,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Pegar",
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = AmberDark
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -208,7 +225,7 @@ fun OnboardingErrorScreen(
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = {
                             Text(
-                                text = "Pega tu token de Canvas aquí...",
+                                text = "Pega tu token de Canvas aqui...",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
@@ -229,7 +246,7 @@ fun OnboardingErrorScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                            focusedBorderColor = AmberDark,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
                         )
                     )
@@ -244,8 +261,8 @@ fun OnboardingErrorScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(26.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = AmberDark,
-                        contentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 2.dp,
@@ -259,7 +276,7 @@ fun OnboardingErrorScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Reintentar conexión",
+                        text = "Reintentar conexion",
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp
@@ -304,14 +321,14 @@ fun OnboardingErrorScreen(
                         Icon(
                             imageVector = Icons.Default.MenuBook,
                             contentDescription = null,
-                            tint = AmberDark,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Ver guía rápida para obtener tu token",
+                            text = "Ver guia rapida para obtener tu token",
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-                            color = AmberDark
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
