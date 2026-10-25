@@ -1,8 +1,12 @@
 package me.joxquin.notivas.ui.onboarding
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -12,12 +16,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 enum class OnboardingStep {
-    Domain,
+    WelcomeDomain,
     WebLogin,
-    Token,
     Verifying,
-    Success,
-    BackgroundSync,
+    Permissions,
+    GoogleDrive,
     Error
 }
 
@@ -30,33 +33,77 @@ fun OnboardingFlow(
     val accessToken by viewModel.accessToken.collectAsState(initial = "")
     val isVerifying by viewModel.isVerifying.collectAsState(initial = false)
     val verificationSuccess by viewModel.verificationSuccess.collectAsState(initial = null)
-    val userProfile by viewModel.userProfile.collectAsState(initial = null)
-    val coursesCount by viewModel.coursesCount.collectAsState(initial = 0)
 
-    var currentStep by remember { mutableStateOf(OnboardingStep.Domain) }
-    var hasSeenSuccess by remember { mutableStateOf(false) }
+    var currentStep by remember { mutableStateOf(OnboardingStep.WelcomeDomain) }
+    var hasCompletedAuth by remember { mutableStateOf(false) }
 
     val effectiveStep = when {
-        currentStep == OnboardingStep.BackgroundSync -> OnboardingStep.BackgroundSync
+        currentStep == OnboardingStep.GoogleDrive -> OnboardingStep.GoogleDrive
+        currentStep == OnboardingStep.Permissions -> OnboardingStep.Permissions
         isVerifying -> OnboardingStep.Verifying
-        verificationSuccess == true && !hasSeenSuccess -> OnboardingStep.Success
+        verificationSuccess == true && !hasCompletedAuth -> OnboardingStep.Permissions
         verificationSuccess == false -> OnboardingStep.Error
         else -> currentStep
     }
 
+    me.joxquin.notivas.ui.components.BackHandler(enabled = effectiveStep != OnboardingStep.WelcomeDomain) {
+        when (effectiveStep) {
+            OnboardingStep.WebLogin -> currentStep = OnboardingStep.WelcomeDomain
+            OnboardingStep.Permissions -> {
+                viewModel.resetVerification()
+                hasCompletedAuth = false
+                currentStep = OnboardingStep.WebLogin
+            }
+            OnboardingStep.GoogleDrive -> {
+                currentStep = OnboardingStep.Permissions
+            }
+            OnboardingStep.Error -> {
+                viewModel.resetVerification()
+                currentStep = OnboardingStep.WelcomeDomain
+            }
+            else -> {}
+        }
+    }
+
     AnimatedContent(
         targetState = effectiveStep,
-        transitionSpec = { fadeIn() togetherWith fadeOut() }
+        transitionSpec = {
+            if (targetState.ordinal > initialState.ordinal) {
+                (slideInHorizontally(
+                    initialOffsetX = { fullWidth -> (fullWidth * 0.25f).toInt() },
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(350))) togetherWith
+                (slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> (-fullWidth * 0.25f).toInt() },
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(350)))
+            } else {
+                (slideInHorizontally(
+                    initialOffsetX = { fullWidth -> (-fullWidth * 0.25f).toInt() },
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(350))) togetherWith
+                (slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> (fullWidth * 0.25f).toInt() },
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(350)))
+            }
+        },
+        label = "onboarding_flow_transition"
     ) { step ->
         when (step) {
-            OnboardingStep.Domain -> {
-                OnboardingDomainScreen(
+            OnboardingStep.WelcomeDomain -> {
+                OnboardingWelcomeDomainScreen(
                     currentUrl = universityUrl,
+                    currentToken = accessToken,
                     onContinue = { url ->
                         viewModel.updateUniversityUrl(url)
                         currentStep = OnboardingStep.WebLogin
                     },
-                    onBack = { /* Primer paso */ }
+                    onContinueWithToken = { url, token ->
+                        viewModel.updateUniversityUrl(url)
+                        viewModel.updateAccessToken(token)
+                        viewModel.verifyConnection()
+                    }
                 )
             }
             OnboardingStep.WebLogin -> {
@@ -66,37 +113,31 @@ fun OnboardingFlow(
                         viewModel.verifySessionConnection(cookies, csrfToken)
                     },
                     onUseManualToken = {
-                        currentStep = OnboardingStep.Token
+                        currentStep = OnboardingStep.WelcomeDomain
                     },
-                    onBack = { currentStep = OnboardingStep.Domain }
-                )
-            }
-            OnboardingStep.Token -> {
-                OnboardingTokenScreen(
-                    currentToken = accessToken,
-                    onContinue = { token ->
-                        viewModel.updateAccessToken(token)
-                        viewModel.verifyConnection()
-                    },
-                    onBack = { currentStep = OnboardingStep.WebLogin }
+                    onBack = { currentStep = OnboardingStep.WelcomeDomain }
                 )
             }
             OnboardingStep.Verifying -> {
                 OnboardingVerifyingScreen()
             }
-            OnboardingStep.Success -> {
-                OnboardingSuccessScreen(
-                    userProfile = userProfile,
-                    coursesCount = coursesCount,
-                    onStartApp = {
-                        hasSeenSuccess = true
-                        currentStep = OnboardingStep.BackgroundSync
+            OnboardingStep.Permissions -> {
+                OnboardingPermissionsScreen(
+                    onContinue = {
+                        hasCompletedAuth = true
+                        currentStep = OnboardingStep.GoogleDrive
                     }
                 )
             }
-            OnboardingStep.BackgroundSync -> {
-                OnboardingBackgroundSyncScreen(
-                    onFinish = onComplete
+            OnboardingStep.GoogleDrive -> {
+                OnboardingGoogleDriveScreen(
+                    onFinish = onComplete,
+                    onBack = {
+                        currentStep = OnboardingStep.Permissions
+                    },
+                    onSaveGoogleAuth = { token, refresh, email ->
+                        viewModel.saveGoogleDriveAuth(token, refresh, email)
+                    }
                 )
             }
             OnboardingStep.Error -> {
@@ -108,7 +149,7 @@ fun OnboardingFlow(
                     },
                     onChangeDomain = {
                         viewModel.resetVerification()
-                        currentStep = OnboardingStep.Domain
+                        currentStep = OnboardingStep.WelcomeDomain
                     }
                 )
             }
