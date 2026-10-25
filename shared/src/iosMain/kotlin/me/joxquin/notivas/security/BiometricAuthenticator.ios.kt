@@ -6,6 +6,7 @@ import platform.LocalAuthentication.LAContext
 import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthenticationWithBiometrics
 
 actual class BiometricAuthenticator {
+    @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
     actual fun canAuthenticate(): Boolean {
         val context = LAContext()
         val error = null

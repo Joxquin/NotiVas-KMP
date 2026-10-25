@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 
 actual class BackgroundPermissionManager {
+    actual fun isNotificationPermissionGranted(): Boolean = true
+    actual fun openNotificationSettings() {}
     actual fun isBatteryOptimizationIgnored(): Boolean = true
     actual fun requestIgnoreBatteryOptimization() {}
     actual fun canScheduleExactAlarms(): Boolean = true
@@ -17,4 +19,9 @@ actual class BackgroundPermissionManager {
 @Composable
 actual fun rememberBackgroundPermissionManager(): BackgroundPermissionManager {
     return remember { BackgroundPermissionManager() }
+}
+
+@Composable
+actual fun rememberNotificationPermissionLauncher(onResult: (Boolean) -> Unit): () -> Unit {
+    return { onResult(true) }
 }

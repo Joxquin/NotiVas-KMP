@@ -24,9 +24,11 @@ androidx-work = "2.10.0"
 ksp = "2.3.12"
 coil = "3.1.0"
 androidx-biometric = "1.1.0"
+androidx-core-splashscreen = "1.0.1"
 
 
 [libraries]
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidx-core-splashscreen" }
 miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui", version.ref = "miuix" }
 miuix-preference = { module = "top.yukonga.miuix.kmp:miuix-preference", version.ref = "miuix" }
 miuix-blur = { module = "top.yukonga.miuix.kmp:miuix-blur", version.ref = "miuix" }

@@ -1,13 +1,17 @@
 package me.joxquin.notivas.util
 
+import android.Manifest
 import android.app.AlarmManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -15,6 +19,40 @@ import androidx.compose.ui.platform.LocalContext
 actual class BackgroundPermissionManager(
     private val context: Context
 ) {
+    actual fun isNotificationPermissionGranted(): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                NotificationManagerCompat.from(context).areNotificationsEnabled()
+            }
+        } catch (_: Exception) {
+            true
+        }
+    }
+
+    actual fun openNotificationSettings() {
+        try {
+            val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            } else {
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            openAppSettings()
+        }
+    }
+
     actual fun isBatteryOptimizationIgnored(): Boolean {
         return try {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
@@ -66,15 +104,18 @@ actual class BackgroundPermissionManager(
 
     actual fun isMiuiOrHyperOs(): Boolean {
         val manufacturer = Build.MANUFACTURER.lowercase()
-        if (manufacturer.contains("xiaomi") || manufacturer.contains("redmi") || manufacturer.contains("poco")) {
+        val brand = Build.BRAND.lowercase()
+        if (manufacturer.contains("xiaomi") || manufacturer.contains("redmi") || manufacturer.contains("poco")
+            || brand.contains("xiaomi") || brand.contains("redmi") || brand.contains("poco")) {
             return true
         }
         var hasMiuiProp = false
         try {
             val systemPropertiesClass = Class.forName("android.os.SystemProperties")
             val getMethod = systemPropertiesClass.getMethod("get", String::class.java)
-            val result = getMethod.invoke(null, "ro.miui.ui.version.name") as? String
-            hasMiuiProp = !result.isNullOrBlank()
+            val miuiVersion = getMethod.invoke(null, "ro.miui.ui.version.name") as? String
+            val hyperOsVersion = getMethod.invoke(null, "ro.mi.os.version.name") as? String
+            hasMiuiProp = !miuiVersion.isNullOrBlank() || !hyperOsVersion.isNullOrBlank()
         } catch (_: Exception) {
             hasMiuiProp = false
         }
@@ -129,4 +170,19 @@ actual class BackgroundPermissionManager(
 actual fun rememberBackgroundPermissionManager(): BackgroundPermissionManager {
     val context = LocalContext.current
     return remember(context) { BackgroundPermissionManager(context) }
+}
+
+@Composable
+actual fun rememberNotificationPermissionLauncher(onResult: (Boolean) -> Unit): () -> Unit {
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+        onResult = onResult
+    )
+    return {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            onResult(true)
+        }
+    }
 }
