@@ -222,8 +222,11 @@
     <string name="no_forums_found">No se encontraron discusiones</string>
     <string name="foro_reply_placeholder">Escribe tu aporte aquí...</string>
     <string name="foro_send_reply">Publicar Respuesta</string>
-    <string name="foro_copilot_suggest">Sugerencia Copilot</string>
     <string name="foro_replies_count">%1$d respuestas</string>
+    <string name="foro_author_you">Tú</string>
+    <string name="foro_author_you_role">Tu aporte</string>
+    <string name="foro_status_responded">Respondido</string>
+    <string name="foro_status_pending_reply">Pendiente de respuesta</string>
 
     <!-- Copilot AI Screen -->
     <string name="copilot_title">Copilot IA</string>
@@ -244,7 +247,7 @@
     <string name="onboarding_welcome_subtitle">Tu asistente moderno, inteligente y offline-first para Canvas LMS</string>
     <string name="onboarding_start_button">Comenzar</string>
     <string name="onboarding_domain_title">Selecciona tu Universidad</string>
-    <string name="onboarding_login_sso">Inicio Institucional (SSO Web)</string>
+    <string name="onboarding_login_sso">Inicio Institucional</string>
     <string name="onboarding_login_token">Token Manual de Acceso</string>
     <string name="onboarding_bg_sync_title">Sincronización y Notificaciones</string>
     <string name="onboarding_bg_sync_subtitle">Configura estos permisos para recibir recordatorios puntuales y mantener tus cursos actualizados sin abrir la app</string>
@@ -256,8 +259,21 @@
     <string name="onboarding_miui_desc">En dispositivos Xiaomi se requiere activar \'Inicio automático\' y quitar el ahorro de batería agresivo</string>
     <string name="onboarding_miui_autostart_btn">Inicio Automático</string>
     <string name="onboarding_miui_battery_btn">Ahorro de Batería</string>
+    <string name="onboarding_notifications_title">Notificaciones</string>
+    <string name="onboarding_notifications_desc">Recibe avisos inmediatos de nuevas calificaciones, anuncios y tareas pendientes</string>
+    <string name="onboarding_permissions_header">Permisos y Segundo Plano</string>
+    <string name="onboarding_permissions_subtitle">Configura estos permisos para mantener tu horario y cursos siempre al día</string>
+    <string name="onboarding_token_switch_btn">Token Manual</string>
+    <string name="onboarding_web_switch_btn">Inicio Web</string>
+    <string name="onboarding_domain_input_label">INSTITUCIÓN O CAMPUS</string>
+    <string name="onboarding_domain_input_placeholder">ej. micampus</string>
+    <string name="onboarding_domain_quick_suggestions">Sugerencias rápidas</string>
+    <string name="onboarding_domain_continue_btn">Continuar</string>
+    <string name="onboarding_domain_help">¿No encuentras el dominio de tu universidad?</string>
     <string name="permission_status_granted">Configurado</string>
     <string name="permission_status_action">Permitir</string>
+    <string name="permission_status_granted_label">Concedido</string>
+    <string name="permission_status_configure_label">Configurar</string>
     <string name="onboarding_finish_btn">Comenzar a usar NotiVas</string>
 
     <!-- Bento Cards & Herramientas extras -->
@@ -595,6 +611,7 @@
     <string name="search_clear_history">Borrar historial</string>
     <string name="search_filter_courses">Cursos</string>
     <string name="search_filter_assignments">Tareas</string>
+    <string name="search_filter_forums">Foros</string>
     <string name="search_no_results">No se encontraron resultados para \"%1$s\"</string>
     <string name="search_ask_copilot_format">Preguntar a Copilot IA sobre \"%1$s\"</string>
     <string name="search_quick_suggestions">Sugerencias y accesos directos</string>
@@ -610,7 +627,6 @@
     <string name="morning_briefing_due_at_format">Hoy %1$s</string>
     <string name="morning_briefing_points_format">%1$s pts</string>
     <string name="morning_briefing_weight_format">%1$s%% ponderado</string>
-    <string name="morning_briefing_updated_at">Actualizado a las %1$s (SQLite local)</string>
     <string name="morning_briefing_view_plan">Ver plan del día</string>
     <string name="daily_roadmap_title">Resumen Matutino</string>
     <string name="daily_roadmap_executive_summary_title">Resumen Ejecutivo del Asistente</string>

@@ -222,8 +222,11 @@
     <string name="no_forums_found">No discussions found</string>
     <string name="foro_reply_placeholder">Write your response here...</string>
     <string name="foro_send_reply">Send Reply</string>
-    <string name="foro_copilot_suggest">Copilot Draft</string>
     <string name="foro_replies_count">%1$d replies</string>
+    <string name="foro_author_you">You</string>
+    <string name="foro_author_you_role">Your contribution</string>
+    <string name="foro_status_responded">Answered</string>
+    <string name="foro_status_pending_reply">Pending reply</string>
 
     <!-- Copilot AI Screen -->
     <string name="copilot_title">Copilot AI</string>
@@ -244,7 +247,7 @@
     <string name="onboarding_welcome_subtitle">Your modern, intelligent, offline-first Canvas LMS assistant</string>
     <string name="onboarding_start_button">Get Started</string>
     <string name="onboarding_domain_title">Select your University</string>
-    <string name="onboarding_login_sso">Institutional Login (SSO Web)</string>
+    <string name="onboarding_login_sso">Institutional Login</string>
     <string name="onboarding_login_token">Manual Access Token</string>
     <string name="onboarding_bg_sync_title">Background Sync &amp; Alerts</string>
     <string name="onboarding_bg_sync_subtitle">Configure these permissions to receive timely reminders and keep courses synced without opening the app</string>
@@ -256,8 +259,21 @@
     <string name="onboarding_miui_desc">On Xiaomi devices, \'Autostart\' and unrestricted battery saver are required</string>
     <string name="onboarding_miui_autostart_btn">Autostart</string>
     <string name="onboarding_miui_battery_btn">Battery Saver</string>
+    <string name="onboarding_notifications_title">Notifications</string>
+    <string name="onboarding_notifications_desc">Receive instant alerts for new grades, announcements, and upcoming deadlines</string>
+    <string name="onboarding_permissions_header">Permissions &amp; Background Sync</string>
+    <string name="onboarding_permissions_subtitle">Configure key permissions to keep your academic schedule and courses always up to date</string>
+    <string name="onboarding_token_switch_btn">Manual Token</string>
+    <string name="onboarding_web_switch_btn">Web Login</string>
+    <string name="onboarding_domain_input_label">INSTITUTION OR CAMPUS</string>
+    <string name="onboarding_domain_input_placeholder">e.g. mycampus</string>
+    <string name="onboarding_domain_quick_suggestions">Quick suggestions</string>
+    <string name="onboarding_domain_continue_btn">Continue</string>
+    <string name="onboarding_domain_help">Can\'t find your university domain?</string>
     <string name="permission_status_granted">Configured</string>
     <string name="permission_status_action">Allow</string>
+    <string name="permission_status_granted_label">Granted</string>
+    <string name="permission_status_configure_label">Configure</string>
     <string name="onboarding_finish_btn">Start using NotiVas</string>
 
     <!-- Bento Cards & Herramientas extras -->
@@ -595,6 +611,7 @@
     <string name="search_clear_history">Clear history</string>
     <string name="search_filter_courses">Courses</string>
     <string name="search_filter_assignments">Assignments</string>
+    <string name="search_filter_forums">Forums</string>
     <string name="search_no_results">No results found for \"%1$s\"</string>
     <string name="search_ask_copilot_format">Ask Copilot AI about \"%1$s\"</string>
     <string name="search_quick_suggestions">Suggestions &amp; shortcuts</string>
@@ -610,7 +627,6 @@
     <string name="morning_briefing_due_at_format">Today %1$s</string>
     <string name="morning_briefing_points_format">%1$s pts</string>
     <string name="morning_briefing_weight_format">%1$s%% weighted</string>
-    <string name="morning_briefing_updated_at">Updated at %1$s (SQLite local)</string>
     <string name="morning_briefing_view_plan">View daily plan</string>
     <string name="daily_roadmap_title">Morning Briefing</string>
     <string name="daily_roadmap_executive_summary_title">Executive Summary</string>
@@ -627,5 +643,3 @@
     <string name="morning_briefing_api_key_required_desc">The daily morning briefing requires an active OpenRouter API key to generate intelligent summaries and study advice.</string>
     <string name="morning_briefing_configure_api_key">Configure API Key</string>
 </resources>
-
-
