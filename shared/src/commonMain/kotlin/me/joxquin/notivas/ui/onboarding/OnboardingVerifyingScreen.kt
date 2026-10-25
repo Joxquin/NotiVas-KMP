@@ -34,10 +34,13 @@ fun OnboardingVerifyingScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        OnboardingStepIndicator(currentStep = 3, totalSteps = 5)
-                    }
+                title = {},
+                actions = {
+                    OnboardingStepIndicator(
+                        currentStep = 2,
+                        totalSteps = 4,
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
