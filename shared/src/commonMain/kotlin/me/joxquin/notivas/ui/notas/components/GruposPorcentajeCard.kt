@@ -38,13 +38,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -121,7 +121,7 @@ fun GruposPorcentajeCard(
                 Box(
                     modifier = Modifier
                         .squircleSurface(
-                            color = if (isWeightComplete) Color(0xFFE8F5E9) else Color(0xFFFFF3E0),
+                            color = if (isWeightComplete) MiuixTheme.colorScheme.primaryContainer else MiuixTheme.colorScheme.tertiaryContainer,
                             cornerRadius = 9999.dp
                         )
                         .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -130,7 +130,7 @@ fun GruposPorcentajeCard(
                         text = "${totalConfiguredWeight.roundToInt()}% Ponderado",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isWeightComplete) Color(0xFF2E7D32) else Color(0xFFE65100)
+                        color = if (isWeightComplete) MiuixTheme.colorScheme.onPrimaryContainer else MiuixTheme.colorScheme.onTertiaryContainer
                     )
                 }
             }
@@ -143,15 +143,17 @@ fun GruposPorcentajeCard(
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     simulationGroups.forEach { groupModel ->
-                        SingleGroupItemMiuix(
-                            groupModel = groupModel,
-                            onAddItem = { onAddItem(groupModel.group.id) },
-                            onEditGroup = { onEditGroup(groupModel.group) },
-                            onUpdateScore = onUpdateItemScore,
-                            onDeleteGroup = { onDeleteGroup(groupModel.group) },
-                            onDeleteItem = onDeleteItem,
-                            onLinkPlaceholder = onLinkPlaceholder
-                        )
+                        key(groupModel.group.id) {
+                            SingleGroupItemMiuix(
+                                groupModel = groupModel,
+                                onAddItem = { onAddItem(groupModel.group.id) },
+                                onEditGroup = { onEditGroup(groupModel.group) },
+                                onUpdateScore = onUpdateItemScore,
+                                onDeleteGroup = { onDeleteGroup(groupModel.group) },
+                                onDeleteItem = onDeleteItem,
+                                onLinkPlaceholder = onLinkPlaceholder
+                            )
+                        }
                     }
 
                     Button(
@@ -223,15 +225,17 @@ fun GruposPorcentajeCard(
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         simulationGroups.forEach { groupModel ->
-                            SingleGroupItemMaterial(
-                                groupModel = groupModel,
-                                onAddItem = { onAddItem(groupModel.group.id) },
-                                onEditGroup = { onEditGroup(groupModel.group) },
-                                onUpdateScore = onUpdateItemScore,
-                                onDeleteGroup = { onDeleteGroup(groupModel.group) },
-                                onDeleteItem = onDeleteItem,
-                                onLinkPlaceholder = onLinkPlaceholder
-                            )
+                            key(groupModel.group.id) {
+                                SingleGroupItemMaterial(
+                                    groupModel = groupModel,
+                                    onAddItem = { onAddItem(groupModel.group.id) },
+                                    onEditGroup = { onEditGroup(groupModel.group) },
+                                    onUpdateScore = onUpdateItemScore,
+                                    onDeleteGroup = { onDeleteGroup(groupModel.group) },
+                                    onDeleteItem = onDeleteItem,
+                                    onLinkPlaceholder = onLinkPlaceholder
+                                )
+                            }
                         }
 
                         TextButton(
@@ -260,7 +264,7 @@ private fun SingleGroupItemMiuix(
     onDeleteItem: (SimulationItem) -> Unit,
     onLinkPlaceholder: (SimulationItem) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember(groupModel.group.id) { mutableStateOf(false) }
     val avgScore = ((groupModel.groupAverage * 10f).roundToInt() / 10f).toString()
 
     Column(
@@ -280,14 +284,34 @@ private fun SingleGroupItemMiuix(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = groupModel.group.name,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MiuixTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = groupModel.group.name,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MiuixTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (groupModel.group.dropLowest) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MiuixTheme.colorScheme.tertiaryContainer
+                        ) {
+                            Text(
+                                text = "Descarta menor",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MiuixTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -309,23 +333,6 @@ private fun SingleGroupItemMiuix(
                         fontSize = 11.sp,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )
-                    if (groupModel.group.dropLowest) {
-                        Box(
-                            modifier = Modifier
-                                .squircleSurface(
-                                    color = Color(0xFFFFF3E0),
-                                    cornerRadius = 6.dp
-                                )
-                                .padding(horizontal = 4.dp, vertical = 1.dp)
-                        ) {
-                            Text(
-                                text = "Descarta menor",
-                                fontSize = 9.sp,
-                                color = Color(0xFFE65100),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
                 }
             }
 
@@ -350,7 +357,7 @@ private fun SingleGroupItemMiuix(
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
                         contentDescription = "Eliminar grupo",
-                        tint = Color(0xFFC62828),
+                        tint = MiuixTheme.colorScheme.error,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -398,26 +405,30 @@ private fun SingleGroupItemMiuix(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     if (item.isPlaceholder) {
-                                        Box(
-                                            modifier = Modifier
-                                                .squircleSurface(
-                                                    color = Color(0xFFEDE7F6),
-                                                    cornerRadius = 4.dp
-                                                )
-                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = MiuixTheme.colorScheme.surfaceContainerHighest
                                         ) {
-                                            Text("Vacío", fontSize = 9.sp, color = Color(0xFF512DA8), fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = "Vacío",
+                                                fontSize = 9.sp,
+                                                color = MiuixTheme.colorScheme.primary,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                            )
                                         }
                                     } else if (isGraded) {
-                                        Box(
-                                            modifier = Modifier
-                                                .squircleSurface(
-                                                    color = Color(0xFFE8F5E9),
-                                                    cornerRadius = 4.dp
-                                                )
-                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = MiuixTheme.colorScheme.primaryContainer
                                         ) {
-                                            Text("Calificada", fontSize = 9.sp, color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = "Calificada",
+                                                fontSize = 9.sp,
+                                                color = MiuixTheme.colorScheme.onPrimaryContainer,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                            )
                                         }
                                     }
                                     Text(
@@ -498,7 +509,7 @@ private fun SingleGroupItemMaterial(
     onDeleteItem: (SimulationItem) -> Unit,
     onLinkPlaceholder: (SimulationItem) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember(groupModel.group.id) { mutableStateOf(false) }
     val avgScore = ((groupModel.groupAverage * 10f).roundToInt() / 10f).toString()
 
     Surface(
@@ -515,13 +526,32 @@ private fun SingleGroupItemMaterial(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = groupModel.group.name,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = groupModel.group.name,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        if (groupModel.group.dropLowest) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = MaterialTheme.colorScheme.tertiaryContainer
+                            ) {
+                                Text(
+                                    text = "Descarta menor",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -542,19 +572,6 @@ private fun SingleGroupItemMaterial(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        if (groupModel.group.dropLowest) {
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.tertiaryContainer
-                            ) {
-                                Text(
-                                    text = "Descarta peor",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
                     }
                 }
 
