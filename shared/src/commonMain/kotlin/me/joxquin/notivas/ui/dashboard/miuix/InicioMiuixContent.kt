@@ -63,6 +63,7 @@ fun InicioMiuixContent(
     onNavigateToSchedule: () -> Unit = {},
     onNavigateToRoadmap: () -> Unit = {},
     onOpenAssignmentDraft: ((me.joxquin.notivas.ui.dashboard.AssignmentUiModel) -> Unit)? = null,
+    onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
@@ -74,6 +75,7 @@ fun InicioMiuixContent(
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
     val morningBriefing by viewModel.morningBriefing.collectAsState()
+    val discussions by viewModel.discussions.collectAsState()
 
     var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
 
@@ -254,8 +256,10 @@ fun InicioMiuixContent(
             courses = courses,
             courseStats = courseStats,
             assignments = allAssignments,
+            discussions = discussions,
             onCourseClick = onNavigateToCourseProgreso,
             onAssignmentClick = { selectedAssignmentForSubmenu = it },
+            onForumClick = { onNavigateToForoDetail?.invoke(it) },
             onAskAi = { query -> onNavigateToCopilot() },
             themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
             onAnimStatusChange = {

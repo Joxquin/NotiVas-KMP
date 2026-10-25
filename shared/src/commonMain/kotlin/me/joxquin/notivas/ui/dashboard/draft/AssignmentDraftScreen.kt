@@ -76,6 +76,7 @@ import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import me.joxquin.notivas.ui.components.miuix.shortenCourseSubtitle
 import androidx.compose.foundation.layout.fillMaxHeight
 
 /**
@@ -196,7 +197,8 @@ fun AssignmentDraftScreen(
                     scrollBehavior = scrollBehavior
                 ) {
                     MiuixPageTopAppBar(
-                        title = assignment.name,
+                        title = stringResource(Res.string.assignment_detail_title),
+                        subtitle = shortenCourseSubtitle(courseName.ifBlank { "Canvas LMS" }),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
                             BackNavigationIcon(onClick = onBack)
@@ -248,7 +250,6 @@ fun AssignmentDraftScreen(
                             courseName = courseName,
                             themeStyle = themeStyle,
                             draftInfo = draftInfo,
-                            modifier = Modifier.padding(horizontal = 16.dp),
                             onStartDraft = { isTemplate, templateName ->
                                 viewModel?.startOrCloneDraft(
                                     assignment = assignment,
@@ -297,8 +298,7 @@ fun AssignmentDraftScreen(
                         AssignmentBottomActionBar(
                             onSaveForLater = onBack,
                             onGoToEditor = onOpenCanvas,
-                            themeStyle = themeStyle,
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            themeStyle = themeStyle
                         )
                     }
 
@@ -336,10 +336,11 @@ fun AssignmentDraftScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = courseName.ifBlank { "Canvas LMS" },
+                                text = shortenCourseSubtitle(courseName.ifBlank { "Canvas LMS" }),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
                         }
                     },
@@ -427,7 +428,9 @@ fun AssignmentDraftScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     top = innerPadding.calculateTopPadding() + 8.dp,
-                    bottom = innerPadding.calculateBottomPadding() + 24.dp
+                    bottom = innerPadding.calculateBottomPadding() + 24.dp,
+                    start = 16.dp,
+                    end = 16.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -447,7 +450,6 @@ fun AssignmentDraftScreen(
                         courseName = courseName,
                         themeStyle = themeStyle,
                         draftInfo = draftInfo,
-                        modifier = Modifier.padding(horizontal = 16.dp),
                         onStartDraft = { isTemplate, templateName ->
                             viewModel?.startOrCloneDraft(
                                 assignment = assignment,
@@ -496,8 +498,7 @@ fun AssignmentDraftScreen(
                     AssignmentBottomActionBar(
                         onSaveForLater = onBack,
                         onGoToEditor = onOpenCanvas,
-                        themeStyle = themeStyle,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        themeStyle = themeStyle
                     )
                 }
 

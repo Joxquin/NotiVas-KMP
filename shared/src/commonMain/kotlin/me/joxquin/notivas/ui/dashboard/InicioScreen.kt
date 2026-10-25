@@ -52,6 +52,7 @@ fun InicioScreen(
     onNavigateToRoadmap: () -> Unit = {},
     onOpenAssignmentDraft: ((AssignmentUiModel) -> Unit)? = null,
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
+    onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (themeStyle == AppThemeStyle.MIUIX) {
@@ -65,6 +66,7 @@ fun InicioScreen(
             onNavigateToSchedule = onNavigateToSchedule,
             onNavigateToRoadmap = onNavigateToRoadmap,
             onOpenAssignmentDraft = onOpenAssignmentDraft,
+            onNavigateToForoDetail = onNavigateToForoDetail,
             modifier = modifier
         )
         return
@@ -80,6 +82,7 @@ fun InicioScreen(
     val institutionName by viewModel.institutionName.collectAsState()
     val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
     val morningBriefing by viewModel.morningBriefing.collectAsState()
+    val discussions by viewModel.discussions.collectAsState()
 
     var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
 
@@ -273,8 +276,10 @@ fun InicioScreen(
             courses = courses,
             courseStats = courseStats,
             assignments = allAssignments,
+            discussions = discussions,
             onCourseClick = onNavigateToCourseProgreso,
             onAssignmentClick = { selectedAssignmentForSubmenu = it },
+            onForumClick = { onNavigateToForoDetail?.invoke(it) },
             onAskAi = { query -> onNavigateToCopilot() },
             themeStyle = AppThemeStyle.MATERIAL,
             onAnimStatusChange = {

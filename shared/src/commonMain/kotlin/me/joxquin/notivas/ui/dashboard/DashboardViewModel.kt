@@ -129,6 +129,9 @@ class DashboardViewModel(
     private val _searchOffsetY = MutableStateFlow(0.dp)
     val searchOffsetY: StateFlow<Dp> = _searchOffsetY.asStateFlow()
 
+    private val _discussions = MutableStateFlow<List<me.joxquin.notivas.data.model.CanvasDiscussionTopic>>(emptyList())
+    val discussions: StateFlow<List<me.joxquin.notivas.data.model.CanvasDiscussionTopic>> = _discussions.asStateFlow()
+
     fun setSearchOffsetY(offsetY: Dp) {
         _searchOffsetY.value = offsetY
     }
@@ -707,6 +710,16 @@ class DashboardViewModel(
             } catch (e: Exception) {
                 _syncStatus.value = SyncStatus.FAILED
             }
+            loadDiscussionsQuietly()
+        }
+    }
+
+    private fun loadDiscussionsQuietly() {
+        viewModelScope.launch {
+            try {
+                val topics = repository.getDiscussionsForCourses()
+                _discussions.value = topics
+            } catch (_: Exception) {}
         }
     }
 

@@ -241,8 +241,10 @@ fun DashboardAnimatedSearchOverlay(
     courses: List<Course>,
     courseStats: List<CourseStat>,
     assignments: List<AssignmentUiModel>,
+    discussions: List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = emptyList(),
     onCourseClick: (Course) -> Unit,
     onAssignmentClick: (AssignmentUiModel) -> Unit,
+    onForumClick: (me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit = {},
     onAskAi: (String) -> Unit,
     themeStyle: AppThemeStyle,
     onAnimStatusChange: (SearchAnimStatus) -> Unit = {},
@@ -550,6 +552,7 @@ fun DashboardAnimatedSearchOverlay(
                                 courses = courses,
                                 courseStats = courseStats,
                                 assignments = assignments,
+                                discussions = discussions,
                                 onCourseClick = { course ->
                                     onSearchCommit(course.name)
                                     animStatus = SearchAnimStatus.COLLAPSING
@@ -559,6 +562,11 @@ fun DashboardAnimatedSearchOverlay(
                                     onSearchCommit(uiModel.assignment.name)
                                     animStatus = SearchAnimStatus.COLLAPSING
                                     onAssignmentClick(uiModel)
+                                },
+                                onForumClick = { topic ->
+                                    onSearchCommit(topic.title)
+                                    animStatus = SearchAnimStatus.COLLAPSING
+                                    onForumClick(topic)
                                 },
                                 onAskCopilot = { prompt ->
                                     onSearchCommit(prompt)

@@ -56,14 +56,20 @@ import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
+import androidx.compose.material.icons.filled.Forum
+import me.joxquin.notivas.data.model.CanvasDiscussionTopic
+import me.joxquin.notivas.shared.resources.search_filter_forums
+
 @Composable
 fun SearchLiveResultsSection(
     query: String,
     courses: List<Course>,
     courseStats: List<CourseStat>,
     assignments: List<AssignmentUiModel>,
+    discussions: List<CanvasDiscussionTopic> = emptyList(),
     onCourseClick: (Course) -> Unit,
     onAssignmentClick: (AssignmentUiModel) -> Unit,
+    onForumClick: (CanvasDiscussionTopic) -> Unit = {},
     onAskCopilot: (String) -> Unit,
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
@@ -87,7 +93,13 @@ fun SearchLiveResultsSection(
                 it.courseName.contains(trimmedQuery, ignoreCase = true)
     }
 
-    val hasResults = matchingCourses.isNotEmpty() || matchingAssignments.isNotEmpty()
+    val matchingDiscussions = discussions.filter {
+        it.title.contains(trimmedQuery, ignoreCase = true) ||
+                (it.courseName?.contains(trimmedQuery, ignoreCase = true) == true) ||
+                (it.userName?.contains(trimmedQuery, ignoreCase = true) == true)
+    }
+
+    val hasResults = matchingCourses.isNotEmpty() || matchingAssignments.isNotEmpty() || matchingDiscussions.isNotEmpty()
 
     Column(
         modifier = modifier
@@ -261,9 +273,64 @@ fun SearchLiveResultsSection(
                         }
                     }
                 }
-            }
+            // ─── 3. Foros Encontrados ──────────────────────────────────────
+            if (matchingDiscussions.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (isMiuix) {
+                        SmallTitle(
+                            text = "${stringResource(Res.string.search_filter_forums).uppercase()} (${matchingDiscussions.size})",
+                            modifier = Modifier.padding(start = 2.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "${stringResource(Res.string.search_filter_forums)} (${matchingDiscussions.size})",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                            color = onSurfaceColor
+                        )
+                    }
 
-            // ─── 3. Botón inferior para consultar con Copilot IA ────────────
+                    matchingDiscussions.forEach { topic ->
+                        if (isMiuix) {
+                            MiuixCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = MiuixCardDefaults.defaultColors(color = containerColor),
+                                insideMargin = PaddingValues(12.dp),
+                                pressFeedbackType = PressFeedbackType.Sink,
+                                onClick = { onForumClick(topic) }
+                            ) {
+                                ForumResultRow(
+                                    topic = topic,
+                                    isMiuix = true,
+                                    onSurfaceColor = onSurfaceColor,
+                                    onVariantColor = onVariantColor,
+                                    primaryColor = primaryColor
+                                )
+                            }
+                        } else {
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = containerColor),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onForumClick(topic) }
+                            ) {
+                                Box(modifier = Modifier.padding(12.dp)) {
+                                    ForumResultRow(
+                                        topic = topic,
+                                        isMiuix = false,
+                                        onSurfaceColor = onSurfaceColor,
+                                        onVariantColor = onVariantColor,
+                                        primaryColor = primaryColor
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+            // ─── 4. Botón inferior para consultar con Copilot IA ────────────
             Surface(
                 shape = RoundedCornerShape(14.dp),
                 color = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
@@ -444,3 +511,73 @@ private fun AssignmentResultRow(
         )
     }
 }
+
+@Composable
+private fun ForumResultRow(
+    topic: CanvasDiscussionTopic,
+    isMiuix: Boolean,
+    onSurfaceColor: androidx.compose.ui.graphics.Color,
+    onVariantColor: androidx.compose.ui.graphics.Color,
+    primaryColor: androidx.compose.ui.graphics.Color
+) {
+    val points = topic.assignment?.pointsPossible
+    val hasPoints = points != null && points > 0
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = primaryColor.copy(alpha = 0.15f),
+            modifier = Modifier.size(36.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.Forum,
+                    contentDescription = null,
+                    tint = primaryColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = topic.title,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = onSurfaceColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = topic.courseName ?: "Canvas",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = onVariantColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (hasPoints) {
+                    Text(
+                        text = "• ${points?.toInt()} pts",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                        color = primaryColor
+                    )
+                }
+            }
+        }
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = onVariantColor,
+            modifier = Modifier.size(14.dp)
+        )
+    }
+}
+

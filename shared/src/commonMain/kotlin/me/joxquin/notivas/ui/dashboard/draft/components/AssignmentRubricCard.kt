@@ -66,7 +66,6 @@ fun AssignmentRubricCard(
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
                 .squircleSurface(
                     color = MiuixTheme.colorScheme.surfaceContainer,
                     cornerRadius = 20.dp
@@ -162,7 +161,6 @@ fun AssignmentRubricCard(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
         ) {
             Column(
                 modifier = Modifier

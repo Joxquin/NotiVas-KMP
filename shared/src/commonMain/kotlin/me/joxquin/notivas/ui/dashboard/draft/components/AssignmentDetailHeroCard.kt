@@ -88,8 +88,7 @@ fun AssignmentDetailHeroCard(
     if (themeStyle == AppThemeStyle.MIUIX) {
         Column(
             modifier = modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Fila Superior: DETALLE DE TAREA + Badge Sincronizado Canvas
@@ -129,34 +128,6 @@ fun AssignmentDetailHeroCard(
                             color = MiuixGreen
                         )
                     }
-                }
-            }
-
-            // Pill del Curso
-            Surface(
-                shape = RoundedCornerShape(9999.dp),
-                color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.clip(RoundedCornerShape(9999.dp))
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.School,
-                        contentDescription = null,
-                        tint = MiuixTheme.colorScheme.primary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    MiuixText(
-                        text = courseName.ifBlank { "Canvas LMS" },
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MiuixTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
                 }
             }
 
@@ -237,7 +208,6 @@ fun AssignmentDetailHeroCard(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -278,32 +248,6 @@ fun AssignmentDetailHeroCard(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                    }
-                }
-
-                // Curso
-                Surface(
-                    shape = RoundedCornerShape(9999.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = courseName.ifBlank { "Canvas LMS" },
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, fontWeight = FontWeight.Medium),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
                     }
                 }
 
