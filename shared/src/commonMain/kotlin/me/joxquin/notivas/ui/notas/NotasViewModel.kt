@@ -180,8 +180,12 @@ class NotasViewModel(
         _selectedCourse.value = course
     }
 
+    private fun getTargetCourse(): Course? {
+        return _selectedCourse.value ?: uiState.value.selectedCourse ?: uiState.value.courses.firstOrNull()
+    }
+
     fun applyTemplate(template: me.joxquin.notivas.domain.template.CourseEvaluationTemplate) {
-        val course = _selectedCourse.value ?: return
+        val course = getTargetCourse() ?: return
         viewModelScope.launch {
             repository.applyTemplate(course, template)
         }
@@ -222,7 +226,7 @@ class NotasViewModel(
     }
 
     fun addSimulationGroup(name: String, weight: Float) {
-        val courseId = _selectedCourse.value?.id ?: return
+        val courseId = getTargetCourse()?.id ?: return
         viewModelScope.launch {
             repository.createSimulationGroup(
                 SimulationGroup(courseId = courseId, name = name, weightPercentage = weight)
@@ -237,7 +241,7 @@ class NotasViewModel(
         dropLowest: Boolean,
         minToDrop: Int
     ) {
-        val courseId = _selectedCourse.value?.id ?: return
+        val courseId = getTargetCourse()?.id ?: return
         viewModelScope.launch {
             val group = SimulationGroup(
                 courseId = courseId,
