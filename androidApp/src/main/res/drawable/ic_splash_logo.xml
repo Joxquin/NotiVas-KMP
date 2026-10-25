@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="160dp"
+    android:viewportWidth="160"
+    android:viewportHeight="160">
+    <!-- Icono de arranque modo claro: birrete contrastado sobre fondo claro -->
+    <group
+        android:scaleX="0.75"
+        android:scaleY="0.75"
+        android:translateX="27.5"
+        android:translateY="23.75">
+        <!-- Casquete / Base Inferior del Birrete -->
+        <path
+            android:fillColor="#150B00"
+            android:pathData="M28,70 L28,98 C28,116 47,127 70,127 C93,127 112,116 112,98 L112,70 L70,88 Z" />
+
+        <!-- Rombo / Diamante Superior del Birrete -->
+        <path
+            android:fillColor="#2A1700"
+            android:pathData="M70,24 L136,54 L70,84 L4,54 Z" />
+
+        <!-- Faceta Especular -->
+        <path
+            android:fillColor="#534434"
+            android:fillAlpha="0.32"
+            android:pathData="M70,28 L128,54 L70,78 L12,54 Z" />
+
+        <!-- Boton Pivote Central de la Borla -->
+        <path
+            android:fillColor="#4F6532"
+            android:pathData="M70,54m-5.5,0a5.5,5.5 0,1 1,11 0a5.5,5.5 0,1 1,-11 0" />
+
+        <!-- Cuerda Drapeada de la Borla -->
+        <path
+            android:strokeColor="#4F6532"
+            android:strokeWidth="4"
+            android:strokeLineCap="round"
+            android:pathData="M70,54 C54,54 38,65 32,78 L28,98" />
+
+        <!-- Borla / Flecos de Graduacion -->
+        <path
+            android:fillColor="#3A4D23"
+            android:pathData="M28,98 L24,118 C24,121 31,121 32,118 L31,98 Z" />
+
+        <!-- Anillo Tonal de la Borla en AmberPrimary -->
+        <path
+            android:fillColor="#F59E0B"
+            android:pathData="M24,101h7.5v3.5h-7.5z" />
+    </group>
+</vector>

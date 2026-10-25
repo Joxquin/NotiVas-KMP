@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo del splash modo claro idéntico a MaterialTheme.colorScheme.surface (CanvasSurface) -->
+    <color name="splash_background">#FCF9F4</color>
+</resources>
