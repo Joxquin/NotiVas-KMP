@@ -1,6 +1,9 @@
 package me.joxquin.notivas.ui.onboarding.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,12 +32,25 @@ fun OnboardingStepIndicator(
     ) {
         for (i in 1..totalSteps) {
             val isActive = i == currentStep
-            val width by animateDpAsState(if (isActive) 24.dp else 8.dp)
-            val color = if (isActive) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.outlineVariant
+            val isCompleted = i < currentStep
+
+            val width by animateDpAsState(
+                targetValue = if (isActive) 24.dp else 8.dp,
+                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                label = "step_width"
+            )
+
+            val targetColor = when {
+                isActive -> MaterialTheme.colorScheme.primary
+                isCompleted -> MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
+                else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
             }
+
+            val color by animateColorAsState(
+                targetValue = targetColor,
+                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                label = "step_color"
+            )
 
             Box(
                 modifier = Modifier
