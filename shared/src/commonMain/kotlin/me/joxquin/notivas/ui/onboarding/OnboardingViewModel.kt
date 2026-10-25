@@ -111,6 +111,12 @@ class OnboardingViewModel(
         }
     }
 
+    fun saveGoogleDriveAuth(accessToken: String, refreshToken: String?, email: String?) {
+        viewModelScope.launch {
+            repository.saveGoogleDriveAuth(accessToken, refreshToken, email)
+        }
+    }
+
     fun resetVerification() {
         _verificationSuccess.value = null
     }

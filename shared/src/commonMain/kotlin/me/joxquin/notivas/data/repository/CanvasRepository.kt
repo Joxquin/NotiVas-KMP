@@ -33,6 +33,7 @@ class CanvasRepository(
     private val preferencesManager: PreferencesManager
 ) {
     val userProfile: Flow<UserProfile?> = localStore.userProfile
+    fun getUserProfileOnce(): UserProfile? = localStore.getUserProfileOnce()
     val allCourses: Flow<List<Course>> = localStore.getAllCourses()
     val allAssignments: Flow<List<Assignment>> = localStore.getAllAssignments()
     val allPlannerItems: Flow<List<PlannerItem>> = localStore.getAllPlannerItems()
@@ -610,6 +611,10 @@ class CanvasRepository(
 
     suspend fun completeOnboarding() {
         preferencesManager.setOnboardingCompleted(true)
+    }
+
+    suspend fun saveGoogleDriveAuth(accessToken: String, refreshToken: String?, email: String?) {
+        preferencesManager.saveGoogleDriveTokens(accessToken, refreshToken, email)
     }
 
     suspend fun getProfile(): UserProfile = withContext(Dispatchers.IO) {
