@@ -120,4 +120,13 @@ class OnboardingViewModel(
     fun resetVerification() {
         _verificationSuccess.value = null
     }
+
+    fun resetState() {
+        _universityUrl.value = "https://canvas.utp.edu.pe"
+        _accessToken.value = ""
+        _isVerifying.value = false
+        _verificationSuccess.value = null
+        _userProfile.value = null
+        _coursesCount.value = 0
+    }
 }

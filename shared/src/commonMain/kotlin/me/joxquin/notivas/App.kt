@@ -109,12 +109,14 @@ fun App() {
                         label = "onboarding_to_dashboard_transition"
                     ) { completed ->
                         if (!completed) {
-                            OnboardingFlow(
-                                viewModel = onboardingViewModel,
-                                onComplete = {
-                                    onboardingViewModel.finishOnboarding()
-                                }
-                            )
+                            androidx.compose.runtime.key(completed) {
+                                OnboardingFlow(
+                                    viewModel = onboardingViewModel,
+                                    onComplete = {
+                                        onboardingViewModel.finishOnboarding()
+                                    }
+                                )
+                            }
                         } else if (isBiometricLockEnabled && !isBiometricAuthenticated) {
                             // Pantalla de bloqueo biométrico pendiente
                             Box(

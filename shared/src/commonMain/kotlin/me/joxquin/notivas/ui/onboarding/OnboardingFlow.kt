@@ -37,6 +37,12 @@ fun OnboardingFlow(
     var currentStep by remember { mutableStateOf(OnboardingStep.WelcomeDomain) }
     var hasCompletedAuth by remember { mutableStateOf(false) }
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.resetState()
+        currentStep = OnboardingStep.WelcomeDomain
+        hasCompletedAuth = false
+    }
+
     val effectiveStep = when {
         currentStep == OnboardingStep.GoogleDrive -> OnboardingStep.GoogleDrive
         currentStep == OnboardingStep.Permissions -> OnboardingStep.Permissions
