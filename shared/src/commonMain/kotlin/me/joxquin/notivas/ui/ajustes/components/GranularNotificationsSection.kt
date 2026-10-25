@@ -89,6 +89,11 @@ import me.joxquin.notivas.shared.resources.onboarding_miui_desc
 import me.joxquin.notivas.shared.resources.onboarding_miui_autostart_btn
 import me.joxquin.notivas.shared.resources.permission_status_granted
 import me.joxquin.notivas.shared.resources.permission_status_action
+import me.joxquin.notivas.shared.resources.settings_battery_desc
+import me.joxquin.notivas.shared.resources.settings_alarms_desc
+import me.joxquin.notivas.shared.resources.settings_miui_desc
+import androidx.compose.material.icons.outlined.BatteryChargingFull
+import androidx.compose.material.icons.outlined.RocketLaunch
 import me.joxquin.notivas.shared.resources.morning_briefing_api_key_required_title
 import me.joxquin.notivas.shared.resources.morning_briefing_api_key_required_desc
 import me.joxquin.notivas.shared.resources.morning_briefing_configure_api_key
@@ -511,135 +516,50 @@ fun GranularNotificationsSection(
                     }
                 }
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
 
                 // Diagnóstico y Permisos de Batería y Alarmas
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { permissionManager.requestIgnoreBatteryOptimization() },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(Res.string.onboarding_battery_title),
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = stringResource(Res.string.onboarding_battery_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (permissionManager.isBatteryOptimizationIgnored()) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.errorContainer
-                        },
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Text(
-                            text = if (permissionManager.isBatteryOptimizationIgnored()) {
-                                stringResource(Res.string.permission_status_granted)
-                            } else {
-                                stringResource(Res.string.permission_status_action)
-                            },
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = if (permissionManager.isBatteryOptimizationIgnored()) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onErrorContainer
-                            },
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
+                MaterialNotificationActionRow(
+                    icon = Icons.Outlined.BatteryChargingFull,
+                    title = stringResource(Res.string.onboarding_battery_title),
+                    subtitle = stringResource(Res.string.settings_battery_desc),
+                    actionLabel = if (permissionManager.isBatteryOptimizationIgnored()) {
+                        stringResource(Res.string.permission_status_granted)
+                    } else {
+                        stringResource(Res.string.permission_status_action)
+                    },
+                    isActionActive = permissionManager.isBatteryOptimizationIgnored(),
+                    onClick = { permissionManager.requestIgnoreBatteryOptimization() }
+                )
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { permissionManager.requestScheduleExactAlarms() },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(Res.string.onboarding_alarms_title),
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = stringResource(Res.string.onboarding_alarms_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (permissionManager.canScheduleExactAlarms()) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.errorContainer
-                        },
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Text(
-                            text = if (permissionManager.canScheduleExactAlarms()) {
-                                stringResource(Res.string.permission_status_granted)
-                            } else {
-                                stringResource(Res.string.permission_status_action)
-                            },
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = if (permissionManager.canScheduleExactAlarms()) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onErrorContainer
-                            },
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
+                MaterialNotificationActionRow(
+                    icon = Icons.Default.NotificationsActive,
+                    title = stringResource(Res.string.onboarding_alarms_title),
+                    subtitle = stringResource(Res.string.settings_alarms_desc),
+                    actionLabel = if (permissionManager.canScheduleExactAlarms()) {
+                        stringResource(Res.string.permission_status_granted)
+                    } else {
+                        stringResource(Res.string.permission_status_action)
+                    },
+                    isActionActive = permissionManager.canScheduleExactAlarms(),
+                    onClick = { permissionManager.requestScheduleExactAlarms() }
+                )
 
                 if (permissionManager.isMiuiOrHyperOs()) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { permissionManager.openMiuiAutostartSettings() },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(Res.string.onboarding_miui_title),
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = stringResource(Res.string.onboarding_miui_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            modifier = Modifier.padding(start = 8.dp)
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.onboarding_miui_autostart_btn),
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+
+                    MaterialNotificationActionRow(
+                        icon = Icons.Outlined.RocketLaunch,
+                        title = stringResource(Res.string.onboarding_miui_title),
+                        subtitle = stringResource(Res.string.settings_miui_desc),
+                        actionLabel = stringResource(Res.string.onboarding_miui_autostart_btn),
+                        isActionActive = true,
+                        actionContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        actionContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        onClick = { permissionManager.openMiuiAutostartSettings() }
+                    )
                 }
             }
         }
