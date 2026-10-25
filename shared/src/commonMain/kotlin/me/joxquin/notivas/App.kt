@@ -1,5 +1,6 @@
 package me.joxquin.notivas
 
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,70 +95,85 @@ fun App() {
             Surface(modifier = Modifier.fillMaxSize()) {
                 if (!isPreferencesLoaded) {
                     Box(modifier = Modifier.fillMaxSize())
-                } else if (!isOnboardingCompleted) {
-                    OnboardingFlow(
-                        viewModel = onboardingViewModel,
-                        onComplete = {
-                            onboardingViewModel.finishOnboarding()
-                        }
-                    )
-                } else if (isBiometricLockEnabled && !isBiometricAuthenticated) {
-                    // Pantalla de bloqueo biométrico pendiente
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Fingerprint,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(80.dp)
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text(
-                                text = stringResource(Res.string.biometric_lock_title),
-                                style = MaterialTheme.typography.headlineMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = stringResource(Res.string.biometric_lock_desc),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(32.dp))
-                            Button(
-                                onClick = {
-                                    biometricAuthenticator.authenticate(
-                                        title = "NotiVas",
-                                        subtitle = "Desbloquear con biometría",
-                                        onSuccess = { isBiometricAuthenticated = true },
-                                        onError = {}
-                                    )
+                } else {
+                    androidx.compose.animation.AnimatedContent(
+                        targetState = isOnboardingCompleted,
+                        transitionSpec = {
+                            (androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(450, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
+                             androidx.compose.animation.scaleIn(initialScale = 0.94f, animationSpec = androidx.compose.animation.core.tween(450, easing = androidx.compose.animation.core.FastOutSlowInEasing)))
+                                .togetherWith(
+                                    androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300)) +
+                                    androidx.compose.animation.scaleOut(targetScale = 1.04f, animationSpec = androidx.compose.animation.core.tween(300))
+                                )
+                        },
+                        label = "onboarding_to_dashboard_transition"
+                    ) { completed ->
+                        if (!completed) {
+                            OnboardingFlow(
+                                viewModel = onboardingViewModel,
+                                onComplete = {
+                                    onboardingViewModel.finishOnboarding()
                                 }
+                            )
+                        } else if (isBiometricLockEnabled && !isBiometricAuthenticated) {
+                            // Pantalla de bloqueo biométrico pendiente
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text("Desbloquear")
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Fingerprint,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(80.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                    Text(
+                                        text = stringResource(Res.string.biometric_lock_title),
+                                        style = MaterialTheme.typography.headlineMedium.copy(
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = stringResource(Res.string.biometric_lock_desc),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(32.dp))
+                                    Button(
+                                        onClick = {
+                                            biometricAuthenticator.authenticate(
+                                                title = "NotiVas",
+                                                subtitle = "Desbloquear con biometría",
+                                                onSuccess = { isBiometricAuthenticated = true },
+                                                onError = {}
+                                            )
+                                        }
+                                    ) {
+                                        Text("Desbloquear")
+                                    }
+                                }
                             }
+                        } else {
+                            me.joxquin.notivas.ui.MainAppShell(
+                                canvasRepository = canvasRepository,
+                                copilotRepository = copilotRepository,
+                                chatRepository = chatRepository,
+                                preferencesManager = preferencesManager
+                            )
                         }
                     }
-                } else {
-                    me.joxquin.notivas.ui.MainAppShell(
-                        canvasRepository = canvasRepository,
-                        copilotRepository = copilotRepository,
-                        chatRepository = chatRepository,
-                        preferencesManager = preferencesManager
-                    )
                 }
             }
         }
