@@ -32,9 +32,11 @@ fun AppTheme(
         darkTheme -> top.yukonga.miuix.kmp.theme.ColorSchemeMode.Dark
         else -> top.yukonga.miuix.kmp.theme.ColorSchemeMode.Light
     }
-    val miuixThemeController = androidx.compose.runtime.remember(miuixColorSchemeMode, colorScheme.primary) {
+    val miuixThemeController = androidx.compose.runtime.remember(miuixColorSchemeMode, colorScheme.primary, darkTheme) {
         top.yukonga.miuix.kmp.theme.ThemeController(
             colorSchemeMode = miuixColorSchemeMode,
+            lightColors = WarmMiuixLightColors,
+            darkColors = WarmMiuixDarkColors,
             keyColor = colorScheme.primary,
             isDark = darkTheme
         )
