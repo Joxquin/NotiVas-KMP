@@ -76,6 +76,9 @@
     <string name="sync_interval_3h">Every 3 hours</string>
     <string name="sync_interval_6h">Every 6 hours (Battery saving)</string>
     <string name="sync_interval_custom_format">Every %1$d minutes</string>
+    <string name="settings_battery_desc">Sync and alerts with screen turned off</string>
+    <string name="settings_alarms_desc">Punctual alerts at exact due time</string>
+    <string name="settings_miui_desc">Allow app to wake up after reboot</string>
 
     <!-- AI Copilot Settings -->
     <string name="settings_copilot_section_title">INTELLIGENCE &amp; COPILOT AI</string>

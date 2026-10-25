@@ -76,6 +76,9 @@
     <string name="sync_interval_3h">Cada 3 horas</string>
     <string name="sync_interval_6h">Cada 6 horas (Ahorro de batería)</string>
     <string name="sync_interval_custom_format">Cada %1$d minutos</string>
+    <string name="settings_battery_desc">Sincronización y alertas con pantalla apagada</string>
+    <string name="settings_alarms_desc">Avisos puntuales al minuto exacto de entrega</string>
+    <string name="settings_miui_desc">Inicio automático tras reinicios del sistema</string>
 
     <!-- AI Copilot Settings -->
     <string name="settings_copilot_section_title">INTELIGENCIA Y COPILOT IA</string>
