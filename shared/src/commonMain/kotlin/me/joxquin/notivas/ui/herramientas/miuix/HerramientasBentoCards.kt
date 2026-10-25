@@ -413,15 +413,27 @@ fun ForosBentoCard(
 ) {
     val discussions = forosUiState?.discussions ?: emptyList()
     val nowMs = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+    val respondedIds = forosUiState?.respondedForumIds ?: emptySet()
 
-    // Encontrar el foro activo más próximo a cerrar
-    val nextClosingForum = discussions
-        .filter { topic ->
-            if (topic.locked == true) return@filter false
-            val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: return@filter false
-            val epochMs = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis ?: return@filter false
-            epochMs > nowMs
-        }
+    // 1. Foros activos que aún no han cerrado
+    val activeForums = discussions.filter { topic ->
+        if (topic.locked == true) return@filter false
+        val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: return@filter false
+        val epochMs = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis ?: return@filter false
+        epochMs > nowMs
+    }
+
+    // 2. Separar foros pendientes de responder de los ya respondidos
+    val (pendingForums, answeredForums) = activeForums.partition { topic ->
+        val isResponded = respondedIds.contains(topic.id) ||
+                topic.assignment?.submission?.score != null ||
+                topic.assignment?.submission?.workflowState in listOf("submitted", "graded")
+        !isResponded
+    }
+
+    // 3. Priorizar el más próximo a cerrar que esté pendiente; si todos fueron respondidos, el más próximo respondido
+    val isAllAnswered = activeForums.isNotEmpty() && pendingForums.isEmpty()
+    val nextClosingForum = (if (pendingForums.isNotEmpty()) pendingForums else answeredForums)
         .minByOrNull { topic ->
             val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt ?: ""
             me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis ?: Long.MAX_VALUE
@@ -593,13 +605,37 @@ fun ForosBentoCard(
                                 )
                             }
 
-                            Text(
-                                text = dueBadgeText,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (isUrgent) MiuixTheme.colorScheme.error else MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                modifier = Modifier.padding(start = 6.dp)
-                            )
+                            val isThisTopicAnswered = respondedIds.contains(nextClosingForum.id) ||
+                                    nextClosingForum.assignment?.submission?.score != null ||
+                                    nextClosingForum.assignment?.submission?.workflowState in listOf("submitted", "graded")
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                if (isThisTopicAnswered) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(MiuixTheme.colorScheme.primary.copy(alpha = 0.15f))
+                                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(Res.string.foro_status_responded),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MiuixTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+
+                                Text(
+                                    text = dueBadgeText,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isUrgent) MiuixTheme.colorScheme.error else MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                )
+                            }
                         }
 
                         // Banner sutil Copilot IA

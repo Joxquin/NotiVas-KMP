@@ -496,6 +496,10 @@ fun MainAppShell(
                                             onNavigateToCourseProgreso = { course ->
                                                 notasViewModel.selectCourse(course)
                                                 miuixNavigator.push(MiuixRoute.CourseProgreso(course.id))
+                                            },
+                                            onNavigateToForoDetail = { topic ->
+                                                forosViewModel.selectDiscussion(topic)
+                                                miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
                                             }
                                         )
                                     }
@@ -1118,6 +1122,13 @@ fun MainAppShell(
                                     notasViewModel.selectCourse(course)
                                     showingForosDetail = false
                                     showingNotasDetail = true
+                                    navigateToMaterial(MainDestination.Herramientas)
+                                },
+                                onNavigateToForoDetail = { topic ->
+                                    forosViewModel.selectDiscussion(topic)
+                                    showingNotasDetail = false
+                                    showingArchiveDetail = false
+                                    showingForosDetail = true
                                     navigateToMaterial(MainDestination.Herramientas)
                                 }
                             )

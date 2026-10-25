@@ -641,16 +641,14 @@ fun ForoCopilotAssistantSheet(
                                     color = chipBg,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    val formattedDraft = remember(strategy.suggestedDraft) {
-                                        formatMarkdown(strategy.suggestedDraft)
-                                    }
-                                    Text(
-                                        text = formattedDraft,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                    me.joxquin.notivas.ui.components.RichContentRenderer(
+                                        text = strategy.suggestedDraft,
+                                        themeStyle = themeStyle,
+                                        textStyle = MaterialTheme.typography.bodyMedium.copy(
                                             fontSize = 13.sp,
                                             lineHeight = 20.sp
                                         ),
-                                        color = onSurface,
+                                        textColor = onSurface,
                                         modifier = Modifier.padding(12.dp)
                                     )
                                 }

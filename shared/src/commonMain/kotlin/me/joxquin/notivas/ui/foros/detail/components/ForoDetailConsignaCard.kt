@@ -124,10 +124,11 @@ fun ForoDetailConsignaCard(
                 }
 
                 // Cuerpo de la Consigna
-                Text(
-                    text = formattedMessage,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
-                    color = MiuixTheme.colorScheme.onSurface
+                me.joxquin.notivas.ui.components.RichContentRenderer(
+                    text = cleanMessage,
+                    themeStyle = AppThemeStyle.MIUIX,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
+                    textColor = MiuixTheme.colorScheme.onSurface
                 )
 
                 // Rúbrica de Evaluación Acordeón (Solo si Canvas incluye rúbrica real)
@@ -267,10 +268,11 @@ fun ForoDetailConsignaCard(
                     )
                 }
 
-                Text(
-                    text = formattedMessage,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
-                    color = MaterialTheme.colorScheme.onSurface
+                me.joxquin.notivas.ui.components.RichContentRenderer(
+                    text = cleanMessage,
+                    themeStyle = AppThemeStyle.MATERIAL,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
+                    textColor = MaterialTheme.colorScheme.onSurface
                 )
 
                 val realRubric = topic.assignment?.rubric

@@ -72,7 +72,9 @@ data class ForosUiState(
     val isGeneratingCopilot: Boolean = false,
     val copilotStrategy: CopilotForoStrategy? = null,
     val copilotErrorMessage: String? = null,
-    val activeCopilotModel: String = "google/gemini-2.5-flash"
+    val activeCopilotModel: String = "google/gemini-2.5-flash",
+    val userProfile: me.joxquin.notivas.data.model.UserProfile? = null,
+    val respondedForumIds: Set<Long> = emptySet()
 )
 
 class ForosViewModel(
@@ -107,6 +109,8 @@ class ForosViewModel(
             preferencesManager?.getOpenRouterModel() ?: "gemini-3.5-flash-lite"
         }
     )
+
+    private val _respondedForumIds = MutableStateFlow<Set<Long>>(emptySet())
 
     // Almacenamiento local de borradores y estrategias por ID de foro en memoria del ViewModel
     private val _draftsMemory = mutableMapOf<Long, String>()
@@ -200,8 +204,14 @@ class ForosViewModel(
             _activeCopilotModel
         ) { generating, strategy, errorMsg, activeModel ->
             Tuple4(generating, strategy, errorMsg, activeModel)
+        },
+        combine(
+            canvasRepository.userProfile,
+            _respondedForumIds
+        ) { profile, respondedIds ->
+            profile to respondedIds
         }
-    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, publishing, pubSuccess, pubError), (generating, strategy, errorMsg, activeModel) ->
+    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, publishing, pubSuccess, pubError), (generating, strategy, errorMsg, activeModel), (userProfile, respondedIds) ->
 
         val nowMs = DateTimeUtil.nowEpochMillis()
 
@@ -287,7 +297,9 @@ class ForosViewModel(
             isGeneratingCopilot = generating,
             copilotStrategy = strategy,
             copilotErrorMessage = errorMsg,
-            activeCopilotModel = activeModel
+            activeCopilotModel = activeModel,
+            userProfile = userProfile,
+            respondedForumIds = respondedIds
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ForosUiState())
 
@@ -341,6 +353,15 @@ class ForosViewModel(
             try {
                 val entries = canvasRepository.getDiscussionEntries(courseId, topic.id)
                 _selectedDiscussionReplies.value = entries
+
+                val user = canvasRepository.getUserProfileOnce()
+                val hasUserReplied = entries.any { entry ->
+                    (user?.id != null && (entry.userId == user.id || entry.user?.id == user.id)) ||
+                            (user?.name != null && entry.userName?.equals(user.name, ignoreCase = true) == true)
+                }
+                if (hasUserReplied) {
+                    _respondedForumIds.value = _respondedForumIds.value + topic.id
+                }
             } catch (_: Exception) {
                 _selectedDiscussionReplies.value = emptyList()
             } finally {
@@ -641,6 +662,7 @@ class ForosViewModel(
                     // Limpiar borrador local
                     _currentDraft.value = ""
                     _draftsMemory.remove(topic.id)
+                    _respondedForumIds.value = _respondedForumIds.value + topic.id
                     _publishSuccessMessage.value = true
                     _publishErrorMessage.value = null
 

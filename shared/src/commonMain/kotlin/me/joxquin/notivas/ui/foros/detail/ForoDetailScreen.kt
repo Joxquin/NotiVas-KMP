@@ -68,6 +68,7 @@ import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import me.joxquin.notivas.ui.components.miuix.shortenCourseSubtitle
 import androidx.compose.foundation.layout.fillMaxHeight
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
@@ -118,7 +119,8 @@ fun ForoDetailScreen(
                     scrollBehavior = scrollBehavior
                 ) {
                     MiuixPageTopAppBar(
-                        title = topic.title.orEmpty(),
+                        title = stringResource(Res.string.foro_detail_title),
+                        subtitle = shortenCourseSubtitle(topic.courseName ?: "Canvas LMS"),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
                             BackNavigationIcon(onClick = onBack)
@@ -164,7 +166,9 @@ fun ForoDetailScreen(
                         replies = uiState.selectedDiscussionReplies,
                         isLoading = uiState.isLoadingReplies,
                         totalRepliesCount = topic.discussionSubentryCount ?: 0,
-                        themeStyle = themeStyle
+                        themeStyle = themeStyle,
+                        currentUserId = uiState.userProfile?.id,
+                        currentUserName = uiState.userProfile?.name
                     )
                 }
 
@@ -271,10 +275,11 @@ fun ForoDetailScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = topic.courseName ?: "Canvas",
+                                    text = shortenCourseSubtitle(topic.courseName ?: "Canvas"),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -330,7 +335,9 @@ fun ForoDetailScreen(
                         replies = uiState.selectedDiscussionReplies,
                         isLoading = uiState.isLoadingReplies,
                         totalRepliesCount = topic.discussionSubentryCount ?: 0,
-                        themeStyle = themeStyle
+                        themeStyle = themeStyle,
+                        currentUserId = uiState.userProfile?.id,
+                        currentUserName = uiState.userProfile?.name
                     )
                 }
 

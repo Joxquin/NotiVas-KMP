@@ -63,12 +63,19 @@ import me.joxquin.notivas.shared.resources.foro_author_classmate_role
 import me.joxquin.notivas.shared.resources.foro_show_more
 import me.joxquin.notivas.shared.resources.foro_show_less_action
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import me.joxquin.notivas.shared.resources.foro_author_you
+import me.joxquin.notivas.shared.resources.foro_author_you_role
+
 @Composable
 fun ForoDetailRepliesSection(
     replies: List<CanvasDiscussionEntry>,
     isLoading: Boolean,
     totalRepliesCount: Int,
     themeStyle: AppThemeStyle,
+    currentUserId: Long? = null,
+    currentUserName: String? = null,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
@@ -199,7 +206,9 @@ fun ForoDetailRepliesSection(
                 visibleReplies.forEach { reply ->
                     ReplyCardItem(
                         entry = reply,
-                        themeStyle = themeStyle
+                        themeStyle = themeStyle,
+                        currentUserId = currentUserId,
+                        currentUserName = currentUserName
                     )
                 }
             }
@@ -246,7 +255,9 @@ fun ForoDetailRepliesSection(
 @Composable
 private fun ReplyCardItem(
     entry: CanvasDiscussionEntry,
-    themeStyle: AppThemeStyle
+    themeStyle: AppThemeStyle,
+    currentUserId: Long? = null,
+    currentUserName: String? = null
 ) {
     val cleanText = remember(entry.message) {
         entry.message?.let { me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.cleanHtml(it) } ?: ""
@@ -254,6 +265,11 @@ private fun ReplyCardItem(
 
     val defaultAuthorName = stringResource(Res.string.foro_author_classmate)
     val authorName = entry.user?.displayName ?: entry.userName ?: defaultAuthorName
+    val isCurrentUser = remember(entry, currentUserId, currentUserName, authorName) {
+        (currentUserId != null && (entry.userId == currentUserId || entry.user?.id == currentUserId)) ||
+            (!currentUserName.isNullOrBlank() && authorName.equals(currentUserName.trim(), ignoreCase = true))
+    }
+
     val initials = remember(authorName) {
         val parts = authorName.trim().split(" ").filter { it.isNotBlank() }
         when {
@@ -265,14 +281,30 @@ private fun ReplyCardItem(
 
     var isTextExpanded by remember { mutableStateOf(false) }
 
-    val bg = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainer
+    val bg = if (themeStyle == AppThemeStyle.MIUIX) {
+        if (isCurrentUser) MiuixTheme.colorScheme.primary.copy(alpha = 0.08f) else MiuixTheme.colorScheme.surfaceContainer
+    } else {
+        if (isCurrentUser) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.surfaceContainer
+    }
+    val cardBorder = if (isCurrentUser) {
+        val borderColor = if (themeStyle == AppThemeStyle.MIUIX) {
+            MiuixTheme.colorScheme.primary.copy(alpha = 0.35f)
+        } else {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+        }
+        BorderStroke(1.dp, borderColor)
+    } else null
+
     val onSurface = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
     val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
 
+    val cardShape = RoundedCornerShape(if (themeStyle == AppThemeStyle.MIUIX) 18.dp else 12.dp)
+
     Card(
-        shape = RoundedCornerShape(if (themeStyle == AppThemeStyle.MIUIX) 18.dp else 12.dp),
+        shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = bg),
+        border = cardBorder,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -292,28 +324,66 @@ private fun ReplyCardItem(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val avatarBg = if (isCurrentUser) {
+                        primaryColor
+                    } else if (themeStyle == AppThemeStyle.MIUIX) {
+                        MiuixTheme.colorScheme.surfaceContainerHigh
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHighest
+                    }
+                    val avatarTextColor = if (isCurrentUser) {
+                        if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        onSurface
+                    }
+
                     Surface(
                         shape = CircleShape,
-                        color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        color = avatarBg,
                         modifier = Modifier.size(30.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = initials,
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                color = onSurface
+                                color = avatarTextColor
                             )
                         }
                     }
 
                     Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = authorName,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+                                color = if (isCurrentUser) primaryColor else onSurface
+                            )
+                            if (isCurrentUser) {
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = primaryColor.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.foro_author_you),
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = primaryColor,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
+                        }
                         Text(
-                            text = authorName,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
-                            color = onSurface
-                        )
-                        Text(
-                            text = stringResource(Res.string.foro_author_classmate_role),
+                            text = if (isCurrentUser) {
+                                stringResource(Res.string.foro_author_you_role)
+                            } else {
+                                stringResource(Res.string.foro_author_classmate_role)
+                            },
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                             color = onSurfaceVariant
                         )
@@ -354,13 +424,14 @@ private fun ReplyCardItem(
                     .fillMaxWidth()
                     .clickable { isTextExpanded = !isTextExpanded }
             ) {
-                val formattedText = remember(cleanText) { formatMarkdown(cleanText) }
-                Text(
-                    text = formattedText,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
-                    color = onSurfaceVariant,
-                    maxLines = if (isTextExpanded) Int.MAX_VALUE else 3,
-                    overflow = TextOverflow.Ellipsis
+                me.joxquin.notivas.ui.components.RichContentRenderer(
+                    text = cleanText,
+                    themeStyle = themeStyle,
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLinesCollapsed = 3,
+                    isExpanded = isTextExpanded,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
+                    textColor = onSurfaceVariant
                 )
 
                 // Indicador para expandir / contraer texto largo

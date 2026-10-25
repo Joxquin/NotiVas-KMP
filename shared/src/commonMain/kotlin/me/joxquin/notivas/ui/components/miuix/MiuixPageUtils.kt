@@ -156,3 +156,25 @@ fun MiuixPageTopAppBar(
         bottomContent = bottomContent,
     )
 }
+
+/**
+ * Recorta y limpia el nombre del curso para que se visualice de forma compacta en TopAppBars
+ * sin desbordarse en pantallas pequeñas ni colisionar con botones de navegación o acción.
+ */
+fun shortenCourseSubtitle(courseName: String?, maxLength: Int = 36): String {
+    if (courseName.isNullOrBlank()) return ""
+    // Los nombres de Canvas suelen incluir códigos de sección: "Nombre del Curso - C24 4to C-A - ..."
+    val cleanName = if (courseName.contains(" - ")) {
+        val parts = courseName.split(" - ")
+        parts.firstOrNull()?.trim().takeIf { !it.isNullOrBlank() } ?: courseName.trim()
+    } else {
+        courseName.trim()
+    }
+
+    return if (cleanName.length > maxLength) {
+        cleanName.take(maxLength - 1).trimEnd() + "…"
+    } else {
+        cleanName
+    }
+}
+
