@@ -89,4 +89,61 @@ class HtmlUtilsTest {
         assertTrue(cleaned.contains("*requisitos*"))
         assertTrue(cleaned.contains("`npm start`"))
     }
+
+    @Test
+    fun testCleanHtml_tableWithHeadersAndRowsConvertedToMarkdownTable() {
+        val htmlTableInput = """
+            <p>Casos de prueba:</p>
+            <table border="1">
+              <thead>
+                <tr>
+                  <th>Caso</th>
+                  <th>Datos de entrada</th>
+                  <th>Resultado esperado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Tipo de cliente: estudiante</td>
+                  <td>S/ 10</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Tipo de cliente: público general</td>
+                  <td>S/ 20</td>
+                </tr>
+              </tbody>
+            </table>
+        """.trimIndent()
+
+        val cleaned = HtmlUtils.cleanHtml(htmlTableInput)
+
+        assertTrue(cleaned.contains("| Caso | Datos de entrada | Resultado esperado |"), "Debe contener encabezados de tabla")
+        assertTrue(cleaned.contains("| :--- | :--- | :--- |"), "Debe contener separador Markdown")
+        assertTrue(cleaned.contains("| 1 | Tipo de cliente: estudiante | S/ 10 |"), "Debe contener fila 1")
+        assertTrue(cleaned.contains("| 2 | Tipo de cliente: público general | S/ 20 |"), "Debe contener fila 2")
+    }
+
+    @Test
+    fun testTextToHtml_markdownTableConvertedToCanvasHtmlTable() {
+        val markdownInput = """
+            1. Revisar el trabajo en grupo.
+
+            | Caso | Datos de Entrada | Resultado Esperado |
+            | :--- | :--- | :--- |
+            | 1 | Estudiante | S/ 10 |
+            | 2 | Público general | S/ 20 |
+
+            Fuentes consultadas.
+        """.trimIndent()
+
+        val htmlOutput = HtmlUtils.textToHtml(markdownInput)
+
+        assertTrue(htmlOutput.contains("<table border=\"1\" style=\"border-collapse: collapse; width: 100%; margin: 12px 0;\">"))
+        assertTrue(htmlOutput.contains("<thead><tr style=\"background-color: #f2f2f2;\"><th style=\"padding: 8px; border: 1px solid #ddd; text-align: left;\">Caso</th>"))
+        assertTrue(htmlOutput.contains("<tbody><tr><td style=\"padding: 8px; border: 1px solid #ddd;\">1</td>"))
+        assertFalse(htmlOutput.contains("<p><table"), "La tabla no debe estar encerrada en un párrafo <p>")
+    }
 }
+
