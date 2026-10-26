@@ -80,10 +80,15 @@ class AssignmentAlarmReceiver : BroadcastReceiver() {
 
             if (shouldNotify) {
                 val notifId = AndroidAlarmScheduler.generateRequestCode(assignmentId, alertType)
+                val course = localStore.getCourseList().firstOrNull { it.id == assignment.courseId }
                 notificationHelper.showNotification(
                     title = title,
                     message = message,
-                    notificationId = notifId
+                    notificationId = notifId,
+                    targetId = assignmentId,
+                    secondaryId = assignment.courseId,
+                    courseCode = course?.courseCode,
+                    courseName = courseName
                 )
 
                 when (alertType) {
