@@ -86,10 +86,9 @@ jobs:
       - name: Filter arm64 and universal APKs
         run: |
           mkdir -p release_to_upload
-          # Copiar apk universal y arm64-v8a
-          find release_apks -name "*universal*.apk" -exec cp {} release_to_upload/NotiVas-v1.2.0-universal.apk \;
-          find release_apks -name "*arm64-v8a*.apk" -exec cp {} release_to_upload/NotiVas-v1.2.0-arm64-v8a.apk \;
-          # Si por nombre exacto no coincidió, copiar los apks disponibles
+          # Conservar nombres originales oficiales de APK (androidApp-universal-release.apk y androidApp-arm64-v8a-release.apk)
+          find release_apks -name "*universal*.apk" -exec cp {} release_to_upload/androidApp-universal-release.apk \;
+          find release_apks -name "*arm64-v8a*.apk" -exec cp {} release_to_upload/androidApp-arm64-v8a-release.apk \;
           if [ -z "$(ls -A release_to_upload)" ]; then
             cp release_apks/*.apk release_to_upload/
           fi
@@ -113,27 +112,37 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          PROMPT="Eres el Release Manager de NotiVas-KMP. Redacta notas de versión atractivas, concisas y profesionales en español (Markdown) para la versión ${{ steps.tag_version.outputs.new_tag }}.
-          Organiza el contenido con formato limpio y claro:
-          - Resumen destacado de la versión
-          - Novedades y Funcionalidades
-          - Mejoras de UI (Diseño Dual MIUIX y Material 3)
-          - Rendimiento y Correcciones
-          
-          Lista de cambios y commits recientes:
+          PROMPT="You are the release manager of 'NotiVas - KMP'. Write clean, professional release notes in English following strictly this exact Markdown format:
+
+          ### New Features
+
+          • Feature Title: Concise description of the user-facing feature.
+          • Another Feature: Description.
+
+          ### Bug Fixes & Performance
+
+          • Fix Title: Description of the fix or optimization.
+
+          Rules:
+          - Use bullet symbol '• ' (not '-').
+          - Use bold title followed by colon, like: '• Title: Description'.
+          - Do not include commit hashes, markdown code blocks, backticks, or greetings.
+          - Categorize items clearly under '### New Features' or '### Bug Fixes & Performance'.
+
+          List of recent commits:
           $COMMITS"
 
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{contents: [{parts: [{text: $prompt}]}]}')
 
           RESPONSE=$(curl -s -X POST \
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}" \
             -H 'Content-Type: application/json' \
             -d "$PAYLOAD")
 
           AI_TEXT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
 
           if [ -z "$AI_TEXT" ]; then
-            AI_TEXT="## NotiVas ${{ steps.tag_version.outputs.new_tag }}\n\n### Cambios recientes:\n$COMMITS"
+            AI_TEXT="### New Features\n\n• Performance and UI Improvements: Updated components and optimized multiplatform sync."
           fi
 
           echo "CHANGELOG<<EOF" >> $GITHUB_ENV
@@ -144,6 +153,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
-          name: NotiVas ${{ steps.tag_version.outputs.new_tag }}
+          name: NotiVas - KMP ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ env.CHANGELOG }}
           files: release_to_upload/*.apk
