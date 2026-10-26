@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -50,6 +51,14 @@ class PreferencesManager(
     private val _csrfToken = MutableStateFlow<String?>(null)
     val csrfToken: Flow<String?> = _csrfToken.asStateFlow()
     fun getCsrfToken(): String? = _csrfToken.value
+
+    private val _isSessionExpired = MutableStateFlow(false)
+    val isSessionExpired: StateFlow<Boolean> = _isSessionExpired.asStateFlow()
+    fun getIsSessionExpired(): Boolean = _isSessionExpired.value
+
+    fun setSessionExpired(expired: Boolean) {
+        _isSessionExpired.value = expired
+    }
 
     fun getAuthCredential(): me.joxquin.notivas.data.model.CanvasAuthCredential? {
         return when (_authMode.value) {
@@ -336,6 +345,7 @@ class PreferencesManager(
     suspend fun saveAccessToken(token: String) {
         _accessToken.value = token
         _authMode.value = me.joxquin.notivas.data.model.AuthMode.TOKEN
+        _isSessionExpired.value = false
         schedulePersist()
     }
 
@@ -343,6 +353,7 @@ class PreferencesManager(
         _sessionCookies.value = cookies
         _csrfToken.value = csrfToken
         _authMode.value = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION
+        _isSessionExpired.value = false
         schedulePersist()
     }
 

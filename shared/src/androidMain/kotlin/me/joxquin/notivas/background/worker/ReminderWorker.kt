@@ -3,7 +3,10 @@ package me.joxquin.notivas.background.worker
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import me.joxquin.notivas.background.alarm.AndroidAlarmScheduler
 import me.joxquin.notivas.background.alarm.AssignmentAlarmReceiver
 import me.joxquin.notivas.background.notification.NotificationHelper
@@ -29,12 +32,19 @@ class ReminderWorker(
                 notificationHelper.showSyncNotification()
                 try {
                     println("ReminderWorker [Sync] Iniciando fetchAndSaveData()")
-                    canvasRepository.fetchAndSaveData()
-                    println("ReminderWorker [Sync] fetchAndSaveData() completado con éxito")
+                    withTimeoutOrNull(45_000L) {
+                        canvasRepository.fetchAndSaveData()
+                    } ?: println("ReminderWorker [Sync] Timeout de 45s alcanzado durante fetchAndSaveData()")
+                    println("ReminderWorker [Sync] fetchAndSaveData() completado")
+                } catch (e: me.joxquin.notivas.data.remote.CanvasAuthExpiredException) {
+                    println("ReminderWorker [Sync] Sesión de Canvas expirada: ${e.message}")
+                    notificationHelper.showSessionExpiredNotification()
                 } catch (e: Exception) {
                     println("ReminderWorker [Sync] Error durante la sincronización: ${e.message}")
                 } finally {
-                    notificationHelper.dismissSyncNotification()
+                    withContext(NonCancellable) {
+                        notificationHelper.dismissSyncNotification()
+                    }
                 }
             } else {
                 println("ReminderWorker [Sync] No hay credenciales de autenticación disponibles")
@@ -71,7 +81,9 @@ class ReminderWorker(
                     }
 
                     val minutesRemaining = Duration.between(now, dueDate).toMinutes()
-                    val courseName = courseMap[assignment.courseId]?.name ?: "Curso"
+                    val course = courseMap[assignment.courseId]
+                    val courseName = course?.name ?: "Curso"
+                    val courseCode = course?.courseCode
                     val shortName = if (assignment.name.length > 38) {
                         assignment.name.take(35) + "..."
                     } else {
@@ -87,7 +99,11 @@ class ReminderWorker(
                         notificationHelper.showNotification(
                             title = "Alerta Crítica · $courseName",
                             message = "$shortName: ¡Últimos $minutesRemaining minutos para la entrega!",
-                            notificationId = notifId
+                            notificationId = notifId,
+                            targetId = assignment.id,
+                            secondaryId = assignment.courseId,
+                            courseCode = courseCode,
+                            courseName = courseName
                         )
                         localStore.markNotified30m(assignment.id)
                     }
@@ -101,7 +117,11 @@ class ReminderWorker(
                         notificationHelper.showNotification(
                             title = "Alerta de Urgencia · $courseName",
                             message = "$shortName: Quedan ~$hours hora(s) para la entrega",
-                            notificationId = notifId
+                            notificationId = notifId,
+                            targetId = assignment.id,
+                            secondaryId = assignment.courseId,
+                            courseCode = courseCode,
+                            courseName = courseName
                         )
                         localStore.markNotified3h(assignment.id)
                     }
@@ -114,7 +134,11 @@ class ReminderWorker(
                         notificationHelper.showNotification(
                             title = "Recordatorio Preventivo · $courseName",
                             message = "$shortName: Entrega programada para las próximas 24h",
-                            notificationId = notifId
+                            notificationId = notifId,
+                            targetId = assignment.id,
+                            secondaryId = assignment.courseId,
+                            courseCode = courseCode,
+                            courseName = courseName
                         )
                         localStore.markNotified24h(assignment.id)
                     }

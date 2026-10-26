@@ -27,6 +27,7 @@ class NotificationHelper(
         const val CHANNEL_SYNC_ID = "sync_notifications"
         const val CHANNEL_SYNC_NAME = "Sincronización en Segundo Plano"
 
+        const val SESSION_EXPIRED_NOTIFICATION_ID = 77777
         const val SYNC_NOTIFICATION_ID = 88888
         const val SUMMARY_NOTIFICATION_ID = 99999
         const val NOTIFICATION_GROUP_KEY = "ASSIGNMENT_REMINDERS"
@@ -36,7 +37,11 @@ class NotificationHelper(
         title: String,
         message: String,
         channelId: String = CHANNEL_REMINDERS_ID,
-        notificationId: Int? = null
+        notificationId: Int? = null,
+        targetId: Long? = null,
+        secondaryId: Long? = null,
+        courseCode: String? = null,
+        courseName: String? = null
     ) {
         createChannels()
 
@@ -60,12 +65,17 @@ class NotificationHelper(
         try {
             val db = me.joxquin.notivas.data.local.db.createRoomDatabase()
             CoroutineScope(Dispatchers.IO).launch {
+                val derivedCode = me.joxquin.notivas.util.CourseUtil.extractCourseTag(courseCode, courseName)
                 db.activityLogDao().insert(
                     me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
                         type = "CANVAS_NOTIFICATION",
                         title = title,
                         description = message,
                         timestamp = System.currentTimeMillis(),
+                        courseCode = derivedCode,
+                        courseName = courseName,
+                        targetId = targetId,
+                        secondaryId = secondaryId,
                         extraInfo = "Notificación Canvas"
                     )
                 )
@@ -101,10 +111,50 @@ class NotificationHelper(
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSilent(true)
             .setOngoing(true)
+            .setTimeoutAfter(45_000L)
             .setProgress(0, 0, true)
             .build()
 
         notificationManager.notify(SYNC_NOTIFICATION_ID, notification)
+    }
+
+    fun showSessionExpiredNotification(
+        title: String = "Sesión de Canvas expirada",
+        message: String = "Tu sesión web ha caducado. Toca para reconectar y actualizar tus tareas."
+    ) {
+        createChannels()
+
+        val smallIconRes = context.applicationInfo.icon.takeIf { it != 0 }
+            ?: android.R.drawable.ic_dialog_alert
+
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("action", "relogin")
+        }
+        val pendingIntent = intent?.let {
+            android.app.PendingIntent.getActivity(
+                context,
+                SESSION_EXPIRED_NOTIFICATION_ID,
+                it,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_GENERAL_ID)
+            .setSmallIcon(smallIconRes)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .apply {
+                if (pendingIntent != null) {
+                    setContentIntent(pendingIntent)
+                }
+            }
+            .build()
+
+        notificationManager.notify(SESSION_EXPIRED_NOTIFICATION_ID, notification)
     }
 
     fun dismissSyncNotification() {

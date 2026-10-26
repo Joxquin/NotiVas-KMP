@@ -2,12 +2,18 @@ package me.joxquin.notivas.data.remote
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
+import io.ktor.http.parameters
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -25,6 +31,8 @@ import me.joxquin.notivas.data.model.PlannerItem
 import me.joxquin.notivas.data.model.SubmissionDetails
 import me.joxquin.notivas.data.model.UserProfile
 
+class CanvasAuthExpiredException(message: String = "Canvas session expired") : Exception(message)
+
 class CanvasApiService(
     private val client: HttpClient
 ) {
@@ -38,6 +46,18 @@ class CanvasApiService(
         val cleanBase = withScheme.trimEnd('/')
         val cleanPath = path.trimStart('/')
         return "$cleanBase/$cleanPath"
+    }
+
+    private fun checkAuth(status: HttpStatusCode, bodyText: String) {
+        if (status == HttpStatusCode.Unauthorized || status == HttpStatusCode.Forbidden) {
+            throw CanvasAuthExpiredException("Canvas session or token unauthorized (${status.value})")
+        }
+        val trimmed = bodyText.trimStart().lowercase()
+        if (trimmed.startsWith("<!doctype html") || trimmed.startsWith("<html")) {
+            if (trimmed.contains("/login") || trimmed.contains("pseudonym_session") || trimmed.contains("log in")) {
+                throw CanvasAuthExpiredException("Canvas session expired, redirected to login page")
+            }
+        }
     }
 
     private fun HttpRequestBuilder.applyAuth(credentialOrToken: String, csrfToken: String? = null) {
@@ -67,17 +87,57 @@ class CanvasApiService(
         }
     }
 
+    suspend fun generateStudentAccessToken(
+        baseUrl: String,
+        cookies: String,
+        csrfToken: String?,
+        purpose: String = "NotiVas App"
+    ): String? {
+        return try {
+            val cleanCookies = cookies.removePrefix("Cookie: ").trim()
+            val url = formatUrl(baseUrl, "api/v1/users/self/tokens")
+            val response = client.submitForm(
+                url = url,
+                formParameters = parameters {
+                    append("token[purpose]", purpose)
+                }
+            ) {
+                header("User-Agent", "CanvasFastClient/1.0")
+                header("Cookie", cleanCookies)
+                csrfToken?.let { header("X-CSRF-Token", it) }
+            }
+            val text = response.body<String>()
+            println("[CanvasApiService] generateStudentAccessToken status: ${response.status.value}, body: ${text.take(300)}")
+            if (response.status.isSuccess() && text.trimStart().startsWith("{")) {
+                val json = KtorHttpClientProvider.jsonConfig.parseToJsonElement(text) as? JsonObject
+                val token = json?.get("token")?.let { (it as? JsonPrimitive)?.contentOrNull }
+                    ?: json?.get("visible_token")?.let { (it as? JsonPrimitive)?.contentOrNull }
+                if (!token.isNullOrBlank()) {
+                    println("[CanvasApiService] Token de estudiante autogenerado con éxito")
+                    return token
+                }
+            }
+            null
+        } catch (e: Exception) {
+            println("[CanvasApiService] No se pudo generar token de estudiante: ${e.message}")
+            null
+        }
+    }
+
     suspend fun getCourses(
         baseUrl: String,
         token: String,
         state: String = "active",
         perPage: Int = 100
     ): List<Course> {
-        return client.get(formatUrl(baseUrl, "api/v1/courses")) {
+        val response = client.get(formatUrl(baseUrl, "api/v1/courses")) {
             applyAuth(token)
             parameter("enrollment_state", state)
             parameter("per_page", perPage)
-        }.body()
+        }
+        val text = response.body<String>()
+        checkAuth(response.status, text)
+        return KtorHttpClientProvider.jsonConfig.decodeFromString<List<Course>>(text)
     }
 
     suspend fun getDashboardCards(
@@ -149,6 +209,8 @@ class CanvasApiService(
         submissionType: String = "online_url",
         url: String? = null,
         bodyText: String? = null,
+        fileIds: List<Long>? = null,
+        comment: String? = null,
         csrfToken: String? = null
     ): SubmissionDetails {
         val formUrl = formatUrl(baseUrl, "api/v1/courses/$courseId/assignments/$assignmentId/submissions")
@@ -158,10 +220,70 @@ class CanvasApiService(
                 append("submission[submission_type]", submissionType)
                 url?.let { append("submission[url]", it) }
                 bodyText?.let { append("submission[body]", it) }
+                fileIds?.forEach { append("submission[file_ids][]", it.toString()) }
+                comment?.takeIf { it.isNotBlank() }?.let { append("comment[text_comment]", it) }
             }
         ) {
             applyAuth(token, csrfToken)
         }.body()
+    }
+
+    suspend fun uploadSubmissionFile(
+        baseUrl: String,
+        token: String,
+        courseId: Long,
+        assignmentId: Long,
+        fileName: String,
+        fileBytes: ByteArray,
+        mimeType: String = "application/octet-stream",
+        csrfToken: String? = null
+    ): Long? {
+        val initUrl = formatUrl(baseUrl, "api/v1/courses/$courseId/assignments/$assignmentId/submissions/self/files")
+        val initResponse = client.submitForm(
+            url = initUrl,
+            formParameters = io.ktor.http.parameters {
+                append("name", fileName)
+                append("size", fileBytes.size.toString())
+                append("content_type", mimeType)
+            }
+        ) {
+            applyAuth(token, csrfToken)
+        }
+
+        val initBodyText = initResponse.body<String>()
+        val initJson = try {
+            KtorHttpClientProvider.jsonConfig.parseToJsonElement(initBodyText) as? JsonObject
+        } catch (_: Exception) { null } ?: return null
+
+        val uploadUrl = (initJson["upload_url"] as? JsonPrimitive)?.contentOrNull ?: return null
+        val uploadParams = initJson["upload_params"] as? JsonObject ?: JsonObject(emptyMap())
+
+        val uploadResponse = client.submitFormWithBinaryData(
+            url = uploadUrl,
+            formData = formData {
+                uploadParams.forEach { (key, element) ->
+                    val value = (element as? JsonPrimitive)?.contentOrNull
+                    if (value != null) {
+                        append(key, value)
+                    }
+                }
+                append(
+                    key = "file",
+                    value = fileBytes,
+                    headers = Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                        append(HttpHeaders.ContentType, mimeType)
+                    }
+                )
+            }
+        )
+
+        val uploadResponseBody = uploadResponse.body<String>()
+        val fileJson = try {
+            KtorHttpClientProvider.jsonConfig.parseToJsonElement(uploadResponseBody) as? JsonObject
+        } catch (_: Exception) { null }
+
+        return (fileJson?.get("id") as? JsonPrimitive)?.contentOrNull?.toLongOrNull()
     }
 
     suspend fun getMissingSubmissions(
@@ -184,6 +306,7 @@ class CanvasApiService(
             applyAuth(token)
         }
         val text = response.body<String>()
+        checkAuth(response.status, text)
         println("CanvasApiService: getProfile response from $url: $text")
         return KtorHttpClientProvider.jsonConfig.decodeFromString<UserProfile>(text)
     }
@@ -201,11 +324,14 @@ class CanvasApiService(
         startDate: String,
         perPage: Int = 100
     ): List<PlannerItem> {
-        return client.get(formatUrl(baseUrl, "api/v1/planner/items")) {
+        val response = client.get(formatUrl(baseUrl, "api/v1/planner/items")) {
             applyAuth(token)
             parameter("start_date", startDate)
             parameter("per_page", perPage)
-        }.body()
+        }
+        val text = response.body<String>()
+        checkAuth(response.status, text)
+        return KtorHttpClientProvider.jsonConfig.decodeFromString<List<PlannerItem>>(text)
     }
 
     suspend fun getAssignmentDetails(
@@ -392,5 +518,39 @@ class CanvasApiService(
             }
         }
         return null
+    }
+
+    suspend fun getCourseAnnouncements(
+        baseUrl: String,
+        token: String,
+        courseId: Long,
+        perPage: Int = 10
+    ): List<CanvasDiscussionTopic> {
+        return try {
+            client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/discussion_topics")) {
+                applyAuth(token)
+                parameter("only_announcements", true)
+                parameter("per_page", perPage)
+            }.body()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun getCourseUsers(
+        baseUrl: String,
+        token: String,
+        courseId: Long,
+        perPage: Int = 20
+    ): List<UserProfile> {
+        return try {
+            client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/users")) {
+                applyAuth(token)
+                parameter("enrollment_type[]", "student")
+                parameter("per_page", perPage)
+            }.body()
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 }

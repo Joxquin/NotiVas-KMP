@@ -37,12 +37,23 @@ class MainActivity : ComponentActivity() {
         val syncInterval = AppModule.preferencesManager.syncIntervalMinutes
         BackgroundSyncScheduler.schedulePeriodicSync(15L)
 
+        if (intent?.getStringExtra("action") == "relogin") {
+            AppModule.preferencesManager.setSessionExpired(true)
+        }
+
         setContent {
             androidx.compose.runtime.CompositionLocalProvider(
                 androidx.activity.compose.LocalActivityResultRegistryOwner provides this
             ) {
                 App()
             }
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        if (intent.getStringExtra("action") == "relogin") {
+            AppModule.preferencesManager.setSessionExpired(true)
         }
     }
 }

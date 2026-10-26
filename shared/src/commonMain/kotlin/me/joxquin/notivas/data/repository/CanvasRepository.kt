@@ -243,6 +243,34 @@ class CanvasRepository(
         }
     }
 
+    suspend fun fetchCourseAnnouncements(courseId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext emptyList()
+        val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
+        return@withContext try {
+            apiService.getCourseAnnouncements(
+                baseUrl = baseUrl,
+                token = token,
+                courseId = courseId
+            )
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun fetchCourseUsers(courseId: Long): List<UserProfile> = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext emptyList()
+        val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
+        return@withContext try {
+            apiService.getCourseUsers(
+                baseUrl = baseUrl,
+                token = token,
+                courseId = courseId
+            )
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     /**
      * Extrae y compila plantillas y documentos candidatos del curso:
      * 1. Detecta enlaces directos a Google Docs/Drive o archivos en la consigna de la tarea.
@@ -578,9 +606,35 @@ class CanvasRepository(
             val combinedAssignments = currentWithMissing + remainingMissing
 
             localStore.insertAssignments(combinedAssignments)
+            preferencesManager.setSessionExpired(false)
+
+            // Si está en sesión de cookies, intentar migrar silenciosamente a Token permanente
+            if (preferencesManager.getAuthMode() == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
+                try {
+                    tryUpgradeSessionToToken()
+                } catch (_: Exception) {}
+            }
+        } catch (e: me.joxquin.notivas.data.remote.CanvasAuthExpiredException) {
+            preferencesManager.setSessionExpired(true)
+            throw e
         } catch (e: Exception) {
             throw e
         }
+    }
+
+    suspend fun tryUpgradeSessionToToken(): Boolean = withContext(Dispatchers.IO) {
+        if (preferencesManager.getAuthMode() == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
+            val cookies = preferencesManager.getSessionCookies() ?: return@withContext false
+            val csrf = preferencesManager.getCsrfToken()
+            val url = preferencesManager.universityUrl.first() ?: return@withContext false
+            val token = apiService.generateStudentAccessToken(url, cookies, csrf)
+            if (!token.isNullOrBlank()) {
+                preferencesManager.saveAccessToken(token)
+                println("[CanvasRepository] Migración exitosa de COOKIE_SESSION a BearerToken permanente")
+                return@withContext true
+            }
+        }
+        false
     }
 
     suspend fun verifyAndSave(url: String, token: String): Boolean = withContext(Dispatchers.IO) {
@@ -588,6 +642,7 @@ class CanvasRepository(
             apiService.verifyToken(url, "Bearer $token")
             preferencesManager.saveUniversityUrl(url)
             preferencesManager.saveAccessToken(token)
+            preferencesManager.setSessionExpired(false)
             true
         } catch (e: Exception) {
             println("CanvasRepository: verifyAndSave failed for url='$url': ${e.message}")
@@ -600,7 +655,23 @@ class CanvasRepository(
         try {
             apiService.verifyToken(url, "Cookie: $cookies")
             preferencesManager.saveUniversityUrl(url)
-            preferencesManager.saveSessionCookies(cookies, csrfToken)
+
+            // Primera opción: Intentar obtener el token de estudiante permanente vía Canvas API
+            val studentToken = apiService.generateStudentAccessToken(
+                baseUrl = url,
+                cookies = cookies,
+                csrfToken = csrfToken,
+                purpose = "NotiVas App"
+            )
+
+            if (!studentToken.isNullOrBlank()) {
+                println("[CanvasRepository] Primera opción exitosa: Token de estudiante autogenerado. Guardando BearerToken.")
+                preferencesManager.saveAccessToken(studentToken)
+            } else {
+                println("[CanvasRepository] Creación de token no disponible en la institución. Guardando SessionCookies como fallback.")
+                preferencesManager.saveSessionCookies(cookies, csrfToken)
+            }
+            preferencesManager.setSessionExpired(false)
             true
         } catch (e: Exception) {
             println("CanvasRepository: verifyAndSaveSession failed for url='$url': ${e.message}")
@@ -752,7 +823,11 @@ class CanvasRepository(
         assignmentId: Long,
         submissionType: String = "online_url",
         url: String? = null,
-        bodyText: String? = null
+        bodyText: String? = null,
+        fileBytes: ByteArray? = null,
+        fileName: String? = null,
+        mimeType: String = "application/octet-stream",
+        comment: String? = null
     ): Result<SubmissionDetails> = withContext(Dispatchers.IO) {
         val credential = preferencesManager.getAuthCredential()
             ?: return@withContext Result.failure(Exception("No autenticado en Canvas"))
@@ -769,6 +844,21 @@ class CanvasRepository(
         }
 
         try {
+            var fileIds: List<Long>? = null
+            if (submissionType == "online_upload" && fileBytes != null && !fileName.isNullOrBlank()) {
+                val uploadedId = apiService.uploadSubmissionFile(
+                    baseUrl = baseUrl,
+                    token = token,
+                    courseId = courseId,
+                    assignmentId = assignmentId,
+                    fileName = fileName,
+                    fileBytes = fileBytes,
+                    mimeType = mimeType,
+                    csrfToken = csrfToken
+                ) ?: return@withContext Result.failure(Exception("Error al subir archivo a Canvas LMS"))
+                fileIds = listOf(uploadedId)
+            }
+
             val formattedBody = bodyText?.let { me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils.textToHtml(it) }
             val result = apiService.submitAssignmentSubmission(
                 baseUrl = baseUrl,
@@ -778,6 +868,8 @@ class CanvasRepository(
                 submissionType = submissionType,
                 url = url,
                 bodyText = formattedBody,
+                fileIds = fileIds,
+                comment = comment,
                 csrfToken = csrfToken
             )
             // Actualizar assignment localmente de inmediato con prevalencia canónica de entrega
@@ -830,9 +922,10 @@ class CanvasRepository(
         val matchingCourse = courses.find { c ->
             (!draft.courseFolder.isBlank() && (c.name.equals(draft.courseFolder, ignoreCase = true) || c.courseCode.equals(draft.courseFolder, ignoreCase = true)))
         }
-        val shortCourseCode = matchingCourse?.courseCode?.takeIf { it.isNotBlank() }
-            ?: draft.courseFolder.takeIf { it.isNotBlank() && it.length <= 16 }
-            ?: "ProgMov"
+        val shortCourseCode = me.joxquin.notivas.util.CourseUtil.extractCourseTag(
+            matchingCourse?.courseCode,
+            matchingCourse?.name ?: draft.courseFolder
+        )
         val courseName = matchingCourse?.name ?: draft.courseFolder
 
         localStore.saveActivityLog(
@@ -906,7 +999,7 @@ class CanvasRepository(
             val course = courses.find { it.id == a.courseId }
             val fakeOffsetHours = (index * 6).toLong()
             val time = (me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() - fakeOffsetHours * 3600 * 1000).coerceAtLeast(1000L)
-            val code = course?.courseCode?.takeIf { it.isNotBlank() } ?: "ProgMov"
+            val code = me.joxquin.notivas.util.CourseUtil.extractCourseTag(course?.courseCode, course?.name)
             seedLogs.add(
                 me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
                     type = "ASSIGNMENT_SUBMISSION",
@@ -930,9 +1023,10 @@ class CanvasRepository(
                 (assignment != null && c.id == assignment.courseId) ||
                 (!d.courseFolder.isBlank() && (c.name.equals(d.courseFolder, ignoreCase = true) || c.courseCode.equals(d.courseFolder, ignoreCase = true)))
             }
-            val shortCode = course?.courseCode?.takeIf { it.isNotBlank() }
-                ?: d.courseFolder.takeIf { it.isNotBlank() && it.length <= 16 }
-                ?: "ProgMov"
+            val shortCode = me.joxquin.notivas.util.CourseUtil.extractCourseTag(
+                course?.courseCode,
+                course?.name ?: d.courseFolder
+            )
             val fakeOffsetHours = ((index + 1) * 14).toLong()
             val time = (me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() - fakeOffsetHours * 3600 * 1000).coerceAtLeast(1000L)
             seedLogs.add(
