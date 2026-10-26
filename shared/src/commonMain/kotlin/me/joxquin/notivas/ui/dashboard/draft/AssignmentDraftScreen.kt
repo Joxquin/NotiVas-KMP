@@ -53,11 +53,13 @@ import me.joxquin.notivas.shared.resources.*
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
-import me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentBottomActionBar
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentConsignaCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentDetailHeroCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentRubricCard
+import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentSubmissionCard
+import me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusCard
+import me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo
 import top.yukonga.miuix.kmp.basic.DropdownEntry
 import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
@@ -99,8 +101,6 @@ fun AssignmentDraftScreen(
     val assignment = assignmentUi.assignment
     val courseName = assignmentUi.courseName
 
-    val draftInfo: me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo? =
-        viewModel?.currentAssignmentDraft?.collectAsState()?.value
 
     val onOpenCanvas: () -> Unit = {
         assignment.htmlUrl?.let { url ->
@@ -122,6 +122,35 @@ fun AssignmentDraftScreen(
     val isLoadingTemplates by (viewModel?.isLoadingTemplates?.collectAsState() ?: remember { mutableStateOf(false) })
 
     val currentAssignmentModuleName by (viewModel?.currentAssignmentModuleName?.collectAsState() ?: remember { mutableStateOf(null) })
+
+    val draftInfo by (viewModel?.currentAssignmentDraft?.collectAsState() ?: remember { mutableStateOf<DraftSyncInfo?>(null) })
+
+    val handleStartDraft: (Boolean, String?) -> Unit = { isTemplate, templateName ->
+        viewModel?.startOrCloneDraft(
+            assignment = assignment,
+            courseName = courseName,
+            templateName = if (isTemplate) templateName else null
+        )
+    }
+
+    val handleCancelDraft: () -> Unit = {
+        viewModel?.cancelDraft(assignment.id)
+    }
+
+    val handleOpenDocs: (String) -> Unit = { url ->
+        viewModel?.onOpenDocsRequested(url) ?: run {
+            try { uriHandler.openUri(url) } catch (_: Exception) {}
+        }
+    }
+
+    val handleSubmitDraftToCanvas: () -> Unit = {
+        val targetUrl = draftInfo?.driveUrl.orEmpty()
+        viewModel?.submitDraftToCanvas(
+            assignment = assignment,
+            driveUrl = targetUrl,
+            onSuccess = onOpenCanvas
+        ) ?: onOpenCanvas()
+    }
 
     val handleExploreTemplates: () -> Unit = {
         localShowTemplatePicker = true
@@ -243,36 +272,21 @@ fun AssignmentDraftScreen(
                         )
                     }
 
-                    // 2. Tarjeta de Borrador Google Drive Sincronizado
-                    item(key = "task_draft") {
-                        DraftStatusCard(
+                    // 2. Tarjeta Unificada de Entrega Directa y Borrador Google Drive
+                    item(key = "task_submission") {
+                        AssignmentSubmissionCard(
                             assignment = assignment,
                             courseName = courseName,
                             themeStyle = themeStyle,
+                            viewModel = viewModel,
                             draftInfo = draftInfo,
-                            onStartDraft = { isTemplate, templateName ->
-                                viewModel?.startOrCloneDraft(
-                                    assignment = assignment,
-                                    courseName = courseName,
-                                    templateName = if (isTemplate) templateName else null
-                                )
-                            },
+                            onStartDraft = handleStartDraft,
                             onExploreTemplates = handleExploreTemplates,
-                            onCancelDraft = {
-                                viewModel?.cancelDraft(assignment.id)
-                            },
-                            onOpenDocs = { url ->
-                                viewModel?.onOpenDocsRequested(url) ?: run {
-                                    try { uriHandler.openUri(url) } catch (_: Exception) {}
-                                }
-                            },
-                            onSubmitToCanvas = {
-                                val targetUrl = draftInfo?.driveUrl.orEmpty()
-                                viewModel?.submitDraftToCanvas(
-                                    assignment = assignment,
-                                    driveUrl = targetUrl,
-                                    onSuccess = { onOpenCanvas() }
-                                ) ?: onOpenCanvas()
+                            onCancelDraft = handleCancelDraft,
+                            onOpenDocs = handleOpenDocs,
+                            onSubmitDraftToCanvas = handleSubmitDraftToCanvas,
+                            onSubmitSuccess = {
+                                viewModel?.refreshData()
                             }
                         )
                     }
@@ -293,11 +307,10 @@ fun AssignmentDraftScreen(
                         )
                     }
 
-                    // 5. Botones de Acción (Guardar para después / Ir al Editor)
+                    // 5. Botones de Acción (Guardar para después)
                     item(key = "task_actions") {
                         AssignmentBottomActionBar(
                             onSaveForLater = onBack,
-                            onGoToEditor = onOpenCanvas,
                             themeStyle = themeStyle
                         )
                     }
@@ -443,36 +456,21 @@ fun AssignmentDraftScreen(
                     )
                 }
 
-                // 2. Tarjeta de Borrador Google Drive Sincronizado
-                item(key = "task_draft_material") {
-                    DraftStatusCard(
+                // 2. Tarjeta Unificada de Entrega Directa y Borrador Google Drive
+                item(key = "task_submission_material") {
+                    AssignmentSubmissionCard(
                         assignment = assignment,
                         courseName = courseName,
                         themeStyle = themeStyle,
+                        viewModel = viewModel,
                         draftInfo = draftInfo,
-                        onStartDraft = { isTemplate, templateName ->
-                            viewModel?.startOrCloneDraft(
-                                assignment = assignment,
-                                courseName = courseName,
-                                templateName = if (isTemplate) templateName else null
-                            )
-                        },
+                        onStartDraft = handleStartDraft,
                         onExploreTemplates = handleExploreTemplates,
-                        onCancelDraft = {
-                            viewModel?.cancelDraft(assignment.id)
-                        },
-                        onOpenDocs = { url ->
-                            viewModel?.onOpenDocsRequested(url) ?: run {
-                                try { uriHandler.openUri(url) } catch (_: Exception) {}
-                            }
-                        },
-                        onSubmitToCanvas = {
-                            val targetUrl = draftInfo?.driveUrl.orEmpty()
-                            viewModel?.submitDraftToCanvas(
-                                assignment = assignment,
-                                driveUrl = targetUrl,
-                                onSuccess = { onOpenCanvas() }
-                            ) ?: onOpenCanvas()
+                        onCancelDraft = handleCancelDraft,
+                        onOpenDocs = handleOpenDocs,
+                        onSubmitDraftToCanvas = handleSubmitDraftToCanvas,
+                        onSubmitSuccess = {
+                            viewModel?.refreshData()
                         }
                     )
                 }
@@ -493,11 +491,10 @@ fun AssignmentDraftScreen(
                     )
                 }
 
-                // 5. Botones de Acción
+                // 5. Botones de Acción (Guardar para después)
                 item(key = "task_actions_material") {
                     AssignmentBottomActionBar(
                         onSaveForLater = onBack,
-                        onGoToEditor = onOpenCanvas,
                         themeStyle = themeStyle
                     )
                 }

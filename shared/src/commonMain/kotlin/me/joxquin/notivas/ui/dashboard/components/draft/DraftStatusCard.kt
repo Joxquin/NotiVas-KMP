@@ -32,8 +32,6 @@ import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-private val MiuixGreen = Color(0xFF4CAF50)
-
 @Composable
 fun DraftStatusCard(
     assignment: Assignment,
@@ -103,6 +101,7 @@ fun DraftStatusCard(
 
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
     val primaryColor = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+    val onPrimaryColor = if (isMiuix) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
 
     val triggerStart: (Boolean) -> Unit = { isTemplate ->
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -185,7 +184,7 @@ fun DraftStatusCard(
             if (isSubmitted || currentInfo.hasSubmitted) {
                 StatusHeader(
                     icon = Icons.Default.CheckCircle,
-                    iconColor = MiuixGreen,
+                    iconColor = primaryColor,
                     title = stringResource(Res.string.draft_status_submitted_title),
                     subtitle = stringResource(Res.string.draft_status_submitted_desc),
                     isMiuix = isMiuix
@@ -232,7 +231,7 @@ fun DraftStatusCard(
                         text = stringResource(Res.string.draft_btn_start_template, detectedTemplateName),
                         icon = Icons.Default.GroupAdd,
                         bgColor = primaryColor,
-                        textColor = Color.White,
+                        textColor = onPrimaryColor,
                         isMiuix = isMiuix,
                         onClick = { triggerStart(true) }
                     )
@@ -242,7 +241,7 @@ fun DraftStatusCard(
                         text = stringResource(Res.string.draft_btn_start_blank_drive),
                         icon = Icons.Default.AddCircleOutline,
                         bgColor = primaryColor,
-                        textColor = Color.White,
+                        textColor = onPrimaryColor,
                         isMiuix = isMiuix,
                         onClick = { triggerStart(false) }
                     )
@@ -252,7 +251,7 @@ fun DraftStatusCard(
                 ActionButton(
                     text = stringResource(Res.string.draft_btn_explore_modules),
                     icon = Icons.Default.FolderOpen,
-                    bgColor = if (isMiuix) Color.White.copy(alpha = 0.08f) else MaterialTheme.colorScheme.secondaryContainer,
+                    bgColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer,
                     textColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSecondaryContainer,
                     isMiuix = isMiuix,
                     onClick = {
@@ -290,14 +289,14 @@ fun DraftStatusCard(
                                 modifier = Modifier
                                     .size(8.dp)
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(MiuixGreen)
+                                    .background(primaryColor)
                             )
                             AdaptiveText(
                                 text = stringResource(Res.string.draft_synced_cloud_status),
                                 size = 11.sp,
                                 weight = FontWeight.Medium,
                                 isMiuix = isMiuix,
-                                color = MiuixGreen
+                                color = primaryColor
                             )
                         } else {
                             CircularProgressIndicator(
@@ -339,7 +338,7 @@ fun DraftStatusCard(
                         text = if (isDocumentReady) stringResource(Res.string.draft_open_docs_btn) else stringResource(Res.string.draft_preparing_docs),
                         icon = Icons.Default.Launch,
                         bgColor = primaryColor,
-                        textColor = Color.White,
+                        textColor = onPrimaryColor,
                         isMiuix = isMiuix,
                         enabled = isDocumentReady,
                         onClick = { onOpenDocs(currentInfo.driveUrl) },
@@ -348,8 +347,8 @@ fun DraftStatusCard(
                     ActionButton(
                         text = stringResource(Res.string.draft_btn_send_to_canvas),
                         icon = Icons.Default.Send,
-                        bgColor = MiuixGreen,
-                        textColor = Color.White,
+                        bgColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer,
+                        textColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSecondaryContainer,
                         isMiuix = isMiuix,
                         enabled = isDocumentReady,
                         onClick = onSubmitToCanvas,

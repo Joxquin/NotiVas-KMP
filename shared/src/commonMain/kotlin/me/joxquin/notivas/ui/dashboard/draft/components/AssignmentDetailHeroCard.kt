@@ -40,8 +40,7 @@ import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-private val MiuixGreen = Color(0xFF4CAF50)
-private val UrgentRed = Color(0xFFE53935)
+
 
 @Composable
 fun AssignmentDetailHeroCard(
@@ -81,8 +80,14 @@ fun AssignmentDetailHeroCard(
         }
     }
 
-    val pointsText = remember(assignment.pointsPossible) {
-        assignment.pointsPossible?.let { "${it.toInt()} pts" } ?: "Sin calificar"
+    val gradingText = remember(assignment.pointsPossible) {
+        val pts = assignment.pointsPossible
+        if (pts != null && pts > 0) {
+            val ptsFormatted = if (pts % 1.0 == 0.0) "${pts.toInt()} pts" else "$pts pts"
+            "Calificado $ptsFormatted"
+        } else {
+            "No calificado"
+        }
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
@@ -91,46 +96,6 @@ fun AssignmentDetailHeroCard(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Fila Superior: DETALLE DE TAREA + Badge Sincronizado Canvas
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                MiuixText(
-                    text = stringResource(Res.string.task_detail_header_label),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                )
-
-                // Badge Sincronizado Canvas
-                Surface(
-                    shape = RoundedCornerShape(9999.dp),
-                    color = MiuixGreen.copy(alpha = 0.12f),
-                    modifier = Modifier.clip(RoundedCornerShape(9999.dp))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = MiuixGreen,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        MiuixText(
-                            text = stringResource(Res.string.canvas_synced_badge),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MiuixGreen
-                        )
-                    }
-                }
-            }
-
             // Título de la Tarea
             MiuixText(
                 text = assignment.name,
@@ -147,8 +112,8 @@ fun AssignmentDetailHeroCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Pill Vencimiento
-                val dueBg = if (isUrgent) UrgentRed.copy(alpha = 0.12f) else MiuixTheme.colorScheme.surfaceContainerHigh
-                val dueColor = if (isUrgent) UrgentRed else MiuixTheme.colorScheme.onSurfaceVariantSummary
+                val dueBg = if (isUrgent) MiuixTheme.colorScheme.errorContainer else MiuixTheme.colorScheme.surfaceContainerHigh
+                val dueColor = if (isUrgent) MiuixTheme.colorScheme.onErrorContainer else MiuixTheme.colorScheme.onSurfaceVariantSummary
 
                 Surface(
                     shape = RoundedCornerShape(9999.dp),
@@ -193,7 +158,7 @@ fun AssignmentDetailHeroCard(
                             modifier = Modifier.size(14.dp)
                         )
                         MiuixText(
-                            text = "$pointsText • ${stringResource(Res.string.canvas_graded_badge)}",
+                            text = gradingText,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = MiuixTheme.colorScheme.onSurface
@@ -203,114 +168,70 @@ fun AssignmentDetailHeroCard(
             }
         }
     } else {
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+        Column(
             modifier = modifier
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // Fila Superior
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(Res.string.task_detail_header_label),
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            // Título
+            Text(
+                text = assignment.name,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-                    Surface(
-                        shape = RoundedCornerShape(9999.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+            // Fila de Pills
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val dueContainer = if (isUrgent) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                val dueColor = if (isUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+
+                Surface(
+                    shape = RoundedCornerShape(9999.dp),
+                    color = dueContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Text(
-                                text = stringResource(Res.string.canvas_synced_badge),
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = dueColor,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = dueText,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
+                            color = dueColor
+                        )
                     }
                 }
 
-                // Título
-                Text(
-                    text = assignment.name,
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                // Fila de Pills
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    shape = RoundedCornerShape(9999.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest
                 ) {
-                    val dueContainer = if (isUrgent) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f) else MaterialTheme.colorScheme.surfaceContainerHighest
-                    val dueColor = if (isUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-
-                    Surface(
-                        shape = RoundedCornerShape(9999.dp),
-                        color = dueContainer
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Schedule,
-                                contentDescription = null,
-                                tint = dueColor,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = dueText,
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
-                                color = dueColor
-                            )
-                        }
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(9999.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FactCheck,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = "$pointsText • ${stringResource(Res.string.canvas_graded_badge)}",
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Medium),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.FactCheck,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = gradingText,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Medium),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
