@@ -36,6 +36,8 @@ data class AssignmentEntity(
     val htmlUrl: String? = null,
     @ColumnInfo(name = "submission_types")
     val submissionTypes: List<String>? = null,
+    @ColumnInfo(name = "allowed_extensions")
+    val allowedExtensions: List<String>? = null,
     @ColumnInfo(name = "is_completed")
     val isCompleted: Boolean = false,
     @ColumnInfo(name = "is_locked")
@@ -77,6 +79,7 @@ data class AssignmentEntity(
         pointsPossible = pointsPossible,
         htmlUrl = htmlUrl,
         submissionTypes = submissionTypes,
+        allowedExtensions = allowedExtensions,
         isCompleted = isCompleted,
         isLocked = isLocked,
         submission = if (submissionId != null || submissionWorkflowState != null || score != null || grade != null) {
@@ -113,6 +116,7 @@ data class AssignmentEntity(
             pointsPossible = a.pointsPossible,
             htmlUrl = a.htmlUrl,
             submissionTypes = a.submissionTypes,
+            allowedExtensions = a.allowedExtensions,
             isCompleted = a.isCompleted,
             isLocked = a.isLocked,
             status = a.status,

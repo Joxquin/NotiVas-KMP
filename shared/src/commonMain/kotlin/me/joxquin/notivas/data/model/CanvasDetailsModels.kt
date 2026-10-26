@@ -67,7 +67,10 @@ data class CanvasModule(
     @SerialName("name") val name: String,
     @SerialName("position") val position: Int? = null,
     @SerialName("items_count") val itemsCount: Int? = null,
-    @SerialName("items") val items: List<CanvasModuleItem>? = null
+    @SerialName("items") val items: List<CanvasModuleItem>? = null,
+    @SerialName("state") val state: String? = null, // "locked", "unlocked", "started", "completed"
+    @SerialName("unlock_at") val unlockAt: String? = null,
+    @SerialName("workflow_state") val workflowState: String? = null
 )
 
 @Serializable
@@ -79,7 +82,8 @@ data class CanvasModuleItem(
     @SerialName("url") val url: String? = null,
     @SerialName("page_url") val pageUrl: String? = null,
     @SerialName("external_url") val externalUrl: String? = null,
-    @SerialName("content_id") val contentId: Long? = null
+    @SerialName("content_id") val contentId: Long? = null,
+    @SerialName("locked_for_user") val lockedForUser: Boolean? = null
 )
 
 @Serializable

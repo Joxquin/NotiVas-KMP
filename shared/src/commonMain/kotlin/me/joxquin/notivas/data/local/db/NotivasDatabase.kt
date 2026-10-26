@@ -36,7 +36,7 @@ import me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity
         SimulationItemEntity::class,
         PlannerItemEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(RoomConverters::class)

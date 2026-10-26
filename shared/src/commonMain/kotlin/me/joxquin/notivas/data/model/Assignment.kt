@@ -14,6 +14,7 @@ data class Assignment(
     @SerialName("points_possible") val pointsPossible: Double? = null,
     @SerialName("html_url") val htmlUrl: String? = null,
     @SerialName("submission_types") val submissionTypes: List<String>? = null,
+    @SerialName("allowed_extensions") val allowedExtensions: List<String>? = null,
     @SerialName("has_submitted_submissions") val isCompleted: Boolean = false,
     @SerialName("locked_for_user") val isLocked: Boolean = false,
     @SerialName("submission") val submission: SubmissionDetails? = null,
