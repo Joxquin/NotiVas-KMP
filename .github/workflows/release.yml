@@ -6,7 +6,7 @@ on:
       bump_type:
         description: 'Tipo de versión (patch, minor, major)'
         required: true
-        default: 'patch'
+        default: 'minor'
         type: choice
         options:
           - patch
@@ -21,12 +21,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-android:
-    name: Build Android APK
+  build-release:
+    name: Build Signed Android Release APKs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -38,62 +40,29 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Android Release APK
-        run: ./gradlew :androidApp:assembleDebug --stacktrace
+      - name: Decode Release Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > androidApp/release.keystore
+            echo "Keystore decoded successfully."
+          else
+            echo "Warning: RELEASE_KEYSTORE_BASE64 secret not found."
+          fi
 
-      - name: Upload Android APK
+      - name: Build Android Release APKs
+        run: ./gradlew :androidApp:assembleRelease --stacktrace
+
+      - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: notivas-android-apk
-          path: androidApp/build/outputs/apk/debug/*.apk
-
-  build-ios:
-    name: Build iOS App
-    runs-on: macos-15
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Select Xcode Version
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '16.2'
-
-      - name: Build iOS App (Simulator build)
-        run: |
-          xcodebuild \
-            -project iosApp/iosApp.xcodeproj \
-            -scheme iosApp \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -derivedDataPath build/ios_derived \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-
-      - name: Compress iOS App
-        run: |
-          cd build/ios_derived/Build/Products/Debug-iphonesimulator
-          zip -r -y NotiVas-iOS-Simulator.app.zip *.app
-
-      - name: Upload iOS App
-        uses: actions/upload-artifact@v4
-        with:
-          name: notivas-ios-app
-          path: build/ios_derived/Build/Products/Debug-iphonesimulator/NotiVas-iOS-Simulator.app.zip
+          name: notivas-release-apks
+          path: androidApp/build/outputs/apk/release/*.apk
 
   publish-release:
     name: Publish Release with AI Notes
-    needs: [build-android, build-ios]
+    needs: [build-release]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -106,26 +75,32 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: ${{ github.event.inputs.bump_type || 'patch' }}
+          default_bump: ${{ github.event.inputs.bump_type || 'minor' }}
 
-      - name: Download Android Artifacts
+      - name: Download Release APKs
         uses: actions/download-artifact@v4
         with:
-          name: notivas-android-apk
-          path: release_artifacts/android
+          name: notivas-release-apks
+          path: release_apks
 
-      - name: Download iOS Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: notivas-ios-app
-          path: release_artifacts/ios
+      - name: Filter arm64 and universal APKs
+        run: |
+          mkdir -p release_to_upload
+          # Copiar apk universal y arm64-v8a
+          find release_apks -name "*universal*.apk" -exec cp {} release_to_upload/NotiVas-v1.2.0-universal.apk \;
+          find release_apks -name "*arm64-v8a*.apk" -exec cp {} release_to_upload/NotiVas-v1.2.0-arm64-v8a.apk \;
+          # Si por nombre exacto no coincidió, copiar los apks disponibles
+          if [ -z "$(ls -A release_to_upload)" ]; then
+            cp release_apks/*.apk release_to_upload/
+          fi
+          ls -la release_to_upload/
 
       - name: Collect Git Log
         id: git_log
         run: |
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -z "$PREV_TAG" ]; then
-            COMMITS=$(git log -n 25 --pretty=format:"- %s (%h)")
+            COMMITS=$(git log -n 50 --pretty=format:"- %s (%h)")
           else
             COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)")
           fi
@@ -139,11 +114,11 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           PROMPT="Eres el Release Manager de NotiVas-KMP. Redacta notas de versión atractivas, concisas y profesionales en español (Markdown) para la versión ${{ steps.tag_version.outputs.new_tag }}.
-          Organiza el contenido en secciones claras:
-          - Resumen destacado
-          - Novedades y Características
-          - Mejoras y Optimización
-          - Correcciones
+          Organiza el contenido con formato limpio y claro:
+          - Resumen destacado de la versión
+          - Novedades y Funcionalidades
+          - Mejoras de UI (Diseño Dual MIUIX y Material 3)
+          - Rendimiento y Correcciones
           
           Lista de cambios y commits recientes:
           $COMMITS"
@@ -171,6 +146,4 @@ jobs:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
           name: NotiVas ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ env.CHANGELOG }}
-          files: |
-            release_artifacts/android/*.apk
-            release_artifacts/ios/*.zip
+          files: release_to_upload/*.apk
