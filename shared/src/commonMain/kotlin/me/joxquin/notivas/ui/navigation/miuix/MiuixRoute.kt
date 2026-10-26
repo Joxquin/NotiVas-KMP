@@ -39,4 +39,10 @@ sealed interface MiuixRoute : NavKey {
 
     @Serializable
     data object TaskHistoryArchive : MiuixRoute
+
+    @Serializable
+    data class CourseDetail(val courseId: Long) : MiuixRoute
+
+    @Serializable
+    data class CourseModules(val courseId: Long) : MiuixRoute
 }

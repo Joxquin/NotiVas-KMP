@@ -105,6 +105,10 @@ import me.joxquin.notivas.ui.herramientas.archive.TaskHistoryArchiveScreen
 import me.joxquin.notivas.ui.foros.detail.ForoDetailScreen
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.Course
+import me.joxquin.notivas.ui.course.CourseDetailScreen
+import me.joxquin.notivas.ui.course.CourseDetailViewModel
+import me.joxquin.notivas.ui.course.modules.CourseModulesScreen
 
 @Stable
 class MainPagerState(
@@ -332,6 +336,8 @@ fun MainAppShell(
     var showingActivityDetail by remember { mutableStateOf(false) }
     var showingScheduleDetail by remember { mutableStateOf(false) }
     val showingMorningRoadmap by dashboardViewModel.showingMorningRoadmap.collectAsState()
+    var selectedCourseForDetail by remember { mutableStateOf<Course?>(null) }
+    var selectedCourseForModules by remember { mutableStateOf<Course?>(null) }
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
@@ -496,6 +502,9 @@ fun MainAppShell(
                                             onNavigateToCourseProgreso = { course ->
                                                 notasViewModel.selectCourse(course)
                                                 miuixNavigator.push(MiuixRoute.CourseProgreso(course.id))
+                                            },
+                                            onNavigateToCourseDetail = { course ->
+                                                miuixNavigator.push(MiuixRoute.CourseDetail(course.id))
                                             },
                                             onNavigateToForoDetail = { topic ->
                                                 forosViewModel.selectDiscussion(topic)
@@ -911,6 +920,89 @@ fun MainAppShell(
                         }
                     )
                 }
+
+                entry<MiuixRoute.CourseDetail>(swipeDismiss = NavSwipeDirection.LeftToRight) { route: MiuixRoute.CourseDetail ->
+                    val detailViewModel = remember(route.courseId) {
+                        CourseDetailViewModel(
+                            courseId = route.courseId,
+                            repository = canvasRepository
+                        )
+                    }
+                    CourseDetailScreen(
+                        viewModel = detailViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() },
+                        onNavigateToAssignmentDraft = { assignmentId, courseName ->
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    val assignmentUi = AssignmentUiModel(assignment, courseName)
+                                    dashboardViewModel.openDraft(assignmentUi)
+                                    miuixNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                                }
+                            }
+                        },
+                        onNavigateToProgreso = {
+                            val course = notasViewModel.uiState.value.courses.find { it.id == route.courseId }
+                            if (course != null) {
+                                notasViewModel.selectCourse(course)
+                            }
+                            miuixNavigator.push(MiuixRoute.CourseProgreso(route.courseId))
+                        },
+                        onNavigateToCopilot = { prompt ->
+                            handleMiuixBack()
+                            mainPagerState.animateToPage(2)
+                            copilotViewModel.sendMessage(prompt)
+                        },
+                        onNavigateToAnnouncements = {
+                            miuixNavigator.push(MiuixRoute.ForosHub)
+                        },
+                        onNavigateToAllModules = {
+                            miuixNavigator.push(MiuixRoute.CourseModules(route.courseId))
+                        },
+                        onOpenUrl = { url ->
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (_: Exception) {}
+                        }
+                    )
+                }
+
+                entry<MiuixRoute.CourseModules>(swipeDismiss = NavSwipeDirection.LeftToRight) { route: MiuixRoute.CourseModules ->
+                    val detailViewModel = remember(route.courseId) {
+                        CourseDetailViewModel(
+                            courseId = route.courseId,
+                            repository = canvasRepository
+                        )
+                    }
+                    CourseModulesScreen(
+                        viewModel = detailViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() },
+                        onNavigateToAssignmentDraft = { assignmentId, courseName ->
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    val assignmentUi = AssignmentUiModel(assignment, courseName)
+                                    dashboardViewModel.openDraft(assignmentUi)
+                                    miuixNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                                }
+                            }
+                        },
+                        onNavigateToForoDetail = { topicId ->
+                            val topic = forosUiState.discussions.find { it.id == topicId }
+                            if (topic != null) {
+                                forosViewModel.selectDiscussion(topic)
+                                miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                            }
+                        },
+                        onOpenUrl = { url ->
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (_: Exception) {}
+                        }
+                    )
+                }
             }
         }
     } else {
@@ -927,6 +1019,8 @@ fun MainAppShell(
         BackHandler(
             enabled = themeStyle == AppThemeStyle.MATERIAL && (
                 isMaterialDashboardSearchExpandingOrExpanded ||
+                selectedCourseForModules != null ||
+                selectedCourseForDetail != null ||
                 showingMorningRoadmap ||
                 showingScheduleDetail ||
                 showingActivityDetail ||
@@ -939,6 +1033,10 @@ fun MainAppShell(
         ) {
             if (isMaterialDashboardSearchExpandingOrExpanded) {
                 dashboardViewModel.setSearchExpanded(false)
+            } else if (selectedCourseForModules != null) {
+                selectedCourseForModules = null
+            } else if (selectedCourseForDetail != null) {
+                selectedCourseForDetail = null
             } else if (showingMorningRoadmap) {
                 dashboardViewModel.closeMorningRoadmap()
             } else if (showingScheduleDetail) {
@@ -963,7 +1061,7 @@ fun MainAppShell(
         }
 
         val isImeVisible = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
-        val isMaterialBottomBarVisible = !isImeVisible && !showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null && !isMaterialDashboardSearchExpandingOrExpanded
+        val isMaterialBottomBarVisible = !isImeVisible && selectedCourseForModules == null && selectedCourseForDetail == null && !showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null && !isMaterialDashboardSearchExpandingOrExpanded
 
         Scaffold(
             bottomBar = {
@@ -971,6 +1069,8 @@ fun MainAppShell(
                     currentDestination = materialDestination,
                     isVisible = isMaterialBottomBarVisible,
                     onNavigate = { destination ->
+                        selectedCourseForModules = null
+                        selectedCourseForDetail = null
                         if (selectedAssignmentForDraft != null) {
                             dashboardViewModel.closeDraft()
                         }
@@ -993,7 +1093,101 @@ fun MainAppShell(
                     .fillMaxSize()
                     .padding(bottom = animatedBottomPadding)
             ) {
-                if (showingMorningRoadmap) {
+                if (selectedCourseForModules != null) {
+                    val course = selectedCourseForModules!!
+                    val detailViewModel = remember(course.id) {
+                        CourseDetailViewModel(
+                            courseId = course.id,
+                            repository = canvasRepository
+                        )
+                    }
+                    CourseModulesScreen(
+                        viewModel = detailViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { selectedCourseForModules = null },
+                        onNavigateToAssignmentDraft = { assignmentId, courseName ->
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    dashboardViewModel.openDraft(
+                                        AssignmentUiModel(
+                                            assignment = assignment,
+                                            courseName = courseName
+                                        )
+                                    )
+                                }
+                            }
+                        },
+                        onNavigateToForoDetail = { topicId ->
+                            val topic = forosUiState.discussions.find { it.id == topicId }
+                            if (topic != null) {
+                                forosViewModel.selectDiscussion(topic)
+                                showingForosDetail = true
+                                showingNotasDetail = false
+                                navigateToMaterial(MainDestination.Herramientas)
+                            }
+                        },
+                        onOpenUrl = { url ->
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (_: Exception) {}
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (selectedCourseForDetail != null) {
+                    val course = selectedCourseForDetail!!
+                    val detailViewModel = remember(course.id) {
+                        CourseDetailViewModel(
+                            courseId = course.id,
+                            repository = canvasRepository
+                        )
+                    }
+                    CourseDetailScreen(
+                        viewModel = detailViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { selectedCourseForDetail = null },
+                        onNavigateToAssignmentDraft = { assignmentId, courseName ->
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    dashboardViewModel.openDraft(
+                                        AssignmentUiModel(
+                                            assignment = assignment,
+                                            courseName = courseName
+                                        )
+                                    )
+                                }
+                            }
+                        },
+                        onNavigateToProgreso = {
+                            notasViewModel.selectCourse(course)
+                            selectedCourseForDetail = null
+                            showingNotasDetail = true
+                            showingForosDetail = false
+                            navigateToMaterial(MainDestination.Herramientas)
+                        },
+                        onNavigateToCopilot = { prompt ->
+                            selectedCourseForDetail = null
+                            navigateToMaterial(MainDestination.Copilot)
+                            copilotViewModel.sendMessage(prompt)
+                        },
+                        onNavigateToAnnouncements = {
+                            selectedCourseForDetail = null
+                            showingForosDetail = true
+                            showingNotasDetail = false
+                            navigateToMaterial(MainDestination.Herramientas)
+                        },
+                        onNavigateToAllModules = {
+                            selectedCourseForModules = course
+                        },
+                        onOpenUrl = { url ->
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (_: Exception) {}
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else if (showingMorningRoadmap) {
                     me.joxquin.notivas.ui.dashboard.roadmap.MorningRoadmapScreen(
                         viewModel = dashboardViewModel,
                         onBack = { dashboardViewModel.closeMorningRoadmap() },
@@ -1123,6 +1317,9 @@ fun MainAppShell(
                                     showingForosDetail = false
                                     showingNotasDetail = true
                                     navigateToMaterial(MainDestination.Herramientas)
+                                },
+                                onNavigateToCourseDetail = { course ->
+                                    selectedCourseForDetail = course
                                 },
                                 onNavigateToForoDetail = { topic ->
                                     forosViewModel.selectDiscussion(topic)

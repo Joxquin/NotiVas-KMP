@@ -166,8 +166,7 @@ private fun MiuixCourseGridCard(
     val percentage = (progressRatio * 100).toInt()
 
     val shortCode = remember(course.courseCode, course.name) {
-        course.courseCode?.takeIf { it.isNotBlank() }
-            ?: if (course.name.contains("Mov", ignoreCase = true)) "ProgMov" else "CS-${course.id % 1000}"
+        me.joxquin.notivas.util.CourseUtil.extractCourseTag(course.courseCode, course.name)
     }
 
     MiuixCard(
@@ -280,7 +279,7 @@ private fun MiuixCourseGridCard(
  * Placeholder estilizado con degradado suave Monet y barras mini que emulan la referencia visual.
  */
 @Composable
-private fun MiuixCourseCoverPlaceholder(
+fun MiuixCourseCoverPlaceholder(
     courseId: Long,
     modifier: Modifier = Modifier
 ) {

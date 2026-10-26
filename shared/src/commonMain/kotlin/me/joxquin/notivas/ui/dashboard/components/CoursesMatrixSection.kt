@@ -163,8 +163,7 @@ private fun MaterialCourseGridCard(
     val percentage = (progressRatio * 100).toInt()
 
     val shortCode = remember(course.courseCode, course.name) {
-        course.courseCode?.takeIf { it.isNotBlank() }
-            ?: if (course.name.contains("Mov", ignoreCase = true)) "ProgMov" else "CS-${course.id % 1000}"
+        me.joxquin.notivas.util.CourseUtil.extractCourseTag(course.courseCode, course.name)
     }
 
     Card(
