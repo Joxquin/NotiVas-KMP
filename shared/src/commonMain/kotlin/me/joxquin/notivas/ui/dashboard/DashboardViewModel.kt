@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -30,7 +32,8 @@ import me.joxquin.notivas.util.DateTimeUtil
 enum class SyncStatus {
     SYNCING,
     SYNCED,
-    FAILED
+    FAILED,
+    SESSION_EXPIRED
 }
 
 data class AssignmentUiModel(
@@ -98,6 +101,29 @@ class DashboardViewModel(
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.SYNCING)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
+
+    val isSessionExpired: StateFlow<Boolean> = preferencesManager.isSessionExpired
+    private val _showQuickRelogin = MutableStateFlow(false)
+    val showQuickRelogin: StateFlow<Boolean> = _showQuickRelogin.asStateFlow()
+
+    fun openQuickRelogin() {
+        _showQuickRelogin.value = true
+    }
+
+    fun closeQuickRelogin() {
+        _showQuickRelogin.value = false
+    }
+
+    fun onReloginSuccess(cookies: String, csrfToken: String?) {
+        viewModelScope.launch {
+            _showQuickRelogin.value = false
+            val url = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
+            val success = repository.verifyAndSaveSession(url, cookies, csrfToken)
+            if (success) {
+                refreshData()
+            }
+        }
+    }
 
     val userProfile: StateFlow<UserProfile?> = repository.userProfile.stateIn(
         viewModelScope,
@@ -548,6 +574,59 @@ class DashboardViewModel(
         }
     }
 
+    fun submitAssignmentDirect(
+        assignment: Assignment,
+        submissionType: String,
+        fileBytes: ByteArray? = null,
+        fileName: String? = null,
+        mimeType: String = "application/octet-stream",
+        bodyText: String? = null,
+        comment: String? = null,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val result = repository.submitAssignment(
+                courseId = assignment.courseId,
+                assignmentId = assignment.id,
+                submissionType = submissionType,
+                bodyText = bodyText,
+                fileBytes = fileBytes,
+                fileName = fileName,
+                mimeType = mimeType,
+                comment = comment
+            )
+            result.onSuccess { subDetails ->
+                val currentDraft = repository.getAssignmentDraft(assignment.id)
+                if (currentDraft != null) {
+                    repository.saveAssignmentDraft(
+                        currentDraft.copy(
+                            draftStatus = me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusEnum.SUBMITTED.name
+                        )
+                    )
+                }
+                _selectedAssignmentForDraft.value?.let { current ->
+                    if (current.assignment.id == assignment.id) {
+                        _selectedAssignmentForDraft.value = current.copy(
+                            assignment = current.assignment.copy(
+                                isCompleted = true,
+                                status = "completed",
+                                submittedAt = subDetails.submittedAt ?: me.joxquin.notivas.util.DateTimeUtil.nowLocalDate().toIsoDateString()
+                            )
+                        )
+                    }
+                }
+                refreshData()
+                _uiEffect.tryEmit(UiEffect.ShowToast("Tarea entregada con éxito a Canvas"))
+                onSuccess()
+            }.onFailure { error ->
+                val errorMsg = error.message ?: "Error al enviar la entrega a Canvas"
+                _uiEffect.tryEmit(UiEffect.ShowToast(errorMsg))
+                onError(errorMsg)
+            }
+        }
+    }
+
     val courses: StateFlow<List<Course>> =
         repository.allCourses.stateIn(
             viewModelScope,
@@ -696,8 +775,19 @@ class DashboardViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "CANVAS")
 
+    val universityUrl: StateFlow<String> = preferencesManager.universityUrl.map {
+        it ?: "https://canvas.utp.edu.pe"
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "https://canvas.utp.edu.pe")
+
     init {
         initialSync()
+        viewModelScope.launch {
+            preferencesManager.isSessionExpired.collect { expired ->
+                if (expired) {
+                    _syncStatus.value = SyncStatus.SESSION_EXPIRED
+                }
+            }
+        }
     }
 
     private fun initialSync() {
@@ -707,8 +797,14 @@ class DashboardViewModel(
                 repository.getProfile()
                 repository.fetchAndSaveData()
                 _syncStatus.value = SyncStatus.SYNCED
+            } catch (e: me.joxquin.notivas.data.remote.CanvasAuthExpiredException) {
+                _syncStatus.value = SyncStatus.SESSION_EXPIRED
             } catch (e: Exception) {
-                _syncStatus.value = SyncStatus.FAILED
+                if (preferencesManager.getIsSessionExpired()) {
+                    _syncStatus.value = SyncStatus.SESSION_EXPIRED
+                } else {
+                    _syncStatus.value = SyncStatus.FAILED
+                }
             }
             loadDiscussionsQuietly()
         }
@@ -746,8 +842,14 @@ class DashboardViewModel(
                 repository.fetchAndSaveData()
                 repository.getProfile()
                 _syncStatus.value = SyncStatus.SYNCED
+            } catch (e: me.joxquin.notivas.data.remote.CanvasAuthExpiredException) {
+                _syncStatus.value = SyncStatus.SESSION_EXPIRED
             } catch (e: Exception) {
-                _syncStatus.value = SyncStatus.FAILED
+                if (preferencesManager.getIsSessionExpired()) {
+                    _syncStatus.value = SyncStatus.SESSION_EXPIRED
+                } else {
+                    _syncStatus.value = SyncStatus.FAILED
+                }
             } finally {
                 _isRefreshing.value = false
             }

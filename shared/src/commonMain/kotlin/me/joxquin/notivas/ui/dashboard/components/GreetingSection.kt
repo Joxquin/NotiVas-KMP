@@ -45,6 +45,7 @@ fun GreetingSection(
     institution: String,
     syncStatus: SyncStatus = SyncStatus.SYNCED,
     onRefresh: () -> Unit = {},
+    onRelogin: (() -> Unit)? = null,
     onAvatarClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -166,13 +167,16 @@ fun GreetingSection(
             SyncStatus.SYNCING -> stringResource(Res.string.sync_status_syncing) to MaterialTheme.colorScheme.tertiary
             SyncStatus.SYNCED -> stringResource(Res.string.sync_status_synced) to Color(0xFF4CAF50)
             SyncStatus.FAILED -> stringResource(Res.string.sync_status_offline) to MaterialTheme.colorScheme.error
+            SyncStatus.SESSION_EXPIRED -> stringResource(Res.string.sync_status_session_expired) to MaterialTheme.colorScheme.error
         }
+
+        val badgeAction = if (syncStatus == SyncStatus.SESSION_EXPIRED) (onRelogin ?: onRefresh) else onRefresh
 
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = MaterialTheme.colorScheme.surfaceContainer,
             contentColor = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.clickable(onClick = onRefresh)
+            modifier = Modifier.clickable(onClick = badgeAction)
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),

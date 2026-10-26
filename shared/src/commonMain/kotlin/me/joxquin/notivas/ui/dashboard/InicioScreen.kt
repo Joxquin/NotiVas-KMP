@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.dashboard.components.CoursesMatrixSection
 import me.joxquin.notivas.ui.dashboard.components.GreetingSection
+import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
+import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
 import me.joxquin.notivas.ui.dashboard.components.InicioQuickActionsFab
 import me.joxquin.notivas.ui.dashboard.components.InicioTopAppBar
 import me.joxquin.notivas.ui.dashboard.components.SelectedDateAssignmentsSection
@@ -52,15 +54,22 @@ fun InicioScreen(
     onNavigateToRoadmap: () -> Unit = {},
     onOpenAssignmentDraft: ((AssignmentUiModel) -> Unit)? = null,
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
+    onNavigateToCourseDetail: ((me.joxquin.notivas.data.model.Course) -> Unit)? = null,
     onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val handleCourseClick: (me.joxquin.notivas.data.model.Course) -> Unit = { course ->
+        if (onNavigateToCourseDetail != null) onNavigateToCourseDetail(course)
+        else onNavigateToCourseProgreso(course)
+    }
+
     if (themeStyle == AppThemeStyle.MIUIX) {
         InicioMiuixContent(
             viewModel = viewModel,
             listState = listState,
             onNavigateToAjustes = onNavigateToAjustes,
             onNavigateToCourseProgreso = onNavigateToCourseProgreso,
+            onNavigateToCourseDetail = onNavigateToCourseDetail,
             onNavigateToCopilot = onNavigateToCopilot,
             onNavigateToHerramientas = onNavigateToHerramientas,
             onNavigateToSchedule = onNavigateToSchedule,
@@ -83,6 +92,9 @@ fun InicioScreen(
     val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
     val morningBriefing by viewModel.morningBriefing.collectAsState()
     val discussions by viewModel.discussions.collectAsState()
+    val isSessionExpired by viewModel.isSessionExpired.collectAsState()
+    val showQuickRelogin by viewModel.showQuickRelogin.collectAsState()
+    val universityUrl by viewModel.universityUrl.collectAsState()
 
     var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
 
@@ -209,6 +221,15 @@ fun InicioScreen(
                     }
                 }
 
+                if (isSessionExpired) {
+                    item {
+                        SessionExpiredBanner(
+                            onReconnect = { viewModel.openQuickRelogin() },
+                            themeStyle = AppThemeStyle.MATERIAL
+                        )
+                    }
+                }
+
                 // ─── 1. Buscador Global (Cápsula Ancla con medición de coordenada Y) ──────────
                 item {
                     me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
@@ -256,7 +277,7 @@ fun InicioScreen(
                     CoursesMatrixSection(
                         courseStats = courseStats,
                         courses = filteredCourses,
-                        onCourseClick = { course -> onNavigateToCourseProgreso(course) }
+                        onCourseClick = handleCourseClick
                     )
                 }
             }
@@ -277,7 +298,7 @@ fun InicioScreen(
             courseStats = courseStats,
             assignments = allAssignments,
             discussions = discussions,
-            onCourseClick = onNavigateToCourseProgreso,
+            onCourseClick = handleCourseClick,
             onAssignmentClick = { selectedAssignmentForSubmenu = it },
             onForumClick = { onNavigateToForoDetail?.invoke(it) },
             onAskAi = { query -> onNavigateToCopilot() },
@@ -307,5 +328,15 @@ fun InicioScreen(
                 onOpenAssignmentDraft?.invoke(assignment)
             }
         )
+
+        if (showQuickRelogin) {
+            QuickReloginSheet(
+                universityUrl = universityUrl,
+                onDismiss = { viewModel.closeQuickRelogin() },
+                onSuccess = { cookies, csrfToken ->
+                    viewModel.onReloginSuccess(cookies, csrfToken)
+                }
+            )
+        }
     }
 }

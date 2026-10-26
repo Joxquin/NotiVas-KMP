@@ -32,6 +32,8 @@ import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.components.SelectedDateAssignmentsSection
+import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
+import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixStudentHeader
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixUrgentTasksCarousel
@@ -58,6 +60,7 @@ fun InicioMiuixContent(
     ),
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
+    onNavigateToCourseDetail: ((me.joxquin.notivas.data.model.Course) -> Unit)? = null,
     onNavigateToCopilot: () -> Unit = {},
     onNavigateToHerramientas: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
@@ -66,6 +69,10 @@ fun InicioMiuixContent(
     onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val handleCourseClick: (me.joxquin.notivas.data.model.Course) -> Unit = { course ->
+        if (onNavigateToCourseDetail != null) onNavigateToCourseDetail(course)
+        else onNavigateToCourseProgreso(course)
+    }
     val userProfile by viewModel.userProfile.collectAsState()
     val syncStatus by viewModel.syncStatus.collectAsState()
     val courses by viewModel.courses.collectAsState()
@@ -76,6 +83,9 @@ fun InicioMiuixContent(
     val institutionName by viewModel.institutionName.collectAsState()
     val morningBriefing by viewModel.morningBriefing.collectAsState()
     val discussions by viewModel.discussions.collectAsState()
+    val isSessionExpired by viewModel.isSessionExpired.collectAsState()
+    val showQuickRelogin by viewModel.showQuickRelogin.collectAsState()
+    val universityUrl by viewModel.universityUrl.collectAsState()
 
     var searchQuery by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
 
@@ -175,6 +185,15 @@ fun InicioMiuixContent(
                 }
             }
 
+            if (isSessionExpired) {
+                item {
+                    SessionExpiredBanner(
+                        onReconnect = { viewModel.openQuickRelogin() },
+                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                    )
+                }
+            }
+
             // 1. Buscador Global (Cápsula Ancla con medición de coordenada Y)
             item {
                 me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
@@ -231,7 +250,7 @@ fun InicioMiuixContent(
                 MiuixCourseSummaryList(
                     courses = filteredCourses,
                     courseStats = courseStats,
-                    onCourseClick = { course -> onNavigateToCourseProgreso(course) }
+                    onCourseClick = handleCourseClick
                 )
             }
         }
@@ -257,7 +276,7 @@ fun InicioMiuixContent(
             courseStats = courseStats,
             assignments = allAssignments,
             discussions = discussions,
-            onCourseClick = onNavigateToCourseProgreso,
+            onCourseClick = handleCourseClick,
             onAssignmentClick = { selectedAssignmentForSubmenu = it },
             onForumClick = { onNavigateToForoDetail?.invoke(it) },
             onAskAi = { query -> onNavigateToCopilot() },
@@ -287,5 +306,15 @@ fun InicioMiuixContent(
                 onOpenAssignmentDraft?.invoke(assignment)
             }
         )
+
+        if (showQuickRelogin) {
+            QuickReloginSheet(
+                universityUrl = universityUrl,
+                onDismiss = { viewModel.closeQuickRelogin() },
+                onSuccess = { cookies, csrfToken ->
+                    viewModel.onReloginSuccess(cookies, csrfToken)
+                }
+            )
+        }
     }
 }

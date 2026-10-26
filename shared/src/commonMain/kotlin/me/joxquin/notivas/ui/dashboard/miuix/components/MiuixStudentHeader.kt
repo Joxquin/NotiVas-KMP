@@ -46,6 +46,7 @@ fun MiuixStudentHeader(
     institution: String,
     syncStatus: SyncStatus = SyncStatus.SYNCED,
     onRefresh: () -> Unit,
+    onRelogin: (() -> Unit)? = null,
     onAvatarClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -181,7 +182,10 @@ fun MiuixStudentHeader(
                 SyncStatus.SYNCING -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.sync_status_syncing) to MiuixOrange
                 SyncStatus.SYNCED -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.sync_status_synced) to MiuixGreen
                 SyncStatus.FAILED -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.sync_status_offline) to MiuixRed
+                SyncStatus.SESSION_EXPIRED -> org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.sync_status_session_expired) to MiuixRed
             }
+
+            val badgeAction = if (syncStatus == SyncStatus.SESSION_EXPIRED) (onRelogin ?: onRefresh) else onRefresh
 
             Box(
                 modifier = Modifier
@@ -194,7 +198,7 @@ fun MiuixStudentHeader(
                         color = MiuixTheme.colorScheme.dividerLine,
                         cornerRadius = 14.dp
                     )
-                    .clickable(onClick = onRefresh)
+                    .clickable(onClick = badgeAction)
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
