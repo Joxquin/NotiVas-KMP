@@ -37,3 +37,72 @@ jobs:
         with:
           name: notivas-android-debug
           path: androidApp/build/outputs/apk/debug/*.apk
+
+  build-ios:
+    name: Build iOS App
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build iOS Simulator App
+        working-directory: iosApp
+        run: |
+          xcodebuild \
+            -project iosApp.xcodeproj \
+            -scheme iosApp \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Release \
+            -derivedDataPath build \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package iOS Simulator App
+        working-directory: iosApp
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/Build/Products/Release-iphonesimulator/NotiVas-KMP.app \
+            notivas-ios-simulator.zip
+
+      - name: Build Unsigned iOS Device App
+        working-directory: iosApp
+        run: |
+          xcodebuild \
+            -project iosApp.xcodeproj \
+            -scheme iosApp \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -derivedDataPath build-device \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Package Unsigned IPA
+        working-directory: iosApp
+        run: |
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R build-device/Build/Products/Release-iphoneos/NotiVas-KMP.app Payload/
+          zip -qry notivas-unsigned.ipa Payload
+
+      - name: Upload iOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: notivas-ios-builds
+          path: |
+            iosApp/notivas-ios-simulator.zip
+            iosApp/notivas-unsigned.ipa
