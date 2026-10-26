@@ -343,7 +343,7 @@ private fun handleItemClick(
     onOpenUrl: (String) -> Unit
 ) {
     when (log.type) {
-        "ASSIGNMENT_SUBMISSION", "DRIVE_SYNC" -> {
+        "ASSIGNMENT_SUBMISSION", "DRIVE_SYNC", "CANVAS_NOTIFICATION" -> {
             log.targetId?.let { onNavigateToAssignment(it) }
                 ?: log.actionUrl?.let { onOpenUrl(it) }
         }
@@ -352,7 +352,8 @@ private fun handleItemClick(
                 ?: log.actionUrl?.let { onOpenUrl(it) }
         }
         else -> {
-            log.actionUrl?.let { onOpenUrl(it) }
+            log.targetId?.let { onNavigateToAssignment(it) }
+                ?: log.actionUrl?.let { onOpenUrl(it) }
         }
     }
 }
@@ -520,14 +521,7 @@ private fun ActivityCardContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val courseText = remember(log.courseCode, log.courseName) {
-                val candidate = log.courseCode?.takeIf { it.isNotBlank() }
-                    ?: log.courseName?.takeIf { it.isNotBlank() }
-                    ?: "ProgMov"
-                if (candidate.length > 16) {
-                    candidate.take(14) + "…"
-                } else {
-                    candidate
-                }
+                me.joxquin.notivas.util.CourseUtil.extractCourseTag(log.courseCode, log.courseName)
             }
             Box(
                 modifier = Modifier
@@ -608,22 +602,22 @@ private fun ActivityTypeBadge(
         "ASSIGNMENT_SUBMISSION" -> {
             val bg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.secondaryContainer
             val text = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer
-            Quad("Entrega Canvas ✓", Icons.Default.CheckCircle, bg, text)
+            Quad("Entrega Canvas", Icons.Default.CheckCircle, bg, text)
         }
         "FORUM_POST" -> {
             val bg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.secondaryContainer
             val text = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer
-            Quad("Foro participado 💬", Icons.Default.Forum, bg, text)
+            Quad("Foro participado", Icons.Default.Forum, bg, text)
         }
         "CANVAS_NOTIFICATION" -> {
             val bg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.tertiaryContainer
             val text = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.onTertiaryContainer
-            Quad("Notificación Canvas 🔔", Icons.Default.NotificationsActive, bg, text)
+            Quad("Notificación Canvas", Icons.Default.NotificationsActive, bg, text)
         }
         "DRIVE_SYNC" -> {
             val bg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.primaryContainer
             val text = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer
-            Quad("Drive Sync ☁", Icons.Default.CloudSync, bg, text)
+            Quad("Drive Sync", Icons.Default.CloudSync, bg, text)
         }
         else -> {
             val bg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainerHigh
@@ -664,6 +658,7 @@ private fun ActivityActionButton(
     val (label, icon) = when (type) {
         "ASSIGNMENT_SUBMISSION" -> stringResource(Res.string.recent_activity_action_view_receipt) to Icons.AutoMirrored.Filled.ArrowForward
         "FORUM_POST" -> stringResource(Res.string.recent_activity_action_view_thread) to Icons.AutoMirrored.Filled.ArrowForward
+        "CANVAS_NOTIFICATION" -> stringResource(Res.string.recent_activity_action_view_assignment) to Icons.AutoMirrored.Filled.ArrowForward
         else -> stringResource(Res.string.recent_activity_action_open_document) to Icons.AutoMirrored.Outlined.OpenInNew
     }
 

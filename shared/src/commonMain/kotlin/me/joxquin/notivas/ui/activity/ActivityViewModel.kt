@@ -51,26 +51,79 @@ class ActivityViewModel(
     val uiState: StateFlow<ActivityUiState> = combine(
         repository.observeActivityLogs(),
         repository.allCourses,
+        repository.allAssignments,
         _searchQuery,
         _selectedFilter
-    ) { logs, courses, query, filter ->
+    ) { logs, courses, assignments, query, filter ->
         val resolvedLogs = logs.map { log ->
+            var targetId = log.targetId
+            var secondaryId = log.secondaryId
+            var courseName = log.courseName
+
+            // 1. Si courseName es nulo, extraerlo del título (ej. "Alerta de Urgencia · Tecnologías Emergentes...")
+            if (courseName.isNullOrBlank() && log.title.contains(" · ")) {
+                courseName = log.title.substringAfter(" · ").trim()
+            }
+
+            // 2. Identificar el curso correspondiente
             val matchingCourse = courses.find { c ->
-                (log.secondaryId != null && c.id == log.secondaryId) ||
-                (!log.courseName.isNullOrBlank() && c.name.equals(log.courseName, ignoreCase = true)) ||
+                (secondaryId != null && c.id == secondaryId) ||
+                (!courseName.isNullOrBlank() && (c.name.equals(courseName, ignoreCase = true) || courseName.contains(c.name, ignoreCase = true) || c.name.contains(courseName, ignoreCase = true))) ||
                 (!log.courseCode.isNullOrBlank() && (c.name.equals(log.courseCode, ignoreCase = true) || c.courseCode.equals(log.courseCode, ignoreCase = true)))
             }
-            val shortCode = matchingCourse?.courseCode?.takeIf { it.isNotBlank() }
-                ?: log.courseCode?.takeIf { it.isNotBlank() && it.length <= 16 }
-                ?: matchingCourse?.name?.take(10)
-                ?: log.courseName?.takeIf { it.isNotBlank() }?.let { if (it.length > 14) it.take(10) + "…" else it }
-                ?: "ProgMov"
 
-            if (log.courseCode != shortCode) {
-                log.copy(courseCode = shortCode, courseName = log.courseName ?: matchingCourse?.name)
-            } else {
-                log
+            if (secondaryId == null && matchingCourse != null) {
+                secondaryId = matchingCourse.id
             }
+
+            // 3. Si targetId es nulo o es notificación de Canvas, resolver la tarea precisa
+            if (targetId == null && assignments.isNotEmpty()) {
+                val candidateAssignments = if (matchingCourse != null) {
+                    assignments.filter { it.courseId == matchingCourse.id }
+                } else {
+                    assignments
+                }
+
+                val rawPrefix = log.description.substringBefore(":").trim()
+                val cleanPrefix = rawPrefix.replace("...", "").replace("…", "").trim()
+                val prefixWeek = Regex("""\bS(\d+)\b""", RegexOption.IGNORE_CASE).find(cleanPrefix)?.groupValues?.get(1)
+
+                val matchedAssignment = candidateAssignments.find { a ->
+                    val aWeek = Regex("""\bS(\d+)\b""", RegexOption.IGNORE_CASE).find(a.name)?.groupValues?.get(1)
+                    val weekMatches = prefixWeek == null || aWeek == null || prefixWeek == aWeek
+
+                    weekMatches && (
+                        a.name.startsWith(cleanPrefix, ignoreCase = true) ||
+                        cleanPrefix.startsWith(a.name, ignoreCase = true) ||
+                        (cleanPrefix.length >= 10 && a.name.contains(cleanPrefix, ignoreCase = true)) ||
+                        log.title.contains(a.name, ignoreCase = true)
+                    )
+                } ?: candidateAssignments.find { a ->
+                    val aWeek = Regex("""\bS(\d+)\b""", RegexOption.IGNORE_CASE).find(a.name)?.groupValues?.get(1)
+                    val weekMatches = prefixWeek == null || aWeek == null || prefixWeek == aWeek
+                    weekMatches && a.name.contains(cleanPrefix.take(12), ignoreCase = true)
+                }
+
+                if (matchedAssignment != null) {
+                    targetId = matchedAssignment.id
+                    if (secondaryId == null) {
+                        secondaryId = matchedAssignment.courseId
+                    }
+                }
+            }
+
+            val finalCourseName = matchingCourse?.name ?: courseName
+            val shortCode = me.joxquin.notivas.util.CourseUtil.extractCourseTag(
+                matchingCourse?.courseCode ?: log.courseCode,
+                finalCourseName
+            )
+
+            log.copy(
+                targetId = targetId,
+                secondaryId = secondaryId ?: matchingCourse?.id,
+                courseCode = shortCode,
+                courseName = finalCourseName
+            )
         }
 
         val filtered = resolvedLogs.filter { log ->
