@@ -29,10 +29,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -273,21 +271,22 @@ fun ForosFilterBottomSheet(
             }
         }
     } else {
-        // Material Design 3 Modal Bottom Sheet
-        if (show) {
-            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-            ModalBottomSheet(
-                onDismissRequest = onDismissRequest,
-                sheetState = sheetState,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                dragHandle = null
+        // Material Design 3 Window Bottom Sheet (Natively supports back gesture & hardware back button)
+        WindowBottomSheet(
+            show = show,
+            onDismissRequest = onDismissRequest,
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            dragHandleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+            insideMargin = androidx.compose.ui.unit.DpSize(0.dp, 0.dp),
+            cornerRadius = 28.dp
+        ) {
+            val dismissState = LocalDismissState.current
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -326,7 +325,7 @@ fun ForosFilterBottomSheet(
                                 }
                             }
 
-                            IconButton(onClick = onDismissRequest) {
+                            IconButton(onClick = { dismissState?.invoke() }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.close),
@@ -535,10 +534,17 @@ fun ForosFilterBottomSheet(
                                 }
                             }
                         }
-                        Spacer(Modifier.height(24.dp))
+                    }
+
+                    item {
+                        Spacer(
+                            Modifier.padding(
+                                bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+                                    WindowInsets.captionBar.asPaddingValues().calculateBottomPadding() + 16.dp
+                            )
+                        )
                     }
                 }
             }
         }
     }
-}
