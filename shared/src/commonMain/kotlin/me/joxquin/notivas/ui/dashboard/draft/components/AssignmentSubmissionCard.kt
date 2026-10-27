@@ -45,6 +45,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -136,14 +137,25 @@ fun AssignmentSubmissionCard(
         }
     }
 
+    val isDraftSyncing by (viewModel?.isDraftSyncing?.collectAsState() ?: remember { mutableStateOf(false) })
+    val isSyncingNow = isDraftSyncing || (draftInfo != null && draftInfo.draftStatus == DraftStatusEnum.IN_PROGRESS && draftInfo.driveUrl.isBlank())
+    val isDraftActive = draftInfo != null && draftInfo.draftStatus != DraftStatusEnum.NOT_STARTED && !isSyncingNow && draftInfo.driveUrl.isNotBlank()
+
+    val courseTemplates by (viewModel?.courseTemplates?.collectAsState() ?: remember { mutableStateOf(emptyList()) })
     // Detección contextual de plantilla docente en descripción HTML
-    val detectedTemplateName = remember(assignment) {
-        val desc = assignment.description ?: ""
-        Regex("""([\w\-_]+\.docx)""").find(desc)?.value
-            ?: if (desc.contains("docs.google.com")) "Plantilla_Docente_Enlace" else null
+    val detectedTemplateName = remember(assignment, courseTemplates) {
+        val candidateMatch = courseTemplates.firstOrNull { it.isCurrentAssignmentModule }?.title
+            ?: courseTemplates.firstOrNull()?.title
+        candidateMatch ?: run {
+            val desc = assignment.description ?: ""
+            val linkMatch = Regex("""<a\s+[^>]*title=["']([^"']+\.docx)["']""", RegexOption.IGNORE_CASE).find(desc)?.groupValues?.get(1)
+                ?: Regex("""<a\s+[^>]*>([^<]+\.docx)</a>""", RegexOption.IGNORE_CASE).find(desc)?.groupValues?.get(1)
+            linkMatch
+                ?: Regex("""([\w\-_]+\.docx)""").find(desc)?.value
+                ?: if (desc.contains("docs.google.com")) "Plantilla_Docente_Enlace" else null
+        }
     }
 
-    val isDraftActive = draftInfo != null && draftInfo.draftStatus != DraftStatusEnum.NOT_STARTED
     val currentDraftFileName = remember(draftInfo, detectedTemplateName, assignment.name) {
         draftInfo?.fileName?.takeIf { it.isNotBlank() }
             ?: detectedTemplateName
@@ -606,7 +618,9 @@ fun AssignmentSubmissionCard(
                                         }
 
                                         MiuixText(
-                                            text = if (isDraftActive) {
+                                            text = if (isSyncingNow) {
+                                                stringResource(Res.string.draft_syncing_cloud_status)
+                                            } else if (isDraftActive) {
                                                 "Borrador sincronizado Google Drive"
                                             } else if (detectedTemplateName != null) {
                                                 "Plantilla oficial Canvas LMS"
@@ -621,7 +635,34 @@ fun AssignmentSubmissionCard(
                             }
 
                             // Botones de acción de Google Drive
-                            if (!isDraftActive) {
+                            if (isSyncingNow) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .squircleSurface(
+                                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                            cornerRadius = 12.dp
+                                        )
+                                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            color = MiuixTheme.colorScheme.primary
+                                        )
+                                        MiuixText(
+                                            text = stringResource(Res.string.draft_syncing_cloud_status),
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MiuixTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            } else if (!isDraftActive) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1299,7 +1340,9 @@ fun AssignmentSubmissionCard(
                                         }
 
                                         Text(
-                                            text = if (isDraftActive) {
+                                            text = if (isSyncingNow) {
+                                                stringResource(Res.string.draft_syncing_cloud_status)
+                                            } else if (isDraftActive) {
                                                 "Borrador sincronizado Google Drive"
                                             } else if (detectedTemplateName != null) {
                                                 "Plantilla oficial Canvas LMS"
@@ -1313,7 +1356,30 @@ fun AssignmentSubmissionCard(
                                 }
                             }
 
-                            if (!isDraftActive) {
+                            if (isSyncingNow) {
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = stringResource(Res.string.draft_syncing_cloud_status),
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            } else if (!isDraftActive) {
                                 Button(
                                     onClick = { onStartDraft(detectedTemplateName != null, detectedTemplateName) },
                                     modifier = Modifier.fillMaxWidth(),

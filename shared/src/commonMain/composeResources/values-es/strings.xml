@@ -555,6 +555,12 @@
     <string name="draft_cancel_action">Cancelar</string>
     <string name="draft_preparing_docs">Preparando Docs...</string>
     <string name="draft_btn_send_to_canvas">Enviar Entrega a Canvas</string>
+    <string name="draft_sync_success">Borrador creado y sincronizado en Google Drive</string>
+    <string name="draft_sync_error_auth">Sesión de Google Drive expirada. Reconecta tu cuenta en Ajustes.</string>
+    <string name="draft_sync_error_download">No se pudo descargar la plantilla de Canvas.</string>
+    <string name="draft_sync_error_general">Error al crear el documento en Google Drive.</string>
+    <string name="draft_btn_open_docs">Abrir en Docs</string>
+    <string name="draft_btn_cancel_sync">Cancelar sincronización</string>
     <string name="task_rubric_empty">Esta tarea no tiene una rúbrica de calificación asociada configurada por el docente.</string>
 
     <!-- Historial y Archivo de Tareas -->

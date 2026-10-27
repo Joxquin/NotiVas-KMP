@@ -186,6 +186,7 @@ private fun MiuixAssignmentDetailContent(
     val assignment = assignmentUi.assignment
     val courseName = assignmentUi.courseName
     val uriHandler = LocalUriHandler.current
+    val isDraftSyncing by (viewModel?.isDraftSyncing?.collectAsState() ?: remember { mutableStateOf(false) })
 
     Column(
         modifier = Modifier
@@ -334,6 +335,7 @@ private fun MiuixAssignmentDetailContent(
                         courseName = courseName,
                         themeStyle = AppThemeStyle.MIUIX,
                         draftInfo = draftInfo,
+                        isSyncing = isDraftSyncing,
                         onStartDraft = { isTemplate, templateName ->
                             viewModel?.startOrCloneDraft(
                                 assignment = assignment,
@@ -576,6 +578,7 @@ private fun MaterialAssignmentDetailContent(
     val assignment = assignmentUi.assignment
     val courseName = assignmentUi.courseName
     val uriHandler = LocalUriHandler.current
+    val isDraftSyncing by (viewModel?.isDraftSyncing?.collectAsState() ?: remember { mutableStateOf(false) })
 
     Column(
         modifier = Modifier
@@ -712,6 +715,7 @@ private fun MaterialAssignmentDetailContent(
                         courseName = courseName,
                         themeStyle = AppThemeStyle.MATERIAL,
                         draftInfo = draftInfo,
+                        isSyncing = isDraftSyncing,
                         onStartDraft = { isTemplate, templateName ->
                             viewModel?.startOrCloneDraft(
                                 assignment = assignment,

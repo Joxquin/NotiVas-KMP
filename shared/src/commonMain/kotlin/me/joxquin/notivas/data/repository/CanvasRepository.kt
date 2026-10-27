@@ -403,29 +403,32 @@ class CanvasRepository(
             }
 
             // 2a. Extraer enlaces HTML directos a archivos de Canvas: <a ... href="..." ...>nombre</a>
-            val anchorFileRegex = Regex("""<a\s+[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>""", RegexOption.IGNORE_CASE)
+            val anchorFileRegex = Regex("""<a\s+([^>]*?)href=["']([^"']+)["']([^>]*?)>(.*?)</a>""", RegexOption.IGNORE_CASE)
             anchorFileRegex.findAll(assignmentDescription).forEach { match ->
-                val rawHref = match.groupValues[1]
+                val preHref = match.groupValues[1]
+                val rawHref = match.groupValues[2]
+                val postHref = match.groupValues[3]
+                val anchorText = match.groupValues[4].replace(Regex("<[^>]*>"), "").trim()
+                val fullTagAttrs = "$preHref $postHref"
+                val titleAttr = Regex("""title=["']([^"']+)["']""", RegexOption.IGNORE_CASE).find(fullTagAttrs)?.groupValues?.get(1)?.trim()
+                val dataApiEndpoint = Regex("""data-api-endpoint=["']([^"']+)["']""", RegexOption.IGNORE_CASE).find(fullTagAttrs)?.groupValues?.get(1)
+
                 val cleanHref = rawHref.replace("&amp;", "&")
-                val anchorText = match.groupValues[2].replace(Regex("<[^>]*>"), "").trim()
                 val docExt = cleanHref.substringBefore("?").substringAfterLast(".", "").lowercase()
                 val textExt = anchorText.substringAfterLast(".", "").lowercase()
-                val ext = if (docExt in listOf("docx", "doc", "xlsx", "xls", "pdf")) docExt
-                          else if (textExt in listOf("docx", "doc", "xlsx", "xls", "pdf")) textExt
-                          else ""
+                val titleExt = titleAttr?.substringAfterLast(".", "")?.lowercase().orEmpty()
+                val ext = when {
+                    docExt in listOf("docx", "doc", "xlsx", "xls", "pdf") -> docExt
+                    titleExt in listOf("docx", "doc", "xlsx", "xls", "pdf") -> titleExt
+                    textExt in listOf("docx", "doc", "xlsx", "xls", "pdf") -> textExt
+                    else -> ""
+                }
 
                 val fileIdFromHref = Regex("""/files/(\d+)""").find(cleanHref)?.groupValues?.get(1)?.toLongOrNull()
+                    ?: dataApiEndpoint?.let { Regex("""/files/(\d+)""").find(it)?.groupValues?.get(1)?.toLongOrNull() }
                 val isCanvasFileLink = cleanHref.contains("/files/") || cleanHref.contains("download") || fileIdFromHref != null
 
                 if (ext.isNotBlank() || isCanvasFileLink) {
-                    val resolvedTitle = if (anchorText.isNotBlank() && !anchorText.startsWith("http")) {
-                        anchorText
-                    } else if (fileIdFromHref != null) {
-                        "Plantilla_Canvas_$fileIdFromHref.${ext.ifBlank { "docx" }}"
-                    } else {
-                        cleanHref.substringBefore("?").substringAfterLast("/")
-                    }
-
                     val fullDownloadUrl = if (fileIdFromHref != null && !cleanHref.contains("/download")) {
                         val verifier = Regex("""verifier=([^&"'>]+)""").find(cleanHref)?.groupValues?.get(1)
                         val hostBase = if (cleanHref.startsWith("http://") || cleanHref.startsWith("https://")) {
@@ -440,29 +443,47 @@ class CanvasRepository(
                         else -> cleanHref
                     }
 
-                    val matchingModuleCandidate = resolvedModuleCandidates.find {
-                        (fileIdFromHref != null && it.canvasFileId == fileIdFromHref) ||
-                        it.title.equals(resolvedTitle, ignoreCase = true) ||
-                        it.title.contains(resolvedTitle.substringBeforeLast("."), ignoreCase = true)
+                    val titlesToAdd = mutableListOf<String>()
+                    if (!titleAttr.isNullOrBlank() && !titleAttr.startsWith("http")) {
+                        titlesToAdd.add(titleAttr)
+                    }
+                    if (anchorText.isNotBlank() && !anchorText.startsWith("http") && !titlesToAdd.contains(anchorText)) {
+                        titlesToAdd.add(anchorText)
+                    }
+                    if (titlesToAdd.isEmpty()) {
+                        if (fileIdFromHref != null) {
+                            titlesToAdd.add("Plantilla_Canvas_$fileIdFromHref.${ext.ifBlank { "docx" }}")
+                        } else {
+                            titlesToAdd.add(cleanHref.substringBefore("?").substringAfterLast("/"))
+                        }
                     }
 
-                    candidates.add(
-                        me.joxquin.notivas.data.model.TemplateCandidate(
-                            title = resolvedTitle,
-                            type = me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE,
-                            url = fullDownloadUrl,
-                            moduleName = currentModuleName ?: "Consigna de la Tarea",
-                            fileExtension = ext.ifBlank { matchingModuleCandidate?.fileExtension ?: "docx" },
-                            canvasFileId = fileIdFromHref ?: matchingModuleCandidate?.canvasFileId,
-                            isCurrentAssignmentModule = true
+                    for (resolvedTitle in titlesToAdd) {
+                        val matchingModuleCandidate = resolvedModuleCandidates.find {
+                            (fileIdFromHref != null && it.canvasFileId == fileIdFromHref) ||
+                            it.title.equals(resolvedTitle, ignoreCase = true) ||
+                            it.title.contains(resolvedTitle.substringBeforeLast("."), ignoreCase = true)
+                        }
+
+                        candidates.add(
+                            me.joxquin.notivas.data.model.TemplateCandidate(
+                                title = resolvedTitle,
+                                type = me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE,
+                                url = fullDownloadUrl,
+                                moduleName = currentModuleName ?: "Consigna de la Tarea",
+                                fileExtension = ext.ifBlank { matchingModuleCandidate?.fileExtension ?: "docx" },
+                                canvasFileId = fileIdFromHref ?: matchingModuleCandidate?.canvasFileId,
+                                isCurrentAssignmentModule = true
+                            )
                         )
-                    )
+                    }
                 }
             }
 
             // 2b. Archivos nombrados en texto plano si no se detectaron como enlaces HTML
+            val textWithoutHtml = assignmentDescription.replace(Regex("<[^>]*>"), " ")
             val docxRegex = Regex("""([\w\-_]+\.(?:docx|doc|xlsx|pdf))""", RegexOption.IGNORE_CASE)
-            docxRegex.findAll(assignmentDescription).forEach { match ->
+            docxRegex.findAll(textWithoutHtml).forEach { match ->
                 val fileName = match.value
                 val ext = fileName.substringAfterLast(".", "").lowercase()
                 val alreadyAdded = candidates.any { it.title.equals(fileName, ignoreCase = true) }
@@ -471,17 +492,20 @@ class CanvasRepository(
                         it.title.equals(fileName, ignoreCase = true) || it.title.contains(fileName.substringBeforeLast("."), ignoreCase = true)
                     }
 
-                    candidates.add(
-                        me.joxquin.notivas.data.model.TemplateCandidate(
-                            title = fileName,
-                            type = me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE,
-                            url = matchingModuleCandidate?.url ?: fileName,
-                            moduleName = currentModuleName ?: "Consigna de la Tarea",
-                            fileExtension = ext,
-                            canvasFileId = matchingModuleCandidate?.canvasFileId,
-                            isCurrentAssignmentModule = true
+                    // Solo agregar candidatos de texto plano si tienen un candidato real en módulos con URL válida
+                    if (matchingModuleCandidate != null && matchingModuleCandidate.url.startsWith("http")) {
+                        candidates.add(
+                            me.joxquin.notivas.data.model.TemplateCandidate(
+                                title = fileName,
+                                type = me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE,
+                                url = matchingModuleCandidate.url,
+                                moduleName = currentModuleName ?: "Consigna de la Tarea",
+                                fileExtension = ext,
+                                canvasFileId = matchingModuleCandidate.canvasFileId,
+                                isCurrentAssignmentModule = true
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

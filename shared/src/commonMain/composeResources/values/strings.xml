@@ -555,6 +555,12 @@
     <string name="draft_cancel_action">Cancel</string>
     <string name="draft_preparing_docs">Preparing Docs...</string>
     <string name="draft_btn_send_to_canvas">Submit to Canvas</string>
+    <string name="draft_sync_success">Draft created and synced with Google Drive</string>
+    <string name="draft_sync_error_auth">Google Drive session expired. Please reconnect your account in Settings.</string>
+    <string name="draft_sync_error_download">Could not download Canvas template.</string>
+    <string name="draft_sync_error_general">Error creating document in Google Drive.</string>
+    <string name="draft_btn_open_docs">Open in Docs</string>
+    <string name="draft_btn_cancel_sync">Cancel synchronization</string>
     <string name="task_rubric_empty">This assignment does not have an associated grading rubric configured by the teacher.</string>
 
     <!-- Task History & Archive -->

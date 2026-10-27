@@ -12,4 +12,5 @@ expect class SecureTokenVault(preferencesManager: PreferencesManager) {
     fun getGoogleDriveRefreshToken(): String?
     fun getGoogleDriveEmail(): String?
     fun clearGoogleDriveTokens(): Boolean
+    suspend fun refreshGoogleDriveAccessToken(): String?
 }

@@ -194,9 +194,14 @@ class DashboardViewModel(
         }
     }
 
+    private val secureTokenVault = me.joxquin.notivas.security.SecureTokenVault(preferencesManager)
     private val googleDriveApiService = me.joxquin.notivas.data.remote.GoogleDriveApiService(
-        preferencesManager = preferencesManager
+        preferencesManager = preferencesManager,
+        tokenRefresher = { secureTokenVault.refreshGoogleDriveAccessToken() }
     )
+
+    private val _isDraftSyncing = MutableStateFlow(false)
+    val isDraftSyncing: StateFlow<Boolean> = _isDraftSyncing.asStateFlow()
 
     // Efectos de interfaz unidireccionales (Apertura de URLs nativas, etc.)
     sealed interface UiEffect {
@@ -213,17 +218,28 @@ class DashboardViewModel(
         _selectedAssignmentForDraft.flatMapLatest { ui: AssignmentUiModel? ->
             if (ui == null) flowOf(null)
             else repository.observeAssignmentDraft(ui.assignment.id).map { entity ->
-                val isSubmitted = ui.assignment.status == "completed" ||
-                        ui.assignment.isCompleted ||
-                        (ui.assignment.submission?.workflowState in listOf("submitted", "graded")) ||
-                        (!ui.assignment.submittedAt.isNullOrBlank()) ||
-                        (!ui.assignment.submission?.submittedAt.isNullOrBlank())
-                entity?.toDomain(isSubmitted)
+                if (entity != null && (entity.driveFileId.isNullOrBlank() || entity.driveUrl.contains("/d//edit"))) {
+                    // Sanitizar registro residual corrupto en base de datos
+                    viewModelScope.launch { repository.deleteAssignmentDraft(ui.assignment.id) }
+                    null
+                } else {
+                    val isSubmitted = ui.assignment.status == "completed" ||
+                            ui.assignment.isCompleted ||
+                            (ui.assignment.submission?.workflowState in listOf("submitted", "graded")) ||
+                            (!ui.assignment.submittedAt.isNullOrBlank()) ||
+                            (!ui.assignment.submission?.submittedAt.isNullOrBlank())
+                    entity?.toDomain(isSubmitted)
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun openDraft(assignmentUi: AssignmentUiModel) {
         _selectedAssignmentForDraft.value = assignmentUi
+        loadTemplatesForCourse(
+            courseId = assignmentUi.assignment.courseId,
+            assignmentId = assignmentUi.assignment.id,
+            assignmentDescription = assignmentUi.assignment.description
+        )
     }
 
     fun closeDraft() {
@@ -293,94 +309,95 @@ class DashboardViewModel(
         onOptimisticCompleted: () -> Unit = {}
     ) {
         viewModelScope.launch {
-            // Verificar si Google Drive está vinculado
-            if (!googleDriveApiService.hasValidAuth()) {
-                _uiEffect.tryEmit(UiEffect.ShowToast("Debes vincular tu cuenta de Google Drive en Ajustes primero."))
-                return@launch
-            }
-
-            val userEmail = preferencesManager.getGoogleDriveEmail() ?: "usuario@institucional.edu"
-            val cleanAssignmentName = assignment.name.replace(Regex("""[^\w\s\-]"""), "").trim().replace(Regex("""\s+"""), "_").take(30)
-            val matchingCourse = courses.value.find { it.id == assignment.courseId }
-            val courseCodeClean = (matchingCourse?.courseCode ?: matchingCourse?.name ?: courseName)
-                .replace(Regex("""[^\w\-]"""), "_")
-                .trim('_')
-                .ifBlank { "CURSO" }
-                .take(16)
-
-            val courseFolder = courseName.ifBlank { "General" }
-
-            // Si se pasa templateName pero no templateCandidate, resolverlo dinámicamente desde el repositorio
-            var effectiveCandidate = templateCandidate
-            if (effectiveCandidate == null && !templateName.isNullOrBlank()) {
-                val cachedCandidates = courseTemplates.value
-                effectiveCandidate = cachedCandidates.find {
-                    it.title.equals(templateName, ignoreCase = true) || it.title.contains(templateName, ignoreCase = true)
-                }
-
-                if (effectiveCandidate == null) {
-                    try {
-                        val fetchedCandidates = repository.getCourseTemplateCandidates(
-                            courseId = assignment.courseId,
-                            assignmentId = assignment.id,
-                            assignmentDescription = assignment.description
-                        )
-                        _courseTemplates.value = fetchedCandidates
-                        effectiveCandidate = fetchedCandidates.find {
-                            it.title.equals(templateName, ignoreCase = true) ||
-                                    it.title.contains(templateName.substringBeforeLast("."), ignoreCase = true) ||
-                                    templateName.contains(it.title.substringBeforeLast("."), ignoreCase = true)
-                        } ?: fetchedCandidates.firstOrNull { it.isCurrentAssignmentModule }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-
-                if (effectiveCandidate == null) {
-                    // Buscar en descripción si hay enlace directo de Google Drive
-                    val desc = assignment.description ?: ""
-                    val driveMatch = Regex("""https://(?:docs|drive)\.google\.com/[^\s"'>]+""").find(desc)?.value
-                    if (driveMatch != null) {
-                        effectiveCandidate = me.joxquin.notivas.data.model.TemplateCandidate(
-                            title = templateName,
-                            type = me.joxquin.notivas.data.model.TemplateSourceType.DRIVE_URL,
-                            url = driveMatch,
-                            moduleName = "Consigna",
-                            fileExtension = if (driveMatch.contains("spreadsheets")) "gsheet" else "gdoc",
-                            isCurrentAssignmentModule = true
-                        )
-                    }
-                }
-            }
-
-            val templateDisplayName = effectiveCandidate?.title ?: templateName
-            val isCloning = effectiveCandidate != null || !templateName.isNullOrBlank()
-            val extension = if (effectiveCandidate?.fileExtension == "gsheet") "gsheet" else "gdoc"
-            val generatedFileName = "${courseCodeClean}_${cleanAssignmentName}_${if (isCloning) "Copia" else "v1"}.$extension"
-
-            // 1. Registro optimista sin URL ficticia (esperando respuesta de Drive)
-            val optimisticInfo = me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo(
-                fileName = generatedFileName,
-                driveUrl = "",
-                driveFileId = null,
-                lastEditedTime = "Sincronizando...",
-                accountEmail = userEmail,
-                detectedTemplate = templateDisplayName,
-                courseFolder = courseFolder,
-                draftStatus = me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusEnum.IN_PROGRESS,
-                hasSubmitted = assignment.status == "completed" || !assignment.submittedAt.isNullOrBlank()
-            )
-
-            val optimisticEntity = me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity.fromDomain(
-                assignmentId = assignment.id,
-                info = optimisticInfo
-            )
-            repository.saveAssignmentDraft(optimisticEntity)
-            onOptimisticCompleted()
-
-            // 2. Creación / Clonación con timeout de 30 segundos
+            _isDraftSyncing.value = true
             try {
-                val createdFile = kotlinx.coroutines.withTimeoutOrNull(30_000L) {
+                // Verificar si Google Drive está vinculado
+                if (!googleDriveApiService.hasValidAuth()) {
+                    _uiEffect.tryEmit(UiEffect.ShowToast("Debes vincular tu cuenta de Google Drive en Ajustes primero."))
+                    return@launch
+                }
+
+                val userEmail = preferencesManager.getGoogleDriveEmail() ?: "usuario@institucional.edu"
+                val cleanAssignmentName = assignment.name.replace(Regex("""[^\w\s\-]"""), "").trim().replace(Regex("""\s+"""), "_").take(30)
+                val matchingCourse = courses.value.find { it.id == assignment.courseId }
+                val courseCodeClean = (matchingCourse?.courseCode ?: matchingCourse?.name ?: courseName)
+                    .replace(Regex("""[^\w\-]"""), "_")
+                    .trim('_')
+                    .ifBlank { "CURSO" }
+                    .take(16)
+
+                val courseFolder = courseName.ifBlank { "General" }
+
+                // Si se pasa templateName pero no templateCandidate, resolverlo dinámicamente desde el repositorio
+                var effectiveCandidate = templateCandidate
+                if (effectiveCandidate == null && !templateName.isNullOrBlank()) {
+                    val cachedCandidates = courseTemplates.value
+                    effectiveCandidate = cachedCandidates.find {
+                        it.title.equals(templateName, ignoreCase = true) || it.title.contains(templateName, ignoreCase = true)
+                    }
+
+                    if (effectiveCandidate == null) {
+                        try {
+                            val fetchedCandidates = repository.getCourseTemplateCandidates(
+                                courseId = assignment.courseId,
+                                assignmentId = assignment.id,
+                                assignmentDescription = assignment.description
+                            )
+                            _courseTemplates.value = fetchedCandidates
+                            effectiveCandidate = fetchedCandidates.find {
+                                it.title.equals(templateName, ignoreCase = true) ||
+                                        it.title.contains(templateName.substringBeforeLast("."), ignoreCase = true) ||
+                                        templateName.contains(it.title.substringBeforeLast("."), ignoreCase = true)
+                            } ?: fetchedCandidates.firstOrNull { it.isCurrentAssignmentModule }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+
+                    if (effectiveCandidate == null) {
+                        // Buscar en descripción si hay enlace directo de Google Drive
+                        val desc = assignment.description ?: ""
+                        val driveMatch = Regex("""https://(?:docs|drive)\.google\.com/[^\s"'>]+""").find(desc)?.value
+                        if (driveMatch != null) {
+                            effectiveCandidate = me.joxquin.notivas.data.model.TemplateCandidate(
+                                title = templateName,
+                                type = me.joxquin.notivas.data.model.TemplateSourceType.DRIVE_URL,
+                                url = driveMatch,
+                                moduleName = "Consigna",
+                                fileExtension = if (driveMatch.contains("spreadsheets")) "gsheet" else "gdoc",
+                                isCurrentAssignmentModule = true
+                            )
+                        }
+                    }
+                }
+
+                val templateDisplayName = effectiveCandidate?.title ?: templateName
+                val isCloning = effectiveCandidate != null || !templateName.isNullOrBlank()
+                val extension = if (effectiveCandidate?.fileExtension == "gsheet") "gsheet" else "gdoc"
+                val generatedFileName = "${courseCodeClean}_${cleanAssignmentName}_${if (isCloning) "Copia" else "v1"}.$extension"
+
+                // 1. Registro optimista sin URL ficticia (esperando respuesta de Drive)
+                val optimisticInfo = me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo(
+                    fileName = generatedFileName,
+                    driveUrl = "",
+                    driveFileId = null,
+                    lastEditedTime = "Sincronizando...",
+                    accountEmail = userEmail,
+                    detectedTemplate = templateDisplayName,
+                    courseFolder = courseFolder,
+                    draftStatus = me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusEnum.IN_PROGRESS,
+                    hasSubmitted = assignment.status == "completed" || !assignment.submittedAt.isNullOrBlank()
+                )
+
+                val optimisticEntity = me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity.fromDomain(
+                    assignmentId = assignment.id,
+                    info = optimisticInfo
+                )
+                repository.saveAssignmentDraft(optimisticEntity)
+                onOptimisticCompleted()
+
+                // 2. Creación / Clonación con timeout de 60 segundos
+                val createdFile = kotlinx.coroutines.withTimeoutOrNull(60_000L) {
                     val folder = googleDriveApiService.getOrCreateCourseFolder(courseFolder)
                     val folderId = folder?.id ?: "root"
 
@@ -483,12 +500,14 @@ class DashboardViewModel(
                     }
                 }
 
-                if (createdFile != null) {
-                    val realUrl = createdFile.webViewLink ?: "https://docs.google.com/document/d/${createdFile.id}/edit"
+                if (createdFile != null && createdFile.id.isNotBlank()) {
+                    val realUrl = createdFile.webViewLink?.takeIf { it.isNotBlank() }
+                        ?: "https://docs.google.com/document/d/${createdFile.id}/edit"
                     val persistedInfo = optimisticInfo.copy(
                         driveFileId = createdFile.id,
                         driveUrl = realUrl,
-                        lastEditedTime = "Sincronizado ahora"
+                        lastEditedTime = "Sincronizado ahora",
+                        draftStatus = me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusEnum.IN_PROGRESS
                     )
                     repository.saveAssignmentDraft(
                         me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity.fromDomain(
@@ -496,7 +515,7 @@ class DashboardViewModel(
                             info = persistedInfo
                         )
                     )
-                    _uiEffect.tryEmit(UiEffect.ShowToast("Borrador listo en Google Drive: $generatedFileName"))
+                    _uiEffect.tryEmit(UiEffect.ShowToast("Borrador creado y sincronizado en Google Drive"))
                     _uiEffect.tryEmit(UiEffect.OpenUrl(realUrl))
                 } else {
                     // Revertir borrador local porque falló la creación remota o expiró el tiempo
@@ -506,7 +525,15 @@ class DashboardViewModel(
             } catch (e: Exception) {
                 e.printStackTrace()
                 repository.deleteAssignmentDraft(assignment.id)
-                _uiEffect.tryEmit(UiEffect.ShowToast("Fallo de conexión con Google Drive: ${e.message ?: "desconocido"}"))
+                val msg = e.message.orEmpty()
+                val errorMsg = if (msg.contains("401") || msg.contains("auth", ignoreCase = true)) {
+                    "Sesión de Google Drive expirada. Reconecta tu cuenta en Ajustes."
+                } else {
+                    "Fallo de conexión con Google Drive: ${msg.take(60)}"
+                }
+                _uiEffect.tryEmit(UiEffect.ShowToast(errorMsg))
+            } finally {
+                _isDraftSyncing.value = false
             }
         }
     }

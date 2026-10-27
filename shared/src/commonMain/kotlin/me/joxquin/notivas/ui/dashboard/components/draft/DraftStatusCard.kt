@@ -39,6 +39,7 @@ fun DraftStatusCard(
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     accountEmail: String = "usuario@institucional.edu",
     draftInfo: DraftSyncInfo? = null,
+    isSyncing: Boolean = false,
     modifier: Modifier = Modifier,
     onStartDraft: (isTemplate: Boolean, templateName: String?) -> Unit = { _, _ -> },
     onExploreTemplates: () -> Unit = {},
@@ -189,19 +190,26 @@ fun DraftStatusCard(
                     subtitle = stringResource(Res.string.draft_status_submitted_desc),
                     isMiuix = isMiuix
                 )
-            } else if (isOptimisticSyncing) {
-                // Feedback Optimista Inmediato (< 200 ms)
+            } else if (isOptimisticSyncing || isSyncing) {
+                // Feedback Optimista o Sincronizacion en Progreso
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 10.dp, horizontal = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.5.dp,
-                        color = primaryColor
-                    )
+                    if (isMiuix) {
+                        top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = primaryColor
+                        )
+                    } else {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.5.dp,
+                            color = primaryColor
+                        )
+                    }
                     Spacer(Modifier.width(12.dp))
                     Column {
                         AdaptiveText(stringResource(Res.string.draft_creating_in_drive), 14.sp, FontWeight.Bold, isMiuix)

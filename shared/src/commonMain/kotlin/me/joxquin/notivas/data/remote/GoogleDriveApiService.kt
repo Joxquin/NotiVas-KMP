@@ -44,7 +44,8 @@ data class CreateGoogleDriveFileRequest(
 class GoogleDriveApiService(
     private val httpClient: HttpClient = KtorHttpClientProvider.createClient(),
     private val authService: GoogleDriveAuthService = GoogleDriveAuthService(httpClient),
-    private val preferencesManager: PreferencesManager? = null
+    private val preferencesManager: PreferencesManager? = null,
+    private val tokenRefresher: (suspend () -> String?)? = null
 ) {
     companion object {
         const val DRIVE_FILES_API = "https://www.googleapis.com/drive/v3/files"
@@ -56,9 +57,19 @@ class GoogleDriveApiService(
         const val MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     }
 
-    private suspend fun getValidAccessToken(token: String?): String? {
-        val currentToken = token ?: preferencesManager?.getGoogleDriveAccessToken()
-        if (!currentToken.isNullOrBlank()) return currentToken
+    private suspend fun getValidAccessToken(token: String?, forceRefresh: Boolean = false): String? {
+        if (!forceRefresh) {
+            val currentToken = token ?: preferencesManager?.getGoogleDriveAccessToken()
+            if (!currentToken.isNullOrBlank()) return currentToken
+        }
+
+        // 1. Intentar con tokenRefresher de plataforma (Android GoogleSignIn / SecureTokenVault)
+        val refreshedPlatform = tokenRefresher?.invoke()
+        if (!refreshedPlatform.isNullOrBlank()) {
+            return refreshedPlatform
+        }
+
+        // 2. Intentar con authService KMP (refresh token de GoogleDriveAuthService)
         val refreshToken = preferencesManager?.getGoogleDriveRefreshToken() ?: return null
         val refreshed = authService.refreshAccessToken(refreshToken) ?: return null
         preferencesManager?.saveGoogleDriveTokens(
@@ -74,45 +85,72 @@ class GoogleDriveApiService(
     }
 
     suspend fun findFolder(folderName: String, parentId: String? = null, accessToken: String? = null): GoogleDriveFile? {
-        val token = getValidAccessToken(accessToken) ?: return null
+        var token = getValidAccessToken(accessToken) ?: return null
         val query = buildString {
             append("mimeType = '$MIME_TYPE_FOLDER' and name = '$folderName' and trashed = false")
             if (parentId != null) {
                 append(" and '$parentId' in parents")
             }
         }
-        return try {
-            val response: GoogleDriveFileListResponse = httpClient.get(DRIVE_FILES_API) {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                parameter("q", query)
-                parameter("fields", "files(id, name, mimeType, webViewLink, modifiedTime)")
-                parameter("pageSize", 1)
-            }.body()
-            response.files.firstOrNull()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        for (attempt in 1..2) {
+            try {
+                val response = httpClient.get(DRIVE_FILES_API) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    parameter("q", query)
+                    parameter("fields", "files(id, name, mimeType, webViewLink, modifiedTime)")
+                    parameter("pageSize", 1)
+                }
+                if (response.status.value in 200..299) {
+                    val listResponse: GoogleDriveFileListResponse = response.body()
+                    return listResponse.files.firstOrNull { it.id.isNotBlank() }
+                } else if (response.status.value == 401 && attempt == 1) {
+                    println("GoogleDriveApiService: 401 en findFolder. Refrescando token...")
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    println("GoogleDriveApiService: findFolder error HTTP ${response.status.value}")
+                    return null
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return null
+            }
         }
+        return null
     }
 
     suspend fun createFolder(folderName: String, parentId: String? = null, accessToken: String? = null): GoogleDriveFile? {
-        val token = getValidAccessToken(accessToken) ?: return null
-        return try {
-            val requestBody = CreateGoogleDriveFileRequest(
-                name = folderName,
-                mimeType = MIME_TYPE_FOLDER,
-                parents = if (parentId != null) listOf(parentId) else null
-            )
-            httpClient.post(DRIVE_FILES_API) {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                contentType(ContentType.Application.Json)
-                parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
-                setBody(requestBody)
-            }.body()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        var token = getValidAccessToken(accessToken) ?: return null
+        val requestBody = CreateGoogleDriveFileRequest(
+            name = folderName,
+            mimeType = MIME_TYPE_FOLDER,
+            parents = if (parentId != null) listOf(parentId) else null
+        )
+        for (attempt in 1..2) {
+            try {
+                val response = httpClient.post(DRIVE_FILES_API) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    contentType(ContentType.Application.Json)
+                    parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
+                    setBody(requestBody)
+                }
+                if (response.status.value in 200..299) {
+                    val file = response.body<GoogleDriveFile>()
+                    return if (file.id.isNotBlank()) file else null
+                } else if (response.status.value == 401 && attempt == 1) {
+                    println("GoogleDriveApiService: 401 en createFolder. Refrescando token...")
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    println("GoogleDriveApiService: createFolder error HTTP ${response.status.value}")
+                    return null
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return null
+            }
         }
+        return null
     }
 
     suspend fun getOrCreateCourseFolder(courseName: String, accessToken: String? = null): GoogleDriveFile? {
@@ -126,23 +164,37 @@ class GoogleDriveApiService(
     }
 
     suspend fun createBlankDocument(fileName: String, parentFolderId: String, accessToken: String? = null): GoogleDriveFile? {
-        val token = getValidAccessToken(accessToken) ?: return null
-        return try {
-            val requestBody = CreateGoogleDriveFileRequest(
-                name = fileName,
-                mimeType = MIME_TYPE_GDOC,
-                parents = listOf(parentFolderId)
-            )
-            httpClient.post(DRIVE_FILES_API) {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                contentType(ContentType.Application.Json)
-                parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
-                setBody(requestBody)
-            }.body()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        var token = getValidAccessToken(accessToken) ?: return null
+        val requestBody = CreateGoogleDriveFileRequest(
+            name = fileName,
+            mimeType = MIME_TYPE_GDOC,
+            parents = listOf(parentFolderId)
+        )
+        for (attempt in 1..2) {
+            try {
+                val response = httpClient.post(DRIVE_FILES_API) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    contentType(ContentType.Application.Json)
+                    parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
+                    setBody(requestBody)
+                }
+                if (response.status.value in 200..299) {
+                    val file = response.body<GoogleDriveFile>()
+                    return if (file.id.isNotBlank()) file else null
+                } else if (response.status.value == 401 && attempt == 1) {
+                    println("GoogleDriveApiService: 401 en createBlankDocument. Refrescando token...")
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    println("GoogleDriveApiService: createBlankDocument error HTTP ${response.status.value}")
+                    return null
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return null
+            }
         }
+        return null
     }
 
     suspend fun copyFile(
@@ -151,33 +203,40 @@ class GoogleDriveApiService(
         parentFolderId: String,
         accessToken: String? = null
     ): GoogleDriveFile? {
-        val token = getValidAccessToken(accessToken) ?: return null
-        return try {
-            val requestBody = CreateGoogleDriveFileRequest(
-                name = newFileName,
-                parents = listOf(parentFolderId)
-            )
-            val response = httpClient.post("$DRIVE_FILES_API/$fileId/copy") {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                contentType(ContentType.Application.Json)
-                parameter("supportsAllDrives", true)
-                parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
-                setBody(requestBody)
+        var token = getValidAccessToken(accessToken) ?: return null
+        val requestBody = CreateGoogleDriveFileRequest(
+            name = newFileName,
+            parents = listOf(parentFolderId)
+        )
+        for (attempt in 1..2) {
+            try {
+                val response = httpClient.post("$DRIVE_FILES_API/$fileId/copy") {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    contentType(ContentType.Application.Json)
+                    parameter("supportsAllDrives", true)
+                    parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
+                    setBody(requestBody)
+                }
+                val status = response.status.value
+                if (status in 200..299) {
+                    val file = response.body<GoogleDriveFile>()
+                    return if (file.id.isNotBlank()) file else null
+                } else if (status == 401 && attempt == 1) {
+                    println("GoogleDriveApiService: 401 en copyFile. Refrescando token...")
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    val errorBody = try { response.body<String>() } catch (_: Exception) { "" }
+                    println("GoogleDriveApiService: copyFile failed HTTP $status fileId=$fileId: $errorBody")
+                    return null
+                }
+            } catch (e: Exception) {
+                println("GoogleDriveApiService: copyFile exception: ${e.message}")
+                e.printStackTrace()
+                return null
             }
-            val status = response.status.value
-            if (status in 200..299) {
-                val file = response.body<GoogleDriveFile>()
-                if (file.id.isNotBlank()) file else null
-            } else {
-                val errorBody = try { response.body<String>() } catch (_: Exception) { "" }
-                println("GoogleDriveApiService: copyFile failed HTTP $status fileId=$fileId: $errorBody")
-                null
-            }
-        } catch (e: Exception) {
-            println("GoogleDriveApiService: copyFile exception: ${e.message}")
-            e.printStackTrace()
-            null
         }
+        return null
     }
 
     suspend fun getFileMetadata(fileId: String, accessToken: String? = null): GoogleDriveFile? {
@@ -349,51 +408,60 @@ class GoogleDriveApiService(
         sourceMimeType: String = MIME_TYPE_DOCX,
         accessToken: String? = null
     ): GoogleDriveFile? {
-        val token = getValidAccessToken(accessToken) ?: return null
-        return try {
-            val boundary = "====NotiVasUploadBoundary${me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()}===="
-            val metadataJson = """{"name":"$fileName","mimeType":"$targetMimeType","parents":["$parentFolderId"]}"""
+        var token = getValidAccessToken(accessToken) ?: return null
+        val boundary = "====NotiVasUploadBoundary${me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()}===="
+        val metadataJson = """{"name":"$fileName","mimeType":"$targetMimeType","parents":["$parentFolderId"]}"""
 
-            val boundaryBytes = "--$boundary\r\n".encodeToByteArray()
-            val metaHeaderBytes = "Content-Type: application/json; charset=UTF-8\r\n\r\n".encodeToByteArray()
-            val metaBodyBytes = "$metadataJson\r\n".encodeToByteArray()
-            val fileHeaderBytes = "--$boundary\r\nContent-Type: $sourceMimeType\r\n\r\n".encodeToByteArray()
-            val fileTrailerBytes = "\r\n--$boundary--\r\n".encodeToByteArray()
+        val boundaryBytes = "--$boundary\r\n".encodeToByteArray()
+        val metaHeaderBytes = "Content-Type: application/json; charset=UTF-8\r\n\r\n".encodeToByteArray()
+        val metaBodyBytes = "$metadataJson\r\n".encodeToByteArray()
+        val fileHeaderBytes = "--$boundary\r\nContent-Type: $sourceMimeType\r\n\r\n".encodeToByteArray()
+        val fileTrailerBytes = "\r\n--$boundary--\r\n".encodeToByteArray()
 
-            val totalSize = boundaryBytes.size + metaHeaderBytes.size + metaBodyBytes.size +
-                    fileHeaderBytes.size + fileBytes.size + fileTrailerBytes.size
-            val fullPayload = ByteArray(totalSize)
+        val totalSize = boundaryBytes.size + metaHeaderBytes.size + metaBodyBytes.size +
+                fileHeaderBytes.size + fileBytes.size + fileTrailerBytes.size
+        val fullPayload = ByteArray(totalSize)
 
-            var offset = 0
-            fun appendBytes(src: ByteArray) {
-                src.copyInto(fullPayload, destinationOffset = offset)
-                offset += src.size
-            }
-
-            appendBytes(boundaryBytes)
-            appendBytes(metaHeaderBytes)
-            appendBytes(metaBodyBytes)
-            appendBytes(fileHeaderBytes)
-            appendBytes(fileBytes)
-            appendBytes(fileTrailerBytes)
-
-            val response = httpClient.post("$DRIVE_UPLOAD_API?uploadType=multipart") {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                header(HttpHeaders.ContentType, "multipart/related; boundary=$boundary")
-                parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
-                setBody(fullPayload)
-            }
-            val status = response.status.value
-            if (status in 200..299) {
-                response.body<GoogleDriveFile>()
-            } else {
-                println("GoogleDriveApiService: uploadAndConvertFile failed with HTTP $status")
-                null
-            }
-        } catch (e: Exception) {
-            println("GoogleDriveApiService: uploadAndConvertFile exception: ${e.message}")
-            e.printStackTrace()
-            null
+        var offset = 0
+        fun appendBytes(src: ByteArray) {
+            src.copyInto(fullPayload, destinationOffset = offset)
+            offset += src.size
         }
+
+        appendBytes(boundaryBytes)
+        appendBytes(metaHeaderBytes)
+        appendBytes(metaBodyBytes)
+        appendBytes(fileHeaderBytes)
+        appendBytes(fileBytes)
+        appendBytes(fileTrailerBytes)
+
+        for (attempt in 1..2) {
+            try {
+                val multipartContentType = ContentType.parse("multipart/related; boundary=$boundary")
+                val response = httpClient.post("$DRIVE_UPLOAD_API?uploadType=multipart") {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
+                    setBody(io.ktor.http.content.ByteArrayContent(fullPayload, multipartContentType))
+                }
+                val status = response.status.value
+                if (status in 200..299) {
+                    val file = response.body<GoogleDriveFile>()
+                    return if (file.id.isNotBlank()) file else null
+                } else if (status == 401 && attempt == 1) {
+                    println("GoogleDriveApiService: 401 en uploadAndConvertFile. Refrescando token...")
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    val errorBody = try { response.body<String>() } catch (_: Exception) { "" }
+                    println("GoogleDriveApiService: uploadAndConvertFile failed with HTTP $status: $errorBody")
+                    return null
+                }
+            } catch (e: Exception) {
+                println("GoogleDriveApiService: uploadAndConvertFile exception: ${e.message}")
+                e.printStackTrace()
+                return null
+            }
+        }
+        return null
     }
 }

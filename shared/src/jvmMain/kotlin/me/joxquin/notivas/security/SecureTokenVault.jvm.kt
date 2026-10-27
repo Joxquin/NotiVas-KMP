@@ -43,4 +43,20 @@ actual class SecureTokenVault actual constructor(private val preferencesManager:
         scope.launch { preferencesManager.unlinkGoogleDrive() }
         return true
     }
+
+    actual suspend fun refreshGoogleDriveAccessToken(): String? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val refreshToken = preferencesManager.getGoogleDriveRefreshToken() ?: return@withContext null
+        val authService = me.joxquin.notivas.data.remote.GoogleDriveAuthService()
+        val resp = authService.refreshAccessToken(refreshToken)
+        if (resp != null && resp.accessToken.isNotBlank()) {
+            preferencesManager.saveGoogleDriveTokens(
+                accessToken = resp.accessToken,
+                refreshToken = resp.refreshToken ?: refreshToken,
+                userEmail = preferencesManager.getGoogleDriveEmail()
+            )
+            resp.accessToken
+        } else {
+            null
+        }
+    }
 }
