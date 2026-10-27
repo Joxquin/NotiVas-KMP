@@ -95,7 +95,7 @@ fun AssignmentDraftScreen(
     lazyListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
-    BackHandler(onBack = onBack)
+    BackHandler(enabled = false, onBack = onBack)
 
     val uriHandler = LocalUriHandler.current
     val assignment = assignmentUi.assignment

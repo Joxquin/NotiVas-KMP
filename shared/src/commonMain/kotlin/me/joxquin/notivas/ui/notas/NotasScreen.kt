@@ -85,7 +85,7 @@ fun NotasScreen(
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    BackHandler(onBack = onBack)
+    BackHandler(enabled = false, onBack = onBack)
 
     val uiState by viewModel.uiState.collectAsState()
     var showImportTemplateDialog by remember { mutableStateOf(false) }

@@ -101,7 +101,7 @@ fun ForosScreen(
     onOpenTopic: ((CanvasDiscussionTopic) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    BackHandler(onBack = onBack)
+    BackHandler(enabled = false, onBack = onBack)
 
     val uiState by viewModel.uiState.collectAsState()
     val showFilterBottomSheet by viewModel.showFilterBottomSheet.collectAsState()

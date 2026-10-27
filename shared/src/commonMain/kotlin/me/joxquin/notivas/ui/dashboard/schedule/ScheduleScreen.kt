@@ -100,7 +100,7 @@ fun ScheduleScreen(
     lazyListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
-    BackHandler(onBack = onBack)
+    BackHandler(enabled = false, onBack = onBack)
 
     val weeklySchedule by viewModel.weeklySchedule.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()

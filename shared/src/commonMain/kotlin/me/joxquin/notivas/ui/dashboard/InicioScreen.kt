@@ -120,18 +120,6 @@ fun InicioScreen(
         }
     }
 
-    if (selectedAssignmentForDraft != null) {
-        me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
-            assignmentUi = selectedAssignmentForDraft!!,
-            onBack = { viewModel.closeDraft() },
-            viewModel = viewModel,
-            themeStyle = AppThemeStyle.MATERIAL,
-            lazyListState = listState,
-            modifier = modifier
-        )
-        return
-    }
-
     var selectedAssignmentForSubmenu by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf<AssignmentUiModel?>(null)
     }

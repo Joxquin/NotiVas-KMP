@@ -82,10 +82,15 @@ fun ForoDetailScreen(
     lazyListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
-    BackHandler(onBack = onBack)
+    BackHandler(enabled = false, onBack = onBack)
 
     val uiState by viewModel.uiState.collectAsState()
-    val topic = uiState.selectedDiscussion ?: return
+    val currentTopic = uiState.selectedDiscussion
+    var retainedTopic by remember { mutableStateOf(currentTopic) }
+    if (currentTopic != null) {
+        retainedTopic = currentTopic
+    }
+    val topic = currentTopic ?: retainedTopic ?: return
 
     var showCopilotAssistant by remember { mutableStateOf(false) }
 

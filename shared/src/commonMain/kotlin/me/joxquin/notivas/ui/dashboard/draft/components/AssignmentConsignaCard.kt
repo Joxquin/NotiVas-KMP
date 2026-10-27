@@ -513,7 +513,7 @@ fun AssignmentConsignaCard(
 internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
     if (html.isNullOrBlank()) return emptyList()
 
-    val sectionMatches = Regex("""<h3[^>]*>(.*?)</h3>(.*?)((?=<h3)|$)""", RegexOption.DOT_MATCHES_ALL).findAll(html).toList()
+    val sectionMatches = Regex("""(?s)<h3[^>]*>(.*?)</h3>(.*?)((?=<h3)|$)""").findAll(html).toList()
 
     if (sectionMatches.isNotEmpty()) {
         return sectionMatches.map { match ->
@@ -529,7 +529,7 @@ internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
                 else -> ConsignaIconType.GENERAL
             }
 
-            val allLinks = Regex("""<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""", RegexOption.DOT_MATCHES_ALL).findAll(rawBody).map {
+            val allLinks = Regex("""(?s)<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""").findAll(rawBody).map {
                 val url = it.groupValues[1]
                 val text = it.groupValues[2].replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
                 text to url
@@ -547,7 +547,7 @@ internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
 
             val otherLinks = allLinks.filter { it != downloadLink && !it.second.startsWith("\$CANVAS") }
 
-            val lis = Regex("""<li[^>]*>(.*?)</li>""", RegexOption.DOT_MATCHES_ALL).findAll(rawBody).map { liMatch ->
+            val lis = Regex("""(?s)<li[^>]*>(.*?)</li>""").findAll(rawBody).map { liMatch ->
                 val liHtml = liMatch.groupValues[1]
                 val isHighlighted = liHtml.contains("feb2b2", ignoreCase = true) ||
                         liHtml.contains("c53030", ignoreCase = true) ||
@@ -571,8 +571,8 @@ internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
             }.toList()
 
             var cleanText = rawBody
-                .replace(Regex("""<ul[^>]*>.*?</ul>""", RegexOption.DOT_MATCHES_ALL), "")
-                .replace(Regex("""<a[^>]*>.*?</a>""", RegexOption.DOT_MATCHES_ALL), "")
+                .replace(Regex("""(?s)<ul[^>]*>.*?</ul>"""), "")
+                .replace(Regex("""(?s)<a[^>]*>.*?</a>"""), "")
                 .replace(Regex("<[^>]*>"), " ")
                 .cleanEmoji()
                 .trim()
@@ -589,7 +589,7 @@ internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
         }
     }
 
-    val allLinks = Regex("""<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""", RegexOption.DOT_MATCHES_ALL).findAll(html).map {
+    val allLinks = Regex("""(?s)<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""").findAll(html).map {
         val url = it.groupValues[1]
         val text = it.groupValues[2].replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
         text to url

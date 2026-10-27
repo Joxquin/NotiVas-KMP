@@ -91,6 +91,7 @@ import top.yukonga.miuix.kmp.nav.core.NavCornerClipMode
 import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
 import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
 import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
+import top.yukonga.miuix.kmp.nav.transition.NavTransitions
 import me.joxquin.notivas.ui.navigation.miuix.CrossActivityTransition
 import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixNavigator
 import me.joxquin.notivas.ui.navigation.miuix.MiuixNavigator
@@ -369,8 +370,8 @@ fun MainAppShell(
             NavDisplayEffects(
                 enableCornerClip = true,
                 cornerClipRadius = if (navCornerRadius <= 0.dp) 32.dp else navCornerRadius,
-                cornerClipMode = NavCornerClipMode.All,
-                dimAmount = if (isDarkTheme) 0.8f else 0.2f,
+                cornerClipMode = NavCornerClipMode.Leading,
+                dimAmount = 0.5f,
                 backdropColor = backdropColor,
             )
         }
@@ -415,21 +416,27 @@ fun MainAppShell(
         }
 
         // Interceptar boton Atras fisico/gestual para HyperOS MIUIX:
-        // Si hay vistas hijas apiladas en el backstack, retroceder con animacion HyperOS.
-        // Si estamos en la raiz (MiuixRoute.Main), animar al Inicio si estamos en otra pestaña.
+        // IMPORTANTE: Unicamente habilitado cuando estemos en la ruta raíz (MiuixRoute.Main) y en una pestaña
+        // distinta de la primera (Inicio). Cuando haya pantallas apiladas (miuixNavigator.canPop == true),
+        // este callback DEBE estar deshabilitado para que el NavDisplay (PredictiveBackHandlerWithSessions)
+        // reciba los eventos del gesto predictivo del sistema de Android y ejecute la animación 1:1.
         val isMainBackHandlerEnabled by remember {
             derivedStateOf {
-                miuixNavigator.canPop ||
-                    (miuixNavigator.current() is MiuixRoute.Main && mainPagerState.selectedPage != 0)
+                miuixNavigator.current() is MiuixRoute.Main && !miuixNavigator.canPop && mainPagerState.selectedPage != 0
             }
         }
 
         BackHandler(enabled = isMainBackHandlerEnabled) {
-            if (miuixNavigator.canPop) {
-                handleMiuixBack()
-            } else if (mainPagerState.selectedPage != 0) {
+            if (mainPagerState.selectedPage != 0) {
                 mainPagerState.animateToPage(0)
             }
+        }
+
+        val layoutDirection = androidx.compose.ui.platform.LocalLayoutDirection.current
+        val swipeBackDirection = if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) {
+            NavSwipeDirection.RightToLeft
+        } else {
+            NavSwipeDirection.LeftToRight
         }
 
         CompositionLocalProvider(
@@ -439,7 +446,7 @@ fun MainAppShell(
                 backStack = miuixBackStack,
                 modifier = Modifier.fillMaxSize(),
                 onBack = { handleMiuixBack() },
-                transition = CrossActivityTransition,
+                transition = NavTransitions.MiuixDefault,
                 effects = navDisplayEffects,
             ) {
                 entry<MiuixRoute.Main> {
@@ -790,7 +797,7 @@ fun MainAppShell(
                     }
                 }
 
-                entry<MiuixRoute.RecentActivity>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                entry<MiuixRoute.RecentActivity>(swipeDismiss = swipeBackDirection) {
                     RecentActivityScreen(
                         viewModel = activityViewModel,
                         themeStyle = AppThemeStyle.MIUIX,
@@ -825,7 +832,7 @@ fun MainAppShell(
                     )
                 }
 
-                entry<MiuixRoute.Schedule>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                entry<MiuixRoute.Schedule>(swipeDismiss = swipeBackDirection) {
                     ScheduleScreen(
                         viewModel = dashboardViewModel,
                         themeStyle = AppThemeStyle.MIUIX,
@@ -837,7 +844,7 @@ fun MainAppShell(
                     )
                 }
 
-                entry<MiuixRoute.MorningRoadmap>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                entry<MiuixRoute.MorningRoadmap>(swipeDismiss = swipeBackDirection) {
                     MorningRoadmapScreen(
                         viewModel = dashboardViewModel,
                         onBack = { handleMiuixBack() },
@@ -859,7 +866,7 @@ fun MainAppShell(
                     )
                 }
 
-                entry<MiuixRoute.AssignmentDraft>(swipeDismiss = NavSwipeDirection.LeftToRight) { route: MiuixRoute.AssignmentDraft ->
+                entry<MiuixRoute.AssignmentDraft>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.AssignmentDraft ->
                     val currentDraft = selectedAssignmentForDraft ?: remember(route) {
                         dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == route.assignmentId }
                     }
@@ -873,7 +880,7 @@ fun MainAppShell(
                     }
                 }
 
-                entry<MiuixRoute.TaskHistoryArchive>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                entry<MiuixRoute.TaskHistoryArchive>(swipeDismiss = swipeBackDirection) {
                     TaskHistoryArchiveScreen(
                         viewModel = archiveViewModel,
                         themeStyle = AppThemeStyle.MIUIX,
@@ -890,18 +897,31 @@ fun MainAppShell(
                     )
                 }
 
-                entry<MiuixRoute.ForoDetail>(swipeDismiss = NavSwipeDirection.LeftToRight) { route: MiuixRoute.ForoDetail ->
-                    val topic = forosUiState.discussions.find { it.id == route.topicId } ?: forosUiState.selectedDiscussion
-                    if (topic != null) {
-                        ForoDetailScreen(
-                            viewModel = forosViewModel,
-                            themeStyle = AppThemeStyle.MIUIX,
-                            onBack = { handleMiuixBack() }
-                        )
+                entry<MiuixRoute.ForoDetail>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.ForoDetail ->
+                    LaunchedEffect(route.topicId) {
+                        if (forosUiState.selectedDiscussion?.id != route.topicId) {
+                            val existing = forosUiState.discussions.find { it.id == route.topicId }
+                            if (existing != null) {
+                                forosViewModel.selectDiscussion(existing)
+                            }
+                        }
                     }
+                    ForoDetailScreen(
+                        viewModel = forosViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
                 }
 
-                entry<MiuixRoute.CourseProgreso>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                entry<MiuixRoute.CourseProgreso>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.CourseProgreso ->
+                    LaunchedEffect(route.courseId) {
+                        if (route.courseId != 0L && notasViewModel.uiState.value.selectedCourse?.id != route.courseId) {
+                            val target = notasViewModel.uiState.value.courses.find { it.id == route.courseId }
+                            if (target != null) {
+                                notasViewModel.selectCourse(target)
+                            }
+                        }
+                    }
                     NotasScreen(
                         viewModel = notasViewModel,
                         themeStyle = AppThemeStyle.MIUIX,
@@ -909,7 +929,7 @@ fun MainAppShell(
                     )
                 }
 
-                entry<MiuixRoute.ForosHub>(swipeDismiss = NavSwipeDirection.LeftToRight) {
+                entry<MiuixRoute.ForosHub>(swipeDismiss = swipeBackDirection) {
                     ForosScreen(
                         viewModel = forosViewModel,
                         themeStyle = AppThemeStyle.MIUIX,
@@ -921,7 +941,7 @@ fun MainAppShell(
                     )
                 }
 
-                entry<MiuixRoute.CourseDetail>(swipeDismiss = NavSwipeDirection.LeftToRight) { route: MiuixRoute.CourseDetail ->
+                entry<MiuixRoute.CourseDetail>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.CourseDetail ->
                     val detailViewModel = remember(route.courseId) {
                         CourseDetailViewModel(
                             courseId = route.courseId,
@@ -939,6 +959,21 @@ fun MainAppShell(
                                     val assignmentUi = AssignmentUiModel(assignment, courseName)
                                     dashboardViewModel.openDraft(assignmentUi)
                                     miuixNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                                }
+                            }
+                        },
+                        onNavigateToForoDetail = { topicId ->
+                            val topic = forosUiState.discussions.find { it.id == topicId }
+                            if (topic != null) {
+                                forosViewModel.selectDiscussion(topic)
+                                miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                            } else {
+                                coroutineScope.launch {
+                                    val fetched = canvasRepository.getDiscussionTopic(route.courseId, topicId)
+                                    if (fetched != null) {
+                                        forosViewModel.selectDiscussion(fetched)
+                                        miuixNavigator.push(MiuixRoute.ForoDetail(fetched.id))
+                                    }
                                 }
                             }
                         },
@@ -968,7 +1003,7 @@ fun MainAppShell(
                     )
                 }
 
-                entry<MiuixRoute.CourseModules>(swipeDismiss = NavSwipeDirection.LeftToRight) { route: MiuixRoute.CourseModules ->
+                entry<MiuixRoute.CourseModules>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.CourseModules ->
                     val detailViewModel = remember(route.courseId) {
                         CourseDetailViewModel(
                             courseId = route.courseId,
@@ -994,6 +1029,14 @@ fun MainAppShell(
                             if (topic != null) {
                                 forosViewModel.selectDiscussion(topic)
                                 miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                            } else {
+                                coroutineScope.launch {
+                                    val fetched = canvasRepository.getDiscussionTopic(route.courseId, topicId)
+                                    if (fetched != null) {
+                                        forosViewModel.selectDiscussion(fetched)
+                                        miuixNavigator.push(MiuixRoute.ForoDetail(fetched.id))
+                                    }
+                                }
                             }
                         },
                         onOpenUrl = { url ->
@@ -1006,7 +1049,10 @@ fun MainAppShell(
             }
         }
     } else {
-        // ─── ARQUITECTURA MATERIAL DESIGN 3 (SCAFFOLD) ────────────────────────
+        // ─── ARQUITECTURA MATERIAL DESIGN 3 (AOSP PREDICTIVE BACK & NAVDISPLAY) ───
+        val materialBackStack = rememberNavBackStack<MiuixRoute>(MiuixRoute.Main)
+        val materialNavigator = remember(materialBackStack) { MiuixNavigator(materialBackStack) }
+
         var materialDestination by remember { mutableStateOf(MainDestination.Inicio) }
         fun navigateToMaterial(destination: MainDestination) {
             materialDestination = destination
@@ -1015,106 +1061,446 @@ fun MainAppShell(
         val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
         val isMaterialDashboardSearchExpandingOrExpanded = materialDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
 
-        // Interceptar gesto/botón Atrás del sistema para Material 3:
-        BackHandler(
-            enabled = themeStyle == AppThemeStyle.MATERIAL && (
-                isMaterialDashboardSearchExpandingOrExpanded ||
-                selectedCourseForModules != null ||
-                selectedCourseForDetail != null ||
-                showingMorningRoadmap ||
-                showingScheduleDetail ||
-                showingActivityDetail ||
-                selectedAssignmentForDraft != null ||
-                showingNotasDetail ||
-                showingForosDetail ||
-                showingArchiveDetail ||
-                materialDestination != MainDestination.Inicio
-            )
-        ) {
-            if (isMaterialDashboardSearchExpandingOrExpanded) {
-                dashboardViewModel.setSearchExpanded(false)
-            } else if (selectedCourseForModules != null) {
-                selectedCourseForModules = null
-            } else if (selectedCourseForDetail != null) {
-                selectedCourseForDetail = null
-            } else if (showingMorningRoadmap) {
-                dashboardViewModel.closeMorningRoadmap()
-            } else if (showingScheduleDetail) {
-                showingScheduleDetail = false
-            } else if (showingActivityDetail) {
-                showingActivityDetail = false
-            } else if (selectedAssignmentForDraft != null) {
-                dashboardViewModel.closeDraft()
-            } else if (materialDestination == MainDestination.Herramientas) {
-                if (showingForosDetail && forosUiState.selectedDiscussion != null) {
-                    forosViewModel.clearSelectedDiscussion()
-                } else if (showingNotasDetail || showingForosDetail || showingArchiveDetail) {
-                    showingNotasDetail = false
-                    showingForosDetail = false
-                    showingArchiveDetail = false
-                } else {
-                    materialDestination = MainDestination.Inicio
+        fun handleMaterialBack(): Boolean {
+            val current = materialNavigator.current()
+            when (current) {
+                is MiuixRoute.MorningRoadmap -> dashboardViewModel.closeMorningRoadmap()
+                is MiuixRoute.AssignmentDraft -> dashboardViewModel.closeDraft()
+                is MiuixRoute.ForoDetail -> forosViewModel.clearSelectedDiscussion()
+                else -> {}
+            }
+            return materialNavigator.pop()
+        }
+
+        LaunchedEffect(showingMorningRoadmap) {
+            if (showingMorningRoadmap) {
+                if (materialNavigator.current() !is MiuixRoute.MorningRoadmap) {
+                    materialNavigator.push(MiuixRoute.MorningRoadmap)
                 }
             } else {
+                if (materialNavigator.current() is MiuixRoute.MorningRoadmap) {
+                    materialNavigator.pop()
+                }
+            }
+        }
+
+        LaunchedEffect(selectedAssignmentForDraft) {
+            val draft = selectedAssignmentForDraft
+            if (draft != null) {
+                val targetRoute = MiuixRoute.AssignmentDraft(draft.assignment.id, draft.courseName)
+                if (materialNavigator.current() != targetRoute) {
+                    materialNavigator.push(targetRoute)
+                }
+            } else {
+                if (materialNavigator.current() is MiuixRoute.AssignmentDraft) {
+                    materialNavigator.pop()
+                }
+            }
+        }
+
+        val isMaterialMainBackHandlerEnabled by remember {
+            derivedStateOf {
+                materialNavigator.current() is MiuixRoute.Main && !materialNavigator.canPop && (
+                    isMaterialDashboardSearchExpandingOrExpanded || materialDestination != MainDestination.Inicio
+                )
+            }
+        }
+
+        BackHandler(enabled = isMaterialMainBackHandlerEnabled) {
+            if (isMaterialDashboardSearchExpandingOrExpanded) {
+                dashboardViewModel.setSearchExpanded(false)
+            } else if (materialDestination != MainDestination.Inicio) {
                 materialDestination = MainDestination.Inicio
             }
         }
 
-        val isImeVisible = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
-        val isMaterialBottomBarVisible = !isImeVisible && selectedCourseForModules == null && selectedCourseForDetail == null && !showingMorningRoadmap && !showingScheduleDetail && !showingActivityDetail && selectedAssignmentForDraft == null && !isMaterialDashboardSearchExpandingOrExpanded
-
-        Scaffold(
-            bottomBar = {
-                NotiVasNavigationBar(
-                    currentDestination = materialDestination,
-                    isVisible = isMaterialBottomBarVisible,
-                    onNavigate = { destination ->
-                        selectedCourseForModules = null
-                        selectedCourseForDetail = null
-                        if (selectedAssignmentForDraft != null) {
-                            dashboardViewModel.closeDraft()
-                        }
-                        showingNotasDetail = false
-                        showingForosDetail = false
-                        materialDestination = destination
-                    }
-                )
-            }
-        ) { innerPadding ->
-            val targetBottom = if (isMaterialBottomBarVisible) innerPadding.calculateBottomPadding() else 0.dp
-            val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
-                targetValue = targetBottom,
-                animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
-                label = "materialBottomPadding"
+        val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+        val materialNavCornerRadius = rememberNavSystemCornerRadius()
+        val materialAospEffects = remember(isDarkTheme, materialNavCornerRadius) {
+            NavDisplayEffects(
+                enableCornerClip = true,
+                cornerClipRadius = if (materialNavCornerRadius <= 0.dp) 32.dp else materialNavCornerRadius,
+                cornerClipMode = NavCornerClipMode.All,
+                dimAmount = if (isDarkTheme) 0.8f else 0.2f,
             )
+        }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = animatedBottomPadding)
+        val materialLayoutDirection = androidx.compose.ui.platform.LocalLayoutDirection.current
+        val materialSwipeBackDirection = if (materialLayoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) {
+            NavSwipeDirection.RightToLeft
+        } else {
+            NavSwipeDirection.LeftToRight
+        }
+
+        CompositionLocalProvider(
+            LocalMiuixNavigator provides materialNavigator
+        ) {
+            NavDisplay(
+                backStack = materialBackStack,
+                modifier = Modifier.fillMaxSize(),
+                onBack = { handleMaterialBack() },
+                transition = CrossActivityTransition,
+                effects = materialAospEffects,
             ) {
-                if (selectedCourseForModules != null) {
-                    val course = selectedCourseForModules!!
-                    val detailViewModel = remember(course.id) {
+                entry<MiuixRoute.Main> {
+                    val isImeVisible = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
+                    val isMaterialBottomBarVisible = !isImeVisible && !isMaterialDashboardSearchExpandingOrExpanded
+
+                    Scaffold(
+                        bottomBar = {
+                            NotiVasNavigationBar(
+                                currentDestination = materialDestination,
+                                isVisible = isMaterialBottomBarVisible,
+                                onNavigate = { destination ->
+                                    materialDestination = destination
+                                }
+                            )
+                        }
+                    ) { innerPadding ->
+                        val targetBottom = if (isMaterialBottomBarVisible) innerPadding.calculateBottomPadding() else 0.dp
+                        val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
+                            targetValue = targetBottom,
+                            animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
+                            label = "materialBottomPadding"
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(bottom = animatedBottomPadding)
+                        ) {
+                            androidx.compose.animation.AnimatedContent(
+                                targetState = materialDestination,
+                                transitionSpec = {
+                                    val targetIndex = destinations.indexOf(targetState)
+                                    val initialIndex = destinations.indexOf(initialState)
+                                    val isForward = targetIndex >= initialIndex
+                                    if (isForward) {
+                                        (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it } +
+                                                androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
+                                            .togetherWith(
+                                                androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it / 3 } +
+                                                        androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
+                                            )
+                                    } else {
+                                        (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it } +
+                                                androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
+                                            .togetherWith(
+                                                androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it / 3 } +
+                                                        androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
+                                            )
+                                    }
+                                },
+                                label = "materialDestinationTransition"
+                            ) { currentScreen ->
+                                when (currentScreen) {
+                                    MainDestination.Inicio -> {
+                                        InicioScreen(
+                                            viewModel = dashboardViewModel,
+                                            themeStyle = AppThemeStyle.MATERIAL,
+                                            listState = inicioListState,
+                                            onNavigateToCopilot = {
+                                                navigateToMaterial(MainDestination.Copilot)
+                                            },
+                                            onNavigateToHerramientas = {
+                                                navigateToMaterial(MainDestination.Herramientas)
+                                            },
+                                            onNavigateToAjustes = {
+                                                navigateToMaterial(MainDestination.Ajustes)
+                                            },
+                                            onNavigateToActivity = {
+                                                materialNavigator.push(MiuixRoute.RecentActivity)
+                                            },
+                                            onNavigateToSchedule = {
+                                                materialNavigator.push(MiuixRoute.Schedule)
+                                            },
+                                            onNavigateToRoadmap = {
+                                                materialNavigator.push(MiuixRoute.MorningRoadmap)
+                                            },
+                                            onOpenAssignmentDraft = { assignmentUi ->
+                                                dashboardViewModel.openDraft(assignmentUi)
+                                                materialNavigator.push(
+                                                    MiuixRoute.AssignmentDraft(
+                                                        assignmentUi.assignment.id,
+                                                        assignmentUi.courseName
+                                                    )
+                                                )
+                                            },
+                                            onNavigateToCourseProgreso = { course ->
+                                                notasViewModel.selectCourse(course)
+                                                materialNavigator.push(MiuixRoute.CourseProgreso(course.id))
+                                            },
+                                            onNavigateToCourseDetail = { course ->
+                                                materialNavigator.push(MiuixRoute.CourseDetail(course.id))
+                                            },
+                                            onNavigateToForoDetail = { topic ->
+                                                forosViewModel.selectDiscussion(topic)
+                                                materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                                            }
+                                        )
+                                    }
+
+                                    MainDestination.Herramientas -> {
+                                        me.joxquin.notivas.ui.herramientas.HerramientasScreen(
+                                            viewModel = notasViewModel,
+                                            forosViewModel = forosViewModel,
+                                            archiveViewModel = archiveViewModel,
+                                            showingNotasDetail = false,
+                                            showingForosDetail = false,
+                                            showingArchiveDetail = false,
+                                            onOpenProgreso = {
+                                                val selectedCourseId = notasViewModel.uiState.value.selectedCourse?.id ?: 0L
+                                                materialNavigator.push(MiuixRoute.CourseProgreso(selectedCourseId))
+                                            },
+                                            onOpenForos = {
+                                                materialNavigator.push(MiuixRoute.ForosHub)
+                                            },
+                                            onOpenForoDetail = { topic ->
+                                                forosViewModel.selectDiscussion(topic)
+                                                materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                                            },
+                                            onOpenArchive = {
+                                                materialNavigator.push(MiuixRoute.TaskHistoryArchive)
+                                            },
+                                            onOpenAssignmentDetail = { assignment ->
+                                                val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                                                val assignmentUi = me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
+                                                    assignment = assignment,
+                                                    courseName = courseName
+                                                )
+                                                dashboardViewModel.openDraft(assignmentUi)
+                                                materialNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                                            },
+                                            onOpenTuneSettings = { showHerramientasTuneSheet = true },
+                                            onOpenCatalogImport = { showCatalogImportDialog = true },
+                                            onImportJsonClick = { filePicker.launchFilePicker() },
+                                            onExportJsonClick = { filePicker.launchFileCreator("notivas_ponderacion.json") },
+                                            onResetGroups = { notasViewModel.resetAllSimulationGroups() },
+                                            onBack = { handleMaterialBack() },
+                                            themeStyle = AppThemeStyle.MATERIAL,
+                                            lazyListState = herramientasListState
+                                        )
+                                    }
+
+                                    MainDestination.Copilot -> {
+                                        me.joxquin.notivas.ui.copilot.CopilotScreen(
+                                            viewModel = copilotViewModel,
+                                            themeStyle = AppThemeStyle.MATERIAL,
+                                            onNavigateToSettings = {
+                                                navigateToMaterial(MainDestination.Ajustes)
+                                            }
+                                        )
+                                    }
+
+                                    MainDestination.Ajustes -> {
+                                        me.joxquin.notivas.ui.ajustes.AjustesScreen(
+                                            viewModel = profileViewModel
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Feedback Toast / Banner Flotante en Material 3
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = toastMessage != null,
+                                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
+                                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(bottom = 16.dp, start = 20.dp, end = 20.dp)
+                            ) {
+                                toastMessage?.let { msg ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(
+                                                color = if (msg.contains("Error", ignoreCase = true) || msg.contains("Fallo", ignoreCase = true) || msg.contains("No se pudo", ignoreCase = true))
+                                                    androidx.compose.ui.graphics.Color(0xFFE53935)
+                                                else if (msg.contains("exitosamente", ignoreCase = true) || msg.contains("listo", ignoreCase = true) || msg.contains("cancelada", ignoreCase = true))
+                                                    androidx.compose.ui.graphics.Color(0xFF388E3C)
+                                                else
+                                                    androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                                            )
+                                            .padding(vertical = 12.dp, horizontal = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = msg,
+                                            color = androidx.compose.ui.graphics.Color.White,
+                                            fontSize = 13.sp,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                            maxLines = 3
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                entry<MiuixRoute.RecentActivity>(swipeDismiss = materialSwipeBackDirection) {
+                    RecentActivityScreen(
+                        viewModel = activityViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        lazyListState = activityListState,
+                        onBack = { handleMaterialBack() },
+                        onNavigateToAssignment = { assignmentId: Long ->
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                                    val assignmentUi = AssignmentUiModel(
+                                        assignment = assignment,
+                                        courseName = courseName
+                                    )
+                                    dashboardViewModel.openDraft(assignmentUi)
+                                    materialNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                                }
+                            }
+                        },
+                        onNavigateToForum = { topicId: Long ->
+                            val topic = forosUiState.discussions.find { it.id == topicId }
+                            if (topic != null) {
+                                forosViewModel.selectDiscussion(topic)
+                                materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                            }
+                        },
+                        onOpenUrl = { url: String ->
+                            try {
+                                uriHandler.openUri(url)
+                            } catch (_: Exception) {}
+                        }
+                    )
+                }
+
+                entry<MiuixRoute.Schedule>(swipeDismiss = materialSwipeBackDirection) {
+                    ScheduleScreen(
+                        viewModel = dashboardViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() },
+                        onAssignmentClick = { assignmentUi: AssignmentUiModel ->
+                            dashboardViewModel.openDraft(assignmentUi)
+                            materialNavigator.push(MiuixRoute.AssignmentDraft(assignmentUi.assignment.id, assignmentUi.courseName))
+                        }
+                    )
+                }
+
+                entry<MiuixRoute.MorningRoadmap>(swipeDismiss = materialSwipeBackDirection) {
+                    MorningRoadmapScreen(
+                        viewModel = dashboardViewModel,
+                        onBack = { handleMaterialBack() },
+                        onNavigateToCopilotWithPrompt = { prompt: String ->
+                            handleMaterialBack()
+                            materialDestination = MainDestination.Copilot
+                            copilotViewModel.sendMessage(prompt)
+                        },
+                        onOpenDraft = { assignmentUi ->
+                            dashboardViewModel.openDraft(assignmentUi)
+                            materialNavigator.push(
+                                MiuixRoute.AssignmentDraft(
+                                    assignmentUi.assignment.id,
+                                    assignmentUi.courseName
+                                )
+                            )
+                        },
+                        themeStyle = AppThemeStyle.MATERIAL
+                    )
+                }
+
+                entry<MiuixRoute.AssignmentDraft>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.AssignmentDraft ->
+                    val currentDraft = selectedAssignmentForDraft ?: remember(route) {
+                        dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == route.assignmentId }
+                    }
+                    if (currentDraft != null) {
+                        AssignmentDraftScreen(
+                            assignmentUi = currentDraft,
+                            onBack = { handleMaterialBack() },
+                            viewModel = dashboardViewModel,
+                            themeStyle = AppThemeStyle.MATERIAL
+                        )
+                    }
+                }
+
+                entry<MiuixRoute.TaskHistoryArchive>(swipeDismiss = materialSwipeBackDirection) {
+                    TaskHistoryArchiveScreen(
+                        viewModel = archiveViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() },
+                        onOpenAssignmentDetail = { assignment: Assignment ->
+                            val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
+                            val assignmentUi = AssignmentUiModel(
+                                assignment = assignment,
+                                courseName = courseName
+                            )
+                            dashboardViewModel.openDraft(assignmentUi)
+                            materialNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                        }
+                    )
+                }
+
+                entry<MiuixRoute.ForoDetail>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.ForoDetail ->
+                    LaunchedEffect(route.topicId) {
+                        if (forosUiState.selectedDiscussion?.id != route.topicId) {
+                            val existing = forosUiState.discussions.find { it.id == route.topicId }
+                            if (existing != null) {
+                                forosViewModel.selectDiscussion(existing)
+                            }
+                        }
+                    }
+                    ForoDetailScreen(
+                        viewModel = forosViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.CourseProgreso>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.CourseProgreso ->
+                    LaunchedEffect(route.courseId) {
+                        if (route.courseId != 0L && notasViewModel.uiState.value.selectedCourse?.id != route.courseId) {
+                            val target = notasViewModel.uiState.value.courses.find { it.id == route.courseId }
+                            if (target != null) {
+                                notasViewModel.selectCourse(target)
+                            }
+                        }
+                    }
+                    NotasScreen(
+                        viewModel = notasViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.ForosHub>(swipeDismiss = materialSwipeBackDirection) {
+                    ForosScreen(
+                        viewModel = forosViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() },
+                        onOpenTopic = { topic ->
+                            forosViewModel.selectDiscussion(topic)
+                            materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                        }
+                    )
+                }
+
+                entry<MiuixRoute.CourseDetail>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.CourseDetail ->
+                    val detailViewModel = remember(route.courseId) {
                         CourseDetailViewModel(
-                            courseId = course.id,
+                            courseId = route.courseId,
                             repository = canvasRepository
                         )
                     }
-                    CourseModulesScreen(
+                    CourseDetailScreen(
                         viewModel = detailViewModel,
                         themeStyle = AppThemeStyle.MATERIAL,
-                        onBack = { selectedCourseForModules = null },
+                        onBack = { handleMaterialBack() },
                         onNavigateToAssignmentDraft = { assignmentId, courseName ->
                             coroutineScope.launch {
                                 val assignment = canvasRepository.getAssignment(assignmentId)
                                 if (assignment != null) {
-                                    dashboardViewModel.openDraft(
-                                        AssignmentUiModel(
-                                            assignment = assignment,
-                                            courseName = courseName
-                                        )
-                                    )
+                                    val assignmentUi = AssignmentUiModel(assignment, courseName)
+                                    dashboardViewModel.openDraft(assignmentUi)
+                                    materialNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
                                 }
                             }
                         },
@@ -1122,322 +1508,89 @@ fun MainAppShell(
                             val topic = forosUiState.discussions.find { it.id == topicId }
                             if (topic != null) {
                                 forosViewModel.selectDiscussion(topic)
-                                showingForosDetail = true
-                                showingNotasDetail = false
-                                navigateToMaterial(MainDestination.Herramientas)
-                            }
-                        },
-                        onOpenUrl = { url ->
-                            try {
-                                uriHandler.openUri(url)
-                            } catch (_: Exception) {}
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else if (selectedCourseForDetail != null) {
-                    val course = selectedCourseForDetail!!
-                    val detailViewModel = remember(course.id) {
-                        CourseDetailViewModel(
-                            courseId = course.id,
-                            repository = canvasRepository
-                        )
-                    }
-                    CourseDetailScreen(
-                        viewModel = detailViewModel,
-                        themeStyle = AppThemeStyle.MATERIAL,
-                        onBack = { selectedCourseForDetail = null },
-                        onNavigateToAssignmentDraft = { assignmentId, courseName ->
-                            coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
-                                if (assignment != null) {
-                                    dashboardViewModel.openDraft(
-                                        AssignmentUiModel(
-                                            assignment = assignment,
-                                            courseName = courseName
-                                        )
-                                    )
+                                materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                            } else {
+                                coroutineScope.launch {
+                                    val fetched = canvasRepository.getDiscussionTopic(route.courseId, topicId)
+                                    if (fetched != null) {
+                                        forosViewModel.selectDiscussion(fetched)
+                                        materialNavigator.push(MiuixRoute.ForoDetail(fetched.id))
+                                    }
                                 }
                             }
                         },
                         onNavigateToProgreso = {
-                            notasViewModel.selectCourse(course)
-                            selectedCourseForDetail = null
-                            showingNotasDetail = true
-                            showingForosDetail = false
-                            navigateToMaterial(MainDestination.Herramientas)
+                            val course = notasViewModel.uiState.value.courses.find { it.id == route.courseId }
+                            if (course != null) {
+                                notasViewModel.selectCourse(course)
+                            }
+                            materialNavigator.push(MiuixRoute.CourseProgreso(route.courseId))
                         },
                         onNavigateToCopilot = { prompt ->
-                            selectedCourseForDetail = null
-                            navigateToMaterial(MainDestination.Copilot)
+                            handleMaterialBack()
+                            materialDestination = MainDestination.Copilot
                             copilotViewModel.sendMessage(prompt)
                         },
                         onNavigateToAnnouncements = {
-                            selectedCourseForDetail = null
-                            showingForosDetail = true
-                            showingNotasDetail = false
-                            navigateToMaterial(MainDestination.Herramientas)
+                            materialNavigator.push(MiuixRoute.ForosHub)
                         },
                         onNavigateToAllModules = {
-                            selectedCourseForModules = course
+                            materialNavigator.push(MiuixRoute.CourseModules(route.courseId))
                         },
                         onOpenUrl = { url ->
                             try {
                                 uriHandler.openUri(url)
                             } catch (_: Exception) {}
-                        },
-                        modifier = Modifier.fillMaxSize()
+                        }
                     )
-                } else if (showingMorningRoadmap) {
-                    me.joxquin.notivas.ui.dashboard.roadmap.MorningRoadmapScreen(
-                        viewModel = dashboardViewModel,
-                        onBack = { dashboardViewModel.closeMorningRoadmap() },
-                        onNavigateToCopilotWithPrompt = { prompt ->
-                            dashboardViewModel.closeMorningRoadmap()
-                            showingNotasDetail = false
-                            showingForosDetail = false
-                            navigateToMaterial(MainDestination.Copilot)
-                            copilotViewModel.sendMessage(prompt)
-                        },
+                }
+
+                entry<MiuixRoute.CourseModules>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.CourseModules ->
+                    val detailViewModel = remember(route.courseId) {
+                        CourseDetailViewModel(
+                            courseId = route.courseId,
+                            repository = canvasRepository
+                        )
+                    }
+                    CourseModulesScreen(
+                        viewModel = detailViewModel,
                         themeStyle = AppThemeStyle.MATERIAL,
-                        lazyListState = inicioListState,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else if (showingScheduleDetail) {
-                    me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen(
-                        viewModel = dashboardViewModel,
-                        themeStyle = AppThemeStyle.MATERIAL,
-                        onBack = { showingScheduleDetail = false },
-                        onAssignmentClick = { assignmentUi ->
-                            dashboardViewModel.openDraft(assignmentUi)
-                        },
-                        lazyListState = inicioListState,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else if (showingActivityDetail) {
-                    me.joxquin.notivas.ui.activity.RecentActivityScreen(
-                        viewModel = activityViewModel,
-                        themeStyle = AppThemeStyle.MATERIAL,
-                        onBack = { showingActivityDetail = false },
-                        onNavigateToAssignment = { assignmentId ->
-                            showingActivityDetail = false
+                        onBack = { handleMaterialBack() },
+                        onNavigateToAssignmentDraft = { assignmentId, courseName ->
                             coroutineScope.launch {
                                 val assignment = canvasRepository.getAssignment(assignmentId)
                                 if (assignment != null) {
-                                    val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
-                                    dashboardViewModel.openDraft(
-                                        me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
-                                            assignment = assignment,
-                                            courseName = courseName
-                                        )
-                                    )
+                                    val assignmentUi = AssignmentUiModel(assignment, courseName)
+                                    dashboardViewModel.openDraft(assignmentUi)
+                                    materialNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
                                 }
                             }
                         },
-                        onNavigateToForum = { topicId ->
-                            showingActivityDetail = false
+                        onNavigateToForoDetail = { topicId ->
                             val topic = forosUiState.discussions.find { it.id == topicId }
                             if (topic != null) {
                                 forosViewModel.selectDiscussion(topic)
-                                showingNotasDetail = false
-                                showingArchiveDetail = false
-                                showingForosDetail = true
-                                navigateToMaterial(MainDestination.Herramientas)
+                                materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                            } else {
+                                coroutineScope.launch {
+                                    val fetched = canvasRepository.getDiscussionTopic(route.courseId, topicId)
+                                    if (fetched != null) {
+                                        forosViewModel.selectDiscussion(fetched)
+                                        materialNavigator.push(MiuixRoute.ForoDetail(fetched.id))
+                                    }
+                                }
                             }
                         },
                         onOpenUrl = { url ->
                             try {
                                 uriHandler.openUri(url)
                             } catch (_: Exception) {}
-                        },
-                        lazyListState = activityListState,
-                        modifier = Modifier.fillMaxSize()
+                        }
                     )
-                } else if (selectedAssignmentForDraft != null) {
-                    selectedAssignmentForDraft?.let { draftAssignment ->
-                        me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen(
-                            assignmentUi = draftAssignment,
-                            onBack = { dashboardViewModel.closeDraft() },
-                            viewModel = dashboardViewModel,
-                            themeStyle = AppThemeStyle.MATERIAL
-                        )
-                    }
-                } else {
-                    androidx.compose.animation.AnimatedContent(
-                        targetState = materialDestination,
-                        transitionSpec = {
-                            val targetIndex = destinations.indexOf(targetState)
-                            val initialIndex = destinations.indexOf(initialState)
-                            val isForward = targetIndex >= initialIndex
-                            if (isForward) {
-                                (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it } +
-                                        androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
-                                    .togetherWith(
-                                        androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it / 3 } +
-                                                androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
-                                    )
-                            } else {
-                                (androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it } +
-                                        androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
-                                    .togetherWith(
-                                        androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it / 3 } +
-                                                androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
-                                    )
-                            }
-                        },
-                        label = "materialDestinationTransition"
-                    ) { currentScreen ->
-                    when (currentScreen) {
-                        MainDestination.Inicio -> {
-                            InicioScreen(
-                                viewModel = dashboardViewModel,
-                                themeStyle = AppThemeStyle.MATERIAL,
-                                onNavigateToCopilot = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    navigateToMaterial(MainDestination.Copilot)
-                                },
-                                onNavigateToHerramientas = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    navigateToMaterial(MainDestination.Herramientas)
-                                },
-                                onNavigateToAjustes = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    navigateToMaterial(MainDestination.Ajustes)
-                                },
-                                onNavigateToActivity = {
-                                    showingActivityDetail = true
-                                },
-                                onNavigateToSchedule = {
-                                    showingScheduleDetail = true
-                                },
-                                onNavigateToCourseProgreso = { course ->
-                                    notasViewModel.selectCourse(course)
-                                    showingForosDetail = false
-                                    showingNotasDetail = true
-                                    navigateToMaterial(MainDestination.Herramientas)
-                                },
-                                onNavigateToCourseDetail = { course ->
-                                    selectedCourseForDetail = course
-                                },
-                                onNavigateToForoDetail = { topic ->
-                                    forosViewModel.selectDiscussion(topic)
-                                    showingNotasDetail = false
-                                    showingArchiveDetail = false
-                                    showingForosDetail = true
-                                    navigateToMaterial(MainDestination.Herramientas)
-                                }
-                            )
-
-                        }
-
-                        MainDestination.Herramientas -> {
-                            me.joxquin.notivas.ui.herramientas.HerramientasScreen(
-                                viewModel = notasViewModel,
-                                forosViewModel = forosViewModel,
-                                archiveViewModel = archiveViewModel,
-                                showingNotasDetail = showingNotasDetail,
-                                showingForosDetail = showingForosDetail,
-                                showingArchiveDetail = showingArchiveDetail,
-                                onOpenProgreso = {
-                                    showingForosDetail = false
-                                    showingArchiveDetail = false
-                                    showingNotasDetail = true
-                                },
-                                onOpenForos = {
-                                    showingNotasDetail = false
-                                    showingArchiveDetail = false
-                                    showingForosDetail = true
-                                },
-                                onOpenArchive = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    showingArchiveDetail = true
-                                },
-                                onOpenAssignmentDetail = { assignment ->
-                                    val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
-                                    dashboardViewModel.openDraft(
-                                        me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
-                                            assignment = assignment,
-                                            courseName = courseName
-                                        )
-                                    )
-                                },
-                                onOpenTuneSettings = { showHerramientasTuneSheet = true },
-                                onOpenCatalogImport = { showCatalogImportDialog = true },
-                                onImportJsonClick = { filePicker.launchFilePicker() },
-                                onExportJsonClick = { filePicker.launchFileCreator("notivas_ponderacion.json") },
-                                onResetGroups = { notasViewModel.resetAllSimulationGroups() },
-                                onBack = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    showingArchiveDetail = false
-                                },
-                                themeStyle = AppThemeStyle.MATERIAL,
-                                lazyListState = herramientasListState
-                            )
-                        }
-
-                        MainDestination.Copilot -> {
-                            me.joxquin.notivas.ui.copilot.CopilotScreen(
-                                viewModel = copilotViewModel,
-                                themeStyle = AppThemeStyle.MATERIAL,
-                                onNavigateToSettings = {
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    navigateToMaterial(MainDestination.Ajustes)
-                                }
-                            )
-                        }
-
-                        MainDestination.Ajustes -> {
-                            me.joxquin.notivas.ui.ajustes.AjustesScreen(
-                                viewModel = profileViewModel
-                            )
-                        }
-                    }
-                }
-
-                // Feedback Toast / Banner Flotante en Material 3
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = toastMessage != null,
-                    enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
-                    exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 16.dp, start = 20.dp, end = 20.dp)
-                ) {
-                    toastMessage?.let { msg ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    color = if (msg.contains("Error", ignoreCase = true) || msg.contains("Fallo", ignoreCase = true) || msg.contains("No se pudo", ignoreCase = true))
-                                        androidx.compose.ui.graphics.Color(0xFFE53935)
-                                    else if (msg.contains("exitosamente", ignoreCase = true) || msg.contains("listo", ignoreCase = true) || msg.contains("cancelada", ignoreCase = true))
-                                        androidx.compose.ui.graphics.Color(0xFF388E3C)
-                                    else
-                                        androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                                )
-                                .padding(vertical = 12.dp, horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = msg,
-                                color = androidx.compose.ui.graphics.Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                                maxLines = 3
-                            )
-                        }
-                    }
                 }
             }
         }
     }
-}
 
     activeUpdateInfo?.let { info ->
         UpdateDialog(

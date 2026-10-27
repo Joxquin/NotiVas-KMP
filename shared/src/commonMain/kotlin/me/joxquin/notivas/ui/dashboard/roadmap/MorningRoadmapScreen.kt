@@ -125,7 +125,7 @@ fun MorningRoadmapScreen(
     lazyListState: LazyListState = rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
-    BackHandler(onBack = onBack)
+    BackHandler(enabled = false, onBack = onBack)
 
     val briefing by viewModel.morningBriefing.collectAsState()
     val scope = rememberCoroutineScope()
