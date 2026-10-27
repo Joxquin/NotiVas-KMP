@@ -7,8 +7,10 @@
         <item name="postSplashScreenTheme">@style/Theme.App</item>
     </style>
 
-    <!-- Tema principal de la app: estándar opaco que garantiza Predictive Back to Home en Pixel -->
-    <style name="Theme.App" parent="@android:style/Theme.Material.NoActionBar">
+    <!-- Tema principal de la app en modo claro: asegura status bar legible con iconos oscuros -->
+    <style name="Theme.App" parent="@android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>

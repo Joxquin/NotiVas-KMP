@@ -27,3 +27,17 @@ actual fun isDynamicColorAvailable(): Boolean {
     return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 }
 
+@Composable
+actual fun SystemAppearanceEffect(darkTheme: Boolean) {
+    val view = androidx.compose.ui.platform.LocalView.current
+    if (!view.isInEditMode) {
+        androidx.compose.runtime.SideEffect {
+            val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+            androidx.core.view.WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
+    }
+}
+

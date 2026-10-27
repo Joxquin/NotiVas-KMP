@@ -27,6 +27,8 @@ fun AppTheme(
     val dynamicColors = dynamicColorSchemeOrDefault(darkTheme, dynamicColor)
     val colorScheme = dynamicColors ?: if (darkTheme) WarmDarkColorScheme else WarmLightColorScheme
 
+    SystemAppearanceEffect(darkTheme = darkTheme)
+
     val miuixColorSchemeMode = when {
         dynamicColor -> if (darkTheme) top.yukonga.miuix.kmp.theme.ColorSchemeMode.MonetDark else top.yukonga.miuix.kmp.theme.ColorSchemeMode.MonetLight
         darkTheme -> top.yukonga.miuix.kmp.theme.ColorSchemeMode.Dark

@@ -11,3 +11,6 @@ actual fun dynamicColorSchemeOrDefault(
 
 actual fun isDynamicColorAvailable(): Boolean = false
 
+@Composable
+actual fun SystemAppearanceEffect(darkTheme: Boolean) {}
+

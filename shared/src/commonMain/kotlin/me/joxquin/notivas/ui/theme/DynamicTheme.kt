@@ -14,3 +14,10 @@ expect fun dynamicColorSchemeOrDefault(
 ): ColorScheme?
 
 expect fun isDynamicColorAvailable(): Boolean
+
+/**
+ * Sincroniza la apariencia de las barras del sistema (barra de estado e iconos de navegacion)
+ * con el tema activo para garantizar legibilidad (iconos oscuros en fondo claro, claros en fondo oscuro).
+ */
+@Composable
+expect fun SystemAppearanceEffect(darkTheme: Boolean)
