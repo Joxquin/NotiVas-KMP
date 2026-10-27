@@ -22,18 +22,20 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.captionBar
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +51,9 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CopilotSession
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
+import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
@@ -69,9 +73,7 @@ fun CopilotHistoryBottomSheet(
     onDismiss: () -> Unit,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
 ) {
-    if (!isVisible) return
-
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var sessionToRename by remember { mutableStateOf<CopilotSession?>(null) }
     var renameText by remember { mutableStateOf("") }
 
@@ -108,19 +110,32 @@ fun CopilotHistoryBottomSheet(
         )
     }
 
-    ModalBottomSheet(
+    WindowBottomSheet(
+        show = isVisible,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = if (themeStyle == AppThemeStyle.MIUIX) {
+        onDismissFinished = {
+            val action = pendingAction
+            pendingAction = null
+            action?.invoke()
+        },
+        backgroundColor = if (themeStyle == AppThemeStyle.MIUIX) {
             MiuixTheme.colorScheme.surface
         } else {
             MaterialTheme.colorScheme.surfaceContainer
-        }
+        },
+        dragHandleColor = if (themeStyle == AppThemeStyle.MIUIX) {
+            MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.2f)
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+        },
+        insideMargin = androidx.compose.ui.unit.DpSize(0.dp, 0.dp),
+        cornerRadius = 28.dp
     ) {
+        val dismissState = LocalDismissState.current
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
             // Header
             Row(
@@ -149,7 +164,7 @@ fun CopilotHistoryBottomSheet(
                     )
                 }
 
-                IconButton(onClick = onDismiss) {
+                IconButton(onClick = { dismissState?.invoke() }) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = null,
@@ -170,8 +185,8 @@ fun CopilotHistoryBottomSheet(
                             cornerRadius = 14.dp
                         )
                         .clickable {
-                            onNewSession()
-                            onDismiss()
+                            pendingAction = { onNewSession() }
+                            dismissState?.invoke()
                         }
                         .padding(vertical = 12.dp, horizontal = 16.dp),
                     contentAlignment = Alignment.Center
@@ -199,8 +214,8 @@ fun CopilotHistoryBottomSheet(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
                         .clickable {
-                            onNewSession()
-                            onDismiss()
+                            pendingAction = { onNewSession() }
+                            dismissState?.invoke()
                         },
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
@@ -253,8 +268,8 @@ fun CopilotHistoryBottomSheet(
                             session = session,
                             isSelected = isSelected,
                             onSelect = {
-                                onSelectSession(session.id)
-                                onDismiss()
+                                pendingAction = { onSelectSession(session.id) }
+                                dismissState?.invoke()
                             },
                             onRename = {
                                 sessionToRename = session
@@ -267,7 +282,12 @@ fun CopilotHistoryBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(
+                Modifier.padding(
+                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+                        WindowInsets.captionBar.asPaddingValues().calculateBottomPadding() + 16.dp
+                )
+            )
         }
     }
 }
