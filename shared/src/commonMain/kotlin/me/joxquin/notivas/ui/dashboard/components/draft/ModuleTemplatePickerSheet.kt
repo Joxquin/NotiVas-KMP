@@ -431,14 +431,31 @@ fun ModuleTemplatePickerSheet(
                             }
                         }
 
-                        items(itemsInModule, key = { "${it.url}_${it.title}" }) { template ->
-                            TemplateCandidateItemMaterial(
-                                template = template,
-                                onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    onSelectTemplate(template)
+                        item(key = "material_card_$moduleName") {
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    itemsInModule.forEachIndexed { index, template ->
+                                        if (index > 0) {
+                                            HorizontalDivider(
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                                thickness = 0.8.dp,
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                        }
+                                        TemplateCandidateItemMaterial(
+                                            template = template,
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                onSelectTemplate(template)
+                                            }
+                                        )
+                                    }
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -551,69 +568,66 @@ private fun TemplateCandidateItemMaterial(
 
     val tintColor = MaterialTheme.colorScheme.primary
 
-    ElevatedCard(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = MaterialCardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-        )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.weight(1f)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f)
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = tintColor.copy(alpha = 0.12f),
+                modifier = Modifier.size(36.dp)
             ) {
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = tintColor.copy(alpha = 0.14f),
-                    modifier = Modifier.size(34.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = if (isDrive) Icons.Default.CloudSync else Icons.Default.Description,
-                            contentDescription = null,
-                            tint = tintColor,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = template.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = if (isDrive) stringResource(Res.string.template_picker_drive_desc) else stringResource(Res.string.template_picker_canvas_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = if (isDrive) Icons.Default.CloudSync else Icons.Default.Description,
+                        contentDescription = null,
+                        tint = tintColor,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
-            Spacer(Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = template.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = if (isDrive) stringResource(Res.string.template_picker_drive_desc) else stringResource(Res.string.template_picker_canvas_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
-            AssistChip(
-                onClick = onClick,
-                label = {
-                    Text(
-                        text = badgeText,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = tintColor
-                    )
-                }
+        Spacer(Modifier.width(8.dp))
+
+        Surface(
+            shape = RoundedCornerShape(6.dp),
+            color = tintColor.copy(alpha = 0.12f),
+            modifier = Modifier.wrapContentWidth()
+        ) {
+            Text(
+                text = badgeText,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = tintColor,
+                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
             )
         }
     }
