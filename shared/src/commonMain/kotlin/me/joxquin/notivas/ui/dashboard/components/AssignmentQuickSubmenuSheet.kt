@@ -35,10 +35,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
@@ -64,6 +63,13 @@ import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssignmentQuickSubmenuSheet(
@@ -73,15 +79,32 @@ fun AssignmentQuickSubmenuSheet(
     onOpenDraftScreen: (AssignmentUiModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (assignmentUi == null) return
+    // Retener el modelo de tarea no nulo para permitir que las animaciones de salida concluyan
+    var currentAssignment by remember { mutableStateOf(assignmentUi) }
+    if (assignmentUi != null) {
+        currentAssignment = assignmentUi
+    }
 
+    val item = currentAssignment ?: return
+    val isVisible = assignmentUi != null
+
+    val coroutineScope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         WindowBottomSheet(
             title = stringResource(Res.string.task_actions_title),
-            show = true,
+            show = isVisible,
             onDismissRequest = onDismissRequest,
+            onDismissFinished = {
+                val action = pendingAction
+                pendingAction = null
+                action?.invoke()
+                if (!isVisible) {
+                    currentAssignment = null
+                }
+            },
             startAction = {
                 val dismissState = LocalDismissState.current
                 top.yukonga.miuix.kmp.basic.IconButton(
@@ -121,14 +144,14 @@ fun AssignmentQuickSubmenuSheet(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = assignmentUi.courseName.ifBlank { "Canvas LMS" },
+                                text = item.courseName.ifBlank { "Canvas LMS" },
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.SemiBold
                                 ),
                                 color = MiuixTheme.colorScheme.primary
                             )
                             Text(
-                                text = assignmentUi.assignment.name,
+                                text = item.assignment.name,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -140,7 +163,7 @@ fun AssignmentQuickSubmenuSheet(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val pointsText = assignmentUi.assignment.pointsPossible?.let { "${it.toInt()} pts" } ?: "Sin calificar"
+                                val pointsText = item.assignment.pointsPossible?.let { "${it.toInt()} pts" } ?: "Sin calificar"
                                 Surface(
                                     shape = CircleShape,
                                     color = MiuixTheme.colorScheme.surfaceContainerHigh
@@ -164,7 +187,7 @@ fun AssignmentQuickSubmenuSheet(
                                     }
                                 }
 
-                                val dueText = assignmentUi.assignment.dueAt?.take(10) ?: "Sin fecha"
+                                val dueText = item.assignment.dueAt?.take(10) ?: "Sin fecha"
                                 Surface(
                                     shape = CircleShape,
                                     color = MiuixTheme.colorScheme.surfaceContainerHigh
@@ -208,8 +231,10 @@ fun AssignmentQuickSubmenuSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
+                                    pendingAction = {
+                                        onOpenDraftScreen(item)
+                                    }
                                     onDismissRequest()
-                                    onOpenDraftScreen(assignmentUi)
                                 }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -274,8 +299,10 @@ fun AssignmentQuickSubmenuSheet(
                                 title = stringResource(Res.string.task_submenu_open_canvas),
                                 iconTint = MiuixTheme.colorScheme.primary,
                                 onClick = {
-                                    assignmentUi.assignment.htmlUrl?.let { url ->
-                                        try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                    item.assignment.htmlUrl?.let { url ->
+                                        pendingAction = {
+                                            try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                        }
                                     }
                                     onDismissRequest()
                                 }
@@ -317,18 +344,27 @@ fun AssignmentQuickSubmenuSheet(
             }
         }
     } else {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
+        WindowBottomSheet(
+            show = isVisible,
             onDismissRequest = onDismissRequest,
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            dragHandle = null,
+            onDismissFinished = {
+                val action = pendingAction
+                pendingAction = null
+                action?.invoke()
+                if (!isVisible) {
+                    currentAssignment = null
+                }
+            },
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            dragHandleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+            insideMargin = androidx.compose.ui.unit.DpSize(0.dp, 0.dp),
             modifier = modifier
         ) {
+            val dismissState = LocalDismissState.current
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Header Bar con título, subtítulo e icono de cerrar
@@ -339,6 +375,7 @@ fun AssignmentQuickSubmenuSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
+                            modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -356,21 +393,23 @@ fun AssignmentQuickSubmenuSheet(
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
-                            Column {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
                                 Text(
                                     text = stringResource(Res.string.task_actions_title),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = assignmentUi.courseName.ifBlank { "Canvas LMS" },
+                                    text = item.courseName.ifBlank { "Canvas LMS" },
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                             }
                         }
 
-                        IconButton(onClick = onDismissRequest) {
+                        IconButton(onClick = { dismissState?.invoke() }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = stringResource(Res.string.close),
@@ -396,7 +435,7 @@ fun AssignmentQuickSubmenuSheet(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = assignmentUi.assignment.name,
+                                text = item.assignment.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -407,7 +446,7 @@ fun AssignmentQuickSubmenuSheet(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val pointsText = assignmentUi.assignment.pointsPossible?.let { "${it.toInt()} pts" } ?: "Sin calificar"
+                                val pointsText = item.assignment.pointsPossible?.let { "${it.toInt()} pts" } ?: "Sin calificar"
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
                                     color = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -431,7 +470,7 @@ fun AssignmentQuickSubmenuSheet(
                                     }
                                 }
 
-                                val dueText = assignmentUi.assignment.dueAt?.take(10) ?: "Sin fecha"
+                                val dueText = item.assignment.dueAt?.take(10) ?: "Sin fecha"
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
                                     color = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -472,8 +511,10 @@ fun AssignmentQuickSubmenuSheet(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
                             .clickable {
-                                onDismissRequest()
-                                onOpenDraftScreen(assignmentUi)
+                                pendingAction = {
+                                    onOpenDraftScreen(item)
+                                }
+                                dismissState?.invoke()
                             },
                         shape = RoundedCornerShape(14.dp),
                         color = MaterialTheme.colorScheme.primaryContainer
@@ -540,42 +581,49 @@ fun AssignmentQuickSubmenuSheet(
                                 title = stringResource(Res.string.task_submenu_open_canvas),
                                 iconTint = MaterialTheme.colorScheme.primary,
                                 onClick = {
-                                    assignmentUi.assignment.htmlUrl?.let { url ->
-                                        try { uriHandler.openUri(url) } catch (_: Exception) {}
-                                    }
-                                    onDismissRequest()
+                                    item.assignment.htmlUrl?.let { url ->
+                                        pendingAction = {
+                                            try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                        }
+                                        dismissState?.invoke()
+                                    } ?: dismissState?.invoke()
                                 }
                             )
                             MaterialSubmenuRow(
                                 icon = Icons.Default.FactCheck,
                                 title = stringResource(Res.string.task_submenu_view_rubric),
                                 iconTint = Color(0xFF66BB6A),
-                                onClick = onDismissRequest
+                                onClick = { dismissState?.invoke() }
                             )
                             MaterialSubmenuRow(
                                 icon = Icons.Default.CheckCircle,
                                 title = stringResource(Res.string.task_submenu_mark_completed),
                                 iconTint = Color(0xFF66BB6A),
-                                onClick = onDismissRequest
+                                onClick = { dismissState?.invoke() }
                             )
                             MaterialSubmenuRow(
                                 icon = Icons.Default.Archive,
                                 title = stringResource(Res.string.task_submenu_archive),
                                 iconTint = Color(0xFFFFB74D),
-                                onClick = onDismissRequest
+                                onClick = { dismissState?.invoke() }
                             )
                             MaterialSubmenuRow(
                                 icon = Icons.Default.Share,
                                 title = stringResource(Res.string.task_submenu_share),
                                 iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                onClick = onDismissRequest
+                                onClick = { dismissState?.invoke() }
                             )
                         }
                     }
                 }
 
                 item {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(
+                        Modifier.padding(
+                            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+                                WindowInsets.captionBar.asPaddingValues().calculateBottomPadding() + 16.dp
+                        )
+                    )
                 }
             }
         }
