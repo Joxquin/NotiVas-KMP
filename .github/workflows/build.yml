@@ -3,18 +3,24 @@ name: CI Android Build
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - '**.md'
-      - '**.html'
-      - 'LICENSE'
-      - '.gitignore'
+    paths:
+      - 'androidApp/**'
+      - 'shared/**'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/build.yml'
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - '**.md'
-      - '**.html'
-      - 'LICENSE'
-      - '.gitignore'
+    paths:
+      - 'androidApp/**'
+      - 'shared/**'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
 
 concurrency:
