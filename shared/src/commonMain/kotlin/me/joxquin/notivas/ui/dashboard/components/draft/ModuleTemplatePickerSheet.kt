@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -19,11 +18,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
@@ -259,187 +258,199 @@ fun ModuleTemplatePickerSheet(
             }
         }
     } else {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-        ModalBottomSheet(
+        WindowBottomSheet(
+            show = true,
             onDismissRequest = onDismissRequest,
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
-            dragHandle = { BottomSheetDefaults.DragHandle() }
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            dragHandleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+            insideMargin = DpSize(0.dp, 0.dp),
+            cornerRadius = 28.dp
         ) {
-            Column(
+            val dismissState = LocalDismissState.current
+            LazyColumn(
+                state = materialListState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Header Material 3
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                item {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FolderOpen,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
+                                Text(
+                                    text = stringResource(Res.string.template_picker_title),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = courseName.ifBlank { "Canvas LMS" },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        IconButton(onClick = { dismissState?.invoke() }) {
                             Icon(
-                                imageVector = Icons.Default.FolderOpen,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(Res.string.close),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-
-                        Column {
-                            Text(
-                                text = stringResource(Res.string.template_picker_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = courseName.ifBlank { "Canvas LMS" },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    IconButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(Res.string.close),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
 
                 if (isLoading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(32.dp),
-                                strokeWidth = 2.5.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = stringResource(Res.string.template_picker_loading),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                } else if (templates.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FindInPage,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Text(
-                                text = stringResource(Res.string.template_picker_empty),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                } else {
-                    LazyColumn(
-                        state = materialListState,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 380.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        grouped.forEach { (moduleName, itemsInModule) ->
-                            val isCurrentModule = moduleName.equals(currentModuleName, ignoreCase = true) ||
-                                    itemsInModule.any { it.isCurrentAssignmentModule }
-
-                            item {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp, bottom = 4.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = moduleName.uppercase(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isCurrentModule) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(1f, fill = false),
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-
-                                        if (isCurrentModule) {
-                                            Surface(
-                                                shape = RoundedCornerShape(9999.dp),
-                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                                modifier = Modifier.wrapContentWidth()
-                                            ) {
-                                                Text(
-                                                    text = stringResource(Res.string.template_picker_current_module_badge),
-                                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            items(itemsInModule) { template ->
-                                TemplateCandidateItemMaterial(
-                                    template = template,
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        onSelectTemplate(template)
-                                    }
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    strokeWidth = 2.5.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = stringResource(Res.string.template_picker_loading),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                     }
+                } else if (templates.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FindInPage,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                Text(
+                                    text = stringResource(Res.string.template_picker_empty),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    grouped.forEach { (moduleName, itemsInModule) ->
+                        val isCurrentModule = moduleName.equals(currentModuleName, ignoreCase = true) ||
+                            itemsInModule.any { it.isCurrentAssignmentModule }
+
+                        item(key = "material_header_$moduleName") {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp, bottom = 2.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = moduleName.uppercase(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isCurrentModule) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                        modifier = Modifier.weight(1f, fill = false),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    if (isCurrentModule) {
+                                        Surface(
+                                            shape = RoundedCornerShape(9999.dp),
+                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                            modifier = Modifier.wrapContentWidth()
+                                        ) {
+                                            Text(
+                                                text = stringResource(Res.string.template_picker_current_module_badge),
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                color = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        items(itemsInModule, key = { "${it.url}_${it.title}" }) { template ->
+                            TemplateCandidateItemMaterial(
+                                template = template,
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    onSelectTemplate(template)
+                                }
+                            )
+                        }
+                    }
                 }
 
-                Spacer(Modifier.height(12.dp))
+                item(key = "material_bottom_spacer") {
+                    Spacer(
+                        Modifier.padding(
+                            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+                                WindowInsets.captionBar.asPaddingValues().calculateBottomPadding() + 16.dp
+                        )
+                    )
+                }
             }
         }
     }
