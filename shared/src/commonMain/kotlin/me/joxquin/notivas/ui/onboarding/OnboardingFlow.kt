@@ -1,27 +1,46 @@
 package me.joxquin.notivas.ui.onboarding
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import kotlinx.serialization.Serializable
+import me.joxquin.notivas.ui.navigation.miuix.CrossActivityTransition
+import me.joxquin.notivas.ui.navigation.miuix.MiuixNavigator
+import top.yukonga.miuix.kmp.nav.core.NavCornerClipMode
+import top.yukonga.miuix.kmp.nav.core.NavDisplay
+import top.yukonga.miuix.kmp.nav.core.NavDisplayEffects
+import top.yukonga.miuix.kmp.nav.core.NavKey
+import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
+import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
+import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
 
-enum class OnboardingStep {
-    WelcomeDomain,
-    WebLogin,
-    Verifying,
-    Permissions,
-    GoogleDrive,
-    Error
+@Serializable
+sealed interface OnboardingRoute : NavKey {
+    @Serializable
+    data object WelcomeDomain : OnboardingRoute
+
+    @Serializable
+    data object WebLogin : OnboardingRoute
+
+    @Serializable
+    data object Verifying : OnboardingRoute
+
+    @Serializable
+    data object Permissions : OnboardingRoute
+
+    @Serializable
+    data object GoogleDrive : OnboardingRoute
+
+    @Serializable
+    data object Error : OnboardingRoute
 }
 
 @Composable
@@ -34,131 +53,144 @@ fun OnboardingFlow(
     val isVerifying by viewModel.isVerifying.collectAsState(initial = false)
     val verificationSuccess by viewModel.verificationSuccess.collectAsState(initial = null)
 
-    var currentStep by remember { mutableStateOf(OnboardingStep.WelcomeDomain) }
-    var hasCompletedAuth by remember { mutableStateOf(false) }
+    val onboardingBackStack = rememberNavBackStack<OnboardingRoute>(OnboardingRoute.WelcomeDomain)
+    val onboardingNavigator = remember(onboardingBackStack) { MiuixNavigator(onboardingBackStack) }
 
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    LaunchedEffect(Unit) {
         viewModel.resetState()
-        currentStep = OnboardingStep.WelcomeDomain
-        hasCompletedAuth = false
+        onboardingNavigator.popUntil { it == OnboardingRoute.WelcomeDomain }
     }
 
-    val effectiveStep = when {
-        currentStep == OnboardingStep.GoogleDrive -> OnboardingStep.GoogleDrive
-        currentStep == OnboardingStep.Permissions -> OnboardingStep.Permissions
-        isVerifying -> OnboardingStep.Verifying
-        verificationSuccess == true && !hasCompletedAuth -> OnboardingStep.Permissions
-        verificationSuccess == false -> OnboardingStep.Error
-        else -> currentStep
-    }
-
-    me.joxquin.notivas.ui.components.BackHandler(enabled = effectiveStep != OnboardingStep.WelcomeDomain) {
-        when (effectiveStep) {
-            OnboardingStep.WebLogin -> currentStep = OnboardingStep.WelcomeDomain
-            OnboardingStep.Permissions -> {
-                viewModel.resetVerification()
-                hasCompletedAuth = false
-                currentStep = OnboardingStep.WebLogin
+    LaunchedEffect(isVerifying) {
+        if (isVerifying) {
+            if (onboardingNavigator.current() != OnboardingRoute.Verifying) {
+                onboardingNavigator.push(OnboardingRoute.Verifying)
             }
-            OnboardingStep.GoogleDrive -> {
-                currentStep = OnboardingStep.Permissions
-            }
-            OnboardingStep.Error -> {
-                viewModel.resetVerification()
-                currentStep = OnboardingStep.WelcomeDomain
-            }
-            else -> {}
         }
     }
 
-    AnimatedContent(
-        targetState = effectiveStep,
-        transitionSpec = {
-            if (targetState.ordinal > initialState.ordinal) {
-                (slideInHorizontally(
-                    initialOffsetX = { fullWidth -> (fullWidth * 0.25f).toInt() },
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(350))) togetherWith
-                (slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> (-fullWidth * 0.25f).toInt() },
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(350)))
-            } else {
-                (slideInHorizontally(
-                    initialOffsetX = { fullWidth -> (-fullWidth * 0.25f).toInt() },
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(350))) togetherWith
-                (slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> (fullWidth * 0.25f).toInt() },
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(350)))
+    LaunchedEffect(verificationSuccess) {
+        when (verificationSuccess) {
+            true -> {
+                if (onboardingNavigator.current() == OnboardingRoute.Verifying) {
+                    onboardingNavigator.replace(OnboardingRoute.Permissions)
+                }
             }
-        },
-        label = "onboarding_flow_transition"
-    ) { step ->
-        when (step) {
-            OnboardingStep.WelcomeDomain -> {
-                OnboardingWelcomeDomainScreen(
-                    currentUrl = universityUrl,
-                    currentToken = accessToken,
-                    onContinue = { url ->
-                        viewModel.updateUniversityUrl(url)
-                        currentStep = OnboardingStep.WebLogin
-                    },
-                    onContinueWithToken = { url, token ->
-                        viewModel.updateUniversityUrl(url)
-                        viewModel.updateAccessToken(token)
-                        viewModel.verifyConnection()
-                    }
-                )
+            false -> {
+                if (onboardingNavigator.current() == OnboardingRoute.Verifying) {
+                    onboardingNavigator.replace(OnboardingRoute.Error)
+                }
             }
-            OnboardingStep.WebLogin -> {
-                OnboardingWebLoginScreen(
-                    universityUrl = universityUrl,
-                    onLoginSuccess = { cookies, csrfToken ->
-                        viewModel.verifySessionConnection(cookies, csrfToken)
-                    },
-                    onUseManualToken = {
-                        currentStep = OnboardingStep.WelcomeDomain
-                    },
-                    onBack = { currentStep = OnboardingStep.WelcomeDomain }
-                )
+            null -> {}
+        }
+    }
+
+    val isDarkTheme = isSystemInDarkTheme()
+    val navCornerRadius = rememberNavSystemCornerRadius()
+    val onboardingAospEffects = remember(isDarkTheme, navCornerRadius) {
+        NavDisplayEffects(
+            enableCornerClip = true,
+            cornerClipRadius = if (navCornerRadius <= 0.dp) 32.dp else navCornerRadius,
+            cornerClipMode = NavCornerClipMode.All,
+            dimAmount = if (isDarkTheme) 0.8f else 0.2f,
+        )
+    }
+
+    val layoutDirection = LocalLayoutDirection.current
+    val swipeBackDirection = if (layoutDirection == LayoutDirection.Rtl) {
+        NavSwipeDirection.RightToLeft
+    } else {
+        NavSwipeDirection.LeftToRight
+    }
+
+    fun handleOnboardingBack(): Boolean {
+        val current = onboardingNavigator.current()
+        return when (current) {
+            OnboardingRoute.Permissions -> {
+                viewModel.resetVerification()
+                onboardingNavigator.pop()
             }
-            OnboardingStep.Verifying -> {
-                OnboardingVerifyingScreen()
+            OnboardingRoute.Error -> {
+                viewModel.resetVerification()
+                onboardingNavigator.popUntil { it == OnboardingRoute.WelcomeDomain }
+                true
             }
-            OnboardingStep.Permissions -> {
-                OnboardingPermissionsScreen(
-                    onContinue = {
-                        hasCompletedAuth = true
-                        currentStep = OnboardingStep.GoogleDrive
-                    }
-                )
+            else -> {
+                onboardingNavigator.pop()
             }
-            OnboardingStep.GoogleDrive -> {
-                OnboardingGoogleDriveScreen(
-                    onFinish = onComplete,
-                    onBack = {
-                        currentStep = OnboardingStep.Permissions
-                    },
-                    onSaveGoogleAuth = { token, refresh, email ->
-                        viewModel.saveGoogleDriveAuth(token, refresh, email)
-                    }
-                )
-            }
-            OnboardingStep.Error -> {
-                OnboardingErrorScreen(
-                    initialToken = accessToken,
-                    onRetry = { newToken ->
-                        viewModel.updateAccessToken(newToken)
-                        viewModel.verifyConnection()
-                    },
-                    onChangeDomain = {
-                        viewModel.resetVerification()
-                        currentStep = OnboardingStep.WelcomeDomain
-                    }
-                )
-            }
+        }
+    }
+
+    NavDisplay(
+        backStack = onboardingBackStack,
+        modifier = Modifier.fillMaxSize(),
+        onBack = { handleOnboardingBack() },
+        transition = CrossActivityTransition,
+        effects = onboardingAospEffects,
+    ) {
+        entry<OnboardingRoute.WelcomeDomain> {
+            OnboardingWelcomeDomainScreen(
+                currentUrl = universityUrl,
+                currentToken = accessToken,
+                onContinue = { url ->
+                    viewModel.updateUniversityUrl(url)
+                    onboardingNavigator.push(OnboardingRoute.WebLogin)
+                },
+                onContinueWithToken = { url, token ->
+                    viewModel.updateUniversityUrl(url)
+                    viewModel.updateAccessToken(token)
+                    viewModel.verifyConnection()
+                }
+            )
+        }
+
+        entry<OnboardingRoute.WebLogin>(swipeDismiss = swipeBackDirection) {
+            OnboardingWebLoginScreen(
+                universityUrl = universityUrl,
+                onLoginSuccess = { cookies, csrfToken ->
+                    viewModel.verifySessionConnection(cookies, csrfToken)
+                },
+                onUseManualToken = {
+                    onboardingNavigator.pop()
+                },
+                onBack = { handleOnboardingBack() }
+            )
+        }
+
+        entry<OnboardingRoute.Verifying> {
+            OnboardingVerifyingScreen()
+        }
+
+        entry<OnboardingRoute.Permissions>(swipeDismiss = swipeBackDirection) {
+            OnboardingPermissionsScreen(
+                onContinue = {
+                    onboardingNavigator.push(OnboardingRoute.GoogleDrive)
+                }
+            )
+        }
+
+        entry<OnboardingRoute.GoogleDrive>(swipeDismiss = swipeBackDirection) {
+            OnboardingGoogleDriveScreen(
+                onFinish = onComplete,
+                onBack = { handleOnboardingBack() },
+                onSaveGoogleAuth = { token, refresh, email ->
+                    viewModel.saveGoogleDriveAuth(token, refresh, email)
+                }
+            )
+        }
+
+        entry<OnboardingRoute.Error>(swipeDismiss = swipeBackDirection) {
+            OnboardingErrorScreen(
+                initialToken = accessToken,
+                onRetry = { newToken ->
+                    viewModel.updateAccessToken(newToken)
+                    viewModel.verifyConnection()
+                },
+                onChangeDomain = {
+                    viewModel.resetVerification()
+                    onboardingNavigator.popUntil { it == OnboardingRoute.WelcomeDomain }
+                }
+            )
         }
     }
 }
