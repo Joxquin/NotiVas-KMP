@@ -12,10 +12,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.captionBar
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,10 +48,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,6 +65,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -71,7 +74,9 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.ui.copilot.components.formatMarkdown
 import me.joxquin.notivas.ui.foros.CopilotForoStrategy
+import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowBottomSheet
 
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
@@ -118,7 +123,6 @@ fun ForoCopilotAssistantSheet(
     onInsertDraft: (String) -> Unit,
     themeStyle: AppThemeStyle
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     var isCopied by remember { mutableStateOf(false) }
@@ -135,7 +139,7 @@ fun ForoCopilotAssistantSheet(
     val onSurfaceVariant = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
     val cardBg = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainer
     val chipBg = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
-    val successColor = Color(0xFF4CAF50)
+    val successColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
 
     val cleanModelDisplayName = remember(activeModelName) {
         when {
@@ -151,12 +155,23 @@ fun ForoCopilotAssistantSheet(
         }
     }
 
-    ModalBottomSheet(
+    WindowBottomSheet(
+        show = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surface else MaterialTheme.colorScheme.surface,
-        dragHandle = null
+        backgroundColor = if (themeStyle == AppThemeStyle.MIUIX) {
+            MiuixTheme.colorScheme.surface
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+        dragHandleColor = if (themeStyle == AppThemeStyle.MIUIX) {
+            MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.2f)
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+        },
+        insideMargin = DpSize(0.dp, 0.dp),
+        cornerRadius = 28.dp
     ) {
+        val dismissState = LocalDismissState.current
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -175,10 +190,7 @@ fun ForoCopilotAssistantSheet(
                     shape = RoundedCornerShape(9999.dp),
                     color = chipBg,
                     modifier = Modifier.clickable {
-                        coroutineScope.launch {
-                            sheetState.hide()
-                            onDismiss()
-                        }
+                        dismissState?.invoke() ?: onDismiss()
                     }
                 ) {
                     Row(
@@ -276,7 +288,11 @@ fun ForoCopilotAssistantSheet(
                         Icon(
                             imageVector = Icons.Default.HelpOutline,
                             contentDescription = null,
-                            tint = Color(0xFFE53935),
+                            tint = if (themeStyle == AppThemeStyle.MIUIX) {
+                                MiuixTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            },
                             modifier = Modifier.size(40.dp)
                         )
                         Text(
@@ -713,10 +729,7 @@ fun ForoCopilotAssistantSheet(
                                         .clip(RoundedCornerShape(10.dp))
                                         .clickable {
                                             onInsertDraft(strategy.suggestedDraft)
-                                            coroutineScope.launch {
-                                                sheetState.hide()
-                                                onDismiss()
-                                            }
+                                            dismissState?.invoke() ?: onDismiss()
                                         }
                                 ) {
                                     Row(
@@ -750,10 +763,7 @@ fun ForoCopilotAssistantSheet(
                                     .clip(RoundedCornerShape(14.dp))
                                     .clickable {
                                         onInsertDraft(strategy.suggestedDraft)
-                                        coroutineScope.launch {
-                                            sheetState.hide()
-                                            onDismiss()
-                                        }
+                                        dismissState?.invoke() ?: onDismiss()
                                     }
                             ) {
                                 Row(
@@ -792,7 +802,12 @@ fun ForoCopilotAssistantSheet(
                     }
 
                     item {
-                        Spacer(Modifier.height(20.dp))
+                        Spacer(
+                            Modifier.padding(
+                                bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+                                    WindowInsets.captionBar.asPaddingValues().calculateBottomPadding() + 16.dp
+                            )
+                        )
                     }
                 }
             }
@@ -810,7 +825,7 @@ private fun MetricPill(
 ) {
     val chipBg = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
     val onSurfaceVariant = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
-    val successColor = Color(0xFF4CAF50)
+    val successColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
 
     Surface(
         shape = RoundedCornerShape(8.dp),
