@@ -29,6 +29,7 @@ data class CourseModuleItemUi(
     val dueSubtitle: String? = null,
     val pointsText: String? = null,
     val assignmentId: Long? = null,
+    val contentId: Long? = null,
     val actionUrl: String? = null,
     val fileExtension: String? = null
 )
@@ -45,6 +46,7 @@ data class CourseModuleUi(
     val description: String,
     val sections: List<CourseModuleSectionUi>,
     val allItems: List<CourseModuleItemUi>,
+    val previewItems: List<CourseModuleItemUi> = emptyList(),
     val items: List<CourseModuleItemUi> = allItems,
     val completedDeliverablesCount: Int,
     val totalDeliverablesCount: Int,
@@ -231,8 +233,7 @@ class CourseDetailViewModel(
                     } else null
 
                     val isCompleted = matchingAssignment?.isCompleted == true ||
-                            matchingAssignment?.status == "completed" ||
-                            item.type.equals("Page", ignoreCase = true)
+                            matchingAssignment?.status == "completed"
 
                     val isPending = matchingAssignment != null && !isCompleted
 
@@ -278,6 +279,7 @@ class CourseDetailViewModel(
                         dueSubtitle = dueText,
                         pointsText = points,
                         assignmentId = matchingAssignment?.id,
+                        contentId = item.contentId,
                         actionUrl = item.htmlUrl ?: item.url ?: item.externalUrl,
                         fileExtension = ext
                     )
@@ -309,6 +311,18 @@ class CourseDetailViewModel(
                 allNonSubheaderItems.isNotEmpty() && allNonSubheaderItems.none { it.isPending }
             }
 
+            // Generar lista de previsualización para la tarjeta resumen de Ruta de Aprendizaje:
+            // Priorizar entregables (pendientes primero, luego completados), luego otros recursos
+            val deliverableItems = allNonSubheaderItems.filter {
+                it.type.equals("Assignment", ignoreCase = true) ||
+                it.type.equals("Quiz", ignoreCase = true) ||
+                it.assignmentId != null
+            }
+            val pendingDeliverables = deliverableItems.filter { it.isPending }
+            val completedDeliverables = deliverableItems.filter { it.isCompleted }
+            val otherItems = allNonSubheaderItems.filter { it !in deliverableItems }
+            val modulePreviewItems = (pendingDeliverables + completedDeliverables + otherItems).take(2)
+
             // Generar título de semana o unidad
             val weekTag = if (module.name.startsWith("Semana", ignoreCase = true)) {
                 module.name.substringBefore(":").substringBefore("-").trim()
@@ -323,6 +337,7 @@ class CourseDetailViewModel(
                 description = description,
                 sections = sections,
                 allItems = allNonSubheaderItems,
+                previewItems = modulePreviewItems,
                 completedDeliverablesCount = completedCount,
                 totalDeliverablesCount = deliverablesCount,
                 progressPercentage = progressPct,

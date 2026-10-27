@@ -753,6 +753,27 @@ class CanvasRepository(
         }
     }
 
+    suspend fun getDiscussionTopic(courseId: Long, topicId: Long): me.joxquin.notivas.data.model.CanvasDiscussionTopic? = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext null
+        val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext null
+        try {
+            val topic = apiService.getDiscussionTopic(
+                baseUrl = baseUrl,
+                token = token,
+                courseId = courseId,
+                topicId = topicId
+            )
+            val courses = localStore.getAllCourses().first()
+            val course = courses.find { it.id == courseId }
+            topic.copy(
+                courseId = courseId,
+                courseName = course?.name ?: topic.courseName
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     suspend fun getDiscussionEntries(courseId: Long, topicId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(Dispatchers.IO) {
         val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()

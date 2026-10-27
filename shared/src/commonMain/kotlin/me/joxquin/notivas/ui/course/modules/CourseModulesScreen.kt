@@ -286,7 +286,7 @@ private fun handleItemClick(
     if (item.type.equals("Assignment", ignoreCase = true)) {
         onNavigateToAssignmentDraft(item.assignmentId ?: item.id, courseName)
     } else if (item.type.equals("Discussion", ignoreCase = true)) {
-        onNavigateToForoDetail(item.id)
+        onNavigateToForoDetail(item.contentId ?: item.id)
     } else if (!item.actionUrl.isNullOrBlank()) {
         onOpenUrl(item.actionUrl)
     }

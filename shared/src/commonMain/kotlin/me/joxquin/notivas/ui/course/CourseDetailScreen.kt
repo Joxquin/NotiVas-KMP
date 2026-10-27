@@ -62,6 +62,7 @@ fun CourseDetailScreen(
     themeStyle: AppThemeStyle,
     onBack: () -> Unit,
     onNavigateToAssignmentDraft: (Long, String) -> Unit = { _, _ -> },
+    onNavigateToForoDetail: (Long) -> Unit = {},
     onNavigateToProgreso: () -> Unit = {},
     onNavigateToCopilot: (String) -> Unit = {},
     onNavigateToAnnouncements: () -> Unit = {},
@@ -155,6 +156,9 @@ fun CourseDetailScreen(
                                     if (item.assignmentId != null) {
                                         val courseName = uiState.course?.name ?: "Curso"
                                         onNavigateToAssignmentDraft(item.assignmentId, courseName)
+                                    } else if (item.type.equals("Discussion", ignoreCase = true)) {
+                                        val topicId = item.contentId ?: item.id
+                                        onNavigateToForoDetail(topicId)
                                     } else if (!item.actionUrl.isNullOrBlank()) {
                                         onOpenUrl(item.actionUrl)
                                     }
@@ -275,6 +279,9 @@ fun CourseDetailScreen(
                                 if (item.assignmentId != null) {
                                     val courseName = uiState.course?.name ?: "Curso"
                                     onNavigateToAssignmentDraft(item.assignmentId, courseName)
+                                } else if (item.type.equals("Discussion", ignoreCase = true)) {
+                                    val topicId = item.contentId ?: item.id
+                                    onNavigateToForoDetail(topicId)
                                 } else if (!item.actionUrl.isNullOrBlank()) {
                                     onOpenUrl(item.actionUrl)
                                 }

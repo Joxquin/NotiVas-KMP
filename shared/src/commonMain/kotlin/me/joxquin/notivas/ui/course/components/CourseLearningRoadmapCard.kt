@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Schedule
@@ -202,8 +204,8 @@ fun CourseLearningRoadmapCard(
                             )
                         }
 
-                        // Preview de hasta 2 entregables / recursos del módulo
-                        val previewItems = activeModule.allItems.take(2)
+                        // Preview de hasta 2 entregables / recursos del módulo priorizados
+                        val previewItems = if (activeModule.previewItems.isNotEmpty()) activeModule.previewItems else activeModule.allItems.take(2)
                         if (previewItems.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(12.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -295,6 +297,9 @@ private fun RoadmapItemPreviewRow(
     primaryColor: Color,
     onClick: () -> Unit
 ) {
+    val isDiscussion = item.type.equals("Discussion", ignoreCase = true)
+    val isLink = item.type.equals("ExternalUrl", ignoreCase = true)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -303,10 +308,17 @@ private fun RoadmapItemPreviewRow(
             .padding(vertical = 4.dp, horizontal = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icono de estado
-        val statusBg = if (item.isCompleted) successColor.copy(alpha = 0.15f)
-        else primaryColor.copy(alpha = 0.15f)
-        val statusIconTint = if (item.isCompleted) successColor else primaryColor
+        // Icono de estado contextualmente diferenciado
+        val statusBg = when {
+            item.isCompleted -> successColor.copy(alpha = 0.15f)
+            item.isPending -> primaryColor.copy(alpha = 0.15f)
+            else -> onSurfaceVariantColor.copy(alpha = 0.12f)
+        }
+        val statusIconTint = when {
+            item.isCompleted -> successColor
+            item.isPending -> primaryColor
+            else -> onSurfaceVariantColor
+        }
 
         Box(
             modifier = Modifier
@@ -325,6 +337,20 @@ private fun RoadmapItemPreviewRow(
             } else if (item.isPending) {
                 Icon(
                     imageVector = Icons.Outlined.Schedule,
+                    contentDescription = null,
+                    tint = statusIconTint,
+                    modifier = Modifier.size(14.dp)
+                )
+            } else if (isDiscussion) {
+                Icon(
+                    imageVector = Icons.Filled.Forum,
+                    contentDescription = null,
+                    tint = statusIconTint,
+                    modifier = Modifier.size(14.dp)
+                )
+            } else if (isLink) {
+                Icon(
+                    imageVector = Icons.Filled.Link,
                     contentDescription = null,
                     tint = statusIconTint,
                     modifier = Modifier.size(14.dp)
