@@ -30,7 +30,6 @@ data class ProfileUiState(
     val autoFocusMode: Boolean = true,
     val pomodoroDurationMinutes: Int = 25,
     val syncIntervalMinutes: Long = 15L,
-    val biometricLock: Boolean = false,
     val copilotProvider: me.joxquin.notivas.data.local.CopilotProvider = me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER,
     val openRouterApiKey: String? = null,
     val openRouterModel: String = "google/gemini-2.5-flash",
@@ -42,7 +41,6 @@ data class ProfileUiState(
     val isLoadingBalance: Boolean = false,
     val isVerifyingToken: Boolean = false,
     val lastSyncAgoText: String = "hace 5 min",
-    val apiLatencyMs: Int = 42,
     val dynamicColorEnabled: Boolean = true,
     val themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     val appLanguage: AppLanguage = AppLanguage.SYSTEM,
@@ -112,7 +110,6 @@ class ProfileViewModel(
         preferencesManager.autoFocusMode,
         preferencesManager.pomodoroDurationMinutes,
         preferencesManager.syncIntervalMinutes,
-        preferencesManager.biometricLock,
         preferencesManager.copilotProvider,
         preferencesManager.openRouterApiKey,
         preferencesManager.openRouterModel,
@@ -148,25 +145,24 @@ class ProfileViewModel(
             autoFocusMode = args[6] as Boolean,
             pomodoroDurationMinutes = args[7] as Int,
             syncIntervalMinutes = args[8] as Long,
-            biometricLock = args[9] as Boolean,
-            copilotProvider = args[10] as me.joxquin.notivas.data.local.CopilotProvider,
-            openRouterApiKey = args[11] as String?,
-            openRouterModel = args[12] as String,
-            googleAiStudioApiKey = args[13] as String?,
-            googleAiStudioModel = args[14] as String,
-            copilotEnabled = args[15] as Boolean,
-            totalCopilotTokens = args[16] as Long,
-            openRouterBalance = args[17] as OpenRouterAccountBalance?,
-            isLoadingBalance = args[18] as Boolean,
-            isVerifyingToken = args[19] as Boolean,
-            dynamicColorEnabled = args[20] as Boolean,
-            themeStyle = args[21] as AppThemeStyle,
-            authMode = args[22] as AuthMode,
-            appLanguage = args[23] as AppLanguage,
-            googleDriveConnected = args[24] as Boolean,
-            googleDriveEmail = args[25] as String?,
-            googleDriveLastSyncTimestamp = args[26] as Long,
-            googleDriveCacheSize = args[27] as String
+            copilotProvider = args[9] as me.joxquin.notivas.data.local.CopilotProvider,
+            openRouterApiKey = args[10] as String?,
+            openRouterModel = args[11] as String,
+            googleAiStudioApiKey = args[12] as String?,
+            googleAiStudioModel = args[13] as String,
+            copilotEnabled = args[14] as Boolean,
+            totalCopilotTokens = args[15] as Long,
+            openRouterBalance = args[16] as OpenRouterAccountBalance?,
+            isLoadingBalance = args[17] as Boolean,
+            isVerifyingToken = args[18] as Boolean,
+            dynamicColorEnabled = args[19] as Boolean,
+            themeStyle = args[20] as AppThemeStyle,
+            authMode = args[21] as AuthMode,
+            appLanguage = args[22] as AppLanguage,
+            googleDriveConnected = args[23] as Boolean,
+            googleDriveEmail = args[24] as String?,
+            googleDriveLastSyncTimestamp = args[25] as Long,
+            googleDriveCacheSize = args[26] as String
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
 
@@ -236,10 +232,6 @@ class ProfileViewModel(
 
     fun setPomodoroDuration(minutes: Int) {
         viewModelScope.launch { preferencesManager.setPomodoroDurationMinutes(minutes) }
-    }
-
-    fun setBiometricLock(enabled: Boolean) {
-        viewModelScope.launch { preferencesManager.setBiometricLock(enabled) }
     }
 
     fun setCopilotProvider(provider: me.joxquin.notivas.data.local.CopilotProvider) {

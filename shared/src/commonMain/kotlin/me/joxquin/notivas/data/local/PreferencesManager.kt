@@ -98,10 +98,6 @@ class PreferencesManager(
     private val _pomodoroDurationMinutes = MutableStateFlow(25)
     val pomodoroDurationMinutes: Flow<Int> = _pomodoroDurationMinutes.asStateFlow()
 
-    private val _biometricLock = MutableStateFlow(false)
-    val biometricLock: Flow<Boolean> = _biometricLock.asStateFlow()
-    fun getBiometricLock(): Boolean = _biometricLock.value
-
     private val _copilotProvider = MutableStateFlow(CopilotProvider.OPENROUTER)
     val copilotProvider: Flow<CopilotProvider> = _copilotProvider.asStateFlow()
     fun getCopilotProvider(): CopilotProvider = _copilotProvider.value
@@ -224,7 +220,6 @@ class PreferencesManager(
             _notifMorning.value = snapshot.notifMorning
             _autoFocusMode.value = snapshot.autoFocusMode
             _pomodoroDurationMinutes.value = snapshot.pomodoroDurationMinutes
-            _biometricLock.value = snapshot.biometricLock
             _copilotProvider.value = snapshot.copilotProvider
             _openRouterApiKey.value = snapshot.openRouterApiKey
             _openRouterModel.value = snapshot.openRouterModel
@@ -280,7 +275,6 @@ class PreferencesManager(
                 notifMorning = _notifMorning.value,
                 autoFocusMode = _autoFocusMode.value,
                 pomodoroDurationMinutes = _pomodoroDurationMinutes.value,
-                biometricLock = _biometricLock.value,
                 copilotProvider = _copilotProvider.value,
                 openRouterApiKey = _openRouterApiKey.value,
                 openRouterModel = _openRouterModel.value,
@@ -394,11 +388,6 @@ class PreferencesManager(
 
     suspend fun setSyncIntervalMinutes(minutes: Long) {
         _syncIntervalMinutes.value = minutes
-        schedulePersist()
-    }
-
-    suspend fun setBiometricLock(enabled: Boolean) {
-        _biometricLock.value = enabled
         schedulePersist()
     }
 

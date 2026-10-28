@@ -27,7 +27,6 @@ data class PersistentPreferencesSnapshot(
     val notifMorning: Boolean = true,
     val autoFocusMode: Boolean = true,
     val pomodoroDurationMinutes: Int = 25,
-    val biometricLock: Boolean = false,
     val copilotProvider: CopilotProvider = CopilotProvider.OPENROUTER,
     val openRouterApiKey: String? = "",
     val openRouterModel: String = "google/gemini-2.5-flash",

@@ -364,10 +364,6 @@ fun AjustesScreen(
                 // 5. Seguridad y Zona Crítica
                 item {
                     SecurityAndKeystoreSettingsSection(
-                        biometricLock = uiState.biometricLock,
-                        onBiometricLockChange = { viewModel.setBiometricLock(it) },
-                        lastSyncText = uiState.lastSyncAgoText,
-                        apiLatencyMs = uiState.apiLatencyMs,
                         onRequestLogout = { showLogoutDialog = true },
                         themeStyle = AppThemeStyle.MIUIX
                     )
@@ -566,10 +562,6 @@ fun AjustesScreen(
             // 6. Seguridad y Zona Crítica
             item {
                 SecurityAndKeystoreSettingsSection(
-                    biometricLock = uiState.biometricLock,
-                    onBiometricLockChange = { viewModel.setBiometricLock(it) },
-                    lastSyncText = uiState.lastSyncAgoText,
-                    apiLatencyMs = uiState.apiLatencyMs,
                     onRequestLogout = { showLogoutDialog = true },
                     themeStyle = AppThemeStyle.MATERIAL
                 )

@@ -51,7 +51,6 @@ kotlin {
             implementation(libs.compose.uiTooling)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.work.runtime.ktx)
-            implementation(libs.androidx.biometric)
             implementation(libs.play.services.auth)
         }
         commonMain.dependencies {

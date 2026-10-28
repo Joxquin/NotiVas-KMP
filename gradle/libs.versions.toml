@@ -23,7 +23,6 @@ androidx-sqlite = "2.7.1"
 androidx-work = "2.10.0"
 ksp = "2.3.12"
 coil = "3.1.0"
-androidx-biometric = "1.1.0"
 androidx-core-splashscreen = "1.0.1"
 
 
@@ -64,7 +63,6 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
-androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "androidx-biometric" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version = "21.3.0" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }

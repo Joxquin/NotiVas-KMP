@@ -124,24 +124,6 @@
 
     <!-- Security and Session -->
     <string name="settings_security_section_title">SECURITY &amp; CRITICAL ZONE</string>
-    <string name="biometric_lock_title">Biometric Lock</string>
-    <string name="biometric_lock_desc">Require fingerprint or face unlock to access</string>
-    <string name="biometric_unlock_title">Unlock NotiVas</string>
-    <string name="biometric_unlock_subtitle">Confirm your identity to continue</string>
-    <string name="biometric_unlock_action">Unlock</string>
-    <string name="biometric_retry_action">Try again</string>
-    <string name="biometric_lock_error_cancelled">Authentication cancelled</string>
-    <string name="biometric_lock_error_failed">Could not verify your identity. Try again.</string>
-    <string name="biometric_lock_error_unavailable">Biometric authentication is unavailable right now</string>
-    <string name="biometric_lock_unavailable_no_hardware">This device does not have a biometric sensor</string>
-    <string name="biometric_lock_unavailable_not_enrolled">Set up a fingerprint or face unlock in system settings first</string>
-    <string name="biometric_lock_unavailable_unsupported">Biometric lock is only available on mobile devices</string>
-    <string name="biometric_lock_verify_enable">Verify your identity to enable biometric lock</string>
-    <string name="biometric_lock_verify_disable">Verify your identity to disable biometric lock</string>
-    <string name="api_diagnostics_title">Canvas API Diagnostics</string>
-    <string name="api_diagnostics_summary">Sync %1$s · Latency: %2$d ms</string>
-    <string name="last_sync_label">Last sync: %1$s</string>
-    <string name="api_latency_label">API latency: %1$d ms</string>
     <string name="logout_button">Unlink Canvas Account</string>
     <string name="logout_button_desc">Delete token and locally cached data</string>
     <string name="logout_dialog_title">Unlink account?</string>
