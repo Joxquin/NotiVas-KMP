@@ -717,11 +717,14 @@
 
     <!-- Canvas Quiz / Online Assessment -->
     <string name="assignment_quiz_card_title">Canvas Online Quiz</string>
-    <string name="assignment_quiz_badge_completed">Quiz Completed</string>
-    <string name="assignment_quiz_badge_pending">Pending Quiz</string>
+    <string name="assignment_quiz_badge_completed">Completed</string>
+    <string name="assignment_quiz_badge_pending">Pending</string>
     <string name="assignment_quiz_action_take">Take Quiz on Canvas</string>
     <string name="assignment_quiz_action_view">View Quiz on Canvas</string>
     <string name="assignment_quiz_score_label">Score achieved:</string>
     <string name="assignment_quiz_score_format">%1$s of %2$s pts</string>
     <string name="assignment_quiz_info_notice">This activity is a Canvas online quiz. To ensure that your time, attempts, and system audit log are properly recorded without issues, it must be taken directly on the official platform.</string>
+    <string name="task_submenu_view_quiz_detail">View Quiz Details</string>
+    <string name="task_submenu_view_quiz_detail_desc">Check instructions, score, and official link</string>
+    <string name="task_submenu_open_quiz">Open quiz on Canvas LMS</string>
 </resources>

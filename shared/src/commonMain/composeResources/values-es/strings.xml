@@ -717,11 +717,14 @@
 
     <!-- Canvas Quiz / Evaluación en Línea -->
     <string name="assignment_quiz_card_title">Evaluación en Línea Canvas</string>
-    <string name="assignment_quiz_badge_completed">Evaluación Realizada</string>
-    <string name="assignment_quiz_badge_pending">Evaluación Pendiente</string>
+    <string name="assignment_quiz_badge_completed">Realizada</string>
+    <string name="assignment_quiz_badge_pending">Pendiente</string>
     <string name="assignment_quiz_action_take">Rendir evaluación en Canvas</string>
     <string name="assignment_quiz_action_view">Ver evaluación en Canvas</string>
     <string name="assignment_quiz_score_label">Puntaje obtenido:</string>
     <string name="assignment_quiz_score_format">%1$s de %2$s pts</string>
     <string name="assignment_quiz_info_notice">Esta actividad corresponde a una evaluación o cuestionario de Canvas. Para asegurar el registro de tiempo, intentos y la auditoría forense del sistema sin inconvenientes, debe rendirse directamente en la plataforma oficial.</string>
+    <string name="task_submenu_view_quiz_detail">Ver Detalle de Evaluación</string>
+    <string name="task_submenu_view_quiz_detail_desc">Consultar instrucciones, puntaje y enlace oficial</string>
+    <string name="task_submenu_open_quiz">Abrir evaluación en Canvas LMS</string>
 </resources>

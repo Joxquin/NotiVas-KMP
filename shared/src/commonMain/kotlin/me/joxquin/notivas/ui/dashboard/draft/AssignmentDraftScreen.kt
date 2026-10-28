@@ -314,11 +314,13 @@ fun AssignmentDraftScreen(
                     }
 
                     // 4. Criterios de Rúbrica Canvas (Cuadrícula 2x2)
-                    item(key = "task_rubric") {
-                        AssignmentRubricCard(
-                            assignment = assignment,
-                            themeStyle = themeStyle
-                        )
+                    if (!assignment.isQuiz) {
+                        item(key = "task_rubric") {
+                            AssignmentRubricCard(
+                                assignment = assignment,
+                                themeStyle = themeStyle
+                            )
+                        }
                     }
 
                     // 5. Botones de Acción (Guardar para después)
@@ -508,11 +510,13 @@ fun AssignmentDraftScreen(
                 }
 
                 // 4. Criterios de Rúbrica Canvas
-                item(key = "task_rubric_material") {
-                    AssignmentRubricCard(
-                        assignment = assignment,
-                        themeStyle = themeStyle
-                    )
+                if (!assignment.isQuiz) {
+                    item(key = "task_rubric_material") {
+                        AssignmentRubricCard(
+                            assignment = assignment,
+                            themeStyle = themeStyle
+                        )
+                    }
                 }
 
                 // 5. Botones de Acción (Guardar para después)

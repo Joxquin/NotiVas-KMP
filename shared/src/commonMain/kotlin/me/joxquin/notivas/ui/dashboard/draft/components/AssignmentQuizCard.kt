@@ -100,6 +100,9 @@ fun AssignmentQuizCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .padding(end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -155,7 +158,9 @@ fun AssignmentQuizCard(
                                     MiuixTheme.colorScheme.primary
                                 } else {
                                     MiuixTheme.colorScheme.onSurfaceVariantSummary
-                                }
+                                },
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -277,6 +282,9 @@ fun AssignmentQuizCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .padding(end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -329,7 +337,9 @@ fun AssignmentQuizCard(
                                     MaterialTheme.colorScheme.onPrimaryContainer
                                 } else {
                                     MaterialTheme.colorScheme.onSurfaceVariant
-                                }
+                                },
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }

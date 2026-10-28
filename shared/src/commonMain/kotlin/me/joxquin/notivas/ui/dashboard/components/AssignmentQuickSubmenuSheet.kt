@@ -215,10 +215,28 @@ fun AssignmentQuickSubmenuSheet(
                     }
                 }
 
-                // Sección 2: Acción Destacada (Google Drive)
+                // Sección 2: Acción Destacada (Google Drive o Evaluación Quiz)
+                val isQuiz = item.assignment.isQuiz
                 item {
+                    val sectionTitle = if (isQuiz) {
+                        stringResource(Res.string.task_submenu_view_quiz_detail)
+                    } else {
+                        stringResource(Res.string.task_submenu_manage_draft)
+                    }
+                    val actionTitle = if (isQuiz) {
+                        stringResource(Res.string.task_submenu_view_quiz_detail)
+                    } else {
+                        stringResource(Res.string.task_submenu_manage_draft)
+                    }
+                    val actionDesc = if (isQuiz) {
+                        stringResource(Res.string.task_submenu_view_quiz_detail_desc)
+                    } else {
+                        stringResource(Res.string.task_submenu_manage_draft_desc)
+                    }
+                    val actionIcon = if (isQuiz) Icons.Default.FactCheck else Icons.Default.Description
+
                     SmallTitle(
-                        text = stringResource(Res.string.task_submenu_manage_draft),
+                        text = sectionTitle,
                         insideMargin = PaddingValues(16.dp, 8.dp)
                     )
                     Card(
@@ -247,7 +265,7 @@ fun AssignmentQuickSubmenuSheet(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = Icons.Default.Description,
+                                        imageVector = actionIcon,
                                         contentDescription = null,
                                         tint = MiuixTheme.colorScheme.onPrimary,
                                         modifier = Modifier.size(20.dp)
@@ -256,7 +274,7 @@ fun AssignmentQuickSubmenuSheet(
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = stringResource(Res.string.task_submenu_manage_draft),
+                                    text = actionTitle,
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.SemiBold
                                     ),
@@ -264,7 +282,7 @@ fun AssignmentQuickSubmenuSheet(
                                 )
                                 Spacer(Modifier.height(2.dp))
                                 Text(
-                                    text = stringResource(Res.string.task_submenu_manage_draft_desc),
+                                    text = actionDesc,
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontSize = 11.sp
                                     ),
@@ -296,7 +314,9 @@ fun AssignmentQuickSubmenuSheet(
                         Column {
                             MiuixSubmenuRow(
                                 icon = Icons.Default.OpenInBrowser,
-                                title = stringResource(Res.string.task_submenu_open_canvas),
+                                title = stringResource(
+                                    if (isQuiz) Res.string.task_submenu_open_quiz else Res.string.task_submenu_open_canvas
+                                ),
                                 iconTint = MiuixTheme.colorScheme.primary,
                                 onClick = {
                                     item.assignment.htmlUrl?.let { url ->
@@ -307,22 +327,24 @@ fun AssignmentQuickSubmenuSheet(
                                     onDismissRequest()
                                 }
                             )
-                            MiuixSubmenuRow(
-                                icon = Icons.Default.FactCheck,
-                                title = stringResource(Res.string.task_submenu_view_rubric),
-                                iconTint = Color(0xFF83DA85),
-                                onClick = onDismissRequest
-                            )
+                            if (!isQuiz) {
+                                MiuixSubmenuRow(
+                                    icon = Icons.Default.FactCheck,
+                                    title = stringResource(Res.string.task_submenu_view_rubric),
+                                    iconTint = MiuixTheme.colorScheme.primary,
+                                    onClick = onDismissRequest
+                                )
+                            }
                             MiuixSubmenuRow(
                                 icon = Icons.Default.CheckCircle,
                                 title = stringResource(Res.string.task_submenu_mark_completed),
-                                iconTint = Color(0xFF66BB6A),
+                                iconTint = MiuixTheme.colorScheme.primary,
                                 onClick = onDismissRequest
                             )
                             MiuixSubmenuRow(
                                 icon = Icons.Default.Archive,
                                 title = stringResource(Res.string.task_submenu_archive),
-                                iconTint = Color(0xFFFFB74D),
+                                iconTint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                 onClick = onDismissRequest
                             )
                             MiuixSubmenuRow(
@@ -498,10 +520,28 @@ fun AssignmentQuickSubmenuSheet(
                     }
                 }
 
-                // Acción Prioritaria: Gestionar Borrador en Drive
+                // Acción Prioritaria: Gestionar Borrador en Drive o Evaluación Quiz
+                val isQuiz = item.assignment.isQuiz
                 item {
+                    val sectionTitle = if (isQuiz) {
+                        stringResource(Res.string.task_submenu_view_quiz_detail)
+                    } else {
+                        stringResource(Res.string.task_submenu_manage_draft)
+                    }
+                    val actionTitle = if (isQuiz) {
+                        stringResource(Res.string.task_submenu_view_quiz_detail)
+                    } else {
+                        stringResource(Res.string.task_submenu_manage_draft)
+                    }
+                    val actionDesc = if (isQuiz) {
+                        stringResource(Res.string.task_submenu_view_quiz_detail_desc)
+                    } else {
+                        stringResource(Res.string.task_submenu_manage_draft_desc)
+                    }
+                    val actionIcon = if (isQuiz) Icons.Default.FactCheck else Icons.Default.Description
+
                     Text(
-                        text = stringResource(Res.string.task_submenu_manage_draft),
+                        text = sectionTitle,
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -531,7 +571,7 @@ fun AssignmentQuickSubmenuSheet(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = Icons.Default.Description,
+                                        imageVector = actionIcon,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onPrimary,
                                         modifier = Modifier.size(20.dp)
@@ -540,14 +580,14 @@ fun AssignmentQuickSubmenuSheet(
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = stringResource(Res.string.task_submenu_manage_draft),
+                                    text = actionTitle,
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Spacer(Modifier.height(2.dp))
                                 Text(
-                                    text = stringResource(Res.string.task_submenu_manage_draft_desc),
+                                    text = actionDesc,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
@@ -578,7 +618,9 @@ fun AssignmentQuickSubmenuSheet(
                         Column(modifier = Modifier.padding(vertical = 4.dp)) {
                             MaterialSubmenuRow(
                                 icon = Icons.Default.OpenInBrowser,
-                                title = stringResource(Res.string.task_submenu_open_canvas),
+                                title = stringResource(
+                                    if (isQuiz) Res.string.task_submenu_open_quiz else Res.string.task_submenu_open_canvas
+                                ),
                                 iconTint = MaterialTheme.colorScheme.primary,
                                 onClick = {
                                     item.assignment.htmlUrl?.let { url ->
@@ -589,22 +631,24 @@ fun AssignmentQuickSubmenuSheet(
                                     } ?: dismissState?.invoke()
                                 }
                             )
-                            MaterialSubmenuRow(
-                                icon = Icons.Default.FactCheck,
-                                title = stringResource(Res.string.task_submenu_view_rubric),
-                                iconTint = Color(0xFF66BB6A),
-                                onClick = { dismissState?.invoke() }
-                            )
+                            if (!isQuiz) {
+                                MaterialSubmenuRow(
+                                    icon = Icons.Default.FactCheck,
+                                    title = stringResource(Res.string.task_submenu_view_rubric),
+                                    iconTint = MaterialTheme.colorScheme.primary,
+                                    onClick = { dismissState?.invoke() }
+                                )
+                            }
                             MaterialSubmenuRow(
                                 icon = Icons.Default.CheckCircle,
                                 title = stringResource(Res.string.task_submenu_mark_completed),
-                                iconTint = Color(0xFF66BB6A),
+                                iconTint = MaterialTheme.colorScheme.primary,
                                 onClick = { dismissState?.invoke() }
                             )
                             MaterialSubmenuRow(
                                 icon = Icons.Default.Archive,
                                 title = stringResource(Res.string.task_submenu_archive),
-                                iconTint = Color(0xFFFFB74D),
+                                iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 onClick = { dismissState?.invoke() }
                             )
                             MaterialSubmenuRow(
