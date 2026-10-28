@@ -714,4 +714,14 @@
     <string name="assignment_submission_allowed_formats_label">Allowed formats: %1$s</string>
     <string name="assignment_submission_required_format">Required format: %1$s</string>
     <string name="assignment_submission_invalid_format_error">Invalid file format. Only %1$s files are accepted</string>
+
+    <!-- Canvas Quiz / Online Assessment -->
+    <string name="assignment_quiz_card_title">Canvas Online Quiz</string>
+    <string name="assignment_quiz_badge_completed">Quiz Completed</string>
+    <string name="assignment_quiz_badge_pending">Pending Quiz</string>
+    <string name="assignment_quiz_action_take">Take Quiz on Canvas</string>
+    <string name="assignment_quiz_action_view">View Quiz on Canvas</string>
+    <string name="assignment_quiz_score_label">Score achieved:</string>
+    <string name="assignment_quiz_score_format">%1$s of %2$s pts</string>
+    <string name="assignment_quiz_info_notice">This activity is a Canvas online quiz. To ensure that your time, attempts, and system audit log are properly recorded without issues, it must be taken directly on the official platform.</string>
 </resources>

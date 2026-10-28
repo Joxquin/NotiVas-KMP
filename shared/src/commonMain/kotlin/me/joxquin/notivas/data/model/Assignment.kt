@@ -27,7 +27,13 @@ data class Assignment(
     val notified24h: Boolean = false,
     val notified3h: Boolean = false,
     val notified30m: Boolean = false
-)
+) {
+    val isQuiz: Boolean
+        get() = submissionTypes?.contains("online_quiz") == true
+
+    val supportsDirectSubmission: Boolean
+        get() = submissionTypes?.any { it in listOf("online_upload", "online_text_entry", "online_url", "media_recording") } == true
+}
 
 @Serializable
 data class SubmissionDetails(

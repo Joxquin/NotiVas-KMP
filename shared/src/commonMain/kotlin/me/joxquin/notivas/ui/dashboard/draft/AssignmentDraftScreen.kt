@@ -58,6 +58,7 @@ import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentConsignaCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentDetailHeroCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentRubricCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentSubmissionCard
+import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentQuizCard
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusCard
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo
 import top.yukonga.miuix.kmp.basic.DropdownEntry
@@ -195,28 +196,32 @@ fun AssignmentDraftScreen(
         val copyCanvasLinkLabel = stringResource(Res.string.task_menu_copy_canvas_link)
 
         val dropdownEntries = remember(assignment, openCanvasLabel, exploreTemplatesLabel, copyCanvasLinkLabel) {
-            listOf(
-                DropdownEntry(
-                    items = listOf(
-                        DropdownItem(
-                            text = openCanvasLabel,
-                            onClick = { onOpenCanvas() }
-                        ),
-                        DropdownItem(
-                            text = exploreTemplatesLabel,
-                            onClick = handleExploreTemplates
-                        ),
-                        DropdownItem(
-                            text = copyCanvasLinkLabel,
-                            onClick = {
-                                assignment.htmlUrl?.let { url ->
-                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(url))
-                                }
-                            }
-                        )
-                    )
+            val items = mutableListOf<DropdownItem>()
+            items.add(
+                DropdownItem(
+                    text = openCanvasLabel,
+                    onClick = { onOpenCanvas() }
                 )
             )
+            if (!assignment.isQuiz) {
+                items.add(
+                    DropdownItem(
+                        text = exploreTemplatesLabel,
+                        onClick = handleExploreTemplates
+                    )
+                )
+            }
+            items.add(
+                DropdownItem(
+                    text = copyCanvasLinkLabel,
+                    onClick = {
+                        assignment.htmlUrl?.let { url ->
+                            clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(url))
+                        }
+                    }
+                )
+            )
+            listOf(DropdownEntry(items = items))
         }
 
         top.yukonga.miuix.kmp.basic.Scaffold(
@@ -273,23 +278,31 @@ fun AssignmentDraftScreen(
                         )
                     }
 
-                    // 2. Tarjeta Unificada de Entrega Directa y Borrador Google Drive
+                    // 2. Tarjeta de Evaluación Quiz o Entrega Directa
                     item(key = "task_submission") {
-                        AssignmentSubmissionCard(
-                            assignment = assignment,
-                            courseName = courseName,
-                            themeStyle = themeStyle,
-                            viewModel = viewModel,
-                            draftInfo = draftInfo,
-                            onStartDraft = handleStartDraft,
-                            onExploreTemplates = handleExploreTemplates,
-                            onCancelDraft = handleCancelDraft,
-                            onOpenDocs = handleOpenDocs,
-                            onSubmitDraftToCanvas = handleSubmitDraftToCanvas,
-                            onSubmitSuccess = {
-                                viewModel?.refreshData()
-                            }
-                        )
+                        if (assignment.isQuiz) {
+                            AssignmentQuizCard(
+                                assignment = assignment,
+                                themeStyle = themeStyle,
+                                onOpenCanvas = onOpenCanvas
+                            )
+                        } else {
+                            AssignmentSubmissionCard(
+                                assignment = assignment,
+                                courseName = courseName,
+                                themeStyle = themeStyle,
+                                viewModel = viewModel,
+                                draftInfo = draftInfo,
+                                onStartDraft = handleStartDraft,
+                                onExploreTemplates = handleExploreTemplates,
+                                onCancelDraft = handleCancelDraft,
+                                onOpenDocs = handleOpenDocs,
+                                onSubmitDraftToCanvas = handleSubmitDraftToCanvas,
+                                onSubmitSuccess = {
+                                    viewModel?.refreshData()
+                                }
+                            )
+                        }
                     }
 
                     // 3. Consigna de Canvas
@@ -397,19 +410,21 @@ fun AssignmentDraftScreen(
                                         onOpenCanvas()
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(Res.string.task_menu_explore_templates)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.FolderOpen,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    onClick = {
-                                        menuExpanded = false
-                                        handleExploreTemplates()
-                                    }
-                                )
+                                if (!assignment.isQuiz) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(Res.string.task_menu_explore_templates)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.FolderOpen,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            menuExpanded = false
+                                            handleExploreTemplates()
+                                        }
+                                    )
+                                }
                                 DropdownMenuItem(
                                     text = { Text(stringResource(Res.string.task_menu_copy_canvas_link)) },
                                     leadingIcon = {
@@ -457,23 +472,31 @@ fun AssignmentDraftScreen(
                     )
                 }
 
-                // 2. Tarjeta Unificada de Entrega Directa y Borrador Google Drive
+                // 2. Tarjeta de Evaluación Quiz o Entrega Directa
                 item(key = "task_submission_material") {
-                    AssignmentSubmissionCard(
-                        assignment = assignment,
-                        courseName = courseName,
-                        themeStyle = themeStyle,
-                        viewModel = viewModel,
-                        draftInfo = draftInfo,
-                        onStartDraft = handleStartDraft,
-                        onExploreTemplates = handleExploreTemplates,
-                        onCancelDraft = handleCancelDraft,
-                        onOpenDocs = handleOpenDocs,
-                        onSubmitDraftToCanvas = handleSubmitDraftToCanvas,
-                        onSubmitSuccess = {
-                            viewModel?.refreshData()
-                        }
-                    )
+                    if (assignment.isQuiz) {
+                        AssignmentQuizCard(
+                            assignment = assignment,
+                            themeStyle = themeStyle,
+                            onOpenCanvas = onOpenCanvas
+                        )
+                    } else {
+                        AssignmentSubmissionCard(
+                            assignment = assignment,
+                            courseName = courseName,
+                            themeStyle = themeStyle,
+                            viewModel = viewModel,
+                            draftInfo = draftInfo,
+                            onStartDraft = handleStartDraft,
+                            onExploreTemplates = handleExploreTemplates,
+                            onCancelDraft = handleCancelDraft,
+                            onOpenDocs = handleOpenDocs,
+                            onSubmitDraftToCanvas = handleSubmitDraftToCanvas,
+                            onSubmitSuccess = {
+                                viewModel?.refreshData()
+                            }
+                        )
+                    }
                 }
 
                 // 3. Consigna de Canvas

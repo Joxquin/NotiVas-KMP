@@ -714,4 +714,14 @@
     <string name="assignment_submission_allowed_formats_label">Formatos permitidos: %1$s</string>
     <string name="assignment_submission_required_format">Formato requerido: %1$s</string>
     <string name="assignment_submission_invalid_format_error">Formato no válido. Solo se admiten archivos %1$s</string>
+
+    <!-- Canvas Quiz / Evaluación en Línea -->
+    <string name="assignment_quiz_card_title">Evaluación en Línea Canvas</string>
+    <string name="assignment_quiz_badge_completed">Evaluación Realizada</string>
+    <string name="assignment_quiz_badge_pending">Evaluación Pendiente</string>
+    <string name="assignment_quiz_action_take">Rendir evaluación en Canvas</string>
+    <string name="assignment_quiz_action_view">Ver evaluación en Canvas</string>
+    <string name="assignment_quiz_score_label">Puntaje obtenido:</string>
+    <string name="assignment_quiz_score_format">%1$s de %2$s pts</string>
+    <string name="assignment_quiz_info_notice">Esta actividad corresponde a una evaluación o cuestionario de Canvas. Para asegurar el registro de tiempo, intentos y la auditoría forense del sistema sin inconvenientes, debe rendirse directamente en la plataforma oficial.</string>
 </resources>
