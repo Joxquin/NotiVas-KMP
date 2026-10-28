@@ -2,6 +2,9 @@ package me.joxquin.notivas.ui.copilot
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -12,7 +15,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -59,6 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.ui.components.aura.MonetAuraBackground
 import me.joxquin.notivas.ui.copilot.components.CopilotHeaderBar
 import me.joxquin.notivas.ui.copilot.components.CopilotHistoryBottomSheet
 import me.joxquin.notivas.ui.copilot.components.CopilotInputBar
@@ -126,10 +129,19 @@ fun CopilotScreen(
 
         val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
+        val auraAlpha by animateFloatAsState(
+            targetValue = if (uiState.isLoading) 1f else 0f,
+            animationSpec = tween(
+                durationMillis = if (uiState.isLoading) 600 else 800,
+                easing = FastOutSlowInEasing
+            ),
+            label = "copilotMiuixAuraAlpha"
+        )
+
+        MonetAuraBackground(
+            alpha = auraAlpha,
+            surfaceColor = MiuixTheme.colorScheme.surface,
+            modifier = modifier.fillMaxSize()
         ) {
             // Capa 1: Flujo de mensajes Edge-to-Edge que se desliza por detrás del TopBar y del InputBar
             Box(

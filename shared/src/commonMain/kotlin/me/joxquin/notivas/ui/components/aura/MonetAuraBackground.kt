@@ -240,7 +240,7 @@ private class MonetAuraModifierNode(
     private var animTime: Float = 0f
 
     override fun onAttach() {
-        if (!isTransitioning) {
+        if (!isTransitioning && alpha() > 0.001f) {
             startAnimation()
         }
     }
@@ -270,7 +270,7 @@ private class MonetAuraModifierNode(
             if (isTransitioning) {
                 animationJob?.cancel()
                 animationJob = null
-            } else {
+            } else if (alpha() > 0.001f) {
                 startAnimation()
             }
         }
@@ -278,7 +278,7 @@ private class MonetAuraModifierNode(
     }
 
     private fun startAnimation() {
-        if (isTransitioning) return
+        if (isTransitioning || alpha() <= 0.001f) return
         animationJob?.cancel()
         animationJob = coroutineScope.launch {
             val minDeltaNanos = 1_000_000_000L / 30L
@@ -336,11 +336,12 @@ fun MonetAuraBackground(
     alpha: Float,
     isTransitioning: Boolean = false,
     modifier: Modifier = Modifier,
+    surfaceColor: Color = Color.Unspecified,
     content: @Composable BoxScope.() -> Unit = {}
 ) {
     val shaderSupported = remember { isRuntimeShaderSupported() }
     val colorScheme = MaterialTheme.colorScheme
-    val surface = colorScheme.surface
+    val surface = if (surfaceColor != Color.Unspecified) surfaceColor else colorScheme.surface
 
     if (!shaderSupported) {
         // Fallback dinámico armónico basado en degradados radiales Monet
@@ -423,7 +424,8 @@ fun MonetAuraBackground(
 
     val colorStage = remember { Animatable(0f) }
 
-    LaunchedEffect(preset) {
+    LaunchedEffect(preset, alpha > 0.001f) {
+        if (alpha <= 0.001f) return@LaunchedEffect
         var target = floor(colorStage.value) + 1f
         while (isActive) {
             delay((preset.colorInterpPeriod * 500).toLong())
