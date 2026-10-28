@@ -139,6 +139,7 @@ private fun miuixBarBlurColors(progressive: Boolean = false): BlurColors = BlurD
 @Composable
 fun MiuixPageTopAppBar(
     title: String,
+    largeTitle: String = title,
     scrollBehavior: ScrollBehavior? = null,
     subtitle: String = "",
     color: Color = Color.Transparent,
@@ -148,6 +149,7 @@ fun MiuixPageTopAppBar(
 ) {
     TopAppBar(
         title = title,
+        largeTitle = largeTitle,
         subtitle = subtitle,
         color = color,
         scrollBehavior = scrollBehavior,

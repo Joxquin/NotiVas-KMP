@@ -96,15 +96,6 @@ fun AssignmentDetailHeroCard(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Título de la Tarea
-            MiuixText(
-                text = assignment.name,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = MiuixTheme.colorScheme.onSurface,
-                lineHeight = 28.sp
-            )
-
             // Fila de Pills (Vencimiento + Puntos)
             Row(
                 modifier = Modifier.fillMaxWidth(),

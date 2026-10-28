@@ -227,6 +227,7 @@ fun AssignmentDraftScreen(
                 ) {
                     MiuixPageTopAppBar(
                         title = stringResource(Res.string.assignment_detail_title),
+                        largeTitle = assignment.name,
                         subtitle = shortenCourseSubtitle(courseName.ifBlank { "Canvas LMS" }),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
