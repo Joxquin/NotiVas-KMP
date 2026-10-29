@@ -2,9 +2,11 @@ package me.joxquin.notivas.data.remote
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -250,6 +252,54 @@ class GoogleDriveApiService(
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    /**
+     * UPDATE: Modifica el nombre de un archivo en Google Drive (HTTP PATCH)
+     */
+    suspend fun updateFileName(
+        fileId: String,
+        newName: String,
+        accessToken: String? = null
+    ): GoogleDriveFile? {
+        val token = getValidAccessToken(accessToken) ?: return null
+        return try {
+            val response = httpClient.patch("$DRIVE_FILES_API/$fileId") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                parameter("supportsAllDrives", true)
+                parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
+                setBody(mapOf("name" to newName))
+            }
+            if (response.status.value in 200..299) {
+                response.body<GoogleDriveFile>()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * DELETE: Elimina definitivamente un archivo de Google Drive (HTTP DELETE)
+     */
+    suspend fun deleteFile(
+        fileId: String,
+        accessToken: String? = null
+    ): Boolean {
+        val token = getValidAccessToken(accessToken) ?: return false
+        return try {
+            val response = httpClient.delete("$DRIVE_FILES_API/$fileId") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("supportsAllDrives", true)
+            }
+            response.status.value in 200..299 || response.status.value == 204
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 

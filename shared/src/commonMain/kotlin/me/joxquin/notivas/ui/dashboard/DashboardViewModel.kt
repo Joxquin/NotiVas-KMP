@@ -539,12 +539,38 @@ class DashboardViewModel(
     }
 
     /**
-     * Cancela la creación de un borrador y limpia el estado de sincronización local.
+     * Cancela la creación de un borrador, elimina el archivo remoto en Google Drive y limpia el estado local.
      */
     fun cancelDraft(assignmentId: Long) {
         viewModelScope.launch {
+            val currentDraft = repository.getAssignmentDraft(assignmentId)
+            val fileId = currentDraft?.driveFileId
+            if (!fileId.isNullOrBlank()) {
+                googleDriveApiService.deleteFile(fileId)
+            }
             repository.deleteAssignmentDraft(assignmentId)
-            _uiEffect.tryEmit(UiEffect.ShowToast("Sincronización cancelada."))
+            _uiEffect.tryEmit(UiEffect.ShowToast("Borrador cancelado y archivo eliminado."))
+        }
+    }
+
+    /**
+     * Modifica el nombre de un borrador en Google Drive usando HTTP PATCH explícito
+     */
+    fun renameDraft(assignmentId: Long, newSuffix: String = "Actualizado") {
+        viewModelScope.launch {
+            val currentDraft = repository.getAssignmentDraft(assignmentId)
+            val fileId = currentDraft?.driveFileId
+            if (!fileId.isNullOrBlank()) {
+                val updatedName = "Borrador - ${newSuffix} (v2)"
+                val updated = googleDriveApiService.updateFileName(fileId, updatedName)
+                if (updated != null) {
+                    _uiEffect.tryEmit(UiEffect.ShowToast("Archivo renombrado vía PATCH en Google Drive"))
+                } else {
+                    _uiEffect.tryEmit(UiEffect.ShowToast("Fallo al actualizar archivo en Google Drive"))
+                }
+            } else {
+                _uiEffect.tryEmit(UiEffect.ShowToast("No hay archivo remoto para actualizar."))
+            }
         }
     }
 
@@ -566,6 +592,14 @@ class DashboardViewModel(
         }
 
         viewModelScope.launch {
+            // Actualizar nombre del archivo en Google Drive usando HTTP PATCH explícito
+            val currentDraft = repository.getAssignmentDraft(assignment.id)
+            val fileId = currentDraft?.driveFileId
+            if (!fileId.isNullOrBlank()) {
+                val updatedTitle = "[ENTREGADO] ${assignment.name.take(40)}"
+                googleDriveApiService.updateFileName(fileId, updatedTitle)
+            }
+
             val result = repository.submitAssignment(
                 courseId = assignment.courseId,
                 assignmentId = assignment.id,

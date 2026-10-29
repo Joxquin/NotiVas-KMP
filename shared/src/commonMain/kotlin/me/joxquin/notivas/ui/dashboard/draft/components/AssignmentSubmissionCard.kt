@@ -772,6 +772,28 @@ fun AssignmentSubmissionCard(
                                         }
                                     }
 
+                                    // Botón HTTP PATCH para renombrar en Google Drive
+                                    Box(
+                                        modifier = Modifier
+                                            .squircleSurface(
+                                                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                                cornerRadius = 12.dp
+                                            )
+                                            .clickable {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                viewModel?.renameDraft(assignment.id, "v2")
+                                            }
+                                            .padding(horizontal = 14.dp, vertical = 11.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.EditNote,
+                                            contentDescription = "Renombrar vía PATCH",
+                                            tint = MiuixTheme.colorScheme.primary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+
                                     Box(
                                         modifier = Modifier
                                             .squircleSurface(
