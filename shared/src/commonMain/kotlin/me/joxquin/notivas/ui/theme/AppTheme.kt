@@ -51,7 +51,22 @@ fun AppTheme(
         top.yukonga.miuix.kmp.theme.MiuixTheme(
             controller = miuixThemeController
         ) {
-            content()
+            val miuixColors = top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+            val alignedColors = androidx.compose.runtime.remember(miuixColors, colorScheme.surface) {
+                if (dynamicColor && dynamicColors != null) {
+                    miuixColors.copy(
+                        surface = colorScheme.surface,
+                        background = colorScheme.surface
+                    )
+                } else {
+                    miuixColors
+                }
+            }
+            top.yukonga.miuix.kmp.theme.MiuixTheme(
+                colors = alignedColors
+            ) {
+                content()
+            }
         }
     }
 }
