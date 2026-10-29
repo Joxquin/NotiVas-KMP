@@ -26,7 +26,6 @@ data class ProfileUiState(
     val notif24h: Boolean = true,
     val notif3h: Boolean = true,
     val notif30m: Boolean = false,
-    val notifMorning: Boolean = true,
     val autoFocusMode: Boolean = true,
     val pomodoroDurationMinutes: Int = 25,
     val syncIntervalMinutes: Long = 15L,
@@ -106,7 +105,6 @@ class ProfileViewModel(
         preferencesManager.notif24h,
         preferencesManager.notif3h,
         preferencesManager.notif30m,
-        preferencesManager.notifMorning,
         preferencesManager.autoFocusMode,
         preferencesManager.pomodoroDurationMinutes,
         preferencesManager.syncIntervalMinutes,
@@ -141,28 +139,27 @@ class ProfileViewModel(
             notif24h = args[2] as Boolean,
             notif3h = args[3] as Boolean,
             notif30m = args[4] as Boolean,
-            notifMorning = args[5] as Boolean,
-            autoFocusMode = args[6] as Boolean,
-            pomodoroDurationMinutes = args[7] as Int,
-            syncIntervalMinutes = args[8] as Long,
-            copilotProvider = args[9] as me.joxquin.notivas.data.local.CopilotProvider,
-            openRouterApiKey = args[10] as String?,
-            openRouterModel = args[11] as String,
-            googleAiStudioApiKey = args[12] as String?,
-            googleAiStudioModel = args[13] as String,
-            copilotEnabled = args[14] as Boolean,
-            totalCopilotTokens = args[15] as Long,
-            openRouterBalance = args[16] as OpenRouterAccountBalance?,
-            isLoadingBalance = args[17] as Boolean,
-            isVerifyingToken = args[18] as Boolean,
-            dynamicColorEnabled = args[19] as Boolean,
-            themeStyle = args[20] as AppThemeStyle,
-            authMode = args[21] as AuthMode,
-            appLanguage = args[22] as AppLanguage,
-            googleDriveConnected = args[23] as Boolean,
-            googleDriveEmail = args[24] as String?,
-            googleDriveLastSyncTimestamp = args[25] as Long,
-            googleDriveCacheSize = args[26] as String
+            autoFocusMode = args[5] as Boolean,
+            pomodoroDurationMinutes = args[6] as Int,
+            syncIntervalMinutes = args[7] as Long,
+            copilotProvider = args[8] as me.joxquin.notivas.data.local.CopilotProvider,
+            openRouterApiKey = args[9] as String?,
+            openRouterModel = args[10] as String,
+            googleAiStudioApiKey = args[11] as String?,
+            googleAiStudioModel = args[12] as String,
+            copilotEnabled = args[13] as Boolean,
+            totalCopilotTokens = args[14] as Long,
+            openRouterBalance = args[15] as OpenRouterAccountBalance?,
+            isLoadingBalance = args[16] as Boolean,
+            isVerifyingToken = args[17] as Boolean,
+            dynamicColorEnabled = args[18] as Boolean,
+            themeStyle = args[19] as AppThemeStyle,
+            authMode = args[20] as AuthMode,
+            appLanguage = args[21] as AppLanguage,
+            googleDriveConnected = args[22] as Boolean,
+            googleDriveEmail = args[23] as String?,
+            googleDriveLastSyncTimestamp = args[24] as Long,
+            googleDriveCacheSize = args[25] as String
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
 
@@ -213,10 +210,6 @@ class ProfileViewModel(
 
     fun setNotif30m(enabled: Boolean) {
         viewModelScope.launch { preferencesManager.setNotif30m(enabled) }
-    }
-
-    fun setNotifMorning(enabled: Boolean) {
-        viewModelScope.launch { preferencesManager.setNotifMorning(enabled) }
     }
 
     fun setSyncIntervalMinutes(minutes: Long) {

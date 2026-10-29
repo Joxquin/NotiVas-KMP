@@ -309,13 +309,10 @@ fun AjustesScreen(
                         notif24h = uiState.notif24h,
                         notif3h = uiState.notif3h,
                         notif30m = uiState.notif30m,
-                        notifMorning = uiState.notifMorning,
                         syncIntervalMinutes = uiState.syncIntervalMinutes,
-                        openRouterApiKey = uiState.openRouterApiKey,
                         onNotif24hChange = { viewModel.setNotif24h(it) },
                         onNotif3hChange = { viewModel.setNotif3h(it) },
                         onNotif30mChange = { viewModel.setNotif30m(it) },
-                        onNotifMorningChange = { viewModel.setNotifMorning(it) },
                         onSyncIntervalChange = { viewModel.setSyncIntervalMinutes(it) },
                         themeStyle = AppThemeStyle.MIUIX
                     )
@@ -507,13 +504,10 @@ fun AjustesScreen(
                     notif24h = uiState.notif24h,
                     notif3h = uiState.notif3h,
                     notif30m = uiState.notif30m,
-                    notifMorning = uiState.notifMorning,
                     syncIntervalMinutes = uiState.syncIntervalMinutes,
-                    openRouterApiKey = uiState.openRouterApiKey,
                     onNotif24hChange = { viewModel.setNotif24h(it) },
                     onNotif3hChange = { viewModel.setNotif3h(it) },
                     onNotif30mChange = { viewModel.setNotif30m(it) },
-                    onNotifMorningChange = { viewModel.setNotifMorning(it) },
                     onSyncIntervalChange = { viewModel.setSyncIntervalMinutes(it) },
                     themeStyle = AppThemeStyle.MATERIAL
                 )

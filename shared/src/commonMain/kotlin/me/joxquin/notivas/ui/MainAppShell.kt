@@ -100,7 +100,6 @@ import me.joxquin.notivas.ui.notas.NotasScreen
 import me.joxquin.notivas.ui.foros.ForosScreen
 import me.joxquin.notivas.ui.activity.RecentActivityScreen
 import me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen
-import me.joxquin.notivas.ui.dashboard.roadmap.MorningRoadmapScreen
 import me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen
 import me.joxquin.notivas.ui.herramientas.archive.TaskHistoryArchiveScreen
 import me.joxquin.notivas.ui.foros.detail.ForoDetailScreen
@@ -187,7 +186,8 @@ fun MainAppShell(
     canvasRepository: CanvasRepository,
     copilotRepository: CopilotRepository,
     chatRepository: CopilotChatRepository,
-    preferencesManager: PreferencesManager
+    preferencesManager: PreferencesManager,
+    isEntranceTriggered: Boolean = true
 ) {
     val themeStyle by preferencesManager.themeStyle.collectAsState(
         initial = preferencesManager.getThemeStyle()
@@ -336,7 +336,6 @@ fun MainAppShell(
     var showingArchiveDetail by remember { mutableStateOf(false) }
     var showingActivityDetail by remember { mutableStateOf(false) }
     var showingScheduleDetail by remember { mutableStateOf(false) }
-    val showingMorningRoadmap by dashboardViewModel.showingMorningRoadmap.collectAsState()
     var selectedCourseForDetail by remember { mutableStateOf<Course?>(null) }
     var selectedCourseForModules by remember { mutableStateOf<Course?>(null) }
     var showHerramientasTuneSheet by remember { mutableStateOf(false) }
@@ -379,25 +378,11 @@ fun MainAppShell(
         fun handleMiuixBack(): Boolean {
             val current = miuixNavigator.current()
             when (current) {
-                is MiuixRoute.MorningRoadmap -> dashboardViewModel.closeMorningRoadmap()
                 is MiuixRoute.AssignmentDraft -> dashboardViewModel.closeDraft()
                 is MiuixRoute.ForoDetail -> forosViewModel.clearSelectedDiscussion()
                 else -> {}
             }
             return miuixNavigator.pop()
-        }
-
-        // Sincronizar estado reactivo de Roadmap con la navegacion de HyperOS
-        LaunchedEffect(showingMorningRoadmap) {
-            if (showingMorningRoadmap) {
-                if (miuixNavigator.current() !is MiuixRoute.MorningRoadmap) {
-                    miuixNavigator.push(MiuixRoute.MorningRoadmap)
-                }
-            } else {
-                if (miuixNavigator.current() is MiuixRoute.MorningRoadmap) {
-                    miuixNavigator.pop()
-                }
-            }
         }
 
         // Sincronizar estado reactivo de Borrador de Tarea con la navegacion de HyperOS
@@ -494,9 +479,6 @@ fun MainAppShell(
                                             onNavigateToSchedule = {
                                                 miuixNavigator.push(MiuixRoute.Schedule)
                                             },
-                                            onNavigateToRoadmap = {
-                                                miuixNavigator.push(MiuixRoute.MorningRoadmap)
-                                            },
                                             onOpenAssignmentDraft = { assignmentUi ->
                                                 dashboardViewModel.openDraft(assignmentUi)
                                                 miuixNavigator.push(
@@ -516,7 +498,8 @@ fun MainAppShell(
                                             onNavigateToForoDetail = { topic ->
                                                 forosViewModel.selectDiscussion(topic)
                                                 miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
-                                            }
+                                            },
+                                            isEntranceTriggered = isEntranceTriggered
                                         )
                                     }
 
@@ -844,28 +827,6 @@ fun MainAppShell(
                     )
                 }
 
-                entry<MiuixRoute.MorningRoadmap>(swipeDismiss = swipeBackDirection) {
-                    MorningRoadmapScreen(
-                        viewModel = dashboardViewModel,
-                        onBack = { handleMiuixBack() },
-                        onNavigateToCopilotWithPrompt = { prompt: String ->
-                            handleMiuixBack()
-                            mainPagerState.animateToPage(2)
-                            copilotViewModel.sendMessage(prompt)
-                        },
-                        onOpenDraft = { assignmentUi ->
-                            dashboardViewModel.openDraft(assignmentUi)
-                            miuixNavigator.push(
-                                MiuixRoute.AssignmentDraft(
-                                    assignmentUi.assignment.id,
-                                    assignmentUi.courseName
-                                )
-                            )
-                        },
-                        themeStyle = AppThemeStyle.MIUIX
-                    )
-                }
-
                 entry<MiuixRoute.AssignmentDraft>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.AssignmentDraft ->
                     val currentDraft = selectedAssignmentForDraft ?: remember(route) {
                         dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == route.assignmentId }
@@ -1064,24 +1025,11 @@ fun MainAppShell(
         fun handleMaterialBack(): Boolean {
             val current = materialNavigator.current()
             when (current) {
-                is MiuixRoute.MorningRoadmap -> dashboardViewModel.closeMorningRoadmap()
                 is MiuixRoute.AssignmentDraft -> dashboardViewModel.closeDraft()
                 is MiuixRoute.ForoDetail -> forosViewModel.clearSelectedDiscussion()
                 else -> {}
             }
             return materialNavigator.pop()
-        }
-
-        LaunchedEffect(showingMorningRoadmap) {
-            if (showingMorningRoadmap) {
-                if (materialNavigator.current() !is MiuixRoute.MorningRoadmap) {
-                    materialNavigator.push(MiuixRoute.MorningRoadmap)
-                }
-            } else {
-                if (materialNavigator.current() is MiuixRoute.MorningRoadmap) {
-                    materialNavigator.pop()
-                }
-            }
         }
 
         LaunchedEffect(selectedAssignmentForDraft) {
@@ -1214,9 +1162,6 @@ fun MainAppShell(
                                             onNavigateToSchedule = {
                                                 materialNavigator.push(MiuixRoute.Schedule)
                                             },
-                                            onNavigateToRoadmap = {
-                                                materialNavigator.push(MiuixRoute.MorningRoadmap)
-                                            },
                                             onOpenAssignmentDraft = { assignmentUi ->
                                                 dashboardViewModel.openDraft(assignmentUi)
                                                 materialNavigator.push(
@@ -1236,7 +1181,8 @@ fun MainAppShell(
                                             onNavigateToForoDetail = { topic ->
                                                 forosViewModel.selectDiscussion(topic)
                                                 materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
-                                            }
+                                            },
+                                            isEntranceTriggered = isEntranceTriggered
                                         )
                                     }
 
@@ -1383,28 +1329,6 @@ fun MainAppShell(
                             dashboardViewModel.openDraft(assignmentUi)
                             materialNavigator.push(MiuixRoute.AssignmentDraft(assignmentUi.assignment.id, assignmentUi.courseName))
                         }
-                    )
-                }
-
-                entry<MiuixRoute.MorningRoadmap>(swipeDismiss = materialSwipeBackDirection) {
-                    MorningRoadmapScreen(
-                        viewModel = dashboardViewModel,
-                        onBack = { handleMaterialBack() },
-                        onNavigateToCopilotWithPrompt = { prompt: String ->
-                            handleMaterialBack()
-                            materialDestination = MainDestination.Copilot
-                            copilotViewModel.sendMessage(prompt)
-                        },
-                        onOpenDraft = { assignmentUi ->
-                            dashboardViewModel.openDraft(assignmentUi)
-                            materialNavigator.push(
-                                MiuixRoute.AssignmentDraft(
-                                    assignmentUi.assignment.id,
-                                    assignmentUi.courseName
-                                )
-                            )
-                        },
-                        themeStyle = AppThemeStyle.MATERIAL
                     )
                 }
 

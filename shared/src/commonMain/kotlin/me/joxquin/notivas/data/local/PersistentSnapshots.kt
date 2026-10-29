@@ -24,7 +24,6 @@ data class PersistentPreferencesSnapshot(
     val notif24h: Boolean = true,
     val notif3h: Boolean = true,
     val notif30m: Boolean = false,
-    val notifMorning: Boolean = true,
     val autoFocusMode: Boolean = true,
     val pomodoroDurationMinutes: Int = 25,
     val copilotProvider: CopilotProvider = CopilotProvider.OPENROUTER,

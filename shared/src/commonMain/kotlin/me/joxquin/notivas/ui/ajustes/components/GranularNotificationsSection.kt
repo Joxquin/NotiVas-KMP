@@ -16,10 +16,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -66,8 +64,6 @@ import me.joxquin.notivas.shared.resources.notif_3h_title
 import me.joxquin.notivas.shared.resources.notif_3h_desc
 import me.joxquin.notivas.shared.resources.notif_30m_title
 import me.joxquin.notivas.shared.resources.notif_30m_desc
-import me.joxquin.notivas.shared.resources.notif_morning_title
-import me.joxquin.notivas.shared.resources.notif_morning_desc
 import me.joxquin.notivas.shared.resources.sync_interval_title
 import me.joxquin.notivas.shared.resources.sync_interval_desc
 import me.joxquin.notivas.shared.resources.sync_interval_dialog_title
@@ -94,9 +90,6 @@ import me.joxquin.notivas.shared.resources.settings_alarms_desc
 import me.joxquin.notivas.shared.resources.settings_miui_desc
 import androidx.compose.material.icons.outlined.BatteryChargingFull
 import androidx.compose.material.icons.outlined.RocketLaunch
-import me.joxquin.notivas.shared.resources.morning_briefing_api_key_required_title
-import me.joxquin.notivas.shared.resources.morning_briefing_api_key_required_desc
-import me.joxquin.notivas.shared.resources.morning_briefing_configure_api_key
 import me.joxquin.notivas.shared.resources.cancel
 
 @Composable
@@ -104,101 +97,16 @@ fun GranularNotificationsSection(
     notif24h: Boolean,
     notif3h: Boolean,
     notif30m: Boolean,
-    notifMorning: Boolean,
     syncIntervalMinutes: Long,
-    openRouterApiKey: String? = null,
     onNotif24hChange: (Boolean) -> Unit,
     onNotif3hChange: (Boolean) -> Unit,
     onNotif30mChange: (Boolean) -> Unit,
-    onNotifMorningChange: (Boolean) -> Unit,
     onSyncIntervalChange: (Long) -> Unit,
-    onNavigateToCopilotSettings: () -> Unit = {},
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
 ) {
     var showSyncIntervalDialog by remember { mutableStateOf(false) }
-    var showApiKeyRequiredDialog by remember { mutableStateOf(false) }
     val permissionManager = me.joxquin.notivas.util.rememberBackgroundPermissionManager()
-
-    val handleMorningToggle: (Boolean) -> Unit = { enabling ->
-        if (enabling && openRouterApiKey.isNullOrBlank()) {
-            showApiKeyRequiredDialog = true
-        } else {
-            onNotifMorningChange(enabling)
-        }
-    }
-
-    if (showApiKeyRequiredDialog) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            WindowDialog(
-                show = showApiKeyRequiredDialog,
-                title = stringResource(Res.string.morning_briefing_api_key_required_title),
-                summary = stringResource(Res.string.morning_briefing_api_key_required_desc),
-                onDismissRequest = { showApiKeyRequiredDialog = false },
-                content = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MiuixTextButton(
-                            text = stringResource(Res.string.cancel),
-                            onClick = { showApiKeyRequiredDialog = false },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(Modifier.width(16.dp))
-                        MiuixTextButton(
-                            text = stringResource(Res.string.morning_briefing_configure_api_key),
-                            onClick = {
-                                showApiKeyRequiredDialog = false
-                                onNavigateToCopilotSettings()
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                        )
-                    }
-                }
-            )
-        } else {
-            AlertDialog(
-                onDismissRequest = { showApiKeyRequiredDialog = false },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Key,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
-                title = {
-                    Text(
-                        text = stringResource(Res.string.morning_briefing_api_key_required_title),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                },
-                text = {
-                    Text(
-                        text = stringResource(Res.string.morning_briefing_api_key_required_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showApiKeyRequiredDialog = false
-                            onNavigateToCopilotSettings()
-                        }
-                    ) {
-                        Text(stringResource(Res.string.morning_briefing_configure_api_key))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showApiKeyRequiredDialog = false }) {
-                        Text(stringResource(Res.string.cancel))
-                    }
-                }
-            )
-        }
-    }
 
     val sync15 = stringResource(Res.string.sync_interval_15m)
     val sync30 = stringResource(Res.string.sync_interval_30m)
@@ -326,12 +234,6 @@ fun GranularNotificationsSection(
                     checked = notif30m,
                     onCheckedChange = onNotif30mChange
                 )
-                SwitchPreference(
-                    title = stringResource(Res.string.notif_morning_title),
-                    summary = stringResource(Res.string.notif_morning_desc),
-                    checked = notifMorning,
-                    onCheckedChange = handleMorningToggle
-                )
                 val selectedSyncIndex = syncOptions.indexOfFirst { it.first == syncIntervalMinutes }.coerceAtLeast(0)
                 WindowDropdownPreference(
                     title = stringResource(Res.string.sync_interval_title),
@@ -436,18 +338,7 @@ fun GranularNotificationsSection(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
 
-                // Item 4: Morning Briefing
-                MaterialNotificationToggleRow(
-                    icon = Icons.Default.WbSunny,
-                    title = stringResource(Res.string.notif_morning_title),
-                    subtitle = stringResource(Res.string.notif_morning_desc),
-                    checked = notifMorning,
-                    onCheckedChange = handleMorningToggle
-                )
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
-
-                // Item 5: Sync interval
+                // Item 4: Sync interval
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

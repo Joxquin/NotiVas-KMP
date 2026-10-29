@@ -20,9 +20,6 @@ sealed interface MiuixRoute : NavKey {
     data object Schedule : MiuixRoute
 
     @Serializable
-    data object MorningRoadmap : MiuixRoute
-
-    @Serializable
     data class AssignmentDraft(
         val assignmentId: Long,
         val courseName: String

@@ -76,16 +76,13 @@ fun DashboardHeroCarousel(
     courseStats: List<CourseStat>,
     unconfiguredCount: Int,
     firstUnconfiguredCourse: Course?,
-    morningBriefing: me.joxquin.notivas.data.model.MorningBriefingData? = null,
-    onOpenRoadmap: () -> Unit = {},
     onCheckPerformance: () -> Unit,
     onConfigureFormulas: (Course?) -> Unit,
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
-    val hasBriefing = morningBriefing != null
-    val totalPages = if (hasBriefing) 3 else 2
+    val totalPages = 2
     val pagerState = rememberPagerState(
         initialPage = 0
     ) { totalPages }
@@ -111,15 +108,8 @@ fun DashboardHeroCarousel(
             modifier = Modifier.fillMaxWidth()
         ) { page ->
             val content: @Composable () -> Unit = {
-                when {
-                    hasBriefing && page == 0 -> {
-                        MorningBriefingSlideContent(
-                            briefing = morningBriefing!!,
-                            onOpenRoadmap = onOpenRoadmap,
-                            isMiuix = isMiuix
-                        )
-                    }
-                    (!hasBriefing && page == 0) || (hasBriefing && page == 1) -> {
+                when (page) {
+                    0 -> {
                         PerformanceSlideContent(
                             overallAverage = overallAverage,
                             onCheckPerformance = onCheckPerformance,

@@ -35,6 +35,7 @@ class PreferencesManager(
 
     private val _universityUrl = MutableStateFlow<String?>("https://canvas.utp.edu.pe")
     val universityUrl: Flow<String?> = _universityUrl.asStateFlow()
+    fun getUniversityUrl(): String? = _universityUrl.value
 
     private val _accessToken = MutableStateFlow<String?>(null)
     val accessToken: Flow<String?> = _accessToken.asStateFlow()
@@ -88,9 +89,6 @@ class PreferencesManager(
 
     private val _notif30m = MutableStateFlow(false)
     val notif30m: Flow<Boolean> = _notif30m.asStateFlow()
-
-    private val _notifMorning = MutableStateFlow(true)
-    val notifMorning: Flow<Boolean> = _notifMorning.asStateFlow()
 
     private val _autoFocusMode = MutableStateFlow(true)
     val autoFocusMode: Flow<Boolean> = _autoFocusMode.asStateFlow()
@@ -217,7 +215,6 @@ class PreferencesManager(
             _notif24h.value = snapshot.notif24h
             _notif3h.value = snapshot.notif3h
             _notif30m.value = snapshot.notif30m
-            _notifMorning.value = snapshot.notifMorning
             _autoFocusMode.value = snapshot.autoFocusMode
             _pomodoroDurationMinutes.value = snapshot.pomodoroDurationMinutes
             _copilotProvider.value = snapshot.copilotProvider
@@ -272,7 +269,6 @@ class PreferencesManager(
                 notif24h = _notif24h.value,
                 notif3h = _notif3h.value,
                 notif30m = _notif30m.value,
-                notifMorning = _notifMorning.value,
                 autoFocusMode = _autoFocusMode.value,
                 pomodoroDurationMinutes = _pomodoroDurationMinutes.value,
                 copilotProvider = _copilotProvider.value,
@@ -368,11 +364,6 @@ class PreferencesManager(
 
     suspend fun setNotif30m(enabled: Boolean) {
         _notif30m.value = enabled
-        schedulePersist()
-    }
-
-    suspend fun setNotifMorning(enabled: Boolean) {
-        _notifMorning.value = enabled
         schedulePersist()
     }
 

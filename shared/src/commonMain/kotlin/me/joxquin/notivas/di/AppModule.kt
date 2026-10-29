@@ -54,9 +54,5 @@ object AppModule {
     val academicCalculatorUseCase: me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase by lazy {
         me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase()
     }
-
-    val morningBriefingUseCase: me.joxquin.notivas.domain.usecase.MorningBriefingUseCase by lazy {
-        me.joxquin.notivas.domain.usecase.MorningBriefingUseCase(openRouterApiService, preferencesManager)
-    }
 }
 

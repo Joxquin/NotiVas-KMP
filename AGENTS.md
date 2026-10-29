@@ -22,7 +22,7 @@ En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implemen
    - Al navegar a una pantalla secundaria, `NavDisplay` escala y difumina automáticamente `MiuixRoute.Main` al fondo, retirando de forma natural la barra flotante.
 
 3. **Pantallas Secundarias Modulares (`Screen`):**
-   - Cada pantalla secundaria (`RecentActivityScreen`, `ScheduleScreen`, `MorningRoadmapScreen`, `AssignmentDraftScreen`, `TaskHistoryArchiveScreen`, `ForoDetailScreen`) es un destino registrado en `NavDisplay`.
+   - Cada pantalla secundaria (`RecentActivityScreen`, `ScheduleScreen`, `AssignmentDraftScreen`, `TaskHistoryArchiveScreen`, `ForoDetailScreen`) es un destino registrado en `NavDisplay`.
    - Cada pantalla secundaria implementa su propio `Scaffold` modular de MIUIX con:
      - `MiuixBlurredBar` con desenfoque (`rememberMiuixBlurBackdrop`).
      - `MiuixPageTopAppBar` con su propio título, `BackNavigationIcon(onClick = onBack)` y acciones contextuales.
