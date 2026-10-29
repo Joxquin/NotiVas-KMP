@@ -171,6 +171,13 @@ class InMemoryLocalStore(
         }
     }
 
+    fun markAssignmentCompleted(id: Long, completed: Boolean = true) {
+        scope.launch {
+            val status = if (completed) "completed" else "upcoming"
+            database.assignmentDao().updateCompletionStatus(id, completed, status)
+        }
+    }
+
     fun deleteAssignmentById(id: Long) {
         scope.launch {
             val existing = database.assignmentDao().getById(id) ?: return@launch

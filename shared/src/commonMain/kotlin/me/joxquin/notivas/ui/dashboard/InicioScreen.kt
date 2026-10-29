@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.ui.animation.staggeredEntrance
 import me.joxquin.notivas.ui.dashboard.components.CoursesMatrixSection
 import me.joxquin.notivas.ui.dashboard.components.GreetingSection
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
@@ -51,11 +52,11 @@ fun InicioScreen(
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToActivity: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
-    onNavigateToRoadmap: () -> Unit = {},
     onOpenAssignmentDraft: ((AssignmentUiModel) -> Unit)? = null,
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     onNavigateToCourseDetail: ((me.joxquin.notivas.data.model.Course) -> Unit)? = null,
     onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
+    isEntranceTriggered: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val handleCourseClick: (me.joxquin.notivas.data.model.Course) -> Unit = { course ->
@@ -73,9 +74,9 @@ fun InicioScreen(
             onNavigateToCopilot = onNavigateToCopilot,
             onNavigateToHerramientas = onNavigateToHerramientas,
             onNavigateToSchedule = onNavigateToSchedule,
-            onNavigateToRoadmap = onNavigateToRoadmap,
             onOpenAssignmentDraft = onOpenAssignmentDraft,
             onNavigateToForoDetail = onNavigateToForoDetail,
+            isEntranceTriggered = isEntranceTriggered,
             modifier = modifier
         )
         return
@@ -90,7 +91,6 @@ fun InicioScreen(
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
     val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
-    val morningBriefing by viewModel.morningBriefing.collectAsState()
     val discussions by viewModel.discussions.collectAsState()
     val isSessionExpired by viewModel.isSessionExpired.collectAsState()
     val showQuickRelogin by viewModel.showQuickRelogin.collectAsState()
@@ -191,7 +191,12 @@ fun InicioScreen(
                 // ─── 0. Header de Bienvenida (Welcome, Salung) ───────────────────
                 item {
                     val studentName = userProfile?.name ?: "Estudiante"
-                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp)
+                            .staggeredEntrance(index = 0, trigger = isEntranceTriggered)
+                    ) {
                         Text(
                             text = "Bienvenido, ${studentName.substringBefore(" ")}",
                             style = MaterialTheme.typography.headlineMedium.copy(
@@ -220,53 +225,75 @@ fun InicioScreen(
 
                 // ─── 1. Buscador Global (Cápsula Ancla con medición de coordenada Y) ──────────
                 item {
-                    me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
-                        query = searchQuery,
-                        onSearchClick = { viewModel.setSearchExpanded(true) },
-                        onPositionChanged = { searchOffsetY = it },
-                        onAskAi = { query -> onNavigateToCopilot() },
-                        themeStyle = AppThemeStyle.MATERIAL,
-                        isVisible = searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .staggeredEntrance(index = 1, trigger = isEntranceTriggered)
+                    ) {
+                        me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
+                            query = searchQuery,
+                            onSearchClick = { viewModel.setSearchExpanded(true) },
+                            onPositionChanged = { searchOffsetY = it },
+                            onAskAi = { query -> onNavigateToCopilot() },
+                            themeStyle = AppThemeStyle.MATERIAL,
+                            isVisible = searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded
+                        )
+                    }
                 }
 
                 // ─── 2. Carrusel Hero: Rendimiento Académico + Configuración de Fórmulas ─
                 item {
-                    me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
-                        courseStats = courseStats,
-                        unconfiguredCount = unconfiguredBannerState.first,
-                        firstUnconfiguredCourse = unconfiguredBannerState.second,
-                        morningBriefing = morningBriefing,
-                        onOpenRoadmap = { viewModel.openMorningRoadmap() },
-                        onCheckPerformance = { onNavigateToHerramientas() },
-                        onConfigureFormulas = { course ->
-                            if (course != null) {
-                                onNavigateToCourseProgreso(course)
-                            } else if (courses.isNotEmpty()) {
-                                onNavigateToCourseProgreso(courses.first())
-                            }
-                        },
-                        themeStyle = AppThemeStyle.MATERIAL
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .staggeredEntrance(index = 2, trigger = isEntranceTriggered)
+                    ) {
+                        me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
+                            courseStats = courseStats,
+                            unconfiguredCount = unconfiguredBannerState.first,
+                            firstUnconfiguredCourse = unconfiguredBannerState.second,
+                            onCheckPerformance = { onNavigateToHerramientas() },
+                            onConfigureFormulas = { course ->
+                                if (course != null) {
+                                    onNavigateToCourseProgreso(course)
+                                } else if (courses.isNotEmpty()) {
+                                    onNavigateToCourseProgreso(courses.first())
+                                }
+                            },
+                            themeStyle = AppThemeStyle.MATERIAL
+                        )
+                    }
                 }
 
                 // ─── 3. Today's Tasks: Entregas del Día ──────────────────────────
                 item {
-                    me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
-                        tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
-                        onSeeAll = onNavigateToSchedule,
-                        onTaskClick = { selectedAssignmentForSubmenu = it },
-                        themeStyle = AppThemeStyle.MATERIAL
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .staggeredEntrance(index = 3, trigger = isEntranceTriggered)
+                    ) {
+                        me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
+                            tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
+                            onSeeAll = onNavigateToSchedule,
+                            onTaskClick = { selectedAssignmentForSubmenu = it },
+                            themeStyle = AppThemeStyle.MATERIAL
+                        )
+                    }
                 }
 
                 // ─── 4. Cursos Activos: Grid Rediseñado de Cursos ───────────────
                 item {
-                    CoursesMatrixSection(
-                        courseStats = courseStats,
-                        courses = filteredCourses,
-                        onCourseClick = handleCourseClick
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .staggeredEntrance(index = 4, trigger = isEntranceTriggered)
+                    ) {
+                        CoursesMatrixSection(
+                            courseStats = courseStats,
+                            courses = filteredCourses,
+                            onCourseClick = handleCourseClick
+                        )
+                    }
                 }
             }
         }
@@ -314,6 +341,9 @@ fun InicioScreen(
                 selectedAssignmentForSubmenu = null
                 viewModel.openDraft(assignment)
                 onOpenAssignmentDraft?.invoke(assignment)
+            },
+            onMarkCompleted = { assignmentId ->
+                viewModel.markAssignmentCompleted(assignmentId, true)
             }
         )
 

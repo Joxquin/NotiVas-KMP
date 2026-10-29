@@ -82,22 +82,11 @@ class DashboardViewModel(
     private val preferencesManager: PreferencesManager = AppModule.preferencesManager,
     private val simulationDao: SimulationDao = AppModule.simulationDao,
     private val academicCalculatorUseCase: AcademicCalculatorUseCase = AppModule.academicCalculatorUseCase,
-    private val morningBriefingUseCase: me.joxquin.notivas.domain.usecase.MorningBriefingUseCase = AppModule.morningBriefingUseCase
+    private val localStore: me.joxquin.notivas.data.local.InMemoryLocalStore = AppModule.localStore
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
-
-    private val _showingMorningRoadmap = MutableStateFlow(false)
-    val showingMorningRoadmap: StateFlow<Boolean> = _showingMorningRoadmap.asStateFlow()
-
-    fun openMorningRoadmap() {
-        _showingMorningRoadmap.value = true
-    }
-
-    fun closeMorningRoadmap() {
-        _showingMorningRoadmap.value = false
-    }
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.SYNCING)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
@@ -575,6 +564,28 @@ class DashboardViewModel(
     }
 
     /**
+     * Marca una tarea manualmente como completada en la base de datos local
+     */
+    fun markAssignmentCompleted(assignmentId: Long, completed: Boolean = true) {
+        viewModelScope.launch {
+            localStore.markAssignmentCompleted(assignmentId, completed)
+            // Si estaba abierta en borrador, actualizar el estado
+            _selectedAssignmentForDraft.value?.let { current ->
+                if (current.assignment.id == assignmentId) {
+                    _selectedAssignmentForDraft.value = current.copy(
+                        assignment = current.assignment.copy(isCompleted = completed, status = if (completed) "completed" else "upcoming")
+                    )
+                }
+            }
+            _uiEffect.tryEmit(
+                UiEffect.ShowToast(
+                    if (completed) "Tarea marcada como realizada" else "Tarea marcada como pendiente"
+                )
+            )
+        }
+    }
+
+    /**
      * Despacho Formal a Canvas LMS.
      * Envía la entrega al endpoint de Canvas, actualiza localmente y retira la tarea de la lista de urgentes.
      */
@@ -923,30 +934,6 @@ class DashboardViewModel(
 
     fun inspectCourse(course: Course?) {
         _inspectedCourse.value = course
-    }
-
-    private val _forceAiMorningRefresh = MutableStateFlow(0)
-
-    val morningBriefing: StateFlow<me.joxquin.notivas.data.model.MorningBriefingData?> = combine(
-        userProfile,
-        courses,
-        allAssignmentsUi,
-        courseStats,
-        _forceAiMorningRefresh
-    ) { profile, courseList, assignments, stats, refreshCount ->
-        morningBriefingUseCase.buildMorningBriefing(
-            userProfile = profile,
-            courses = courseList,
-            allAssignments = assignments,
-            courseStats = stats,
-            forceAiRefresh = refreshCount > 0
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
-    fun refreshMorningBriefingAi() {
-        viewModelScope.launch {
-            _forceAiMorningRefresh.value += 1
-        }
     }
 
     private fun isJsonContent(bytes: ByteArray): Boolean {

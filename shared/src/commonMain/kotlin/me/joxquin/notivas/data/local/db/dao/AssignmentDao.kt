@@ -44,6 +44,9 @@ interface AssignmentDao {
     @Query("UPDATE assignments SET notification_sent = :sent WHERE id = :id")
     suspend fun updateNotificationSent(id: Long, sent: Boolean)
 
+    @Query("UPDATE assignments SET is_completed = :completed, status = :status WHERE id = :id")
+    suspend fun updateCompletionStatus(id: Long, completed: Boolean, status: String)
+
     @Query("DELETE FROM assignments WHERE course_id = :courseId")
     suspend fun deleteByCourse(courseId: Long)
 

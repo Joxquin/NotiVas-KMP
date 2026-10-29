@@ -30,6 +30,7 @@ import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import me.joxquin.notivas.ui.animation.staggeredEntrance
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.components.SelectedDateAssignmentsSection
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
@@ -64,9 +65,9 @@ fun InicioMiuixContent(
     onNavigateToCopilot: () -> Unit = {},
     onNavigateToHerramientas: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
-    onNavigateToRoadmap: () -> Unit = {},
     onOpenAssignmentDraft: ((me.joxquin.notivas.ui.dashboard.AssignmentUiModel) -> Unit)? = null,
     onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
+    isEntranceTriggered: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val handleCourseClick: (me.joxquin.notivas.data.model.Course) -> Unit = { course ->
@@ -81,7 +82,6 @@ fun InicioMiuixContent(
     val courseStats by viewModel.courseStats.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
-    val morningBriefing by viewModel.morningBriefing.collectAsState()
     val discussions by viewModel.discussions.collectAsState()
     val isSessionExpired by viewModel.isSessionExpired.collectAsState()
     val showQuickRelogin by viewModel.showQuickRelogin.collectAsState()
@@ -165,6 +165,7 @@ fun InicioMiuixContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp, vertical = 4.dp)
+                        .staggeredEntrance(index = 0, trigger = isEntranceTriggered)
                         .graphicsLayer {
                             alpha = largeTitleAlpha
                             translationY = largeTitleTranslationY
@@ -196,62 +197,81 @@ fun InicioMiuixContent(
 
             // 1. Buscador Global (Cápsula Ancla con medición de coordenada Y)
             item {
-                me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
-                    query = searchQuery,
-                    onSearchClick = {
-                        viewModel.updateSearchStatus(searchStatus.copy(current = me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING))
-                        viewModel.setSearchExpanded(true)
-                    },
-                    onPositionChanged = {
-                        searchOffsetY = it
-                        viewModel.setSearchOffsetY(it)
-                    },
-                    onAskAi = { query -> onNavigateToCopilot() },
-                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-                    isVisible = searchStatus.isCollapsed() && searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .staggeredEntrance(index = 1, trigger = isEntranceTriggered)
+                ) {
+                    me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
+                        query = searchQuery,
+                        onSearchClick = {
+                            viewModel.updateSearchStatus(searchStatus.copy(current = me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING))
+                            viewModel.setSearchExpanded(true)
+                        },
+                        onPositionChanged = {
+                            searchOffsetY = it
+                            viewModel.setSearchOffsetY(it)
+                        },
+                        onAskAi = { query -> onNavigateToCopilot() },
+                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                        isVisible = searchStatus.isCollapsed() && searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded
+                    )
+                }
             }
 
             // 2. Carrusel Hero: Rendimiento Académico + Configuración de Fórmulas
             item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
-                    courseStats = courseStats,
-                    unconfiguredCount = unconfiguredBannerState.first,
-                    firstUnconfiguredCourse = unconfiguredBannerState.second,
-                    morningBriefing = morningBriefing,
-                    onOpenRoadmap = {
-                        viewModel.openMorningRoadmap()
-                        onNavigateToRoadmap()
-                    },
-                    onCheckPerformance = { onNavigateToHerramientas() },
-                    onConfigureFormulas = { course ->
-                        if (course != null) {
-                            onNavigateToCourseProgreso(course)
-                        } else if (courses.isNotEmpty()) {
-                            onNavigateToCourseProgreso(courses.first())
-                        }
-                    },
-                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .staggeredEntrance(index = 2, trigger = isEntranceTriggered)
+                ) {
+                    me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
+                        courseStats = courseStats,
+                        unconfiguredCount = unconfiguredBannerState.first,
+                        firstUnconfiguredCourse = unconfiguredBannerState.second,
+                        onCheckPerformance = { onNavigateToHerramientas() },
+                        onConfigureFormulas = { course ->
+                            if (course != null) {
+                                onNavigateToCourseProgreso(course)
+                            } else if (courses.isNotEmpty()) {
+                                onNavigateToCourseProgreso(courses.first())
+                            }
+                        },
+                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                    )
+                }
             }
 
             // 3. Today's Tasks: Entregas del Día
             item {
-                me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
-                    tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
-                    onSeeAll = onNavigateToSchedule,
-                    onTaskClick = { selectedAssignmentForSubmenu = it },
-                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .staggeredEntrance(index = 3, trigger = isEntranceTriggered)
+                ) {
+                    me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
+                        tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
+                        onSeeAll = onNavigateToSchedule,
+                        onTaskClick = { selectedAssignmentForSubmenu = it },
+                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                    )
+                }
             }
 
             // 4. Courses Summary List (Grid de 2 columnas de cursos estilo MIUIX)
             item {
-                MiuixCourseSummaryList(
-                    courses = filteredCourses,
-                    courseStats = courseStats,
-                    onCourseClick = handleCourseClick
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .staggeredEntrance(index = 4, trigger = isEntranceTriggered)
+                ) {
+                    MiuixCourseSummaryList(
+                        courses = filteredCourses,
+                        courseStats = courseStats,
+                        onCourseClick = handleCourseClick
+                    )
+                }
             }
         }
 
@@ -304,6 +324,9 @@ fun InicioMiuixContent(
                 selectedAssignmentForSubmenu = null
                 viewModel.openDraft(assignment)
                 onOpenAssignmentDraft?.invoke(assignment)
+            },
+            onMarkCompleted = { assignmentId ->
+                viewModel.markAssignmentCompleted(assignmentId, true)
             }
         )
 

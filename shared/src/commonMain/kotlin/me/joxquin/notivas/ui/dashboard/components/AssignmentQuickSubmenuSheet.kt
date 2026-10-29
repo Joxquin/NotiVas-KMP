@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.CheckCircle
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -37,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +65,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,6 +81,7 @@ fun AssignmentQuickSubmenuSheet(
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     onDismissRequest: () -> Unit,
     onOpenDraftScreen: (AssignmentUiModel) -> Unit,
+    onMarkCompleted: ((Long) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // Retener el modelo de tarea no nulo para permitir que las animaciones de salida concluyan
@@ -91,6 +96,80 @@ fun AssignmentQuickSubmenuSheet(
     val coroutineScope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var showConfirmCompleteDialog by remember { mutableStateOf(false) }
+    var showCustomReminderSheet by remember { mutableStateOf(false) }
+
+    if (showConfirmCompleteDialog) {
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            WindowDialog(
+                show = showConfirmCompleteDialog,
+                title = stringResource(Res.string.task_mark_completed_dialog_title),
+                summary = stringResource(Res.string.task_mark_completed_dialog_desc),
+                onDismissRequest = { showConfirmCompleteDialog = false },
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        top.yukonga.miuix.kmp.basic.TextButton(
+                            text = stringResource(Res.string.task_mark_completed_dialog_cancel),
+                            onClick = { showConfirmCompleteDialog = false },
+                            modifier = Modifier.weight(1f),
+                            colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.textButtonColors(
+                                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                textColor = MiuixTheme.colorScheme.onSurface
+                            )
+                        )
+                        top.yukonga.miuix.kmp.basic.TextButton(
+                            text = stringResource(Res.string.task_mark_completed_dialog_confirm),
+                            onClick = {
+                                showConfirmCompleteDialog = false
+                                onMarkCompleted?.invoke(item.assignment.id)
+                                onDismissRequest()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.textButtonColorsPrimary()
+                        )
+                    }
+                }
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { showConfirmCompleteDialog = false },
+                title = { Text(stringResource(Res.string.task_mark_completed_dialog_title)) },
+                text = { Text(stringResource(Res.string.task_mark_completed_dialog_desc)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showConfirmCompleteDialog = false
+                            onMarkCompleted?.invoke(item.assignment.id)
+                            onDismissRequest()
+                        }
+                    ) {
+                        Text(stringResource(Res.string.task_mark_completed_dialog_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showConfirmCompleteDialog = false }) {
+                        Text(stringResource(Res.string.task_mark_completed_dialog_cancel))
+                    }
+                }
+            )
+        }
+    }
+
+    if (showCustomReminderSheet) {
+        CustomReminderBottomSheet(
+            show = showCustomReminderSheet,
+            onDismissRequest = { showCustomReminderSheet = false },
+            assignment = item.assignment,
+            courseName = item.courseName,
+            themeStyle = themeStyle,
+            onReminderSet = {
+                onDismissRequest()
+            }
+        )
+    }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         WindowBottomSheet(
@@ -321,31 +400,27 @@ fun AssignmentQuickSubmenuSheet(
                                 onClick = {
                                     item.assignment.htmlUrl?.let { url ->
                                         pendingAction = {
-                                            try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                            me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(url)
                                         }
                                     }
                                     onDismissRequest()
                                 }
                             )
-                            if (!isQuiz) {
-                                MiuixSubmenuRow(
-                                    icon = Icons.Default.FactCheck,
-                                    title = stringResource(Res.string.task_submenu_view_rubric),
-                                    iconTint = MiuixTheme.colorScheme.primary,
-                                    onClick = onDismissRequest
-                                )
-                            }
                             MiuixSubmenuRow(
                                 icon = Icons.Default.CheckCircle,
                                 title = stringResource(Res.string.task_submenu_mark_completed),
                                 iconTint = MiuixTheme.colorScheme.primary,
-                                onClick = onDismissRequest
+                                onClick = {
+                                    showConfirmCompleteDialog = true
+                                }
                             )
                             MiuixSubmenuRow(
-                                icon = Icons.Default.Archive,
-                                title = stringResource(Res.string.task_submenu_archive),
-                                iconTint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                onClick = onDismissRequest
+                                icon = Icons.Default.Alarm,
+                                title = stringResource(Res.string.task_submenu_custom_reminder),
+                                iconTint = MiuixTheme.colorScheme.primary,
+                                onClick = {
+                                    showCustomReminderSheet = true
+                                }
                             )
                             MiuixSubmenuRow(
                                 icon = Icons.Default.Share,
@@ -625,31 +700,27 @@ fun AssignmentQuickSubmenuSheet(
                                 onClick = {
                                     item.assignment.htmlUrl?.let { url ->
                                         pendingAction = {
-                                            try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                            me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(url)
                                         }
                                         dismissState?.invoke()
                                     } ?: dismissState?.invoke()
                                 }
                             )
-                            if (!isQuiz) {
-                                MaterialSubmenuRow(
-                                    icon = Icons.Default.FactCheck,
-                                    title = stringResource(Res.string.task_submenu_view_rubric),
-                                    iconTint = MaterialTheme.colorScheme.primary,
-                                    onClick = { dismissState?.invoke() }
-                                )
-                            }
                             MaterialSubmenuRow(
                                 icon = Icons.Default.CheckCircle,
                                 title = stringResource(Res.string.task_submenu_mark_completed),
                                 iconTint = MaterialTheme.colorScheme.primary,
-                                onClick = { dismissState?.invoke() }
+                                onClick = {
+                                    showConfirmCompleteDialog = true
+                                }
                             )
                             MaterialSubmenuRow(
-                                icon = Icons.Default.Archive,
-                                title = stringResource(Res.string.task_submenu_archive),
-                                iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                onClick = { dismissState?.invoke() }
+                                icon = Icons.Default.Alarm,
+                                title = stringResource(Res.string.task_submenu_custom_reminder),
+                                iconTint = MaterialTheme.colorScheme.primary,
+                                onClick = {
+                                    showCustomReminderSheet = true
+                                }
                             )
                             MaterialSubmenuRow(
                                 icon = Icons.Default.Share,
