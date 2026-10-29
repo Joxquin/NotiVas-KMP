@@ -64,8 +64,6 @@
     <string name="notif_3h_desc">Urgent alert for upcoming deliveries</string>
     <string name="notif_30m_title">30 minutes before</string>
     <string name="notif_30m_desc">Final countdown alert</string>
-    <string name="notif_morning_title">Daily Morning Briefing</string>
-    <string name="notif_morning_desc">Daily task summary at 8:00 AM</string>
     <string name="sync_interval_title">Sync Frequency</string>
     <string name="sync_interval_desc">How often Canvas data is checked in the background</string>
     <string name="sync_interval_dialog_title">Sync frequency</string>
@@ -478,6 +476,17 @@
     <string name="task_submenu_view_rubric">View evaluation rubric</string>
     <string name="task_submenu_archive">Archive assignment from Dashboard</string>
     <string name="task_submenu_mark_completed">Mark as completed</string>
+    <string name="task_submenu_custom_reminder">Custom reminder</string>
+    <string name="task_mark_completed_dialog_title">Mark as completed?</string>
+    <string name="task_mark_completed_dialog_desc">This assignment will be marked as completed and hidden from your priority upcoming tasks on the Dashboard.</string>
+    <string name="task_mark_completed_dialog_confirm">Mark as completed</string>
+    <string name="task_mark_completed_dialog_cancel">Cancel</string>
+    <string name="custom_reminder_title">Custom Reminder</string>
+    <string name="custom_reminder_date_label">Date</string>
+    <string name="custom_reminder_time_label">Time</string>
+    <string name="custom_reminder_due_warning">Notice: This reminder is scheduled after the assignment due date.</string>
+    <string name="custom_reminder_save">Save reminder</string>
+    <string name="custom_reminder_saved_toast">Reminder scheduled successfully</string>
     <string name="task_submenu_share">Share assignment link</string>
     <string name="task_due_label">Due:</string>
     <string name="task_points_label">Points:</string>
@@ -625,33 +634,6 @@
     <string name="search_no_results">No results found for \"%1$s\"</string>
     <string name="search_ask_copilot_format">Ask Copilot AI about \"%1$s\"</string>
     <string name="search_quick_suggestions">Suggestions &amp; shortcuts</string>
-
-    <!-- Morning Briefing & Daily Roadmap -->
-    <string name="morning_briefing_pill">Morning Briefing • Today 8:00 AM</string>
-    <string name="morning_briefing_greeting">Good morning, %1$s! You have %2$d submissions today.</string>
-    <string name="morning_briefing_greeting_zero">Good morning, %1$s! You have no pending submissions today.</string>
-    <string name="morning_briefing_critical_tasks">%1$d critical (&lt;12h)</string>
-    <string name="morning_briefing_upcoming_tasks">%1$d upcoming (12-48h)</string>
-    <string name="morning_briefing_closing_today">%1$d closing today</string>
-    <string name="morning_briefing_due_in_format">Due in %1$s</string>
-    <string name="morning_briefing_due_at_format">Today %1$s</string>
-    <string name="morning_briefing_points_format">%1$s pts</string>
-    <string name="morning_briefing_weight_format">%1$s%% weighted</string>
-    <string name="morning_briefing_view_plan">View daily plan</string>
-    <string name="daily_roadmap_title">Morning Briefing</string>
-    <string name="daily_roadmap_executive_summary_title">Executive Summary</string>
-    <string name="daily_roadmap_timeline_title">Day Schedule &amp; Blocks</string>
-    <string name="daily_roadmap_impact_title">Academic Impact Breakdown</string>
-    <string name="daily_roadmap_points_stake_format">Today defines %1$s accumulated semester points</string>
-    <string name="daily_roadmap_at_risk_warning">Critical Impact on Average</string>
-    <string name="daily_roadmap_action_drive">Start Draft in Drive</string>
-    <string name="daily_roadmap_action_snooze">Snooze alerts</string>
-    <string name="daily_roadmap_action_undo">Undo</string>
-    <string name="daily_roadmap_action_ask_ai">Ask Copilot: Divide study time</string>
-    <string name="daily_roadmap_action_explain_rubric">Ask Copilot: Explain rubric</string>
-    <string name="morning_briefing_api_key_required_title">OpenRouter API Key Required</string>
-    <string name="morning_briefing_api_key_required_desc">The daily morning briefing requires an active OpenRouter API key to generate intelligent summaries and study advice.</string>
-    <string name="morning_briefing_configure_api_key">Configure API Key</string>
 
     <!-- Course Detail Screen (Stitch Redesign) -->
     <string name="course_detail_screen_title">Course Detail</string>

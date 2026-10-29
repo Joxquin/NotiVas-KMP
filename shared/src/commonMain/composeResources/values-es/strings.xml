@@ -64,8 +64,6 @@
     <string name="notif_3h_desc">Alerta de entrega próxima urgente</string>
     <string name="notif_30m_title">30 minutos antes</string>
     <string name="notif_30m_desc">Alerta de cuenta regresiva final</string>
-    <string name="notif_morning_title">Resumen Matutino Diario</string>
-    <string name="notif_morning_desc">Resumen de tareas del día a las 8:00 AM</string>
     <string name="sync_interval_title">Frecuencia de Sincronización</string>
     <string name="sync_interval_desc">Intervalo para comprobar novedades de Canvas en segundo plano</string>
     <string name="sync_interval_dialog_title">Frecuencia de sincronización</string>
@@ -478,6 +476,17 @@
     <string name="task_submenu_view_rubric">Ver rúbrica de evaluación</string>
     <string name="task_submenu_archive">Archivar tarea del Dashboard</string>
     <string name="task_submenu_mark_completed">Marcar como realizada</string>
+    <string name="task_submenu_custom_reminder">Recordatorio personalizado</string>
+    <string name="task_mark_completed_dialog_title">¿Marcar como realizada?</string>
+    <string name="task_mark_completed_dialog_desc">Esta tarea se marcará como completada y se ocultará de tus tareas pendientes prioritarias en el Dashboard.</string>
+    <string name="task_mark_completed_dialog_confirm">Marcar como realizada</string>
+    <string name="task_mark_completed_dialog_cancel">Cancelar</string>
+    <string name="custom_reminder_title">Recordatorio Personalizado</string>
+    <string name="custom_reminder_date_label">Fecha</string>
+    <string name="custom_reminder_time_label">Hora</string>
+    <string name="custom_reminder_due_warning">Atención: Este recordatorio está programado para después de la fecha límite de entrega.</string>
+    <string name="custom_reminder_save">Guardar recordatorio</string>
+    <string name="custom_reminder_saved_toast">Recordatorio programado con éxito</string>
     <string name="task_submenu_share">Compartir enlace de tarea</string>
     <string name="task_due_label">Vencimiento:</string>
     <string name="task_points_label">Puntos:</string>
@@ -625,33 +634,6 @@
     <string name="search_no_results">No se encontraron resultados para \"%1$s\"</string>
     <string name="search_ask_copilot_format">Preguntar a Copilot IA sobre \"%1$s\"</string>
     <string name="search_quick_suggestions">Sugerencias y accesos directos</string>
-
-    <!-- Morning Briefing & Daily Roadmap -->
-    <string name="morning_briefing_pill">Resumen Matutino • Hoy 8:00 AM</string>
-    <string name="morning_briefing_greeting">¡Buen día, %1$s! Tienes %2$d entregas para hoy.</string>
-    <string name="morning_briefing_greeting_zero">¡Buen día, %1$s! No tienes entregas pendientes para hoy.</string>
-    <string name="morning_briefing_critical_tasks">%1$d críticas (&lt;12h)</string>
-    <string name="morning_briefing_upcoming_tasks">%1$d próximas (12-48h)</string>
-    <string name="morning_briefing_closing_today">%1$d cierran hoy</string>
-    <string name="morning_briefing_due_in_format">Vence en %1$s</string>
-    <string name="morning_briefing_due_at_format">Hoy %1$s</string>
-    <string name="morning_briefing_points_format">%1$s pts</string>
-    <string name="morning_briefing_weight_format">%1$s%% ponderado</string>
-    <string name="morning_briefing_view_plan">Ver plan del día</string>
-    <string name="daily_roadmap_title">Resumen Matutino</string>
-    <string name="daily_roadmap_executive_summary_title">Resumen Ejecutivo del Asistente</string>
-    <string name="daily_roadmap_timeline_title">Cronograma y Bloques del Día</string>
-    <string name="daily_roadmap_impact_title">Desglose de Impacto Académico</string>
-    <string name="daily_roadmap_points_stake_format">Hoy defines %1$s puntos acumulados del semestre</string>
-    <string name="daily_roadmap_at_risk_warning">Impacto Crítico en Promedio</string>
-    <string name="daily_roadmap_action_drive">Iniciar Borrador en Drive</string>
-    <string name="daily_roadmap_action_snooze">Silenciar alertas</string>
-    <string name="daily_roadmap_action_undo">Deshacer</string>
-    <string name="daily_roadmap_action_ask_ai">¿Cómo divido mi tiempo de estudio para hoy?</string>
-    <string name="daily_roadmap_action_explain_rubric">Explícame la rúbrica de la entrega de hoy</string>
-    <string name="morning_briefing_api_key_required_title">API Key de OpenRouter Requerida</string>
-    <string name="morning_briefing_api_key_required_desc">El Resumen Matutino Diario requiere una clave API activa de OpenRouter para generar resúmenes inteligentes y consejos del día.</string>
-    <string name="morning_briefing_configure_api_key">Configurar API Key</string>
 
     <!-- Course Detail Screen (Stitch Redesign) -->
     <string name="course_detail_screen_title">Detalle del Curso</string>

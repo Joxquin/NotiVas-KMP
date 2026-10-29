@@ -76,4 +76,13 @@ actual object DateTimeUtil {
         val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "ES"))
         return ld.format(formatter).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("es", "ES")) else it.toString() }
     }
+
+    actual fun toEpochMillis(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {
+        return try {
+            val ldt = java.time.LocalDateTime.of(year, month, day, hour, minute)
+            ldt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        } catch (_: Exception) {
+            System.currentTimeMillis()
+        }
+    }
 }

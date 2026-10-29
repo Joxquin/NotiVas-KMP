@@ -34,4 +34,5 @@ expect object DateTimeUtil {
     fun dayOfWeekName(date: DateComponents): String // "LUN", "MAR", etc.
     fun formatFullDate(date: DateComponents): String // ej. "Jueves 13 de Marzo"
     fun formatMonthYear(date: DateComponents): String // ej. "Marzo 2026"
+    fun toEpochMillis(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long
 }

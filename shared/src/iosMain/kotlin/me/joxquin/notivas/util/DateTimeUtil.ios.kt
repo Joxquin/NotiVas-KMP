@@ -125,4 +125,18 @@ actual object DateTimeUtil {
         }
         return formatter.stringFromDate(nsDate).replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
+
+    actual fun toEpochMillis(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {
+        val calendar = NSCalendar.currentCalendar
+        val comp = NSDateComponents().apply {
+            this.year = year.toLong()
+            this.month = month.toLong()
+            this.day = day.toLong()
+            this.hour = hour.toLong()
+            this.minute = minute.toLong()
+            this.second = 0
+        }
+        val date = calendar.dateFromComponents(comp) ?: NSDate()
+        return (date.timeIntervalSince1970 * 1000).toLong()
+    }
 }
