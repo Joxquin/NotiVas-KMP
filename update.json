@@ -1,8 +1,8 @@
 {
-  "version": "1.2.0",
-  "versionCode": 4,
-  "title": "NotiVas v1.2.0",
-  "notes": "• Academic Forums module with Copilot AI assistant.\n• Background sync and exact alarm notifications.\n• Room SQLite database and grade simulator with weighting templates.\n• Fluid navigation transitions and adjacent page preloading.",
+  "version": "1.3.0",
+  "versionCode": 5,
+  "title": "NotiVas v1.3.0",
+  "notes": "• Animated Startup Splash: Added an engaging Compose startup splash screen featuring a staggered dashboard entrance.\n• Custom Assignment Reminders: Introduced support for scheduling custom reminders for assignments.\n• Quick Dashboard Actions: Added a direct action to mark assignments as completed from the quick submenu.\n• Inline Image Rendering: Enhanced draft rendering to support inline images with authenticated requests and refined format matching.\n• Canvas Intent Prioritization: Prioritized the native Canvas Student app via intent when opening canvas URLs.",
   "downloadUrl": "https://github.com/Joxquin/NotiVas-KMP/releases/latest",
   "mandatory": false
 }
