@@ -65,7 +65,8 @@ fun NotiVasBrandLogo(
 
             val capBaseColor = if (transparentBackground && isDark) Color(0xFF3D3028) else Color(0xFF150B00)
             val diamondColor = if (transparentBackground && isDark) Color(0xFFF7ECE4) else Color(0xFF2A1700)
-            val facetColor = if (transparentBackground && isDark) Color(0xFFE2D4C8) else Color(0xFF534434).copy(alpha = 0.32f)
+            val facetColor =
+                if (transparentBackground && isDark) Color(0xFFE2D4C8) else Color(0xFF534434).copy(alpha = 0.32f)
             val cordColor = if (transparentBackground && isDark) Color(0xFF769352) else Color(0xFF4F6532)
             val tasselColor = if (transparentBackground && isDark) Color(0xFF5A743B) else Color(0xFF3A4D23)
             val ringColor = if (transparentBackground && isDark) Color(0xFFFFB74D) else Color(0xFFF59E0B)
@@ -73,9 +74,9 @@ fun NotiVasBrandLogo(
             // 1. Casquete / Base Inferior del Birrete
             val capBasePath = Path().apply {
                 moveTo(sx(28f), sy(70f))
-                lineTo(sx(28f), sy(96f))
+                lineTo(sx(28f), sy(98f))
                 cubicTo(sx(28f), sy(116f), sx(47f), sy(127f), sx(70f), sy(127f))
-                cubicTo(sx(93f), sy(127f), sx(112f), sy(116f), sx(112f), sy(96f))
+                cubicTo(sx(93f), sy(127f), sx(112f), sy(116f), sx(112f), sy(98f))
                 lineTo(sx(112f), sy(70f))
                 lineTo(sx(70f), sy(88f))
                 close()
@@ -111,21 +112,21 @@ fun NotiVasBrandLogo(
             drawPath(
                 path = cordPath,
                 color = cordColor,
-                style = Stroke(width = sx(4.5f), cap = StrokeCap.Round)
+                style = Stroke(width = sx(4f), cap = StrokeCap.Round)
             )
 
             // 5. Boton Pivote Central de la Borla
             drawCircle(
                 color = cordColor,
-                radius = sx(6f),
+                radius = sx(5.5f),
                 center = Offset(sx(70f), sy(54f))
             )
 
             // 6. Flecos de Graduacion
             val tasselPath = Path().apply {
                 moveTo(sx(28f), sy(98f))
-                lineTo(sx(23f), sy(120f))
-                cubicTo(sx(24f), sy(123f), sx(31f), sy(123f), sx(33f), sy(120f))
+                lineTo(sx(24f), sy(118f))
+                cubicTo(sx(24f), sy(121f), sx(31f), sy(121f), sx(32f), sy(118f))
                 lineTo(sx(31f), sy(98f))
                 close()
             }
@@ -135,7 +136,7 @@ fun NotiVasBrandLogo(
             drawRect(
                 color = ringColor,
                 topLeft = Offset(sx(24f), sy(101f)),
-                size = androidx.compose.ui.geometry.Size(sx(8f), sy(4f))
+                size = androidx.compose.ui.geometry.Size(sx(7.5f), sy(3.5f))
             )
         }
     }
@@ -159,6 +160,7 @@ fun NotiVasOutlineLogo(
             val w = this.size.width
             val h = this.size.height
 
+            // Factor de escala relativo del vector original
             fun sx(x: Float) = (x / 140f) * w
             fun sy(y: Float) = (y / 140f) * h
 
@@ -167,9 +169,9 @@ fun NotiVasOutlineLogo(
             // 1. Casquete / Base Inferior del Birrete (Trazo Outline)
             val capBasePath = Path().apply {
                 moveTo(sx(28f), sy(70f))
-                lineTo(sx(28f), sy(96f))
+                lineTo(sx(28f), sy(98f))
                 cubicTo(sx(28f), sy(116f), sx(47f), sy(127f), sx(70f), sy(127f))
-                cubicTo(sx(93f), sy(127f), sx(112f), sy(116f), sx(112f), sy(96f))
+                cubicTo(sx(93f), sy(127f), sx(112f), sy(116f), sx(112f), sy(98f))
                 lineTo(sx(112f), sy(70f))
             }
             drawPath(
@@ -218,15 +220,15 @@ fun NotiVasOutlineLogo(
             // 5. Boton Pivote Central de la Borla
             drawCircle(
                 color = tint,
-                radius = sx(4.5f),
+                radius = sx(5.5f),
                 center = Offset(sx(70f), sy(54f))
             )
 
             // 6. Flecos de Graduacion
             val tasselPath = Path().apply {
                 moveTo(sx(28f), sy(98f))
-                lineTo(sx(23f), sy(118f))
-                cubicTo(sx(24f), sy(121f), sx(31f), sy(121f), sx(33f), sy(118f))
+                lineTo(sx(24f), sy(118f))
+                cubicTo(sx(24f), sy(121f), sx(31f), sy(121f), sx(32f), sy(118f))
                 lineTo(sx(31f), sy(98f))
                 close()
             }
