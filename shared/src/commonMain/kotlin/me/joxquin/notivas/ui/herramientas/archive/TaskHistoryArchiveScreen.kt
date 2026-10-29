@@ -278,10 +278,7 @@ fun TaskHistoryArchiveScreen(
                                         onOpenAssignmentDetail?.invoke(item.assignment)
                                     },
                                     onOpenUrl = { url ->
-                                        try {
-                                            uriHandler.openUri(url)
-                                        } catch (_: Exception) {
-                                        }
+                                        me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(url)
                                     },
                                     onRestoreToPending = {
                                         viewModel.restoreAssignmentToPending(item.assignment.id)
@@ -461,10 +458,7 @@ fun TaskHistoryArchiveScreen(
                                         onOpenAssignmentDetail?.invoke(item.assignment)
                                     },
                                     onOpenUrl = { url ->
-                                        try {
-                                            uriHandler.openUri(url)
-                                        } catch (_: Exception) {
-                                        }
+                                        me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(url)
                                     },
                                     onRestoreToPending = {
                                         viewModel.restoreAssignmentToPending(item.assignment.id)
