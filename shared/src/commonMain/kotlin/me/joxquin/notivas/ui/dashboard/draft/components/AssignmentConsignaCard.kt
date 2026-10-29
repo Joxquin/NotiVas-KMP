@@ -38,13 +38,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.di.AppModule
 import me.joxquin.notivas.shared.resources.*
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
@@ -72,7 +80,8 @@ data class ConsignaSection(
     val introText: String,
     val downloadLink: Pair<String, String>? = null,
     val bullets: List<ConsignaBullet> = emptyList(),
-    val otherLinks: List<Pair<String, String>> = emptyList()
+    val otherLinks: List<Pair<String, String>> = emptyList(),
+    val imageUrls: List<String> = emptyList()
 )
 
 @Composable
@@ -82,8 +91,15 @@ fun AssignmentConsignaCard(
     modifier: Modifier = Modifier
 ) {
     val uriHandler = LocalUriHandler.current
-    val sections = remember(assignment.description) {
-        parseConsignaSections(assignment.description)
+    val token = remember { AppModule.preferencesManager.getAccessToken() }
+    val cookies = remember { AppModule.preferencesManager.getSessionCookies() }
+    val baseUrl = remember(assignment.htmlUrl) {
+        assignment.htmlUrl?.let { url ->
+            Regex("""^(https?://[^/]+)""").find(url)?.value
+        } ?: AppModule.preferencesManager.getUniversityUrl()
+    }
+    val sections = remember(assignment.description, baseUrl) {
+        parseConsignaSections(assignment.description, baseUrl)
     }
 
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
@@ -225,6 +241,27 @@ fun AssignmentConsignaCard(
                                         lineHeight = 19.sp,
                                         color = onSurfaceVariantColor
                                     )
+                                }
+
+                                // Imagenes de la consigna
+                                if (section.imageUrls.isNotEmpty()) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        for (imageUrl in section.imageUrls) {
+                                            ConsignaImageItem(
+                                                imageUrl = imageUrl,
+                                                baseUrl = baseUrl,
+                                                token = token,
+                                                cookies = cookies,
+                                                backgroundColor = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                                onOpenUrl = { url ->
+                                                    try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
 
                                 // Botón interactivo para Descargar Guía / Archivo
@@ -399,6 +436,26 @@ fun AssignmentConsignaCard(
                                     )
                                 }
 
+                                if (section.imageUrls.isNotEmpty()) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        for (imageUrl in section.imageUrls) {
+                                            ConsignaImageItem(
+                                                imageUrl = imageUrl,
+                                                baseUrl = baseUrl,
+                                                token = token,
+                                                cookies = cookies,
+                                                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                onOpenUrl = { url ->
+                                                    try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
                                 section.downloadLink?.let { (label, url) ->
                                     Surface(
                                         shape = RoundedCornerShape(12.dp),
@@ -510,13 +567,80 @@ fun AssignmentConsignaCard(
     }
 }
 
-internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
+@Composable
+private fun ConsignaImageItem(
+    imageUrl: String,
+    baseUrl: String?,
+    token: String?,
+    cookies: String?,
+    backgroundColor: Color,
+    onOpenUrl: (String) -> Unit
+) {
+    val platformContext = LocalPlatformContext.current
+    val isCanvasUrl = remember(imageUrl, baseUrl) {
+        (baseUrl != null && imageUrl.startsWith(baseUrl)) ||
+            imageUrl.contains(".instructure.com") ||
+            imageUrl.contains("canvas.")
+    }
+    val imageRequest = remember(imageUrl, token, cookies, isCanvasUrl) {
+        val reqBuilder = ImageRequest.Builder(platformContext)
+            .data(imageUrl)
+            .crossfade(true)
+        if (isCanvasUrl) {
+            val headersBuilder = NetworkHeaders.Builder()
+            if (!token.isNullOrBlank()) {
+                headersBuilder.set("Authorization", "Bearer $token")
+            }
+            if (!cookies.isNullOrBlank()) {
+                headersBuilder.set("Cookie", cookies)
+            }
+            reqBuilder.httpHeaders(headersBuilder.build())
+        }
+        reqBuilder.build()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .clickable { onOpenUrl(imageUrl) }
+    ) {
+        AsyncImage(
+            model = imageRequest,
+            contentDescription = null,
+            contentScale = ContentScale.FillWidth,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+private fun extractImageUrls(html: String, baseUrl: String?): List<String> {
+    val imgMatches = Regex("""(?i)<img[^>]+src=["']([^"']+)["'][^>]*>""").findAll(html)
+    return imgMatches.mapNotNull { match ->
+        val rawSrc = match.groupValues[1].replace("&amp;", "&").trim()
+        if (rawSrc.isBlank() || rawSrc.startsWith("data:")) return@mapNotNull null
+        if (rawSrc.startsWith("http://") || rawSrc.startsWith("https://")) {
+            rawSrc
+        } else if (rawSrc.startsWith("/") && !baseUrl.isNullOrBlank()) {
+            "${baseUrl.trimEnd('/')}$rawSrc"
+        } else {
+            rawSrc
+        }
+    }.toList()
+}
+
+internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List<ConsignaSection> {
     if (html.isNullOrBlank()) return emptyList()
 
     val sectionMatches = Regex("""(?s)<h3[^>]*>(.*?)</h3>(.*?)((?=<h3)|$)""").findAll(html).toList()
 
     if (sectionMatches.isNotEmpty()) {
-        return sectionMatches.map { match ->
+        val firstH3Index = html.indexOf("<h3", ignoreCase = true)
+        val prelude = if (firstH3Index > 0) html.substring(0, firstH3Index) else ""
+        val preludeImages = if (prelude.isNotBlank()) extractImageUrls(prelude, baseUrl) else emptyList()
+
+        return sectionMatches.mapIndexed { index, match ->
             val rawTitle = match.groupValues[1]
             val rawBody = match.groupValues[2]
 
@@ -578,13 +702,17 @@ internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
                 .trim()
             cleanText = cleanText.replace(Regex("""\s+"""), " ")
 
+            val bodyImages = extractImageUrls(rawBody, baseUrl)
+            val sectionImages = if (index == 0) preludeImages + bodyImages else bodyImages
+
             ConsignaSection(
                 title = cleanTitle,
                 iconType = iconType,
                 introText = cleanText,
                 downloadLink = downloadLink,
                 bullets = lis,
-                otherLinks = otherLinks
+                otherLinks = otherLinks,
+                imageUrls = sectionImages
             )
         }
     }
@@ -602,7 +730,12 @@ internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
         url.contains("/files/")
     }
 
+    val imageUrls = extractImageUrls(html, baseUrl)
     val cleanText = html.replace(Regex("<[^>]*>"), " ").cleanEmoji().trim().replace(Regex("""\s+"""), " ")
+
+    if (cleanText.isBlank() && allLinks.isEmpty() && imageUrls.isEmpty()) {
+        return emptyList()
+    }
 
     return listOf(
         ConsignaSection(
@@ -611,7 +744,8 @@ internal fun parseConsignaSections(html: String?): List<ConsignaSection> {
             introText = cleanText,
             downloadLink = downloadLink,
             bullets = emptyList(),
-            otherLinks = allLinks.filter { it != downloadLink }
+            otherLinks = allLinks.filter { it != downloadLink },
+            imageUrls = imageUrls
         )
     )
 }

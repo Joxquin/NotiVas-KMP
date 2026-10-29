@@ -105,7 +105,7 @@ fun AssignmentDraftScreen(
 
     val onOpenCanvas: () -> Unit = {
         assignment.htmlUrl?.let { url ->
-            try { uriHandler.openUri(url) } catch (_: Exception) {}
+            me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(url)
         }
     }
 
@@ -313,17 +313,7 @@ fun AssignmentDraftScreen(
                         )
                     }
 
-                    // 4. Criterios de Rúbrica Canvas (Cuadrícula 2x2)
-                    if (!assignment.isQuiz) {
-                        item(key = "task_rubric") {
-                            AssignmentRubricCard(
-                                assignment = assignment,
-                                themeStyle = themeStyle
-                            )
-                        }
-                    }
-
-                    // 5. Botones de Acción (Guardar para después)
+                    // Botones de Acción (Guardar para después)
                     item(key = "task_actions") {
                         AssignmentBottomActionBar(
                             onSaveForLater = onBack,
@@ -509,17 +499,7 @@ fun AssignmentDraftScreen(
                     )
                 }
 
-                // 4. Criterios de Rúbrica Canvas
-                if (!assignment.isQuiz) {
-                    item(key = "task_rubric_material") {
-                        AssignmentRubricCard(
-                            assignment = assignment,
-                            themeStyle = themeStyle
-                        )
-                    }
-                }
-
-                // 5. Botones de Acción (Guardar para después)
+                // Botones de Acción (Guardar para después)
                 item(key = "task_actions_material") {
                     AssignmentBottomActionBar(
                         onSaveForLater = onBack,

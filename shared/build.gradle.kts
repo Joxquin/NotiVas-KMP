@@ -52,6 +52,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.work.runtime.ktx)
             implementation(libs.play.services.auth)
+            implementation(libs.coil.gif)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -79,7 +80,6 @@ kotlin {
             implementation(libs.androidx.sqlite.bundled)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
-            implementation(libs.coil.gif)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

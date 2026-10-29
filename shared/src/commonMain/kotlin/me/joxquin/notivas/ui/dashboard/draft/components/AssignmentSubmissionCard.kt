@@ -1648,7 +1648,7 @@ internal fun detectExtensionsFromHtml(description: String?): List<String> {
     if (formatMatch != null) {
         val raw = formatMatch.groupValues[1]
         for (ext in knownExtensions) {
-            if (raw.contains(ext)) {
+            if (Regex("""\b$ext\b""").containsMatchIn(raw)) {
                 results.add(ext)
             }
         }

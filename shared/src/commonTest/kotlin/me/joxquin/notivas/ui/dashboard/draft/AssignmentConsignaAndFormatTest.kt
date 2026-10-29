@@ -99,4 +99,13 @@ class AssignmentConsignaAndFormatTest {
         assertNotNull(sections[0].downloadLink)
         assertEquals("https://canvas.test/files/123/download", sections[0].downloadLink?.second)
     }
+
+    @Test
+    fun testParseConsignaSections_withImages() {
+        val imageHtml = """<p><img src="/courses/72704/files/9876/preview" alt="diagrama"></p>"""
+        val sections = parseConsignaSections(imageHtml, baseUrl = "https://tecsup.instructure.com")
+        assertEquals(1, sections.size)
+        assertEquals(1, sections[0].imageUrls.size)
+        assertEquals("https://tecsup.instructure.com/courses/72704/files/9876/preview", sections[0].imageUrls[0])
+    }
 }
