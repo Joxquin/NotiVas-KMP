@@ -46,7 +46,8 @@ class CanvasApiService(
         }
         val cleanBase = withScheme.trimEnd('/')
         val cleanPath = path.trimStart('/')
-        return "$cleanBase/$cleanPath"
+        val directUrl = "$cleanBase/$cleanPath"
+        return me.joxquin.notivas.util.resolveApiUrl(directUrl)
     }
 
     private fun checkAuth(status: HttpStatusCode, bodyText: String) {
@@ -263,8 +264,9 @@ class CanvasApiService(
         val uploadUrl = (initJson["upload_url"] as? JsonPrimitive)?.contentOrNull ?: return null
         val uploadParams = initJson["upload_params"] as? JsonObject ?: JsonObject(emptyMap())
 
+        val resolvedUploadUrl = me.joxquin.notivas.util.resolveApiUrl(uploadUrl)
         val uploadResponse = client.submitFormWithBinaryData(
-            url = uploadUrl,
+            url = resolvedUploadUrl,
             formData = formData {
                 uploadParams.forEach { (key, element) ->
                     val value = (element as? JsonPrimitive)?.contentOrNull
@@ -469,7 +471,8 @@ class CanvasApiService(
                         currentUrl.contains("canvas-user-content.com") ||
                         currentUrl.contains("google.com")
 
-                val response = client.get(currentUrl) {
+                val resolvedDownloadUrl = me.joxquin.notivas.util.resolveApiUrl(currentUrl)
+                val response = client.get(resolvedDownloadUrl) {
                     if (!isExternalStorage) {
                         applyAuth(token)
                     }

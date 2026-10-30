@@ -74,11 +74,15 @@ fun OnboardingFlow(
             true -> {
                 if (onboardingNavigator.current() == OnboardingRoute.Verifying) {
                     onboardingNavigator.replace(OnboardingRoute.Permissions)
+                } else if (onboardingNavigator.current() != OnboardingRoute.Permissions && onboardingNavigator.current() != OnboardingRoute.GoogleDrive) {
+                    onboardingNavigator.push(OnboardingRoute.Permissions)
                 }
             }
             false -> {
                 if (onboardingNavigator.current() == OnboardingRoute.Verifying) {
                     onboardingNavigator.replace(OnboardingRoute.Error)
+                } else if (onboardingNavigator.current() != OnboardingRoute.Error) {
+                    onboardingNavigator.push(OnboardingRoute.Error)
                 }
             }
             null -> {}

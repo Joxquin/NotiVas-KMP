@@ -147,7 +147,9 @@ fun OnboardingWelcomeDomainScreen(
         mutableStateOf(if (sub.isNotBlank()) sub else "utp")
     }
 
-    var showTokenInput by remember(currentToken) { mutableStateOf(currentToken.isNotBlank()) }
+    var showTokenInput by remember(currentToken) {
+        mutableStateOf(currentToken.isNotBlank() || me.joxquin.notivas.getPlatform().name.contains("Web"))
+    }
     var inputToken by remember(currentToken) { mutableStateOf(currentToken) }
     var isTokenVisible by remember { mutableStateOf(false) }
 
