@@ -24,3 +24,19 @@
 # Compose Multiplatform
 -keep class androidx.compose.** { *; }
 -dontwarn androidx.compose.**
+
+# AndroidX WorkManager & Room
+-keep class androidx.work.** { *; }
+-keep class * extends androidx.work.Worker { *; }
+-keep class * extends androidx.work.CoroutineWorker { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep class androidx.work.impl.WorkDatabase_Impl {
+    <init>(...);
+}
+-keepclassmembers class * extends androidx.room.RoomDatabase {
+    <init>(...);
+}
+-keep class androidx.startup.** { *; }
+-dontwarn androidx.work.**
+-dontwarn androidx.room.**
+-dontwarn androidx.startup.**
