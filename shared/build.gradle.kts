@@ -92,7 +92,7 @@ compose.resources {
     publicResClass = true
 }
 
-room {
+configure<androidx.room3.gradle.RoomExtension> {
     schemaDirectory("$projectDir/schemas")
 }
 

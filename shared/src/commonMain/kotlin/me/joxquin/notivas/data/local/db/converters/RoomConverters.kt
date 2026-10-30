@@ -1,18 +1,18 @@
 package me.joxquin.notivas.data.local.db.converters
 
-import androidx.room.TypeConverter
+import androidx.room3.ColumnTypeConverter
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class RoomConverters {
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromStringList(value: List<String>?): String? {
         return value?.let { json.encodeToString(it) }
     }
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun toStringList(value: String?): List<String>? {
         return value?.let {
             try {

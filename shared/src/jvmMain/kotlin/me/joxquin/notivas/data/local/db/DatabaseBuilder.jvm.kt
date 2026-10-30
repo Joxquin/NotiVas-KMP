@@ -1,7 +1,7 @@
 package me.joxquin.notivas.data.local.db
 
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room3.Room
+import androidx.room3.RoomDatabase
 import me.joxquin.notivas.data.local.FileStorageProvider
 import java.io.File
 

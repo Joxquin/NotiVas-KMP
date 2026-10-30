@@ -2,8 +2,8 @@ package me.joxquin.notivas.data.local.db
 
 import android.app.Application
 import android.content.Context
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room3.Room
+import androidx.room3.RoomDatabase
 import java.io.File
 
 actual fun getDatabaseBuilder(): RoomDatabase.Builder<NotivasDatabase> {

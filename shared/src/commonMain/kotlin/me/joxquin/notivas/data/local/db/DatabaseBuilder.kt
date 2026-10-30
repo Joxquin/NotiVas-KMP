@@ -1,18 +1,18 @@
 package me.joxquin.notivas.data.local.db
 
-import androidx.room.RoomDatabase
+import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
-import androidx.room.migration.Migration
+import androidx.room3.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
 expect fun getDatabaseBuilder(): RoomDatabase.Builder<NotivasDatabase>
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
-    override fun migrate(connection: SQLiteConnection) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         fun safeExec(sql: String) {
             try {
                 connection.execSQL(sql)
@@ -46,7 +46,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
 }
 
 val MIGRATION_2_3 = object : Migration(2, 3) {
-    override fun migrate(connection: SQLiteConnection) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         try {
             connection.execSQL("CREATE TABLE IF NOT EXISTS `assignment_drafts` (`assignment_id` INTEGER NOT NULL, `file_name` TEXT NOT NULL, `drive_url` TEXT NOT NULL, `drive_file_id` TEXT, `account_email` TEXT NOT NULL, `detected_template` TEXT, `course_folder` TEXT NOT NULL, `draft_status` TEXT NOT NULL, `last_edited_time` TEXT NOT NULL, `updated_at_timestamp` INTEGER NOT NULL, PRIMARY KEY(`assignment_id`), FOREIGN KEY(`assignment_id`) REFERENCES `assignments`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
             connection.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_assignment_drafts_assignment_id` ON `assignment_drafts` (`assignment_id`)")
@@ -55,7 +55,7 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
 }
 
 val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(connection: SQLiteConnection) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         try {
             connection.execSQL("CREATE TABLE IF NOT EXISTS `activity_logs` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `course_code` TEXT, `course_name` TEXT, `timestamp` INTEGER NOT NULL, `target_id` INTEGER, `secondary_id` INTEGER, `extra_info` TEXT, `action_url` TEXT)")
             connection.execSQL("CREATE INDEX IF NOT EXISTS `index_activity_logs_timestamp` ON `activity_logs` (`timestamp`)")
@@ -65,7 +65,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 }
 
 val MIGRATION_4_5 = object : Migration(4, 5) {
-    override fun migrate(connection: SQLiteConnection) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         try {
             connection.execSQL("ALTER TABLE `courses` ADD COLUMN `image_url` TEXT")
         } catch (_: Throwable) {}
@@ -73,7 +73,7 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
 }
 
 val MIGRATION_5_6 = object : Migration(5, 6) {
-    override fun migrate(connection: SQLiteConnection) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         try {
             connection.execSQL("ALTER TABLE `assignments` ADD COLUMN `allowed_extensions` TEXT")
         } catch (_: Throwable) {}

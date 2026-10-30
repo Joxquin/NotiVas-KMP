@@ -1,10 +1,10 @@
 package me.joxquin.notivas.data.local.db
 
-import androidx.room.ConstructedBy
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.RoomDatabaseConstructor
-import androidx.room.TypeConverters
+import androidx.room3.ConstructedBy
+import androidx.room3.Database
+import androidx.room3.RoomDatabase
+import androidx.room3.RoomDatabaseConstructor
+import androidx.room3.ColumnTypeConverters
 import me.joxquin.notivas.data.local.db.converters.RoomConverters
 import me.joxquin.notivas.data.local.db.dao.AssignmentDao
 import me.joxquin.notivas.data.local.db.dao.CopilotChatDao
@@ -39,7 +39,7 @@ import me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity
     version = 6,
     exportSchema = true
 )
-@TypeConverters(RoomConverters::class)
+@ColumnTypeConverters(RoomConverters::class)
 @ConstructedBy(NotivasDatabaseConstructor::class)
 abstract class NotivasDatabase : RoomDatabase() {
     abstract fun courseDao(): CourseDao
@@ -52,6 +52,4 @@ abstract class NotivasDatabase : RoomDatabase() {
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-expect object NotivasDatabaseConstructor : RoomDatabaseConstructor<NotivasDatabase> {
-    override fun initialize(): NotivasDatabase
-}
+expect object NotivasDatabaseConstructor : RoomDatabaseConstructor<NotivasDatabase>
