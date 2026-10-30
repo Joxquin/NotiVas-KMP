@@ -45,12 +45,39 @@ async function loadPersistedDb() {
     }
 }
 
+async function clearPersistedDb() {
+    try {
+        const db = await openIndexedDb();
+        return new Promise((resolve) => {
+            const tx = db.transaction(DB_STORE_NAME, "readwrite");
+            const store = tx.objectStore(DB_STORE_NAME);
+            const req = store.delete(DB_KEY);
+            req.onsuccess = () => resolve();
+            req.onerror = () => resolve();
+        });
+    } catch (_) {}
+}
+
 let saveTimeout = null;
 function scheduleSave(database) {
+    if (!database) return;
+    try {
+        const check = database.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='courses'");
+        check.step();
+        const hasCourses = check.get()[0] > 0;
+        check.free();
+        if (!hasCourses) {
+            // Do not persist database until essential tables are created by Room
+            return;
+        }
+    } catch (_) {
+        return;
+    }
+
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
         savePersistedDb(database);
-    }, 400);
+    }, 500);
 }
 
 async function savePersistedDb(database) {
@@ -76,7 +103,29 @@ async function getOrCreateDatabase(fileName) {
     }
     const loadPromise = (async () => {
         const savedData = await loadPersistedDb();
-        const db = savedData ? new SQL.Database(savedData) : new SQL.Database();
+        let db = null;
+        if (savedData) {
+            try {
+                db = new SQL.Database(savedData);
+                // Verify database integrity: ensure schema has been created
+                const check = db.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='courses'");
+                check.step();
+                const hasCourses = check.get()[0] > 0;
+                check.free();
+                if (!hasCourses) {
+                    console.warn("[SQLite Worker] Persisted database is missing 'courses' table. Resetting to clean state.");
+                    db.close();
+                    await clearPersistedDb();
+                    db = new SQL.Database();
+                }
+            } catch (err) {
+                console.warn("[SQLite Worker] Corrupted persisted DB detected, starting fresh:", err);
+                await clearPersistedDb();
+                db = new SQL.Database();
+            }
+        } else {
+            db = new SQL.Database();
+        }
         return db;
     })();
     openedDatabases.set(key, loadPromise);
