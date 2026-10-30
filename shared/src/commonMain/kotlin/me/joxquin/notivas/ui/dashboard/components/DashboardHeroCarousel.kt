@@ -372,16 +372,8 @@ private fun FormulasSlideContent(
 ) {
     val onSurfaceColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
     val onVariantColor = if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
-    val accentColor = if (unconfiguredCount > 0) {
-        if (isMiuix) MiuixTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
-    } else {
-        if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-    }
-    val containerAccent = if (unconfiguredCount > 0) {
-        if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.tertiaryContainer
-    } else {
-        if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.primaryContainer
-    }
+    val primaryColor = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+    val primaryContainer = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.primaryContainer
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -401,13 +393,13 @@ private fun FormulasSlideContent(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(containerAccent),
+                        .background(primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = if (unconfiguredCount > 0) Icons.Outlined.Tune else Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = accentColor,
+                        tint = primaryColor,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -418,16 +410,28 @@ private fun FormulasSlideContent(
                 )
             }
 
+            // Píldora de estado (Atención requerida / Al día)
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = containerAccent
+                color = primaryContainer
             ) {
-                Text(
-                    text = if (unconfiguredCount > 0) "Atención requerida" else "Al día",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = accentColor,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = if (unconfiguredCount > 0) Icons.Outlined.Tune else Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = primaryColor,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = if (unconfiguredCount > 0) "Atención requerida" else "Al día",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = primaryColor
+                    )
+                }
             }
         }
 
@@ -445,9 +449,8 @@ private fun FormulasSlideContent(
 
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = onSurfaceColor,
-                lineHeight = 20.sp
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = onSurfaceColor
             )
             Text(
                 text = if (unconfiguredCount > 0) {
@@ -469,24 +472,24 @@ private fun FormulasSlideContent(
                 colors = MiuixButtonDefaults.textButtonColorsPrimary()
             )
         } else {
-            FilledTonalButton(
+            Button(
                 onClick = { onConfigureFormulas(firstUnconfiguredCourse) },
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = containerAccent,
-                    contentColor = accentColor
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = primaryColor,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Tune,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = stringResource(Res.string.unconfigured_banner_btn),
                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
