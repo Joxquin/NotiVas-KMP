@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +26,7 @@ import org.jetbrains.compose.resources.decodeToImageBitmap
 private object ImageCacheManager {
     val cache = mutableMapOf<String, ImageBitmap>()
     val imageClient by lazy {
-        HttpClient(CIO) {
+        HttpClient {
             install(HttpTimeout) {
                 requestTimeoutMillis = 15000
                 connectTimeoutMillis = 10000

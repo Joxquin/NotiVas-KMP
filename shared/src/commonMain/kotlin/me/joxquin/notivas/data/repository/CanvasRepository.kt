@@ -1,7 +1,6 @@
 package me.joxquin.notivas.data.repository
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import me.joxquin.notivas.util.AppDispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -84,7 +83,7 @@ class CanvasRepository(
         localStore.replaceCourseGroupsWithTemplate(updatedCourse, groupsWithItems)
     }
 
-    suspend fun applyTemplateToAllCourses(template: me.joxquin.notivas.domain.template.CourseEvaluationTemplate): Int = withContext(Dispatchers.IO) {
+    suspend fun applyTemplateToAllCourses(template: me.joxquin.notivas.domain.template.CourseEvaluationTemplate): Int = withContext(AppDispatchers.IO) {
         val courses = localStore.getAllCourses().first()
         val updates = courses.map { course ->
             val assignments = localStore.getAssignmentsByCourse(course.id).first()
@@ -98,7 +97,7 @@ class CanvasRepository(
         courses.size
     }
 
-    suspend fun exportGlobalGroupsToJson(): String = withContext(Dispatchers.IO) {
+    suspend fun exportGlobalGroupsToJson(): String = withContext(AppDispatchers.IO) {
         val courses = localStore.getAllCourses().first()
         val allGroupsWithItems = localStore.getAllGroupsWithItemsList()
 
@@ -140,7 +139,7 @@ class CanvasRepository(
         json.encodeToString(me.joxquin.notivas.domain.template.GlobalGroupsExportFile.serializer(), exportFile)
     }
 
-    suspend fun importGlobalGroupsFromJson(jsonContent: String): Result<Int> = withContext(Dispatchers.IO) {
+    suspend fun importGlobalGroupsFromJson(jsonContent: String): Result<Int> = withContext(AppDispatchers.IO) {
         try {
             val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
             val exportFile = json.decodeFromString(me.joxquin.notivas.domain.template.GlobalGroupsExportFile.serializer(), jsonContent)
@@ -218,7 +217,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun resetAllSimulationGroups() = withContext(Dispatchers.IO) {
+    suspend fun resetAllSimulationGroups() = withContext(AppDispatchers.IO) {
         localStore.deleteAllSimulationGroups()
     }
 
@@ -229,7 +228,7 @@ class CanvasRepository(
     suspend fun linkSimulationItemWithCanvas(itemId: Long, assignmentId: Long, name: String, manualScore: Float? = null) =
         localStore.linkItemWithCanvasAssignment(itemId, assignmentId, name, manualScore)
 
-    suspend fun fetchCourseModules(courseId: Long): List<CanvasModule> = withContext(Dispatchers.IO) {
+    suspend fun fetchCourseModules(courseId: Long): List<CanvasModule> = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         return@withContext try {
@@ -243,7 +242,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun fetchCourseAnnouncements(courseId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = withContext(Dispatchers.IO) {
+    suspend fun fetchCourseAnnouncements(courseId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         return@withContext try {
@@ -257,7 +256,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun fetchCourseUsers(courseId: Long): List<UserProfile> = withContext(Dispatchers.IO) {
+    suspend fun fetchCourseUsers(courseId: Long): List<UserProfile> = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         return@withContext try {
@@ -280,7 +279,7 @@ class CanvasRepository(
         courseId: Long,
         assignmentId: Long? = null,
         assignmentDescription: String? = null
-    ): List<me.joxquin.notivas.data.model.TemplateCandidate> = withContext(Dispatchers.IO) {
+    ): List<me.joxquin.notivas.data.model.TemplateCandidate> = withContext(AppDispatchers.IO) {
         val baseUrl = preferencesManager.universityUrl.first() ?: ""
         val candidates = mutableListOf<me.joxquin.notivas.data.model.TemplateCandidate>()
         var currentModuleName: String? = null
@@ -516,7 +515,7 @@ class CanvasRepository(
         candidates.distinctBy { it.title.lowercase() }
     }
 
-    suspend fun fetchAndSaveData() = withContext(Dispatchers.IO) {
+    suspend fun fetchAndSaveData() = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext
 
@@ -567,7 +566,7 @@ class CanvasRepository(
             // 3. Fetch assignments for courses in parallel
             val currentAssignmentsList = coroutineScope {
                 allCoursesList.map { course ->
-                    async(Dispatchers.IO) {
+                    async(AppDispatchers.IO) {
                         try {
                             val rawAssignments = apiService.getAssignmentsForCourse(
                                 baseUrl = baseUrl,
@@ -646,7 +645,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun tryUpgradeSessionToToken(): Boolean = withContext(Dispatchers.IO) {
+    suspend fun tryUpgradeSessionToToken(): Boolean = withContext(AppDispatchers.IO) {
         if (preferencesManager.getAuthMode() == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
             val cookies = preferencesManager.getSessionCookies() ?: return@withContext false
             val csrf = preferencesManager.getCsrfToken()
@@ -661,7 +660,7 @@ class CanvasRepository(
         false
     }
 
-    suspend fun verifyAndSave(url: String, token: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun verifyAndSave(url: String, token: String): Boolean = withContext(AppDispatchers.IO) {
         try {
             apiService.verifyToken(url, "Bearer $token")
             preferencesManager.saveUniversityUrl(url)
@@ -675,7 +674,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun verifyAndSaveSession(url: String, cookies: String, csrfToken: String? = null): Boolean = withContext(Dispatchers.IO) {
+    suspend fun verifyAndSaveSession(url: String, cookies: String, csrfToken: String? = null): Boolean = withContext(AppDispatchers.IO) {
         try {
             apiService.verifyToken(url, "Cookie: $cookies")
             preferencesManager.saveUniversityUrl(url)
@@ -712,7 +711,7 @@ class CanvasRepository(
         preferencesManager.saveGoogleDriveTokens(accessToken, refreshToken, email)
     }
 
-    suspend fun getProfile(): UserProfile = withContext(Dispatchers.IO) {
+    suspend fun getProfile(): UserProfile = withContext(AppDispatchers.IO) {
         val baseUrl = preferencesManager.universityUrl.first() ?: ""
         val token = getAuthToken() ?: throw IllegalStateException("No auth credential found")
         try {
@@ -748,7 +747,7 @@ class CanvasRepository(
         localStore.markNotified30m(assignmentId)
     }
 
-    suspend fun getDiscussionsForCourses(): List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = withContext(Dispatchers.IO) {
+    suspend fun getDiscussionsForCourses(): List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         val courses = localStore.getAllCourses().first()
@@ -777,7 +776,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun getDiscussionTopic(courseId: Long, topicId: Long): me.joxquin.notivas.data.model.CanvasDiscussionTopic? = withContext(Dispatchers.IO) {
+    suspend fun getDiscussionTopic(courseId: Long, topicId: Long): me.joxquin.notivas.data.model.CanvasDiscussionTopic? = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext null
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext null
         try {
@@ -798,7 +797,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun getDiscussionEntries(courseId: Long, topicId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(Dispatchers.IO) {
+    suspend fun getDiscussionEntries(courseId: Long, topicId: Long): List<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext emptyList()
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext emptyList()
         try {
@@ -817,7 +816,7 @@ class CanvasRepository(
         courseId: Long,
         topicId: Long,
         message: String
-    ): Result<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(Dispatchers.IO) {
+    ): Result<me.joxquin.notivas.data.model.CanvasDiscussionEntry> = withContext(AppDispatchers.IO) {
         val credential = preferencesManager.getAuthCredential()
             ?: return@withContext Result.failure(Exception("No autenticado en Canvas"))
         val baseUrl = preferencesManager.universityUrl.first()
@@ -873,7 +872,7 @@ class CanvasRepository(
         fileName: String? = null,
         mimeType: String = "application/octet-stream",
         comment: String? = null
-    ): Result<SubmissionDetails> = withContext(Dispatchers.IO) {
+    ): Result<SubmissionDetails> = withContext(AppDispatchers.IO) {
         val credential = preferencesManager.getAuthCredential()
             ?: return@withContext Result.failure(Exception("No autenticado en Canvas"))
         val baseUrl = preferencesManager.universityUrl.first()
@@ -1029,7 +1028,7 @@ class CanvasRepository(
     suspend fun getAssignment(id: Long): Assignment? =
         localStore.getAssignmentById(id)
 
-    suspend fun seedInitialActivitiesIfEmpty() = withContext(Dispatchers.IO) {
+    suspend fun seedInitialActivitiesIfEmpty() = withContext(AppDispatchers.IO) {
         if (localStore.countActivityLogs() > 0) return@withContext
 
         val allAssignments = localStore.getAllAssignments().firstOrNull().orEmpty()
@@ -1095,7 +1094,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun downloadCanvasFileBytes(fileDownloadUrl: String): ByteArray? = withContext(Dispatchers.IO) {
+    suspend fun downloadCanvasFileBytes(fileDownloadUrl: String): ByteArray? = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext null
         try {
             apiService.downloadFileBytes(fileDownloadUrl, token)
@@ -1105,7 +1104,7 @@ class CanvasRepository(
         }
     }
 
-    suspend fun getCanvasFileDownloadUrl(courseId: Long, fileId: Long): String? = withContext(Dispatchers.IO) {
+    suspend fun getCanvasFileDownloadUrl(courseId: Long, fileId: Long): String? = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext null
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext null
         try {

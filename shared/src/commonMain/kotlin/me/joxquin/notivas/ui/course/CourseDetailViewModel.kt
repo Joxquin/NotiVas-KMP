@@ -2,8 +2,7 @@ package me.joxquin.notivas.ui.course
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import me.joxquin.notivas.util.AppDispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -93,7 +92,7 @@ class CourseDetailViewModel(
     }
 
     fun loadCourseDetail(isRefresh: Boolean = false) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(AppDispatchers.IO) {
             if (isRefresh) {
                 _uiState.value = _uiState.value.copy(isRefreshing = true)
             } else {

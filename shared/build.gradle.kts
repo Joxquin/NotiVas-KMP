@@ -24,6 +24,11 @@ kotlin {
     
     jvm()
     
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+    }
+    
     android {
        namespace = "me.joxquin.notivas.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -53,8 +58,25 @@ kotlin {
             implementation(libs.androidx.work.runtime.ktx)
             implementation(libs.play.services.auth)
             implementation(libs.coil.gif)
+            implementation(libs.ktor.client.cio)
+            implementation(libs.androidx.sqlite.bundled)
+        }
+        jvmMain.dependencies {
+            implementation(libs.ktor.client.cio)
+            implementation(libs.androidx.sqlite.bundled)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.cio)
+            implementation(libs.androidx.sqlite.bundled)
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+                implementation(libs.androidx.sqlite.web)
+            }
         }
         commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
@@ -66,7 +88,6 @@ kotlin {
             implementation(libs.compose.material.icons)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
@@ -77,7 +98,6 @@ kotlin {
             implementation(libs.miuix.icons)
             implementation(libs.miuix.nav)
             implementation(libs.androidx.room.runtime)
-            implementation(libs.androidx.sqlite.bundled)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
         }
@@ -102,4 +122,5 @@ dependencies {
     add("kspJvm", libs.androidx.room.compiler)
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
     add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspWasmJs", libs.androidx.room.compiler)
 }

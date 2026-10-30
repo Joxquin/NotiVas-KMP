@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
 
 actual fun getDatabaseBuilder(): RoomDatabase.Builder<NotivasDatabase> {
@@ -12,7 +13,7 @@ actual fun getDatabaseBuilder(): RoomDatabase.Builder<NotivasDatabase> {
     return Room.databaseBuilder<NotivasDatabase>(
         context = ctx,
         name = dbFile.absolutePath
-    )
+    ).setDriver(BundledSQLiteDriver())
 }
 
 private fun getAndroidApplicationContext(): Context {

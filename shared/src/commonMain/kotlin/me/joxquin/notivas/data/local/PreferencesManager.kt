@@ -1,8 +1,6 @@
 package me.joxquin.notivas.data.local
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -11,12 +9,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import me.joxquin.notivas.util.AppDispatchers
 
 /**
  * Gestor de preferencias reactivo Multiplatform con persistencia automática en disco.
  */
 class PreferencesManager(
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val scope: CoroutineScope = CoroutineScope(AppDispatchers.IO)
 ) {
     private val json = Json {
         ignoreUnknownKeys = true

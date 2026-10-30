@@ -1,13 +1,14 @@
 package me.joxquin.notivas.data.local
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import me.joxquin.notivas.data.local.db.NotivasDatabase
@@ -28,6 +29,7 @@ import me.joxquin.notivas.data.model.SimulationGroup
 import me.joxquin.notivas.data.model.SimulationGroupWithItems
 import me.joxquin.notivas.data.model.SimulationItem
 import me.joxquin.notivas.data.model.UserProfile
+import me.joxquin.notivas.util.AppDispatchers
 import me.joxquin.notivas.util.DateTimeUtil
 
 /**
@@ -36,7 +38,7 @@ import me.joxquin.notivas.util.DateTimeUtil
  */
 class InMemoryLocalStore(
     val database: NotivasDatabase = createRoomDatabase(),
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val scope: CoroutineScope = CoroutineScope(AppDispatchers.IO)
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -76,13 +78,15 @@ class InMemoryLocalStore(
         entities.map { it.toDomain() }
     }
 
+    private val coursesState: StateFlow<List<Course>> = courses.stateIn(
+        scope = scope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
+
     fun getAllCourses(): Flow<List<Course>> = courses
 
-    fun getCourseList(): List<Course> {
-        return kotlinx.coroutines.runBlocking {
-            database.courseDao().getAll().map { it.toDomain() }
-        }
-    }
+    fun getCourseList(): List<Course> = coursesState.value
 
     fun upsertCourses(newCourses: List<Course>) {
         scope.launch {
@@ -101,24 +105,23 @@ class InMemoryLocalStore(
         entities.map { it.toDomain() }
     }
 
+    private val assignmentsState: StateFlow<List<Assignment>> = assignments.stateIn(
+        scope = scope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
+
     fun getAllAssignments(): Flow<List<Assignment>> = assignments
 
-    fun getAssignmentList(): List<Assignment> {
-        return kotlinx.coroutines.runBlocking {
-            database.assignmentDao().getAll().map { it.toDomain() }
-        }
-    }
+    fun getAssignmentList(): List<Assignment> = assignmentsState.value
 
     fun getAssignmentsByCourse(courseId: Long): Flow<List<Assignment>> =
         database.assignmentDao().observeByCourse(courseId).map { list ->
             list.map { it.toDomain() }
         }
 
-    fun getAssignmentsForCourseOnce(courseId: Long): List<Assignment> {
-        return kotlinx.coroutines.runBlocking {
-            database.assignmentDao().getByCourse(courseId).map { it.toDomain() }
-        }
-    }
+    fun getAssignmentsForCourseOnce(courseId: Long): List<Assignment> =
+        assignmentsState.value.filter { it.courseId == courseId }
 
     suspend fun getAssignmentById(id: Long): Assignment? {
         return database.assignmentDao().getById(id)?.toDomain()
@@ -271,11 +274,9 @@ class InMemoryLocalStore(
             relations.map { it.toDomain() }
         }
 
-    fun insertGroup(group: SimulationGroup): Long {
+    suspend fun insertGroup(group: SimulationGroup): Long {
         val groupEntity = SimulationGroupEntity.fromDomain(group)
-        return kotlinx.coroutines.runBlocking {
-            database.simulationDao().insertGroup(groupEntity)
-        }
+        return database.simulationDao().insertGroup(groupEntity)
     }
 
     fun updateGroup(group: SimulationGroup) {
@@ -290,11 +291,9 @@ class InMemoryLocalStore(
         }
     }
 
-    fun insertItem(item: SimulationItem): Long {
+    suspend fun insertItem(item: SimulationItem): Long {
         val itemEntity = SimulationItemEntity.fromDomain(item)
-        return kotlinx.coroutines.runBlocking {
-            database.simulationDao().insertItem(itemEntity)
-        }
+        return database.simulationDao().insertItem(itemEntity)
     }
 
     fun updateItem(item: SimulationItem) {

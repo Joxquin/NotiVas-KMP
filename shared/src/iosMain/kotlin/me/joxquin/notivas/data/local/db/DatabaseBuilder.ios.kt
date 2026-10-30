@@ -2,6 +2,7 @@ package me.joxquin.notivas.data.local.db
 
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
@@ -19,5 +20,5 @@ actual fun getDatabaseBuilder(): RoomDatabase.Builder<NotivasDatabase> {
     val dbFilePath = requireNotNull(documentDirectory?.path) + "/notivas_database.db"
     return Room.databaseBuilder<NotivasDatabase>(
         name = dbFilePath
-    )
+    ).setDriver(BundledSQLiteDriver())
 }

@@ -1,9 +1,7 @@
 package me.joxquin.notivas.data.local.db
 
 import androidx.room3.RoomDatabase
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import me.joxquin.notivas.util.AppDispatchers
 
 import androidx.room3.migration.Migration
 import androidx.sqlite.SQLiteConnection
@@ -13,7 +11,7 @@ expect fun getDatabaseBuilder(): RoomDatabase.Builder<NotivasDatabase>
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override suspend fun migrate(connection: SQLiteConnection) {
-        fun safeExec(sql: String) {
+        suspend fun safeExec(sql: String) {
             try {
                 connection.execSQL(sql)
             } catch (_: Throwable) {}
@@ -84,8 +82,7 @@ fun createRoomDatabase(
     builder: RoomDatabase.Builder<NotivasDatabase> = getDatabaseBuilder()
 ): NotivasDatabase {
     return builder
-        .setDriver(BundledSQLiteDriver())
-        .setQueryCoroutineContext(Dispatchers.IO)
+        .setQueryCoroutineContext(AppDispatchers.IO)
         .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
         .fallbackToDestructiveMigration(dropAllTables = true)
         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
