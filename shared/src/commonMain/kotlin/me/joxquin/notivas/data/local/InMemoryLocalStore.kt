@@ -94,6 +94,14 @@ class InMemoryLocalStore(
         }
     }
 
+    fun syncCourses(activeCourses: List<Course>) {
+        scope.launch {
+            if (activeCourses.isEmpty()) return@launch
+            database.courseDao().upsert(activeCourses.map { CourseEntity.fromDomain(it) })
+            database.courseDao().deleteNotIn(activeCourses.map { it.id })
+        }
+    }
+
     fun deleteCourses() {
         scope.launch {
             database.courseDao().deleteAll()

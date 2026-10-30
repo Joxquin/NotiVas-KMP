@@ -572,7 +572,7 @@ class CanvasRepository(
             allCoursesList.forEach {
                 println("[CanvasRepository] Curso ${it.id} (${it.courseCode}): imageUrl=${it.imageUrl}")
             }
-            localStore.upsertCourses(allCoursesList)
+            localStore.syncCourses(allCoursesList)
 
             // 3. Fetch assignments for courses in parallel
             val currentAssignmentsList = coroutineScope {

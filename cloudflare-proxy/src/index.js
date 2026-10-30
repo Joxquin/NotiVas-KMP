@@ -27,6 +27,13 @@ export default {
     let targetParsed;
     try {
       targetParsed = new URL(targetUrlStr);
+      // Combinar los parámetros de búsqueda adicionales de la URL externa
+      for (const [k, v] of url.searchParams.entries()) {
+        if (k !== "url") {
+          targetParsed.searchParams.set(k, v);
+        }
+      }
+      targetUrlStr = targetParsed.toString();
     } catch (e) {
       return new Response("URL destino invalida: " + targetUrlStr, {
         status: 400,
