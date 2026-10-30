@@ -19,8 +19,10 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import me.joxquin.notivas.util.resolveApiUrl
 import org.jetbrains.compose.resources.decodeToImageBitmap
 
 private object ImageCacheManager {
@@ -58,8 +60,9 @@ fun AsyncAvatarImage(
         if (bitmap == null) {
             try {
                 println("AsyncAvatarImage: Loading avatar from $url")
+                val resolvedUrl = resolveApiUrl(url)
                 val bytes = withContext(Dispatchers.Default) {
-                    ImageCacheManager.imageClient.get(url).body<ByteArray>()
+                    ImageCacheManager.imageClient.get(resolvedUrl).body<ByteArray>()
                 }
                 println("AsyncAvatarImage: Received ${bytes.size} bytes for $url")
                 if (bytes.isNotEmpty()) {
@@ -68,9 +71,10 @@ fun AsyncAvatarImage(
                     bitmap = decoded
                     println("AsyncAvatarImage: Successfully decoded bitmap (${decoded.width}x${decoded.height})")
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 println("AsyncAvatarImage error loading $url: ${e::class.simpleName} - ${e.message}")
-                e.printStackTrace()
             }
         }
     }

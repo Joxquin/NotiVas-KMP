@@ -45,8 +45,27 @@
                     return res.end('Missing target URL');
                 }
 
+                let initialHost = '';
                 try {
-                    const targetParsed = new URL(targetUrlStr);
+                    initialHost = new URL(targetUrlStr).host;
+                } catch (_) {}
+
+                const sendProxyRequest = function(currentUrlStr, currentMethod, bodyBuffer, redirectCount) {
+                    if (redirectCount > 5) {
+                        res.statusCode = 508;
+                        res.setHeader('Access-Control-Allow-Origin', '*');
+                        return res.end('Too many redirects');
+                    }
+
+                    let targetParsed;
+                    try {
+                        targetParsed = new URL(currentUrlStr);
+                    } catch (e) {
+                        res.statusCode = 400;
+                        res.setHeader('Access-Control-Allow-Origin', '*');
+                        return res.end('Invalid URL: ' + currentUrlStr);
+                    }
+
                     const isHttps = targetParsed.protocol === 'https:';
                     const client = isHttps ? https : http;
 
@@ -57,24 +76,39 @@
                     delete proxyHeaders['x-target-url'];
                     proxyHeaders['host'] = targetParsed.host;
 
+                    if (redirectCount > 0 && targetParsed.host !== initialHost) {
+                        delete proxyHeaders['authorization'];
+                        delete proxyHeaders['cookie'];
+                    }
+
                     const options = {
                         protocol: targetParsed.protocol,
                         hostname: targetParsed.hostname,
                         port: targetParsed.port || (isHttps ? 443 : 80),
                         path: targetParsed.pathname + targetParsed.search,
-                        method: req.method,
+                        method: currentMethod,
                         headers: proxyHeaders,
                         rejectUnauthorized: false
                     };
 
                     const proxyReq = client.request(options, function(proxyRes) {
-                        res.statusCode = proxyRes.statusCode;
+                        const statusCode = proxyRes.statusCode || 200;
+                        if (statusCode >= 300 && statusCode < 400 && proxyRes.headers.location) {
+                            proxyRes.resume();
+                            const nextUrl = new URL(proxyRes.headers.location, currentUrlStr).toString();
+                            const nextMethod = (statusCode === 301 || statusCode === 302 || statusCode === 303) ? 'GET' : currentMethod;
+                            const nextBody = (nextMethod === 'GET' || nextMethod === 'HEAD') ? null : bodyBuffer;
+                            return sendProxyRequest(nextUrl, nextMethod, nextBody, redirectCount + 1);
+                        }
+
+                        res.statusCode = statusCode;
                         res.setHeader('Access-Control-Allow-Origin', '*');
                         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
                         res.setHeader('Access-Control-Allow-Headers', '*');
 
                         for (const [key, value] of Object.entries(proxyRes.headers)) {
-                            if (key.toLowerCase() !== 'access-control-allow-origin') {
+                            const lowerKey = key.toLowerCase();
+                            if (lowerKey !== 'access-control-allow-origin' && lowerKey !== 'content-security-policy') {
                                 res.setHeader(key, value);
                             }
                         }
@@ -83,16 +117,41 @@
                     });
 
                     proxyReq.on('error', function(err) {
-                        res.statusCode = 502;
-                        res.setHeader('Access-Control-Allow-Origin', '*');
-                        res.end('Proxy error: ' + err.message);
+                        if (!res.headersSent) {
+                            res.statusCode = 502;
+                            res.setHeader('Access-Control-Allow-Origin', '*');
+                            res.end('Proxy error: ' + err.message);
+                        }
                     });
 
-                    req.pipe(proxyReq);
+                    if (bodyBuffer && bodyBuffer.length > 0 && currentMethod !== 'GET' && currentMethod !== 'HEAD') {
+                        proxyReq.write(bodyBuffer);
+                    }
+                    proxyReq.end();
+                };
+
+                try {
+                    const chunks = [];
+                    req.on('data', function(chunk) {
+                        chunks.push(chunk);
+                    });
+                    req.on('end', function() {
+                        const bodyBuffer = chunks.length > 0 ? Buffer.concat(chunks) : null;
+                        sendProxyRequest(targetUrlStr, req.method, bodyBuffer, 0);
+                    });
+                    req.on('error', function(err) {
+                        if (!res.headersSent) {
+                            res.statusCode = 400;
+                            res.setHeader('Access-Control-Allow-Origin', '*');
+                            res.end('Request stream error: ' + err.message);
+                        }
+                    });
                 } catch (err) {
-                    res.statusCode = 500;
-                    res.setHeader('Access-Control-Allow-Origin', '*');
-                    res.end('Server error: ' + err.message);
+                    if (!res.headersSent) {
+                        res.statusCode = 500;
+                        res.setHeader('Access-Control-Allow-Origin', '*');
+                        res.end('Server error: ' + err.message);
+                    }
                 }
             };
 
