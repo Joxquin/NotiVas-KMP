@@ -2,10 +2,17 @@
 importScripts("https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js");
 
 let SQL = null;
-const databases = new Map();
+
+// Shared database instances per fileName: fileName -> Promise<SQL.Database>
+const openedDatabases = new Map();
+
+// Active connections: connectionId -> { db: SQL.Database, fileName: string }
+const connections = new Map();
+
+// Active prepared statements: statementId -> { stmt: SQL.Statement, db: SQL.Database, sql: string }
 const statements = new Map();
 
-let nextDatabaseId = 0;
+let nextConnectionId = 0;
 let nextStatementId = 0;
 
 // IndexedDB persistence helper
@@ -38,6 +45,14 @@ async function loadPersistedDb() {
     }
 }
 
+let saveTimeout = null;
+function scheduleSave(database) {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        savePersistedDb(database);
+    }, 400);
+}
+
 async function savePersistedDb(database) {
     try {
         const bytes = database.export();
@@ -50,17 +65,31 @@ async function savePersistedDb(database) {
             req.onerror = () => reject(req.error);
         });
     } catch (e) {
-        console.warn("Failed to persist SQLite database to IndexedDB", e);
+        console.warn("[SQLite Worker] Failed to persist SQLite database to IndexedDB", e);
     }
+}
+
+async function getOrCreateDatabase(fileName) {
+    const key = fileName || "notivas_database.db";
+    if (openedDatabases.has(key)) {
+        return openedDatabases.get(key);
+    }
+    const loadPromise = (async () => {
+        const savedData = await loadPersistedDb();
+        const db = savedData ? new SQL.Database(savedData) : new SQL.Database();
+        return db;
+    })();
+    openedDatabases.set(key, loadPromise);
+    return loadPromise;
 }
 
 async function openRequest(id, requestData) {
     try {
-        const newDatabaseId = nextDatabaseId++;
-        const savedData = await loadPersistedDb();
-        const newDatabase = savedData ? new SQL.Database(savedData) : new SQL.Database();
-        databases.set(newDatabaseId, newDatabase);
-        postMessage({ 'id': id, data: { 'databaseId': newDatabaseId } });
+        const connectionId = nextConnectionId++;
+        const fileName = requestData.fileName || "notivas_database.db";
+        const db = await getOrCreateDatabase(fileName);
+        connections.set(connectionId, { db: db, fileName: fileName });
+        postMessage({ 'id': id, data: { 'databaseId': connectionId } });
     } catch (error) {
         postMessage({ 'id': id, error: error.message || String(error) });
     }
@@ -68,14 +97,14 @@ async function openRequest(id, requestData) {
 
 function prepareRequest(id, requestData) {
     try {
-        const newStatementId = nextStatementId++;
-        const database = databases.get(requestData.databaseId);
-        if (!database) {
-            postMessage({ 'id': id, error: "Invalid database ID: " + requestData.databaseId });
+        const conn = connections.get(requestData.databaseId);
+        if (!conn) {
+            postMessage({ 'id': id, error: "Invalid database connection ID: " + requestData.databaseId });
             return;
         }
-        const statement = database.prepare(requestData.sql);
-        statements.set(newStatementId, { stmt: statement, dbId: requestData.databaseId, sql: requestData.sql });
+        const newStatementId = nextStatementId++;
+        const statement = conn.db.prepare(requestData.sql);
+        statements.set(newStatementId, { stmt: statement, db: conn.db, sql: requestData.sql });
 
         const resultData = {
             'statementId': newStatementId,
@@ -132,13 +161,9 @@ function stepRequest(id, requestData) {
             resultData.rows.push(row);
         }
 
-        // Auto-save mutations to IndexedDB asynchronously
-        const isMutation = /^\s*(INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)/i.test(entry.sql);
-        if (isMutation) {
-            const db = databases.get(entry.dbId);
-            if (db) {
-                savePersistedDb(db);
-            }
+        // Schedule auto-save for mutations
+        if (/^\s*(INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)/i.test(entry.sql)) {
+            scheduleSave(entry.db);
         }
 
         postMessage({ 'id': id, data: resultData });
@@ -162,16 +187,10 @@ function closeRequest(id, requestData) {
     }
 
     if (requestData.databaseId !== undefined && requestData.databaseId !== null) {
-        const database = databases.get(requestData.databaseId);
-        if (database) {
-            try {
-                savePersistedDb(database);
-                database.close();
-                databases.delete(requestData.databaseId);
-            } catch (error) {
-                postMessage({ 'id': id, error: error.message || String(error) });
-                return;
-            }
+        const conn = connections.get(requestData.databaseId);
+        if (conn) {
+            connections.delete(requestData.databaseId);
+            scheduleSave(conn.db);
         }
     }
 }
@@ -216,6 +235,5 @@ initSqlJs({
         handleMessage(messageQueue.shift());
     }
 }).catch(err => {
-    console.error("Failed to initialize sql.js in worker:", err);
+    console.error("[SQLite Worker] Failed to initialize sql.js:", err);
 });
-
