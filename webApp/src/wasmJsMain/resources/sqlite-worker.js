@@ -126,6 +126,14 @@ async function getOrCreateDatabase(fileName) {
         } else {
             db = new SQL.Database();
         }
+
+        // Always ensure room_table_modification_log exists so triggers never fail on startup or reload
+        try {
+            db.run("CREATE TABLE IF NOT EXISTS room_table_modification_log (table_id INTEGER PRIMARY KEY, invalidated INTEGER NOT NULL DEFAULT 0);");
+        } catch (e) {
+            console.warn("[SQLite Worker] Failed to ensure room_table_modification_log:", e);
+        }
+
         return db;
     })();
     openedDatabases.set(key, loadPromise);
@@ -152,7 +160,17 @@ function prepareRequest(id, requestData) {
             return;
         }
         const newStatementId = nextStatementId++;
-        const statement = conn.db.prepare(requestData.sql);
+        let statement;
+        try {
+            statement = conn.db.prepare(requestData.sql);
+        } catch (prepErr) {
+            if (prepErr && prepErr.message && prepErr.message.includes("room_table_modification_log")) {
+                conn.db.run("CREATE TABLE IF NOT EXISTS room_table_modification_log (table_id INTEGER PRIMARY KEY, invalidated INTEGER NOT NULL DEFAULT 0);");
+                statement = conn.db.prepare(requestData.sql);
+            } else {
+                throw prepErr;
+            }
+        }
         statements.set(newStatementId, { stmt: statement, db: conn.db, sql: requestData.sql });
 
         const resultData = {
@@ -217,6 +235,38 @@ function stepRequest(id, requestData) {
 
         postMessage({ 'id': id, data: resultData });
     } catch (error) {
+        if (error && error.message && error.message.includes("room_table_modification_log")) {
+            try {
+                entry.db.run("CREATE TABLE IF NOT EXISTS room_table_modification_log (table_id INTEGER PRIMARY KEY, invalidated INTEGER NOT NULL DEFAULT 0);");
+                statement.reset();
+                if (requestData.bindings && requestData.bindings.length > 0) {
+                    statement.bind(requestData.bindings);
+                }
+                const retryResult = { 'rows': [], 'columnTypes': [] };
+                while (statement.step()) {
+                    const row = statement.get();
+                    if (retryResult.columnTypes.length === 0) {
+                        for (let i = 0; i < row.length; i++) {
+                            const val = row[i];
+                            if (val === null) retryResult.columnTypes.push(5);
+                            else if (typeof val === 'number') retryResult.columnTypes.push(Number.isInteger(val) ? 1 : 2);
+                            else if (typeof val === 'string') retryResult.columnTypes.push(3);
+                            else if (val instanceof Uint8Array) retryResult.columnTypes.push(4);
+                            else retryResult.columnTypes.push(5);
+                        }
+                    }
+                    retryResult.rows.push(row);
+                }
+                if (/^\s*(INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)/i.test(entry.sql)) {
+                    scheduleSave(entry.db);
+                }
+                postMessage({ 'id': id, data: retryResult });
+                return;
+            } catch (retryErr) {
+                postMessage({ 'id': id, error: retryErr.message || String(retryErr) });
+                return;
+            }
+        }
         postMessage({ 'id': id, error: error.message || String(error) });
     }
 }
