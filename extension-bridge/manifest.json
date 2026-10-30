@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "NotiVas Canvas Bridge",
+  "version": "1.0.0",
+  "description": "Enlace local de sesion entre Canvas LMS y NotiVas Web",
+  "icons": {
+    "128": "icon-128.png"
+  },
+  "permissions": [
+    "cookies"
+  ],
+  "host_permissions": [
+    "*://*.instructure.com/*",
+    "*://joxquin.github.io/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://joxquin.github.io/NotiVas-KMP/*",
+        "file:///*",
+        "<all_urls>"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "notivas-bridge@joxquin.me",
+      "strict_min_version": "109.0"
+    }
+  }
+}

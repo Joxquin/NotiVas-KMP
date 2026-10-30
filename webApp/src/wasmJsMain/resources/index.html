@@ -5,6 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>NotiVas</title>
     <script src="coi-serviceworker.js"></script>
+    <script>
+      window.NotiVasBridge = {
+        isAvailable: false,
+        sessionState: 'IDLE',
+        cookieHeader: '',
+        csrfToken: '',
+        errorMessage: '',
+        init: function() {
+          window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'NOTIVAS_BRIDGE_AVAILABLE') {
+              window.NotiVasBridge.isAvailable = true;
+            }
+          });
+          window.postMessage({ type: 'NOTIVAS_PING' }, '*');
+        },
+        requestSession: function(domain) {
+          window.NotiVasBridge.sessionState = 'FETCHING';
+          window.NotiVasBridge.errorMessage = '';
+          function handler(event) {
+            if (event.data && event.data.type === 'NOTIVAS_RESPONSE_SESSION') {
+              window.removeEventListener('message', handler);
+              var p = event.data.payload;
+              if (p && p.success && p.hasSession) {
+                window.NotiVasBridge.cookieHeader = p.cookieHeader || '';
+                window.NotiVasBridge.csrfToken = p.csrfToken || '';
+                window.NotiVasBridge.sessionState = 'SUCCESS';
+              } else {
+                window.NotiVasBridge.errorMessage = (p && p.error) || 'No se encontro una sesion activa en Canvas.';
+                window.NotiVasBridge.sessionState = 'ERROR';
+              }
+            }
+          }
+          window.addEventListener('message', handler);
+          window.postMessage({ type: 'NOTIVAS_REQUEST_SESSION', domain: domain, requestId: Date.now() }, '*');
+        }
+      };
+      window.NotiVasBridge.init();
+    </script>
     <style>
         html, body {
             width: 100%;

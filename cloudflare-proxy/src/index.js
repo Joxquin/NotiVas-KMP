@@ -49,6 +49,11 @@ export default {
     proxyHeaders.delete("x-target-url");
     proxyHeaders.set("host", targetParsed.host);
 
+    const forwardedCookie = request.headers.get("x-forwarded-cookie") || request.headers.get("x-proxy-cookie");
+    if (forwardedCookie) {
+      proxyHeaders.set("cookie", forwardedCookie);
+    }
+
     // 4. Reenviar petición con seguimiento de redirecciones (avatares Canvas/S3)
     try {
       const fetchOptions = {

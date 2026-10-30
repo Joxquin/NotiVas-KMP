@@ -76,6 +76,11 @@
                     delete proxyHeaders['x-target-url'];
                     proxyHeaders['host'] = targetParsed.host;
 
+                    const forwardedCookie = req.headers['x-forwarded-cookie'] || req.headers['x-proxy-cookie'];
+                    if (forwardedCookie) {
+                        proxyHeaders['cookie'] = forwardedCookie;
+                    }
+
                     if (redirectCount > 0 && targetParsed.host !== initialHost) {
                         delete proxyHeaders['authorization'];
                         delete proxyHeaders['cookie'];

@@ -25,3 +25,11 @@ keystore.properties
 graphify-out/
 .vscode/
 openspec
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
+*.zip

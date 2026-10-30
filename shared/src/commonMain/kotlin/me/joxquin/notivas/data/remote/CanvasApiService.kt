@@ -67,6 +67,7 @@ class CanvasApiService(
         if (credentialOrToken.startsWith("Cookie: ") || credentialOrToken.contains("canvas_session") || credentialOrToken.contains("_csrf_token")) {
             val cookies = credentialOrToken.removePrefix("Cookie: ")
             header("Cookie", cookies)
+            header("X-Forwarded-Cookie", cookies)
             csrfToken?.let { header("X-CSRF-Token", it) }
             println("[CanvasApiService] applyAuth usando Cookie (longitud: ${cookies.length})")
         } else {
@@ -84,6 +85,7 @@ class CanvasApiService(
             }
             is CanvasAuthCredential.SessionCookies -> {
                 header("Cookie", credential.cookies)
+                header("X-Forwarded-Cookie", credential.cookies)
                 credential.csrfToken?.let { header("X-CSRF-Token", it) }
             }
         }
@@ -106,6 +108,7 @@ class CanvasApiService(
             ) {
                 header("User-Agent", "CanvasFastClient/1.0")
                 header("Cookie", cleanCookies)
+                header("X-Forwarded-Cookie", cleanCookies)
                 csrfToken?.let { header("X-CSRF-Token", it) }
             }
             val text = response.body<String>()
