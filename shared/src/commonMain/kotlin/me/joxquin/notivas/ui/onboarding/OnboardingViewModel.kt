@@ -2,6 +2,7 @@ package me.joxquin.notivas.ui.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,22 +50,30 @@ class OnboardingViewModel(
                     try {
                         val profile = repository.getProfile()
                         _userProfile.value = profile
-                    } catch (_: Exception) { }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) { }
 
                     try {
                         repository.fetchAndSaveData()
-                    } catch (_: Exception) { }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) { }
 
                     try {
                         val count = repository.allCourses.first().size
                         _coursesCount.value = count
-                    } catch (_: Exception) { }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) { }
 
                     _verificationSuccess.value = true
                 } else {
                     _verificationSuccess.value = false
                 }
-            } catch (_: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
                 _verificationSuccess.value = false
             } finally {
                 _isVerifying.value = false
@@ -82,22 +91,30 @@ class OnboardingViewModel(
                     try {
                         val profile = repository.getProfile()
                         _userProfile.value = profile
-                    } catch (_: Exception) { }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) { }
 
                     try {
                         repository.fetchAndSaveData()
-                    } catch (_: Exception) { }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) { }
 
                     try {
                         val count = repository.allCourses.first().size
                         _coursesCount.value = count
-                    } catch (_: Exception) { }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) { }
 
                     _verificationSuccess.value = true
                 } else {
                     _verificationSuccess.value = false
                 }
-            } catch (_: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
                 _verificationSuccess.value = false
             } finally {
                 _isVerifying.value = false

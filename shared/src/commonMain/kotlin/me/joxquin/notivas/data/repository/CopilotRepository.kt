@@ -1,5 +1,6 @@
 package me.joxquin.notivas.data.repository
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
@@ -356,7 +357,9 @@ class CopilotRepository(
                 isFreeTier = keyData?.isFreeTier,
                 limit = keyData?.limit
             )
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             println("Copilot [Error] Error fetching OpenRouter balance: ${e.message}")
             null
         }
@@ -376,7 +379,9 @@ class CopilotRepository(
         val apiKey = preferencesManager.openRouterApiKey.first()
         val response = try {
             openRouterApiService.getModelEndpoints(cleanModel, apiKey)
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             return me.joxquin.notivas.data.model.CustomModelAnalysisResult(
                 modelId = cleanModel,
                 name = cleanModel,

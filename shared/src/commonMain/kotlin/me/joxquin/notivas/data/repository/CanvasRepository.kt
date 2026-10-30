@@ -1,6 +1,7 @@
 package me.joxquin.notivas.data.repository
 
 import me.joxquin.notivas.util.AppDispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -237,7 +238,9 @@ class CanvasRepository(
                 token = token,
                 courseId = courseId
             )
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             emptyList()
         }
     }
@@ -251,7 +254,9 @@ class CanvasRepository(
                 token = token,
                 courseId = courseId
             )
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             emptyList()
         }
     }
@@ -265,7 +270,9 @@ class CanvasRepository(
                 token = token,
                 courseId = courseId
             )
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             emptyList()
         }
     }
@@ -528,12 +535,16 @@ class CanvasRepository(
                     startDate = "2024-01-01"
                 )
                 localStore.insertPlannerItems(plannerItems)
-            } catch (_: Exception) { }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) { }
 
             // 2. Fetch Active Courses & Dashboard Cards (con portadas firmadas de Canvas)
             val dashboardCards = try {
                 apiService.getDashboardCards(baseUrl, token)
-            } catch (_: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
                 emptyList()
             }
             val cardImagesByCourseId = buildMap {
@@ -597,7 +608,9 @@ class CanvasRepository(
                                     grade = sub?.grade
                                 )
                             }
-                        } catch (_: Exception) {
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (_: Throwable) {
                             emptyList()
                         }
                     }
@@ -614,7 +627,9 @@ class CanvasRepository(
                     if (isForum) return@mapNotNull null
                     a.id to a.copy(status = "missing")
                 }.toMap()
-            } catch (_: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
                 emptyMap()
             }
 
@@ -635,12 +650,16 @@ class CanvasRepository(
             if (preferencesManager.getAuthMode() == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
                 try {
                     tryUpgradeSessionToToken()
-                } catch (_: Exception) {}
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Throwable) {}
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: me.joxquin.notivas.data.remote.CanvasAuthExpiredException) {
             preferencesManager.setSessionExpired(true)
             throw e
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             throw e
         }
     }
@@ -667,7 +686,9 @@ class CanvasRepository(
             preferencesManager.saveAccessToken(token)
             preferencesManager.setSessionExpired(false)
             true
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             println("CanvasRepository: verifyAndSave failed for url='$url': ${e.message}")
             e.printStackTrace()
             false
@@ -696,7 +717,9 @@ class CanvasRepository(
             }
             preferencesManager.setSessionExpired(false)
             true
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             println("CanvasRepository: verifyAndSaveSession failed for url='$url': ${e.message}")
             e.printStackTrace()
             false
@@ -718,7 +741,9 @@ class CanvasRepository(
             val remoteProfile = apiService.getProfile(baseUrl, token)
             localStore.saveUserProfile(remoteProfile)
             remoteProfile
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             localStore.getUserProfileOnce() ?: throw e
         }
     }
@@ -768,7 +793,9 @@ class CanvasRepository(
                                 courseName = course.name
                             )
                         }
-                    } catch (_: Exception) {
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) {
                         emptyList()
                     }
                 }
@@ -792,7 +819,9 @@ class CanvasRepository(
                 courseId = courseId,
                 courseName = course?.name ?: topic.courseName
             )
-        } catch (_: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
             null
         }
     }
@@ -807,7 +836,9 @@ class CanvasRepository(
                 courseId = courseId,
                 topicId = topicId
             )
-        } catch (_: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
             emptyList()
         }
     }
@@ -857,8 +888,10 @@ class CanvasRepository(
                 )
             )
             Result.success(result)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Result.failure(if (e is Exception) e else Exception(e.message, e))
         }
     }
 
@@ -945,8 +978,10 @@ class CanvasRepository(
                 )
             )
             Result.success(result)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Result.failure(if (e is Exception) e else Exception(e.message, e))
         }
     }
 
@@ -1098,7 +1133,9 @@ class CanvasRepository(
         val token = getAuthToken() ?: return@withContext null
         try {
             apiService.downloadFileBytes(fileDownloadUrl, token)
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             e.printStackTrace()
             null
         }
@@ -1110,7 +1147,9 @@ class CanvasRepository(
         try {
             val fileDetail = apiService.getFileDetails(baseUrl, token, courseId, fileId)
             fileDetail.url ?: fileDetail.publicUrl
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             e.printStackTrace()
             null
         }

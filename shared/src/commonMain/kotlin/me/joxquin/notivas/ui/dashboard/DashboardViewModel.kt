@@ -2,6 +2,7 @@ package me.joxquin.notivas.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -869,9 +870,11 @@ class DashboardViewModel(
                 repository.getProfile()
                 repository.fetchAndSaveData()
                 _syncStatus.value = SyncStatus.SYNCED
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: me.joxquin.notivas.data.remote.CanvasAuthExpiredException) {
                 _syncStatus.value = SyncStatus.SESSION_EXPIRED
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 if (preferencesManager.getIsSessionExpired()) {
                     _syncStatus.value = SyncStatus.SESSION_EXPIRED
                 } else {
@@ -887,7 +890,9 @@ class DashboardViewModel(
             try {
                 val topics = repository.getDiscussionsForCourses()
                 _discussions.value = topics
-            } catch (_: Exception) {}
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {}
         }
     }
 
@@ -902,7 +907,9 @@ class DashboardViewModel(
         viewModelScope.launch {
             try {
                 repository.getProfile()
-            } catch (_: Exception) { }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) { }
         }
     }
 
@@ -914,9 +921,11 @@ class DashboardViewModel(
                 repository.fetchAndSaveData()
                 repository.getProfile()
                 _syncStatus.value = SyncStatus.SYNCED
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: me.joxquin.notivas.data.remote.CanvasAuthExpiredException) {
                 _syncStatus.value = SyncStatus.SESSION_EXPIRED
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 if (preferencesManager.getIsSessionExpired()) {
                     _syncStatus.value = SyncStatus.SESSION_EXPIRED
                 } else {

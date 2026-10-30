@@ -1,5 +1,6 @@
 package me.joxquin.notivas.data.remote
 
+import kotlinx.coroutines.CancellationException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.formData
@@ -118,7 +119,9 @@ class CanvasApiService(
                 }
             }
             null
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             println("[CanvasApiService] No se pudo generar token de estudiante: ${e.message}")
             null
         }
@@ -159,7 +162,9 @@ class CanvasApiService(
                 println("[CanvasApiService] getDashboardCards no devolvió array JSON: $text")
                 emptyList()
             }
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             println("[CanvasApiService] getDashboardCards error: ${e.message}")
             emptyList()
         }
@@ -422,7 +427,9 @@ class CanvasApiService(
                 applyAuth(token)
                 parameter("per_page", perPage)
             }.body()
-        } catch (_: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
             emptyList()
         }
     }
@@ -511,7 +518,9 @@ class CanvasApiService(
 
                 println("[CanvasApiService] Descarga exitosa de ${bytes.size} bytes desde $currentUrl")
                 return bytes
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 println("[CanvasApiService] Error descargando archivo desde $currentUrl: ${e.message}")
                 e.printStackTrace()
                 return null
@@ -532,7 +541,9 @@ class CanvasApiService(
                 parameter("only_announcements", true)
                 parameter("per_page", perPage)
             }.body()
-        } catch (_: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
             emptyList()
         }
     }
@@ -549,7 +560,9 @@ class CanvasApiService(
                 parameter("enrollment_type[]", "student")
                 parameter("per_page", perPage)
             }.body()
-        } catch (_: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
             emptyList()
         }
     }

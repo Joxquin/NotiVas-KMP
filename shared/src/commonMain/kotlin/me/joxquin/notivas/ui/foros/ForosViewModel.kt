@@ -2,6 +2,7 @@ package me.joxquin.notivas.ui.foros
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -313,7 +314,9 @@ class ForosViewModel(
             try {
                 val result = canvasRepository.getDiscussionsForCourses()
                 _rawDiscussions.value = result
-            } catch (_: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
             } finally {
                 _isLoading.value = false
             }
@@ -362,7 +365,9 @@ class ForosViewModel(
                 if (hasUserReplied) {
                     _respondedForumIds.value = _respondedForumIds.value + topic.id
                 }
-            } catch (_: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
                 _selectedDiscussionReplies.value = emptyList()
             } finally {
                 _isLoadingReplies.value = false
@@ -596,7 +601,9 @@ class ForosViewModel(
                         _copilotErrorMessage.value = ex.message ?: "Error al conectar con el asistente de IA."
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 if (_selectedDiscussion.value?.id == topic.id) {
                     _copilotErrorMessage.value = e.message ?: "Error inesperado al generar la asistencia."
                 }

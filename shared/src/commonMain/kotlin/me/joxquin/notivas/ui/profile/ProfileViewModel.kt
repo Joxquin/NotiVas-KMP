@@ -2,6 +2,7 @@ package me.joxquin.notivas.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -75,15 +76,24 @@ class ProfileViewModel(
         viewModelScope.launch {
             try {
                 canvasRepository.getProfile()
-            } catch (_: Exception) { }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) { }
         }
     }
 
     fun refreshOpenRouterBalance() {
         viewModelScope.launch {
             _isLoadingBalance.value = true
-            _openRouterBalance.value = copilotRepository.getOpenRouterBalance()
-            _isLoadingBalance.value = false
+            try {
+                _openRouterBalance.value = copilotRepository.getOpenRouterBalance()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                _openRouterBalance.value = null
+            } finally {
+                _isLoadingBalance.value = false
+            }
         }
     }
 
@@ -92,7 +102,9 @@ class ProfileViewModel(
             _isVerifyingToken.value = true
             try {
                 canvasRepository.getProfile()
-            } catch (_: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
             } finally {
                 _isVerifyingToken.value = false
             }
