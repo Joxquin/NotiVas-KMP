@@ -114,13 +114,18 @@ fun CopilotScreen(
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         // ─── EXPERIENCIA HYPEROS MIUIX (NOTIVAS Copilot) ────────────────────────
+        val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
         val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
         val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         val isImeOpen = imeBottom > 0.dp
         val floatingNavBottom = if (navBarBottom != 0.dp) 8.dp + navBarBottom else 36.dp
         // FloatingNavigationBar: altura 64dp + bottomPaddingValue (floatingNavBottom).
         // Separación uniforme entre FloatingNavigationBar y CopilotInputBar = 12.dp.
-        val targetBottomPadding = if (isImeOpen) (imeBottom + 12.dp) else (floatingNavBottom + 64.dp + 12.dp)
+        val targetBottomPadding = when {
+            isImeOpen -> (imeBottom + 12.dp)
+            isWideScreen -> 16.dp
+            else -> (floatingNavBottom + 64.dp + 12.dp)
+        }
         val animatedBottomPadding by animateDpAsState(
             targetValue = targetBottomPadding,
             animationSpec = tween(durationMillis = 200),

@@ -236,11 +236,12 @@ fun HerramientasMaterialContent(
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
+        val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
         LazyColumn(
             state = lazyListState,
             contentPadding = PaddingValues(
                 top = paddingValues.calculateTopPadding() + 8.dp,
-                bottom = 120.dp
+                bottom = if (isWideScreen) 24.dp else 120.dp
             ),
             verticalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier.fillMaxSize()

@@ -84,6 +84,8 @@ import top.yukonga.miuix.kmp.icon.extended.Tune
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.runtime.CompositionLocalProvider
 import top.yukonga.miuix.kmp.nav.core.NavDisplay
 import top.yukonga.miuix.kmp.nav.core.NavDisplayEffects
@@ -92,6 +94,10 @@ import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
 import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
 import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
 import top.yukonga.miuix.kmp.nav.transition.NavTransitions
+import me.joxquin.notivas.ui.components.miuix.MiuixPersistentNavigationRail
+import me.joxquin.notivas.ui.navigation.NotiVasNavigationRail
+import me.joxquin.notivas.ui.util.LocalIsWideScreen
+import me.joxquin.notivas.ui.util.shouldShowSplitPane
 import me.joxquin.notivas.ui.navigation.miuix.CrossActivityTransition
 import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixNavigator
 import me.joxquin.notivas.ui.navigation.miuix.MiuixNavigator
@@ -358,16 +364,18 @@ fun MainAppShell(
         }
     )
 
+    val isWideScreen = shouldShowSplitPane()
+
     if (themeStyle == AppThemeStyle.MIUIX) {
         val miuixBackStack = rememberNavBackStack<MiuixRoute>(MiuixRoute.Main)
         val miuixNavigator = remember(miuixBackStack) { MiuixNavigator(miuixBackStack) }
-        val navCornerRadius = rememberNavSystemCornerRadius()
+        val navCornerRadius = if (isWideScreen) 0.dp else rememberNavSystemCornerRadius()
         val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
         val backdropColor = MiuixTheme.colorScheme.surface
 
-        val navDisplayEffects = remember<NavDisplayEffects>(navCornerRadius, backdropColor, isDarkTheme) {
+        val navDisplayEffects = remember<NavDisplayEffects>(navCornerRadius, backdropColor, isDarkTheme, isWideScreen) {
             NavDisplayEffects(
-                enableCornerClip = true,
+                enableCornerClip = !isWideScreen,
                 cornerClipRadius = if (navCornerRadius <= 0.dp) 32.dp else navCornerRadius,
                 cornerClipMode = NavCornerClipMode.Leading,
                 dimAmount = 0.5f,
@@ -425,15 +433,39 @@ fun MainAppShell(
         }
 
         CompositionLocalProvider(
-            LocalMiuixNavigator provides miuixNavigator
+            LocalMiuixNavigator provides miuixNavigator,
+            LocalIsWideScreen provides isWideScreen,
         ) {
-            NavDisplay(
-                backStack = miuixBackStack,
-                modifier = Modifier.fillMaxSize(),
-                onBack = { handleMiuixBack() },
-                transition = NavTransitions.MiuixDefault,
-                effects = navDisplayEffects,
-            ) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                if (isWideScreen) {
+                    MiuixPersistentNavigationRail(
+                        destinations = destinations,
+                        currentDestination = currentDestination,
+                        onNavigate = { destination ->
+                            showingNotasDetail = false
+                            showingForosDetail = false
+                            miuixNavigator.popUntil { it is MiuixRoute.Main }
+                            val targetIndex = destinations.indexOf(destination)
+                            if (targetIndex != -1) {
+                                mainPagerState.animateToPage(targetIndex)
+                            }
+                        }
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .then(if (isWideScreen) Modifier.clipToBounds() else Modifier)
+                ) {
+                    NavDisplay(
+                        backStack = miuixBackStack,
+                        modifier = Modifier.fillMaxSize(),
+                        onBack = { handleMiuixBack() },
+                        transition = NavTransitions.MiuixDefault,
+                        effects = navDisplayEffects,
+                    ) {
                 entry<MiuixRoute.Main> {
                     Box(
                         modifier = Modifier
@@ -720,26 +752,28 @@ fun MainAppShell(
                         )
 
                         // Capa 3: FloatingNavigationBar ("Liquid Glass")
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = !isDashboardSearchExpandingOrExpanded,
-                            enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(200)) +
-                                    androidx.compose.animation.slideInVertically(animationSpec = androidx.compose.animation.core.tween(300)) { it },
-                            exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(150)) +
-                                    androidx.compose.animation.slideOutVertically(animationSpec = androidx.compose.animation.core.tween(250)) { it },
-                            modifier = Modifier.align(Alignment.BottomCenter)
-                        ) {
-                            FloatingNavigationBar(
-                                currentDestination = currentDestination,
-                                onNavigate = { destination ->
-                                    showingNotasDetail = false
-                                    showingForosDetail = false
-                                    val targetIndex = destinations.indexOf(destination)
-                                    if (targetIndex != -1) {
-                                        mainPagerState.animateToPage(targetIndex)
-                                    }
-                                },
-                                backdrop = contentBackdrop
-                            )
+                        if (!isWideScreen) {
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = !isDashboardSearchExpandingOrExpanded,
+                                enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(200)) +
+                                        androidx.compose.animation.slideInVertically(animationSpec = androidx.compose.animation.core.tween(300)) { it },
+                                exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(150)) +
+                                        androidx.compose.animation.slideOutVertically(animationSpec = androidx.compose.animation.core.tween(250)) { it },
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            ) {
+                                FloatingNavigationBar(
+                                    currentDestination = currentDestination,
+                                    onNavigate = { destination ->
+                                        showingNotasDetail = false
+                                        showingForosDetail = false
+                                        val targetIndex = destinations.indexOf(destination)
+                                        if (targetIndex != -1) {
+                                            mainPagerState.animateToPage(targetIndex)
+                                        }
+                                    },
+                                    backdrop = contentBackdrop
+                                )
+                            }
                         }
 
                         // Feedback Toast / Banner Flotante en MIUIX
@@ -1009,7 +1043,9 @@ fun MainAppShell(
                 }
             }
         }
-    } else {
+    }
+}
+} else {
         // ─── ARQUITECTURA MATERIAL DESIGN 3 (AOSP PREDICTIVE BACK & NAVDISPLAY) ───
         val materialBackStack = rememberNavBackStack<MiuixRoute>(MiuixRoute.Main)
         val materialNavigator = remember(materialBackStack) { MiuixNavigator(materialBackStack) }
@@ -1063,10 +1099,10 @@ fun MainAppShell(
         }
 
         val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
-        val materialNavCornerRadius = rememberNavSystemCornerRadius()
-        val materialAospEffects = remember(isDarkTheme, materialNavCornerRadius) {
+        val materialNavCornerRadius = if (isWideScreen) 0.dp else rememberNavSystemCornerRadius()
+        val materialAospEffects = remember(isDarkTheme, materialNavCornerRadius, isWideScreen) {
             NavDisplayEffects(
-                enableCornerClip = true,
+                enableCornerClip = !isWideScreen,
                 cornerClipRadius = if (materialNavCornerRadius <= 0.dp) 32.dp else materialNavCornerRadius,
                 cornerClipMode = NavCornerClipMode.All,
                 dimAmount = if (isDarkTheme) 0.8f else 0.2f,
@@ -1081,30 +1117,50 @@ fun MainAppShell(
         }
 
         CompositionLocalProvider(
-            LocalMiuixNavigator provides materialNavigator
+            LocalMiuixNavigator provides materialNavigator,
+            LocalIsWideScreen provides isWideScreen,
         ) {
-            NavDisplay(
-                backStack = materialBackStack,
-                modifier = Modifier.fillMaxSize(),
-                onBack = { handleMaterialBack() },
-                transition = CrossActivityTransition,
-                effects = materialAospEffects,
-            ) {
-                entry<MiuixRoute.Main> {
-                    val isImeVisible = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
-                    val isMaterialBottomBarVisible = !isImeVisible && !isMaterialDashboardSearchExpandingOrExpanded
-
-                    Scaffold(
-                        bottomBar = {
-                            NotiVasNavigationBar(
-                                currentDestination = materialDestination,
-                                isVisible = isMaterialBottomBarVisible,
-                                onNavigate = { destination ->
-                                    materialDestination = destination
-                                }
-                            )
+            Row(modifier = Modifier.fillMaxSize()) {
+                if (isWideScreen) {
+                    NotiVasNavigationRail(
+                        currentDestination = materialDestination,
+                        onNavigate = { destination ->
+                            materialNavigator.popUntil { it is MiuixRoute.Main }
+                            navigateToMaterial(destination)
                         }
-                    ) { innerPadding ->
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .then(if (isWideScreen) Modifier.clipToBounds() else Modifier)
+                ) {
+                    NavDisplay(
+                        backStack = materialBackStack,
+                        modifier = Modifier.fillMaxSize(),
+                        onBack = { handleMaterialBack() },
+                        transition = CrossActivityTransition,
+                        effects = materialAospEffects,
+                    ) {
+                        entry<MiuixRoute.Main> {
+                            val isImeVisible = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
+                            val isMaterialBottomBarVisible = !isWideScreen && !isImeVisible && !isMaterialDashboardSearchExpandingOrExpanded
+
+                            Scaffold(
+                                bottomBar = {
+                                    if (!isWideScreen) {
+                                        NotiVasNavigationBar(
+                                            currentDestination = materialDestination,
+                                            isVisible = isMaterialBottomBarVisible,
+                                            onNavigate = { destination ->
+                                                materialDestination = destination
+                                            }
+                                        )
+                                    }
+                                }
+                            ) { innerPadding ->
                         val targetBottom = if (isMaterialBottomBarVisible) innerPadding.calculateBottomPadding() else 0.dp
                         val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
                             targetValue = targetBottom,
@@ -1515,6 +1571,8 @@ fun MainAppShell(
             }
         }
     }
+}
+}
 
     activeUpdateInfo?.let { info ->
         UpdateDialog(

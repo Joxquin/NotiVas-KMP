@@ -53,12 +53,7 @@ import me.joxquin.notivas.shared.resources.*
 fun InicioMiuixContent(
     viewModel: DashboardViewModel,
     listState: LazyListState,
-    contentPadding: PaddingValues = PaddingValues(
-        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-        bottom = 100.dp,
-        start = 16.dp,
-        end = 16.dp
-    ),
+    contentPadding: PaddingValues? = null,
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     onNavigateToCourseDetail: ((me.joxquin.notivas.data.model.Course) -> Unit)? = null,
@@ -70,6 +65,13 @@ fun InicioMiuixContent(
     isEntranceTriggered: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
+    val resolvedPadding = contentPadding ?: PaddingValues(
+        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
+        bottom = if (isWideScreen) 24.dp else 100.dp,
+        start = 16.dp,
+        end = 16.dp
+    )
     val handleCourseClick: (me.joxquin.notivas.data.model.Course) -> Unit = { course ->
         if (onNavigateToCourseDetail != null) onNavigateToCourseDetail(course)
         else onNavigateToCourseProgreso(course)
@@ -139,7 +141,7 @@ fun InicioMiuixContent(
                 .scrollEndHaptic()
                 .overScrollVertical()
                 .nestedScroll(autoSettleConnection),
-            contentPadding = contentPadding,
+            contentPadding = resolvedPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 0. Welcome Header (32.sp) con scroll fade sincronizado con el TopAppBar
@@ -278,7 +280,7 @@ fun InicioMiuixContent(
         VerticalScrollBar(
             adapter = rememberScrollBarAdapter(listState),
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            trackPadding = contentPadding
+            trackPadding = resolvedPadding
         )
 
         // Vista Incrustada de Búsqueda con Animación Ease Continua

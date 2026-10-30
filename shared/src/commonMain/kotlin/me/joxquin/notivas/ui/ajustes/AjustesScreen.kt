@@ -210,9 +210,10 @@ fun AjustesScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
+        val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
         val contentPadding = PaddingValues(
             top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-            bottom = 100.dp
+            bottom = if (isWideScreen) 24.dp else 100.dp
         )
         val autoSettleConnection = rememberMiuixAutoSettleScrollConnection(
             listState = lazyListState,

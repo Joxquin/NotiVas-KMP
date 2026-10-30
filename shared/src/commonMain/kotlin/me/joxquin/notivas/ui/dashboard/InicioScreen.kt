@@ -177,11 +177,12 @@ fun InicioScreen(
             },
             containerColor = MaterialTheme.colorScheme.surface
         ) { innerPadding ->
+            val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(
                     top = innerPadding.calculateTopPadding() + 8.dp,
-                    bottom = innerPadding.calculateBottomPadding() + 100.dp,
+                    bottom = innerPadding.calculateBottomPadding() + if (isWideScreen) 24.dp else 100.dp,
                     start = 16.dp,
                     end = 16.dp
                 ),

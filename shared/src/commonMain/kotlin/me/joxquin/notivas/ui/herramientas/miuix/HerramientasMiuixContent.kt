@@ -67,9 +67,10 @@ fun HerramientasMiuixContent(
             .fillMaxSize()
             .background(MiuixTheme.colorScheme.surface)
     ) {
+        val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
         val contentPadding = PaddingValues(
             top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-            bottom = 120.dp
+            bottom = if (isWideScreen) 24.dp else 120.dp
         )
 
         val autoSettleConnection = rememberMiuixAutoSettleScrollConnection(
