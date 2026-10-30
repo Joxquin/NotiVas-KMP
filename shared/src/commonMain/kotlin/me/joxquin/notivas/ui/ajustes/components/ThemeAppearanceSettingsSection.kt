@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.theme.isDynamicColorAvailable
+import me.joxquin.notivas.ui.theme.isMiuixThemeSupported
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.preference.SwitchPreference
@@ -55,6 +56,7 @@ import me.joxquin.notivas.shared.resources.theme_material
 import me.joxquin.notivas.shared.resources.theme_material_desc
 import me.joxquin.notivas.shared.resources.theme_miuix
 import me.joxquin.notivas.shared.resources.theme_miuix_desc
+import me.joxquin.notivas.shared.resources.theme_miuix_unsupported_hint
 import me.joxquin.notivas.shared.resources.dynamic_color_title
 import me.joxquin.notivas.shared.resources.dynamic_color_summary_on
 import me.joxquin.notivas.shared.resources.dynamic_color_summary_off
@@ -70,6 +72,7 @@ fun ThemeAppearanceSettingsSection(
     onThemeStyleChange: (AppThemeStyle) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val miuixSupported = remember { isMiuixThemeSupported() }
     val materialLabel = stringResource(Res.string.theme_material)
     val miuixLabel = stringResource(Res.string.theme_miuix)
 
@@ -80,12 +83,12 @@ fun ThemeAppearanceSettingsSection(
         )
     }
 
-    val selectedThemeIndex = if (themeStyle == AppThemeStyle.MATERIAL) 0 else 1
-    val currentThemeLabel = themeOptions[selectedThemeIndex].second
+    val selectedThemeIndex = if (themeStyle == AppThemeStyle.MATERIAL || !miuixSupported) 0 else 1
+    val currentThemeLabel = if (!miuixSupported) materialLabel else themeOptions[selectedThemeIndex].second
 
     var showMaterialThemeDialog by remember { mutableStateOf(false) }
 
-    if (showMaterialThemeDialog) {
+    if (showMaterialThemeDialog && miuixSupported) {
         AlertDialog(
             onDismissRequest = { showMaterialThemeDialog = false },
             icon = {
@@ -113,6 +116,9 @@ fun ThemeAppearanceSettingsSection(
                     )
                     themeOptions.forEach { (style, label) ->
                         val isSelected = style == themeStyle
+                        val isMiuixOption = style == AppThemeStyle.MIUIX
+                        val isOptionEnabled = !isMiuixOption || miuixSupported
+
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = if (isSelected) {
@@ -122,9 +128,12 @@ fun ThemeAppearanceSettingsSection(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    onThemeStyleChange(style)
-                                    showMaterialThemeDialog = false
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable(enabled = isOptionEnabled) {
+                                    if (isOptionEnabled) {
+                                        onThemeStyleChange(style)
+                                        showMaterialThemeDialog = false
+                                    }
                                 }
                         ) {
                             Row(
@@ -182,7 +191,7 @@ fun ThemeAppearanceSettingsSection(
         )
     }
 
-    if (themeStyle == AppThemeStyle.MIUIX) {
+    if (themeStyle == AppThemeStyle.MIUIX && miuixSupported) {
         Column(modifier = modifier.fillMaxWidth()) {
             SmallTitle(text = stringResource(Res.string.settings_theme_section_title))
             MiuixCard(
@@ -247,12 +256,16 @@ fun ThemeAppearanceSettingsSection(
                     )
                 }
 
-                // Selector de Estilo de Diseño (Fila clickeable tipo preferencia Material)
+                // Selector de Estilo de Diseño (Fila clickeable tipo preferencia Material si MIUIX es soportado)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable { showMaterialThemeDialog = true }
+                        .clickable(enabled = miuixSupported) {
+                            if (miuixSupported) {
+                                showMaterialThemeDialog = true
+                            }
+                        }
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -291,28 +304,34 @@ fun ThemeAppearanceSettingsSection(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = currentThemeLabel,
+                                text = if (!miuixSupported) {
+                                    "$currentThemeLabel • ${stringResource(Res.string.theme_miuix_unsupported_hint)}"
+                                } else {
+                                    currentThemeLabel
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
 
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.change),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                    if (miuixSupported) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.padding(start = 8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.change),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                 }
 

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.serialization.Serializable
 import me.joxquin.notivas.ui.navigation.miuix.CrossActivityTransition
 import me.joxquin.notivas.ui.navigation.miuix.MiuixNavigator
+import me.joxquin.notivas.ui.theme.isMiuixThemeSupported
 import top.yukonga.miuix.kmp.nav.core.NavCornerClipMode
 import top.yukonga.miuix.kmp.nav.core.NavDisplay
 import top.yukonga.miuix.kmp.nav.core.NavDisplayEffects
@@ -90,10 +91,11 @@ fun OnboardingFlow(
     }
 
     val isDarkTheme = isSystemInDarkTheme()
-    val navCornerRadius = rememberNavSystemCornerRadius()
-    val onboardingAospEffects = remember(isDarkTheme, navCornerRadius) {
+    val isEffectsSupported = isMiuixThemeSupported()
+    val navCornerRadius = if (isEffectsSupported) rememberNavSystemCornerRadius() else 0.dp
+    val onboardingAospEffects = remember(isDarkTheme, navCornerRadius, isEffectsSupported) {
         NavDisplayEffects(
-            enableCornerClip = true,
+            enableCornerClip = isEffectsSupported && navCornerRadius > 0.dp,
             cornerClipRadius = if (navCornerRadius <= 0.dp) 32.dp else navCornerRadius,
             cornerClipMode = NavCornerClipMode.All,
             dimAmount = if (isDarkTheme) 0.8f else 0.2f,

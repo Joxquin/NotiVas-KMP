@@ -52,6 +52,7 @@
     <string name="theme_material_desc">Tokens Material 3 Expressive &amp; paleta dinámica Monet</string>
     <string name="theme_miuix">HyperOS Miuix</string>
     <string name="theme_miuix_desc">Componentes Xiaomi HyperOS Miuix, Squircle &amp; Glass</string>
+    <string name="theme_miuix_unsupported_hint">Requiere Android 13 o superior</string>
     <string name="dynamic_color_title">Color dinámico (Monet)</string>
     <string name="dynamic_color_summary_on">Extraer paleta del fondo de pantalla</string>
     <string name="dynamic_color_summary_off">Paleta predeterminada</string>

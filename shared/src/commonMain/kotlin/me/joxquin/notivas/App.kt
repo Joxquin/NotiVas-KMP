@@ -61,10 +61,16 @@ fun App() {
 
     val isDataReady = cachedCourses.isNotEmpty() || isPreloadReady
 
+    val effectiveThemeStyle = if (themeStyle == me.joxquin.notivas.data.local.AppThemeStyle.MIUIX && !me.joxquin.notivas.ui.theme.isMiuixThemeSupported()) {
+        me.joxquin.notivas.data.local.AppThemeStyle.MATERIAL
+    } else {
+        themeStyle
+    }
+
     ProvideAppLocale(language = appLanguage) {
         AppTheme(
             dynamicColor = isDynamicColorEnabled,
-            themeStyle = themeStyle
+            themeStyle = effectiveThemeStyle
         ) {
             Surface(modifier = Modifier.fillMaxSize()) {
                 if (!isPreferencesLoaded) {
@@ -103,7 +109,7 @@ fun App() {
 
                                 if (!hasStartupSplashRun) {
                                     AppStartupSplash(
-                                        themeStyle = themeStyle,
+                                        themeStyle = effectiveThemeStyle,
                                         isDataReady = isDataReady,
                                         onSplashFinished = {
                                             hasStartupSplashRun = true

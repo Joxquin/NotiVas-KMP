@@ -52,6 +52,7 @@
     <string name="theme_material_desc">Expressive M3 tokens &amp; Monet dynamic palette</string>
     <string name="theme_miuix">HyperOS Miuix</string>
     <string name="theme_miuix_desc">Xiaomi HyperOS Miuix components, Squircle &amp; Glass</string>
+    <string name="theme_miuix_unsupported_hint">Requires Android 13 or higher</string>
     <string name="dynamic_color_title">Dynamic color (Monet)</string>
     <string name="dynamic_color_summary_on">Adaptive palette from wallpaper</string>
     <string name="dynamic_color_summary_off">Default Stitch palette</string>

@@ -24,6 +24,12 @@ fun AppTheme(
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     content: @Composable () -> Unit
 ) {
+    val effectiveThemeStyle = if (themeStyle == AppThemeStyle.MIUIX && !isMiuixThemeSupported()) {
+        AppThemeStyle.MATERIAL
+    } else {
+        themeStyle
+    }
+
     val dynamicColors = dynamicColorSchemeOrDefault(darkTheme, dynamicColor)
     val colorScheme = dynamicColors ?: if (darkTheme) WarmDarkColorScheme else WarmLightColorScheme
 
