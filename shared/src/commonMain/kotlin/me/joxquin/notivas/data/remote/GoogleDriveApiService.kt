@@ -12,9 +12,11 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.joxquin.notivas.data.local.PreferencesManager
+import me.joxquin.notivas.util.resolveApiUrl
 
 @Serializable
 data class GoogleDriveFile(
@@ -59,6 +61,8 @@ class GoogleDriveApiService(
         const val MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     }
 
+    private fun apiUrl(endpoint: String): String = resolveApiUrl(endpoint)
+
     private suspend fun getValidAccessToken(token: String?, forceRefresh: Boolean = false): String? {
         if (!forceRefresh) {
             val currentToken = token ?: preferencesManager?.getGoogleDriveAccessToken()
@@ -96,7 +100,7 @@ class GoogleDriveApiService(
         }
         for (attempt in 1..2) {
             try {
-                val response = httpClient.get(DRIVE_FILES_API) {
+                val response = httpClient.get(apiUrl(DRIVE_FILES_API)) {
                     header(HttpHeaders.Authorization, "Bearer $token")
                     parameter("q", query)
                     parameter("fields", "files(id, name, mimeType, webViewLink, modifiedTime)")
@@ -113,7 +117,9 @@ class GoogleDriveApiService(
                     println("GoogleDriveApiService: findFolder error HTTP ${response.status.value}")
                     return null
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 e.printStackTrace()
                 return null
             }
@@ -130,7 +136,7 @@ class GoogleDriveApiService(
         )
         for (attempt in 1..2) {
             try {
-                val response = httpClient.post(DRIVE_FILES_API) {
+                val response = httpClient.post(apiUrl(DRIVE_FILES_API)) {
                     header(HttpHeaders.Authorization, "Bearer $token")
                     contentType(ContentType.Application.Json)
                     parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
@@ -147,7 +153,9 @@ class GoogleDriveApiService(
                     println("GoogleDriveApiService: createFolder error HTTP ${response.status.value}")
                     return null
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 e.printStackTrace()
                 return null
             }
@@ -174,7 +182,7 @@ class GoogleDriveApiService(
         )
         for (attempt in 1..2) {
             try {
-                val response = httpClient.post(DRIVE_FILES_API) {
+                val response = httpClient.post(apiUrl(DRIVE_FILES_API)) {
                     header(HttpHeaders.Authorization, "Bearer $token")
                     contentType(ContentType.Application.Json)
                     parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
@@ -191,7 +199,9 @@ class GoogleDriveApiService(
                     println("GoogleDriveApiService: createBlankDocument error HTTP ${response.status.value}")
                     return null
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 e.printStackTrace()
                 return null
             }
@@ -212,7 +222,7 @@ class GoogleDriveApiService(
         )
         for (attempt in 1..2) {
             try {
-                val response = httpClient.post("$DRIVE_FILES_API/$fileId/copy") {
+                val response = httpClient.post(apiUrl("$DRIVE_FILES_API/$fileId/copy")) {
                     header(HttpHeaders.Authorization, "Bearer $token")
                     contentType(ContentType.Application.Json)
                     parameter("supportsAllDrives", true)
@@ -232,7 +242,9 @@ class GoogleDriveApiService(
                     println("GoogleDriveApiService: copyFile failed HTTP $status fileId=$fileId: $errorBody")
                     return null
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 println("GoogleDriveApiService: copyFile exception: ${e.message}")
                 e.printStackTrace()
                 return null
@@ -244,12 +256,14 @@ class GoogleDriveApiService(
     suspend fun getFileMetadata(fileId: String, accessToken: String? = null): GoogleDriveFile? {
         val token = getValidAccessToken(accessToken) ?: return null
         return try {
-            httpClient.get("$DRIVE_FILES_API/$fileId") {
+            httpClient.get(apiUrl("$DRIVE_FILES_API/$fileId")) {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 parameter("supportsAllDrives", true)
                 parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
             }.body()
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             e.printStackTrace()
             null
         }
@@ -265,7 +279,7 @@ class GoogleDriveApiService(
     ): GoogleDriveFile? {
         val token = getValidAccessToken(accessToken) ?: return null
         return try {
-            val response = httpClient.patch("$DRIVE_FILES_API/$fileId") {
+            val response = httpClient.patch(apiUrl("$DRIVE_FILES_API/$fileId")) {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
                 parameter("supportsAllDrives", true)
@@ -277,7 +291,9 @@ class GoogleDriveApiService(
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             e.printStackTrace()
             null
         }
@@ -292,12 +308,14 @@ class GoogleDriveApiService(
     ): Boolean {
         val token = getValidAccessToken(accessToken) ?: return false
         return try {
-            val response = httpClient.delete("$DRIVE_FILES_API/$fileId") {
+            val response = httpClient.delete(apiUrl("$DRIVE_FILES_API/$fileId")) {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 parameter("supportsAllDrives", true)
             }
             response.status.value in 200..299 || response.status.value == 204
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             e.printStackTrace()
             false
         }
@@ -352,7 +370,7 @@ class GoogleDriveApiService(
         if (token != null) {
             try {
                 println("GoogleDriveApiService: intentando exportación autenticada oficial files.export para $fileId...")
-                val apiExportResponse = httpClient.get("$DRIVE_FILES_API/$fileId/export") {
+                val apiExportResponse = httpClient.get(apiUrl("$DRIVE_FILES_API/$fileId/export")) {
                     header(HttpHeaders.Authorization, "Bearer $token")
                     parameter("mimeType", targetExportMime)
                 }
@@ -373,14 +391,16 @@ class GoogleDriveApiService(
                 } else {
                     println("GoogleDriveApiService: files.export API falló con HTTP ${apiExportResponse.status.value}")
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 println("GoogleDriveApiService: error en files.export: ${e.message}")
             }
 
             // 2.1 Si es un archivo binario en Drive (ej. Office subido con rtpof=true), descargar con alt=media
             try {
                 println("GoogleDriveApiService: intentando descarga directa binaria files.get(alt=media) para $fileId...")
-                val mediaResponse = httpClient.get("$DRIVE_FILES_API/$fileId") {
+                val mediaResponse = httpClient.get(apiUrl("$DRIVE_FILES_API/$fileId")) {
                     header(HttpHeaders.Authorization, "Bearer $token")
                     parameter("alt", "media")
                     parameter("supportsAllDrives", true)
@@ -402,7 +422,9 @@ class GoogleDriveApiService(
                 } else {
                     println("GoogleDriveApiService: files.get(alt=media) falló con HTTP ${mediaResponse.status.value}")
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 println("GoogleDriveApiService: error en files.get(alt=media): ${e.message}")
             }
         }
@@ -416,7 +438,7 @@ class GoogleDriveApiService(
         for (webUrl in downloadUrls) {
             try {
                 println("GoogleDriveApiService: intentando descarga desde $webUrl...")
-                val exportResponse = httpClient.get(webUrl) {
+                val exportResponse = httpClient.get(apiUrl(webUrl)) {
                     if (token != null) {
                         header(HttpHeaders.Authorization, "Bearer $token")
                     }
@@ -438,7 +460,9 @@ class GoogleDriveApiService(
                 } else {
                     println("GoogleDriveApiService: descarga web falló HTTP ${exportResponse.status.value} en $webUrl")
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 println("GoogleDriveApiService: error en descarga web $webUrl: ${e.message}")
             }
         }
@@ -488,7 +512,7 @@ class GoogleDriveApiService(
         for (attempt in 1..2) {
             try {
                 val multipartContentType = ContentType.parse("multipart/related; boundary=$boundary")
-                val response = httpClient.post("$DRIVE_UPLOAD_API?uploadType=multipart") {
+                val response = httpClient.post(apiUrl("$DRIVE_UPLOAD_API?uploadType=multipart")) {
                     header(HttpHeaders.Authorization, "Bearer $token")
                     parameter("fields", "id, name, mimeType, webViewLink, modifiedTime")
                     setBody(io.ktor.http.content.ByteArrayContent(fullPayload, multipartContentType))
@@ -506,7 +530,9 @@ class GoogleDriveApiService(
                     println("GoogleDriveApiService: uploadAndConvertFile failed with HTTP $status: $errorBody")
                     return null
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 println("GoogleDriveApiService: uploadAndConvertFile exception: ${e.message}")
                 e.printStackTrace()
                 return null

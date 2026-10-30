@@ -10,6 +10,7 @@ import me.joxquin.notivas.data.model.OpenRouterChatRequest
 import me.joxquin.notivas.data.model.OpenRouterChatResponse
 import me.joxquin.notivas.data.model.OpenRouterCreditsResponse
 import me.joxquin.notivas.data.model.OpenRouterKeyResponse
+import me.joxquin.notivas.util.resolveApiUrl
 
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -60,7 +61,8 @@ class OpenRouterApiService(
         val cleanedJsonTree = stripNulls(rawJsonTree)
         val requestBodyJson = cleanedJsonTree.toString()
 
-        val response = client.post("$targetBaseUrl/chat/completions") {
+        val fullUrl = resolveApiUrl("$targetBaseUrl/chat/completions")
+        val response = client.post(fullUrl) {
             header("Authorization", authHeader)
             header("HTTP-Referer", "https://github.com/joxquin/NotiVas")
             header("X-Title", "NotiVas Academic Copilot")
@@ -76,7 +78,7 @@ class OpenRouterApiService(
             val errorMsg = try {
                 val errorObj = requestJson.decodeFromString<OpenRouterChatResponse>(responseText)
                 errorObj.error?.message ?: "Error HTTP $status del proveedor de IA"
-            } catch (e: Exception) {
+            } catch (_: Throwable) {
                 "Error HTTP $status: $responseText"
             }
             throw IllegalStateException(errorMsg)
@@ -89,7 +91,8 @@ class OpenRouterApiService(
         apiKey: String
     ): OpenRouterCreditsResponse {
         val authHeader = if (apiKey.startsWith("Bearer ")) apiKey else "Bearer $apiKey"
-        return client.get("$baseUrl/credits") {
+        val fullUrl = resolveApiUrl("$baseUrl/credits")
+        return client.get(fullUrl) {
             header("Authorization", authHeader)
         }.body()
     }
@@ -98,7 +101,8 @@ class OpenRouterApiService(
         apiKey: String
     ): OpenRouterKeyResponse {
         val authHeader = if (apiKey.startsWith("Bearer ")) apiKey else "Bearer $apiKey"
-        return client.get("$baseUrl/auth/key") {
+        val fullUrl = resolveApiUrl("$baseUrl/auth/key")
+        return client.get(fullUrl) {
             header("Authorization", authHeader)
         }.body()
     }
@@ -108,7 +112,8 @@ class OpenRouterApiService(
         apiKey: String? = null
     ): me.joxquin.notivas.data.model.OpenRouterModelEndpointsResponse {
         val cleanModel = modelId.trim().removePrefix("/")
-        val response = client.get("$baseUrl/models/$cleanModel/endpoints") {
+        val fullUrl = resolveApiUrl("$baseUrl/models/$cleanModel/endpoints")
+        val response = client.get(fullUrl) {
             if (!apiKey.isNullOrBlank()) {
                 val authHeader = if (apiKey.startsWith("Bearer ")) apiKey else "Bearer $apiKey"
                 header("Authorization", authHeader)

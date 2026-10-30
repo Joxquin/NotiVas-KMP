@@ -111,7 +111,9 @@ class CopilotRepository(
                     ),
                     customBaseUrl = customBaseUrl
                 )
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 // Si el proveedor del modelo rechaza el parámetro 'tools' o arroja 400 Provider error
                 val isProviderToolError = !disableTools && (
                     e.message?.contains("Provider returned error", ignoreCase = true) == true ||
@@ -134,7 +136,9 @@ class CopilotRepository(
                             ),
                             customBaseUrl = customBaseUrl
                         )
-                    } catch (retryException: Exception) {
+                    } catch (retryException: CancellationException) {
+                        throw retryException
+                    } catch (retryException: Throwable) {
                         println("Copilot [Error] Falló reintento sin tools: ${retryException.message}")
                         return Result.failure(retryException)
                     }
@@ -293,7 +297,9 @@ class CopilotRepository(
                     totalCompletionTokens += cTok
                     totalTokens += u.totalTokens ?: (pTok + cTok)
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 println("Copilot [Aviso] Falló la síntesis forzada final: ${e.message}")
             }
         }

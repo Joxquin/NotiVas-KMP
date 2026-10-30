@@ -2,6 +2,7 @@ package me.joxquin.notivas.ui.copilot
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -460,70 +461,88 @@ class CopilotViewModel(
         _errorMessage.value = null
 
         viewModelScope.launch {
-            val currentSession = chatRepository.getSessionById(sessionId)
-            if (currentSession == null) {
-                val title = prompt.take(40) + if (prompt.length > 40) "..." else ""
-                chatRepository.createOrUpdateSession(
-                    sessionId = sessionId,
-                    title = title,
-                    courseId = _selectedCourseId.value
-                )
-            }
-            chatRepository.saveMessage(sessionId, userMessage)
-
-            val history = updatedMessages
-                .dropLast(1)
-                .map { msg ->
-                    OpenRouterMessage(
-                        role = if (msg.role == CopilotRole.USER) "user" else "assistant",
-                        content = msg.text
+            try {
+                val currentSession = chatRepository.getSessionById(sessionId)
+                if (currentSession == null) {
+                    val title = prompt.take(40) + if (prompt.length > 40) "..." else ""
+                    chatRepository.createOrUpdateSession(
+                        sessionId = sessionId,
+                        title = title,
+                        courseId = _selectedCourseId.value
                     )
                 }
+                chatRepository.saveMessage(sessionId, userMessage)
 
-            val result = copilotRepository.queryCopilot(
-                history = history,
-                userPrompt = prompt,
-                selectedCourseId = _selectedCourseId.value
-            )
-
-            _isLoading.value = false
-
-            result.fold(
-                onSuccess = { response ->
-                    val assistantMessage = CopilotMessageItem(
-                        id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
-                        role = CopilotRole.ASSISTANT,
-                        text = response.reply,
-                        sources = response.sources,
-                        actionFeedback = response.actionFeedback,
-                        tokens = response.totalTokens,
-                        timestamp = DateTimeUtil.nowEpochMillis()
-                    )
-                    _messages.value = _messages.value + assistantMessage
-                    val newSessionTokens = _sessionTokens.value + response.totalTokens
-                    _sessionTokens.value = newSessionTokens
-                    chatRepository.saveMessage(sessionId, assistantMessage)
-                    chatRepository.updateSessionTokens(sessionId, newSessionTokens)
-                    refreshOpenRouterBalance()
-                },
-                onFailure = { error ->
-                    val errorText = error.message ?: "Ocurrió un error inesperado."
-                    _errorMessage.value = errorText
-                    val provider = preferencesManager.copilotProvider.first()
-                    val providerName = when (provider) {
-                        me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
-                        me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
+                val history = updatedMessages
+                    .dropLast(1)
+                    .map { msg ->
+                        OpenRouterMessage(
+                            role = if (msg.role == CopilotRole.USER) "user" else "assistant",
+                            content = msg.text
+                        )
                     }
-                    val assistantErrorMessage = CopilotMessageItem(
-                        id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
-                        role = CopilotRole.ASSISTANT,
-                        text = "No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu API Key de $providerName y tu conexión.",
-                        timestamp = DateTimeUtil.nowEpochMillis()
-                    )
-                    _messages.value = _messages.value + assistantErrorMessage
+
+                val result = copilotRepository.queryCopilot(
+                    history = history,
+                    userPrompt = prompt,
+                    selectedCourseId = _selectedCourseId.value
+                )
+
+                _isLoading.value = false
+
+                result.fold(
+                    onSuccess = { response ->
+                        val assistantMessage = CopilotMessageItem(
+                            id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
+                            role = CopilotRole.ASSISTANT,
+                            text = response.reply,
+                            sources = response.sources,
+                            actionFeedback = response.actionFeedback,
+                            tokens = response.totalTokens,
+                            timestamp = DateTimeUtil.nowEpochMillis()
+                        )
+                        _messages.value = _messages.value + assistantMessage
+                        val newSessionTokens = _sessionTokens.value + response.totalTokens
+                        _sessionTokens.value = newSessionTokens
+                        chatRepository.saveMessage(sessionId, assistantMessage)
+                        chatRepository.updateSessionTokens(sessionId, newSessionTokens)
+                        refreshOpenRouterBalance()
+                    },
+                    onFailure = { error ->
+                        val errorText = error.message ?: "Ocurrió un error inesperado."
+                        _errorMessage.value = errorText
+                        val provider = preferencesManager.copilotProvider.first()
+                        val providerName = when (provider) {
+                            me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
+                            me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
+                        }
+                        val assistantErrorMessage = CopilotMessageItem(
+                            id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
+                            role = CopilotRole.ASSISTANT,
+                            text = "No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu API Key de $providerName y tu conexión.",
+                            timestamp = DateTimeUtil.nowEpochMillis()
+                        )
+                        _messages.value = _messages.value + assistantErrorMessage
+                        chatRepository.saveMessage(sessionId, assistantErrorMessage)
+                    }
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                _isLoading.value = false
+                val errorText = e.message ?: "Ocurrió un error inesperado."
+                _errorMessage.value = errorText
+                val assistantErrorMessage = CopilotMessageItem(
+                    id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
+                    role = CopilotRole.ASSISTANT,
+                    text = "No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu conexión y configuración de Copilot.",
+                    timestamp = DateTimeUtil.nowEpochMillis()
+                )
+                _messages.value = _messages.value + assistantErrorMessage
+                try {
                     chatRepository.saveMessage(sessionId, assistantErrorMessage)
-                }
-            )
+                } catch (_: Throwable) {}
+            }
         }
     }
 

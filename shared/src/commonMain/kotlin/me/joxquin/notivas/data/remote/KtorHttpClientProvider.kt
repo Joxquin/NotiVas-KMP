@@ -18,6 +18,8 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.CancellationException
+import me.joxquin.notivas.util.resolveApiUrl
 
 object KtorHttpClientProvider {
     val jsonConfig = Json {
@@ -103,7 +105,7 @@ class GoogleDriveAuthService(
     ): GoogleOAuthTokenResponse? {
         return try {
             httpClient.submitForm(
-                url = GoogleDriveConstants.TOKEN_URI,
+                url = resolveApiUrl(GoogleDriveConstants.TOKEN_URI),
                 formParameters = parameters {
                     append("code", code)
                     append("client_id", clientId)
@@ -111,7 +113,9 @@ class GoogleDriveAuthService(
                     append("grant_type", "authorization_code")
                 }
             ).body<GoogleOAuthTokenResponse>()
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             e.printStackTrace()
             null
         }
@@ -123,14 +127,16 @@ class GoogleDriveAuthService(
     ): GoogleOAuthTokenResponse? {
         return try {
             httpClient.submitForm(
-                url = GoogleDriveConstants.TOKEN_URI,
+                url = resolveApiUrl(GoogleDriveConstants.TOKEN_URI),
                 formParameters = parameters {
                     append("refresh_token", refreshToken)
                     append("client_id", clientId)
                     append("grant_type", "refresh_token")
                 }
             ).body<GoogleOAuthTokenResponse>()
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
             e.printStackTrace()
             null
         }
@@ -138,10 +144,12 @@ class GoogleDriveAuthService(
 
     suspend fun fetchUserInfo(accessToken: String): GoogleUserInfoResponse? {
         return try {
-            httpClient.get(GoogleDriveConstants.USER_INFO_URI) {
+            httpClient.get(resolveApiUrl(GoogleDriveConstants.USER_INFO_URI)) {
                 header(HttpHeaders.Authorization, "Bearer $accessToken")
             }.body<GoogleUserInfoResponse>()
-        } catch (_: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
             null
         }
     }

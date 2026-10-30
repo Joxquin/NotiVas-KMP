@@ -19,7 +19,7 @@
                 if (req.method === 'OPTIONS') {
                     res.setHeader('Access-Control-Allow-Origin', '*');
                     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
-                    res.setHeader('Access-Control-Allow-Headers', '*');
+                    res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || '*');
                     res.statusCode = 204;
                     return res.end();
                 }
@@ -81,6 +81,12 @@
                         delete proxyHeaders['cookie'];
                     }
 
+                    if (bodyBuffer && bodyBuffer.length > 0) {
+                        proxyHeaders['content-length'] = bodyBuffer.length;
+                    } else {
+                        delete proxyHeaders['content-length'];
+                    }
+
                     const options = {
                         protocol: targetParsed.protocol,
                         hostname: targetParsed.hostname,
@@ -106,9 +112,22 @@
                         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
                         res.setHeader('Access-Control-Allow-Headers', '*');
 
+                        const hopByHop = new Set([
+                            'connection',
+                            'keep-alive',
+                            'proxy-authenticate',
+                            'proxy-authorization',
+                            'te',
+                            'trailer',
+                            'transfer-encoding',
+                            'upgrade',
+                            'access-control-allow-origin',
+                            'content-security-policy'
+                        ]);
+
                         for (const [key, value] of Object.entries(proxyRes.headers)) {
                             const lowerKey = key.toLowerCase();
-                            if (lowerKey !== 'access-control-allow-origin' && lowerKey !== 'content-security-policy') {
+                            if (!hopByHop.has(lowerKey)) {
                                 res.setHeader(key, value);
                             }
                         }
