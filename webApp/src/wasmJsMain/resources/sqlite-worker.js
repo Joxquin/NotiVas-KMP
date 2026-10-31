@@ -191,7 +191,18 @@ function stepRequest(id, requestData) {
         postMessage({ 'id': id, error: "Invalid statement ID: " + requestData.statementId });
         return;
     }
-    const statement = entry.stmt;
+
+    // Auto-heal: If sql.js export() closed the underlying statement, re-prepare it transparently
+    if (!entry.stmt || !entry.stmt.stmt && !entry.stmt.Qa) {
+        try {
+            entry.stmt = entry.db.prepare(entry.sql);
+        } catch (prepErr) {
+            postMessage({ 'id': id, error: prepErr.message || String(prepErr) });
+            return;
+        }
+    }
+
+    let statement = entry.stmt;
 
     try {
         const resultData = {
@@ -235,9 +246,46 @@ function stepRequest(id, requestData) {
 
         postMessage({ 'id': id, data: resultData });
     } catch (error) {
+        // If statement closed during step/reset or room_table_modification_log missing
+        if (error && (String(error).includes("Statement closed") || (error.message && error.message.includes("Statement closed")))) {
+            try {
+                entry.stmt = entry.db.prepare(entry.sql);
+                statement = entry.stmt;
+                statement.reset();
+                if (requestData.bindings && requestData.bindings.length > 0) {
+                    statement.bind(requestData.bindings);
+                }
+                const retryResult = { 'rows': [], 'columnTypes': [] };
+                while (statement.step()) {
+                    const row = statement.get();
+                    if (retryResult.columnTypes.length === 0) {
+                        for (let i = 0; i < row.length; i++) {
+                            const val = row[i];
+                            if (val === null) retryResult.columnTypes.push(5);
+                            else if (typeof val === 'number') retryResult.columnTypes.push(Number.isInteger(val) ? 1 : 2);
+                            else if (typeof val === 'string') retryResult.columnTypes.push(3);
+                            else if (val instanceof Uint8Array) retryResult.columnTypes.push(4);
+                            else retryResult.columnTypes.push(5);
+                        }
+                    }
+                    retryResult.rows.push(row);
+                }
+                if (/^\s*(INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)/i.test(entry.sql)) {
+                    scheduleSave(entry.db);
+                }
+                postMessage({ 'id': id, data: retryResult });
+                return;
+            } catch (reErr) {
+                postMessage({ 'id': id, error: reErr.message || String(reErr) });
+                return;
+            }
+        }
+
         if (error && error.message && error.message.includes("room_table_modification_log")) {
             try {
                 entry.db.run("CREATE TABLE IF NOT EXISTS room_table_modification_log (table_id INTEGER PRIMARY KEY, invalidated INTEGER NOT NULL DEFAULT 0);");
+                entry.stmt = entry.db.prepare(entry.sql);
+                statement = entry.stmt;
                 statement.reset();
                 if (requestData.bindings && requestData.bindings.length > 0) {
                     statement.bind(requestData.bindings);
