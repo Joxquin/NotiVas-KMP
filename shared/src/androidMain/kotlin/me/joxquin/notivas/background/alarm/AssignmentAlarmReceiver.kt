@@ -62,6 +62,7 @@ class AssignmentAlarmReceiver : BroadcastReceiver() {
                 ALERT_TYPE_24H -> preferencesManager.notif24h.first() && !assignment.notified24h
                 ALERT_TYPE_3H -> preferencesManager.notif3h.first() && !assignment.notified3h
                 ALERT_TYPE_30M -> preferencesManager.notif30m.first() && !assignment.notified30m
+                ALERT_TYPE_CUSTOM -> true
                 else -> false
             }
 

@@ -100,8 +100,11 @@ import me.joxquin.notivas.ui.util.LocalIsWideScreen
 import me.joxquin.notivas.ui.util.shouldShowSplitPane
 import me.joxquin.notivas.ui.navigation.miuix.CrossActivityTransition
 import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixNavigator
+import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixSnackbarHostState
 import me.joxquin.notivas.ui.navigation.miuix.MiuixNavigator
 import me.joxquin.notivas.ui.navigation.miuix.MiuixRoute
+import top.yukonga.miuix.kmp.basic.SnackbarHost
+import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import me.joxquin.notivas.ui.notas.NotasScreen
 import me.joxquin.notivas.ui.foros.ForosScreen
 import me.joxquin.notivas.ui.activity.RecentActivityScreen
@@ -248,6 +251,7 @@ fun MainAppShell(
     }
 
     var toastMessage by remember { mutableStateOf<String?>(null) }
+    val miuixSnackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(dashboardViewModel) {
         dashboardViewModel.uiEffect.collect { effect ->
@@ -434,6 +438,7 @@ fun MainAppShell(
 
         CompositionLocalProvider(
             LocalMiuixNavigator provides miuixNavigator,
+            LocalMiuixSnackbarHostState provides miuixSnackbarHostState,
             LocalIsWideScreen provides isWideScreen,
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
@@ -1036,6 +1041,13 @@ fun MainAppShell(
                     )
                 }
             }
+
+            SnackbarHost(
+                state = miuixSnackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = if (!isWideScreen) 88.dp else 24.dp)
+            )
         }
     }
 }
@@ -1112,6 +1124,7 @@ fun MainAppShell(
 
         CompositionLocalProvider(
             LocalMiuixNavigator provides materialNavigator,
+            LocalMiuixSnackbarHostState provides miuixSnackbarHostState,
             LocalIsWideScreen provides isWideScreen,
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
@@ -1563,6 +1576,13 @@ fun MainAppShell(
                     )
                 }
             }
+
+            SnackbarHost(
+                state = miuixSnackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = if (!isWideScreen) 88.dp else 24.dp)
+            )
         }
     }
 }

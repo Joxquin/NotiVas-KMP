@@ -6,6 +6,7 @@ expect object PlatformAlarmScheduler {
         courseName: String,
         assignmentName: String,
         triggerEpochMillis: Long
-    )
+    ): Boolean
 }
+
 

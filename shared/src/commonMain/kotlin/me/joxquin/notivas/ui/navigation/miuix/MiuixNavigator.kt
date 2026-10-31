@@ -61,3 +61,7 @@ class MiuixNavigator(
 val LocalMiuixNavigator = staticCompositionLocalOf<MiuixNavigator> {
     error("No se ha provisto LocalMiuixNavigator en la jerarquia de composicion.")
 }
+
+val LocalMiuixSnackbarHostState = staticCompositionLocalOf<top.yukonga.miuix.kmp.basic.SnackbarHostState?> {
+    null
+}

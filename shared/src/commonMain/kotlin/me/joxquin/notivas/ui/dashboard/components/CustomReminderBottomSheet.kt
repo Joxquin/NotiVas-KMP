@@ -25,6 +25,9 @@ import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import top.yukonga.miuix.kmp.basic.SnackbarDuration
+import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixSnackbarHostState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,15 +77,42 @@ fun CustomReminderBottomSheet(
         dueMillis != null && selectedTargetMillis > dueMillis
     }
 
-    val onConfirm = {
-        PlatformAlarmScheduler.scheduleCustomReminder(
-            assignmentId = assignment.id,
-            courseName = courseName,
-            assignmentName = assignment.name,
-            triggerEpochMillis = selectedTargetMillis
-        )
-        onReminderSet()
-        onDismissRequest()
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = LocalMiuixSnackbarHostState.current
+
+    val successMsg = stringResource(Res.string.custom_reminder_saved_toast)
+    val pastMsg = stringResource(Res.string.custom_reminder_invalid_past)
+
+    val isPast = remember(selectedTargetMillis) {
+        selectedTargetMillis <= DateTimeUtil.nowEpochMillis()
+    }
+
+    val onConfirm: () -> Unit = {
+        if (isPast) {
+            coroutineScope.launch {
+                snackbarHostState?.showSnackbar(
+                    message = pastMsg,
+                    duration = SnackbarDuration.Short
+                )
+            }
+        } else {
+            val scheduled = PlatformAlarmScheduler.scheduleCustomReminder(
+                assignmentId = assignment.id,
+                courseName = courseName,
+                assignmentName = assignment.name,
+                triggerEpochMillis = selectedTargetMillis
+            )
+            if (scheduled) {
+                coroutineScope.launch {
+                    snackbarHostState?.showSnackbar(
+                        message = successMsg,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+            onReminderSet()
+            onDismissRequest()
+        }
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
@@ -189,7 +219,33 @@ fun CustomReminderBottomSheet(
                     }
                 }
 
-                if (isAfterDue) {
+                if (isPast) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.errorContainer)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = MiuixTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            MiuixText(
+                                text = pastMsg,
+                                fontSize = 12.sp,
+                                color = MiuixTheme.colorScheme.onErrorContainer,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                } else if (isAfterDue) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.errorContainer)
@@ -264,7 +320,29 @@ fun CustomReminderBottomSheet(
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                if (isAfterDue) {
+                if (isPast) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Text(
+                                text = pastMsg,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                } else if (isAfterDue) {
                     Surface(
                         color = MaterialTheme.colorScheme.errorContainer,
                         shape = MaterialTheme.shapes.medium

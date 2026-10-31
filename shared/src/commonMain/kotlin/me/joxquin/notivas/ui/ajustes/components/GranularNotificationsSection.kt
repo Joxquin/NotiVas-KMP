@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,6 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.WarningAmber
@@ -58,6 +62,13 @@ import top.yukonga.miuix.kmp.window.WindowDialog
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.settings_notif_section_title
+import me.joxquin.notivas.shared.resources.settings_notif_new_content_title
+import me.joxquin.notivas.shared.resources.notif_new_assignments_title
+import me.joxquin.notivas.shared.resources.notif_new_assignments_desc
+import me.joxquin.notivas.shared.resources.notif_new_quizzes_title
+import me.joxquin.notivas.shared.resources.notif_new_quizzes_desc
+import me.joxquin.notivas.shared.resources.notif_new_foros_title
+import me.joxquin.notivas.shared.resources.notif_new_foros_desc
 import me.joxquin.notivas.shared.resources.notif_24h_title
 import me.joxquin.notivas.shared.resources.notif_24h_desc
 import me.joxquin.notivas.shared.resources.notif_3h_title
@@ -97,10 +108,16 @@ fun GranularNotificationsSection(
     notif24h: Boolean,
     notif3h: Boolean,
     notif30m: Boolean,
+    notifNewAssignments: Boolean,
+    notifNewQuizzes: Boolean,
+    notifNewForos: Boolean,
     syncIntervalMinutes: Long,
     onNotif24hChange: (Boolean) -> Unit,
     onNotif3hChange: (Boolean) -> Unit,
     onNotif30mChange: (Boolean) -> Unit,
+    onNotifNewAssignmentsChange: (Boolean) -> Unit,
+    onNotifNewQuizzesChange: (Boolean) -> Unit,
+    onNotifNewForosChange: (Boolean) -> Unit,
     onSyncIntervalChange: (Long) -> Unit,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
@@ -269,6 +286,33 @@ fun GranularNotificationsSection(
                         onClick = { permissionManager.openMiuiAutostartSettings() }
                     )
                 }
+            }
+
+            Spacer(Modifier.height(12.dp))
+            SmallTitle(text = stringResource(Res.string.settings_notif_new_content_title))
+            MiuixCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                SwitchPreference(
+                    title = stringResource(Res.string.notif_new_assignments_title),
+                    summary = stringResource(Res.string.notif_new_assignments_desc),
+                    checked = notifNewAssignments,
+                    onCheckedChange = onNotifNewAssignmentsChange
+                )
+                SwitchPreference(
+                    title = stringResource(Res.string.notif_new_quizzes_title),
+                    summary = stringResource(Res.string.notif_new_quizzes_desc),
+                    checked = notifNewQuizzes,
+                    onCheckedChange = onNotifNewQuizzesChange
+                )
+                SwitchPreference(
+                    title = stringResource(Res.string.notif_new_foros_title),
+                    summary = stringResource(Res.string.notif_new_foros_desc),
+                    checked = notifNewForos,
+                    onCheckedChange = onNotifNewForosChange
+                )
             }
         }
     } else {
@@ -450,6 +494,61 @@ fun GranularNotificationsSection(
                         actionContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                         actionContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                         onClick = { permissionManager.openMiuiAutostartSettings() }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            Card(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.settings_notif_new_content_title),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    MaterialNotificationToggleRow(
+                        icon = Icons.Default.Assignment,
+                        title = stringResource(Res.string.notif_new_assignments_title),
+                        subtitle = stringResource(Res.string.notif_new_assignments_desc),
+                        checked = notifNewAssignments,
+                        onCheckedChange = onNotifNewAssignmentsChange
+                    )
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+
+                    MaterialNotificationToggleRow(
+                        icon = Icons.Default.FactCheck,
+                        title = stringResource(Res.string.notif_new_quizzes_title),
+                        subtitle = stringResource(Res.string.notif_new_quizzes_desc),
+                        checked = notifNewQuizzes,
+                        onCheckedChange = onNotifNewQuizzesChange
+                    )
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+
+                    MaterialNotificationToggleRow(
+                        icon = Icons.Default.Forum,
+                        title = stringResource(Res.string.notif_new_foros_title),
+                        subtitle = stringResource(Res.string.notif_new_foros_desc),
+                        checked = notifNewForos,
+                        onCheckedChange = onNotifNewForosChange
                     )
                 }
             }

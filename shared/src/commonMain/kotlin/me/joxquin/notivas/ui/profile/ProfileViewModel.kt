@@ -27,6 +27,9 @@ data class ProfileUiState(
     val notif24h: Boolean = true,
     val notif3h: Boolean = true,
     val notif30m: Boolean = false,
+    val notifNewAssignments: Boolean = true,
+    val notifNewQuizzes: Boolean = true,
+    val notifNewForos: Boolean = true,
     val autoFocusMode: Boolean = true,
     val pomodoroDurationMinutes: Int = 25,
     val syncIntervalMinutes: Long = 15L,
@@ -117,6 +120,9 @@ class ProfileViewModel(
         preferencesManager.notif24h,
         preferencesManager.notif3h,
         preferencesManager.notif30m,
+        preferencesManager.notifNewAssignments,
+        preferencesManager.notifNewQuizzes,
+        preferencesManager.notifNewForos,
         preferencesManager.autoFocusMode,
         preferencesManager.pomodoroDurationMinutes,
         preferencesManager.syncIntervalMinutes,
@@ -151,27 +157,30 @@ class ProfileViewModel(
             notif24h = args[2] as Boolean,
             notif3h = args[3] as Boolean,
             notif30m = args[4] as Boolean,
-            autoFocusMode = args[5] as Boolean,
-            pomodoroDurationMinutes = args[6] as Int,
-            syncIntervalMinutes = args[7] as Long,
-            copilotProvider = args[8] as me.joxquin.notivas.data.local.CopilotProvider,
-            openRouterApiKey = args[9] as String?,
-            openRouterModel = args[10] as String,
-            googleAiStudioApiKey = args[11] as String?,
-            googleAiStudioModel = args[12] as String,
-            copilotEnabled = args[13] as Boolean,
-            totalCopilotTokens = args[14] as Long,
-            openRouterBalance = args[15] as OpenRouterAccountBalance?,
-            isLoadingBalance = args[16] as Boolean,
-            isVerifyingToken = args[17] as Boolean,
-            dynamicColorEnabled = args[18] as Boolean,
-            themeStyle = args[19] as AppThemeStyle,
-            authMode = args[20] as AuthMode,
-            appLanguage = args[21] as AppLanguage,
-            googleDriveConnected = args[22] as Boolean,
-            googleDriveEmail = args[23] as String?,
-            googleDriveLastSyncTimestamp = args[24] as Long,
-            googleDriveCacheSize = args[25] as String
+            notifNewAssignments = args[5] as Boolean,
+            notifNewQuizzes = args[6] as Boolean,
+            notifNewForos = args[7] as Boolean,
+            autoFocusMode = args[8] as Boolean,
+            pomodoroDurationMinutes = args[9] as Int,
+            syncIntervalMinutes = args[10] as Long,
+            copilotProvider = args[11] as me.joxquin.notivas.data.local.CopilotProvider,
+            openRouterApiKey = args[12] as String?,
+            openRouterModel = args[13] as String,
+            googleAiStudioApiKey = args[14] as String?,
+            googleAiStudioModel = args[15] as String,
+            copilotEnabled = args[16] as Boolean,
+            totalCopilotTokens = args[17] as Long,
+            openRouterBalance = args[18] as OpenRouterAccountBalance?,
+            isLoadingBalance = args[19] as Boolean,
+            isVerifyingToken = args[20] as Boolean,
+            dynamicColorEnabled = args[21] as Boolean,
+            themeStyle = args[22] as AppThemeStyle,
+            authMode = args[23] as AuthMode,
+            appLanguage = args[24] as AppLanguage,
+            googleDriveConnected = args[25] as Boolean,
+            googleDriveEmail = args[26] as String?,
+            googleDriveLastSyncTimestamp = args[27] as Long,
+            googleDriveCacheSize = args[28] as String
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
 
@@ -222,6 +231,18 @@ class ProfileViewModel(
 
     fun setNotif30m(enabled: Boolean) {
         viewModelScope.launch { preferencesManager.setNotif30m(enabled) }
+    }
+
+    fun setNotifNewAssignments(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setNotifNewAssignments(enabled) }
+    }
+
+    fun setNotifNewQuizzes(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setNotifNewQuizzes(enabled) }
+    }
+
+    fun setNotifNewForos(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setNotifNewForos(enabled) }
     }
 
     fun setSyncIntervalMinutes(minutes: Long) {

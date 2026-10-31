@@ -89,6 +89,31 @@ class PreferencesManager(
     private val _notif30m = MutableStateFlow(false)
     val notif30m: Flow<Boolean> = _notif30m.asStateFlow()
 
+    private val _notifNewAssignments = MutableStateFlow(true)
+    val notifNewAssignments: Flow<Boolean> = _notifNewAssignments.asStateFlow()
+
+    private val _notifNewQuizzes = MutableStateFlow(true)
+    val notifNewQuizzes: Flow<Boolean> = _notifNewQuizzes.asStateFlow()
+
+    private val _notifNewForos = MutableStateFlow(true)
+    val notifNewForos: Flow<Boolean> = _notifNewForos.asStateFlow()
+
+    private val _knownAssignmentIds = MutableStateFlow<Set<Long>>(emptySet())
+    val knownAssignmentIds: Flow<Set<Long>> = _knownAssignmentIds.asStateFlow()
+    fun getKnownAssignmentIds(): Set<Long> = _knownAssignmentIds.value
+
+    private val _knownForumIds = MutableStateFlow<Set<Long>>(emptySet())
+    val knownForumIds: Flow<Set<Long>> = _knownForumIds.asStateFlow()
+    fun getKnownForumIds(): Set<Long> = _knownForumIds.value
+
+    private val _hasCompletedInitialSync = MutableStateFlow(false)
+    val hasCompletedInitialSync: Flow<Boolean> = _hasCompletedInitialSync.asStateFlow()
+    fun getHasCompletedInitialSync(): Boolean = _hasCompletedInitialSync.value
+
+    private val _lastSyncTimestamp = MutableStateFlow(0L)
+    val lastSyncTimestamp: Flow<Long> = _lastSyncTimestamp.asStateFlow()
+    fun getLastSyncTimestamp(): Long = _lastSyncTimestamp.value
+
     private val _autoFocusMode = MutableStateFlow(true)
     val autoFocusMode: Flow<Boolean> = _autoFocusMode.asStateFlow()
 
@@ -214,6 +239,13 @@ class PreferencesManager(
             _notif24h.value = snapshot.notif24h
             _notif3h.value = snapshot.notif3h
             _notif30m.value = snapshot.notif30m
+            _notifNewAssignments.value = snapshot.notifNewAssignments
+            _notifNewQuizzes.value = snapshot.notifNewQuizzes
+            _notifNewForos.value = snapshot.notifNewForos
+            _knownAssignmentIds.value = snapshot.knownAssignmentIds
+            _knownForumIds.value = snapshot.knownForumIds
+            _hasCompletedInitialSync.value = snapshot.hasCompletedInitialSync
+            _lastSyncTimestamp.value = snapshot.lastSyncTimestamp
             _autoFocusMode.value = snapshot.autoFocusMode
             _pomodoroDurationMinutes.value = snapshot.pomodoroDurationMinutes
             _copilotProvider.value = snapshot.copilotProvider
@@ -268,6 +300,13 @@ class PreferencesManager(
                 notif24h = _notif24h.value,
                 notif3h = _notif3h.value,
                 notif30m = _notif30m.value,
+                notifNewAssignments = _notifNewAssignments.value,
+                notifNewQuizzes = _notifNewQuizzes.value,
+                notifNewForos = _notifNewForos.value,
+                knownAssignmentIds = _knownAssignmentIds.value,
+                knownForumIds = _knownForumIds.value,
+                hasCompletedInitialSync = _hasCompletedInitialSync.value,
+                lastSyncTimestamp = _lastSyncTimestamp.value,
                 autoFocusMode = _autoFocusMode.value,
                 pomodoroDurationMinutes = _pomodoroDurationMinutes.value,
                 copilotProvider = _copilotProvider.value,
@@ -363,6 +402,34 @@ class PreferencesManager(
 
     suspend fun setNotif30m(enabled: Boolean) {
         _notif30m.value = enabled
+        schedulePersist()
+    }
+
+    suspend fun setNotifNewAssignments(enabled: Boolean) {
+        _notifNewAssignments.value = enabled
+        schedulePersist()
+    }
+
+    suspend fun setNotifNewQuizzes(enabled: Boolean) {
+        _notifNewQuizzes.value = enabled
+        schedulePersist()
+    }
+
+    suspend fun setNotifNewForos(enabled: Boolean) {
+        _notifNewForos.value = enabled
+        schedulePersist()
+    }
+
+    suspend fun updateSyncContentState(
+        knownAssignmentIds: Set<Long>,
+        knownForumIds: Set<Long>,
+        hasCompletedInitialSync: Boolean = true,
+        lastSyncTimestamp: Long = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+    ) {
+        _knownAssignmentIds.value = knownAssignmentIds
+        _knownForumIds.value = knownForumIds
+        _hasCompletedInitialSync.value = hasCompletedInitialSync
+        _lastSyncTimestamp.value = lastSyncTimestamp
         schedulePersist()
     }
 

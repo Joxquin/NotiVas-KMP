@@ -22,8 +22,8 @@ actual object PlatformAlarmScheduler {
         courseName: String,
         assignmentName: String,
         triggerEpochMillis: Long
-    ) {
-        val context = getContext() ?: return
+    ): Boolean {
+        val context = getContext() ?: return false
         val scheduler = AndroidAlarmScheduler(
             context = context,
             preferencesManager = AppModule.preferencesManager,
@@ -35,6 +35,7 @@ actual object PlatformAlarmScheduler {
             assignmentName = assignmentName,
             triggerEpochMillis = triggerEpochMillis
         )
+        return true
     }
 }
 

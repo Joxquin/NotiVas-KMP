@@ -6,7 +6,8 @@ actual object PlatformAlarmScheduler {
         courseName: String,
         assignmentName: String,
         triggerEpochMillis: Long
-    ) {
+    ): Boolean {
         // No-op en Web
+        return true
     }
 }

@@ -646,6 +646,91 @@ class CanvasRepository(
             localStore.insertAssignments(combinedAssignments)
             preferencesManager.setSessionExpired(false)
 
+            // Detección de nuevos contenidos publicados/abiertos (Tareas, Exámenes, Foros)
+            try {
+                val discussions = try {
+                    getDiscussionsForCourses()
+                } catch (_: Throwable) {
+                    emptyList()
+                }
+
+                val hasCompletedInitialSync = preferencesManager.hasCompletedInitialSync.first()
+                val knownAssignmentIds = preferencesManager.knownAssignmentIds.first()
+                val knownForumIds = preferencesManager.knownForumIds.first()
+                val notifAssignments = preferencesManager.notifNewAssignments.first()
+                val notifQuizzes = preferencesManager.notifNewQuizzes.first()
+                val notifForos = preferencesManager.notifNewForos.first()
+
+                val diff = me.joxquin.notivas.domain.sync.SyncDiffDetector.detectChanges(
+                    currentAssignments = combinedAssignments,
+                    currentForums = discussions,
+                    knownAssignmentIds = knownAssignmentIds,
+                    knownForumIds = knownForumIds,
+                    hasCompletedInitialSync = hasCompletedInitialSync,
+                    filterNewAssignments = notifAssignments,
+                    filterNewQuizzes = notifQuizzes,
+                    filterNewForos = notifForos
+                )
+
+                // Actualizar estado conocido en preferencias
+                preferencesManager.updateSyncContentState(
+                    knownAssignmentIds = diff.allAssignmentIds,
+                    knownForumIds = diff.allForumIds,
+                    hasCompletedInitialSync = true
+                )
+
+                // Registrar en ActivityLog / notificar cambios relevantes
+                if (hasCompletedInitialSync) {
+                    val coursesMap = allCoursesList.associateBy { it.id }
+
+                    diff.newAssignments.forEach { item ->
+                        val course = item.courseId?.let { coursesMap[it] }
+                        val courseName = course?.name ?: "Curso"
+                        notifyNewContentDiscovered(
+                            type = "NEW_ASSIGNMENT",
+                            title = "Nueva Tarea Publicada · $courseName",
+                            message = "Se ha publicado: ${item.title}",
+                            targetId = item.id,
+                            secondaryId = item.courseId,
+                            courseCode = course?.courseCode,
+                            courseName = courseName
+                        )
+                    }
+
+                    diff.newQuizzes.forEach { item ->
+                        val course = item.courseId?.let { coursesMap[it] }
+                        val courseName = course?.name ?: "Curso"
+                        notifyNewContentDiscovered(
+                            type = "NEW_QUIZ",
+                            title = "Examen Disponible · $courseName",
+                            message = "${item.title} ya está disponible para resolver",
+                            targetId = item.id,
+                            secondaryId = item.courseId,
+                            courseCode = course?.courseCode,
+                            courseName = courseName
+                        )
+                    }
+
+                    diff.newForos.forEach { item ->
+                        val course = item.courseId?.let { coursesMap[it] }
+                        val courseName = course?.name ?: "Curso"
+                        notifyNewContentDiscovered(
+                            type = "NEW_FORO",
+                            title = "Nuevo Foro Académico · $courseName",
+                            message = "Nuevo tema de debate: ${item.title}",
+                            targetId = item.id,
+                            secondaryId = item.courseId,
+                            courseCode = course?.courseCode,
+                            courseName = courseName
+                        )
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                println("[CanvasRepository] Error detectando nuevos contenidos: ${e.message}")
+            }
+
             // Si está en sesión de cookies, intentar migrar silenciosamente a Token permanente
             if (preferencesManager.getAuthMode() == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
                 try {
@@ -662,6 +747,25 @@ class CanvasRepository(
         } catch (e: Throwable) {
             throw e
         }
+    }
+
+    private fun notifyNewContentDiscovered(
+        type: String,
+        title: String,
+        message: String,
+        targetId: Long?,
+        secondaryId: Long?,
+        courseCode: String?,
+        courseName: String?
+    ) {
+        me.joxquin.notivas.util.PlatformNotificationDispatcher.showNotification(
+            title = title,
+            message = message,
+            targetId = targetId,
+            secondaryId = secondaryId,
+            courseCode = courseCode,
+            courseName = courseName
+        )
     }
 
     suspend fun tryUpgradeSessionToToken(): Boolean = withContext(AppDispatchers.IO) {

@@ -81,6 +81,9 @@ import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.foros.components.ForosCardItem
 import me.joxquin.notivas.ui.foros.components.ForosFilterBottomSheet
 import me.joxquin.notivas.ui.foros.components.ForosSearchAndFilters
+import me.joxquin.notivas.ui.foros.components.ForosWeekAccordionCard
+import me.joxquin.notivas.ui.foros.model.ForosGroupHelper
+import me.joxquin.notivas.util.DateTimeUtil
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
@@ -90,6 +93,8 @@ import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Tune
+import top.yukonga.miuix.kmp.icon.extended.GridView
+import top.yukonga.miuix.kmp.icon.extended.ListView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,6 +110,30 @@ fun ForosScreen(
 
     val uiState by viewModel.uiState.collectAsState()
     val showFilterBottomSheet by viewModel.showFilterBottomSheet.collectAsState()
+
+    var isGroupedByWeek by rememberSaveable { mutableStateOf(true) }
+    var expandedGroupIds by rememberSaveable { mutableStateOf(setOf<String>()) }
+
+    val generalGroupTitle = stringResource(Res.string.foros_group_general)
+
+    val nowMs = remember { DateTimeUtil.nowEpochMillis() }
+
+    val weekGroups = remember(uiState.filteredDiscussions, generalGroupTitle) {
+        ForosGroupHelper.groupDiscussions(
+            discussions = uiState.filteredDiscussions,
+            nowMs = nowMs,
+            generalGroupTitle = generalGroupTitle,
+            weekFormat = { week -> "SEMANA $week" }
+        )
+    }
+
+    // Por defecto, si expandedGroupIds está vacío y hay grupos, expandir todos o los que tengan pendientes
+    LaunchedEffect(weekGroups) {
+        if (expandedGroupIds.isEmpty() && weekGroups.isNotEmpty()) {
+            val pendingOrAll = weekGroups.filter { it.hasPending }.map { it.id }.toSet()
+            expandedGroupIds = if (pendingOrAll.isNotEmpty()) pendingOrAll else weekGroups.map { it.id }.toSet()
+        }
+    }
 
     val isScrolled by remember {
         derivedStateOf {
@@ -130,6 +159,15 @@ fun ForosScreen(
                             BackNavigationIcon(onClick = onBack)
                         },
                         actions = {
+                            top.yukonga.miuix.kmp.basic.IconButton(
+                                onClick = { isGroupedByWeek = !isGroupedByWeek }
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = if (isGroupedByWeek) MiuixIcons.ListView else MiuixIcons.GridView,
+                                    contentDescription = if (isGroupedByWeek) stringResource(Res.string.foros_view_mode_flat) else stringResource(Res.string.foros_view_mode_grouped),
+                                    tint = if (isGroupedByWeek) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
+                                )
+                            }
                             top.yukonga.miuix.kmp.basic.IconButton(
                                 onClick = { viewModel.setShowFilterBottomSheet(true) }
                             ) {
@@ -245,8 +283,35 @@ fun ForosScreen(
                                     }
                                 }
                             }
+                        } else if (isGroupedByWeek && weekGroups.isNotEmpty()) {
+                            // Agrupación por Semana / Módulo (Referencia Imagen 2)
+                            items(
+                                items = weekGroups,
+                                key = { it.id }
+                            ) { group ->
+                                ForosWeekAccordionCard(
+                                    group = group,
+                                    isExpanded = expandedGroupIds.contains(group.id),
+                                    onToggleExpand = {
+                                        expandedGroupIds = if (expandedGroupIds.contains(group.id)) {
+                                            expandedGroupIds - group.id
+                                        } else {
+                                            expandedGroupIds + group.id
+                                        }
+                                    },
+                                    onTopicClick = { topic ->
+                                        if (onOpenTopic != null) {
+                                            onOpenTopic(topic)
+                                        } else {
+                                            viewModel.selectDiscussion(topic)
+                                        }
+                                    },
+                                    themeStyle = themeStyle,
+                                    modifier = Modifier.padding(horizontal = 12.dp)
+                                )
+                            }
                         } else {
-                            // Lista de Tarjetas de Foros
+                            // Lista Plana de Tarjetas de Foros
                             items(
                                 items = uiState.filteredDiscussions,
                                 key = { "${it.courseId}_${it.id}" }
@@ -348,6 +413,13 @@ fun ForosScreen(
                                 }
                             },
                             actions = {
+                                IconButton(onClick = { isGroupedByWeek = !isGroupedByWeek }) {
+                                    Icon(
+                                        imageVector = if (isGroupedByWeek) Icons.AutoMirrored.Filled.Sort else Icons.Default.Forum,
+                                        contentDescription = if (isGroupedByWeek) stringResource(Res.string.foros_view_mode_flat) else stringResource(Res.string.foros_view_mode_grouped),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                                 IconButton(onClick = { viewModel.setShowFilterBottomSheet(true) }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Tune,
@@ -456,8 +528,36 @@ fun ForosScreen(
                             }
                         }
                     }
+                } else if (isGroupedByWeek && weekGroups.isNotEmpty()) {
+                    // Agrupación por Semana / Módulo (Referencia Imagen 2)
+                    items(
+                        items = weekGroups,
+                        key = { it.id }
+                    ) { group ->
+                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            ForosWeekAccordionCard(
+                                group = group,
+                                isExpanded = expandedGroupIds.contains(group.id),
+                                onToggleExpand = {
+                                    expandedGroupIds = if (expandedGroupIds.contains(group.id)) {
+                                        expandedGroupIds - group.id
+                                    } else {
+                                        expandedGroupIds + group.id
+                                    }
+                                },
+                                onTopicClick = { topic ->
+                                    if (onOpenTopic != null) {
+                                        onOpenTopic(topic)
+                                    } else {
+                                        viewModel.selectDiscussion(topic)
+                                    }
+                                },
+                                themeStyle = themeStyle
+                            )
+                        }
+                    }
                 } else {
-                    // Lista de Tarjetas de Foros
+                    // Lista Plana de Tarjetas de Foros
                     items(
                         items = uiState.filteredDiscussions,
                         key = { "${it.courseId}_${it.id}" }

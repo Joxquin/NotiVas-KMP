@@ -319,10 +319,16 @@ fun AjustesScreen(
                         notif24h = uiState.notif24h,
                         notif3h = uiState.notif3h,
                         notif30m = uiState.notif30m,
+                        notifNewAssignments = uiState.notifNewAssignments,
+                        notifNewQuizzes = uiState.notifNewQuizzes,
+                        notifNewForos = uiState.notifNewForos,
                         syncIntervalMinutes = uiState.syncIntervalMinutes,
                         onNotif24hChange = { viewModel.setNotif24h(it) },
                         onNotif3hChange = { viewModel.setNotif3h(it) },
                         onNotif30mChange = { viewModel.setNotif30m(it) },
+                        onNotifNewAssignmentsChange = { viewModel.setNotifNewAssignments(it) },
+                        onNotifNewQuizzesChange = { viewModel.setNotifNewQuizzes(it) },
+                        onNotifNewForosChange = { viewModel.setNotifNewForos(it) },
                         onSyncIntervalChange = { viewModel.setSyncIntervalMinutes(it) },
                         themeStyle = AppThemeStyle.MIUIX
                     )
@@ -515,10 +521,16 @@ fun AjustesScreen(
                     notif24h = uiState.notif24h,
                     notif3h = uiState.notif3h,
                     notif30m = uiState.notif30m,
+                    notifNewAssignments = uiState.notifNewAssignments,
+                    notifNewQuizzes = uiState.notifNewQuizzes,
+                    notifNewForos = uiState.notifNewForos,
                     syncIntervalMinutes = uiState.syncIntervalMinutes,
                     onNotif24hChange = { viewModel.setNotif24h(it) },
                     onNotif3hChange = { viewModel.setNotif3h(it) },
                     onNotif30mChange = { viewModel.setNotif30m(it) },
+                    onNotifNewAssignmentsChange = { viewModel.setNotifNewAssignments(it) },
+                    onNotifNewQuizzesChange = { viewModel.setNotifNewQuizzes(it) },
+                    onNotifNewForosChange = { viewModel.setNotifNewForos(it) },
                     onSyncIntervalChange = { viewModel.setSyncIntervalMinutes(it) },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
