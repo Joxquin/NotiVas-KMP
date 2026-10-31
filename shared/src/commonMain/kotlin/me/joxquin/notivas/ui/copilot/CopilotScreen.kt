@@ -162,6 +162,8 @@ fun CopilotScreen(
                         viewModel.updateInputText(prompt)
                         viewModel.sendMessage()
                     },
+                    thinkingStatus = uiState.thinkingStatus,
+                    onRegenerate = { viewModel.regenerateLastResponse() },
                     themeStyle = AppThemeStyle.MIUIX,
                     bottomPadding = animatedBottomPadding,
                     modifier = Modifier.fillMaxSize()
@@ -341,6 +343,8 @@ fun CopilotScreen(
                         viewModel.updateInputText(prompt)
                         viewModel.sendMessage()
                     },
+                    thinkingStatus = uiState.thinkingStatus,
+                    onRegenerate = { viewModel.regenerateLastResponse() },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }

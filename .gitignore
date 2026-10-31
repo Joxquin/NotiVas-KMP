@@ -33,3 +33,4 @@ openspec
 .env*
 !.env.example
 *.zip
+build-output/

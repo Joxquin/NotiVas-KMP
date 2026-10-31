@@ -33,11 +33,14 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Source
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -71,6 +74,8 @@ import me.joxquin.notivas.data.repository.CopilotSource
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.util.PlatformShareHandler
+
 
 sealed interface CopilotContentBlock {
     data class TextBlock(val content: String) : CopilotContentBlock
@@ -82,11 +87,12 @@ sealed interface CopilotContentBlock {
 fun CopilotMessageBubble(
     message: CopilotMessageItem,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    onRegenerate: (() -> Unit)? = null,
+    onShare: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == CopilotRole.USER
     val blocks = remember(message.text) { parseMessageBlocks(message.text) }
-    val hasTable = remember(blocks) { blocks.any { it is CopilotContentBlock.TableBlock } }
     val clipboardManager = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -100,165 +106,139 @@ fun CopilotMessageBubble(
         }
     }
 
-    val maxBubbleWidth = if (isUser) {
-        320.dp
-    } else if (hasTable) {
-        520.dp
-    } else {
-        360.dp
-    }
-
-    if (themeStyle == AppThemeStyle.MIUIX) {
-        Column(
-            modifier = modifier.fillMaxWidth(),
-            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
-        ) {
-            Row(
-                modifier = Modifier
-                    .widthIn(max = maxBubbleWidth)
-                    .wrapContentWidth(if (isUser) Alignment.End else Alignment.Start),
-                horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+    if (isUser) {
+        // Mensaje del usuario: Conserva la burbuja flotante alineada a la derecha
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            Column(
+                modifier = modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.End
             ) {
-                if (!isUser) {
+                Row(
+                    modifier = Modifier
+                        .widthIn(max = 320.dp)
+                        .wrapContentWidth(Alignment.End),
+                    horizontalArrangement = Arrangement.End
+                ) {
                     Box(
                         modifier = Modifier
-                            .padding(top = 4.dp, end = 8.dp)
-                            .size(28.dp)
                             .squircleSurface(
-                                color = MiuixTheme.colorScheme.surfaceVariant,
-                                cornerRadius = 9999.dp
+                                color = MiuixTheme.colorScheme.primary,
+                                cornerRadius = 18.dp
                             )
-                            .squircleBorder(
-                                width = 1.dp,
-                                color = Color(0x33A855F7),
-                                cornerRadius = 9999.dp
-                            ),
-                        contentAlignment = Alignment.Center
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = null,
-                            tint = Color(0xFFA855F7),
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .squircleSurface(
-                            color = if (isUser) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.surfaceVariant,
-                            cornerRadius = 18.dp
-                        )
-                        .squircleBorder(
-                            width = 1.dp,
-                            color = if (isUser) Color.Transparent else MiuixTheme.colorScheme.dividerLine,
-                            cornerRadius = 18.dp
-                        )
-                        .padding(horizontal = 14.dp, vertical = 10.dp)
-                ) {
-                    Column {
-                        SelectionContainer {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                blocks.forEach { block ->
-                                    when (block) {
-                                        is CopilotContentBlock.TextBlock -> {
-                                            Text(
-                                                text = formatMarkdown(block.content),
-                                                style = MiuixTheme.textStyles.footnote1,
-                                                color = if (isUser) MiuixTheme.colorScheme.onPrimary else MiuixTheme.colorScheme.onSurface,
-                                                lineHeight = 20.sp
-                                            )
-                                        }
-                                        is CopilotContentBlock.DividerBlock -> {
-                                            CopilotDividerComposable(themeStyle = AppThemeStyle.MIUIX)
-                                        }
-                                        is CopilotContentBlock.TableBlock -> {
-                                            CopilotTableComposable(
-                                                table = block,
-                                                themeStyle = AppThemeStyle.MIUIX
-                                            )
-                                        }
+                        Column {
+                            SelectionContainer {
+                                Text(
+                                    text = message.text,
+                                    style = MiuixTheme.textStyles.footnote1,
+                                    color = MiuixTheme.colorScheme.onPrimary,
+                                    lineHeight = 20.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .squircleSurface(
+                                            color = Color.White.copy(alpha = 0.2f),
+                                            cornerRadius = 6.dp
+                                        )
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null,
+                                            onClick = onCopyClick
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
+                                            contentDescription = "Copiar mensaje",
+                                            tint = MiuixTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Text(
+                                            text = if (copied) "Copiado" else "Copiar",
+                                            style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
+                                            color = MiuixTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                                        )
                                     }
                                 }
                             }
                         }
-
-                        // Feedback de acción (ej: Grupo de simulación creado)
-                        if (!isUser && !message.actionFeedback.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .squircleSurface(
-                                        color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                                        cornerRadius = 8.dp
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 6.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = null,
-                                        tint = Color(0xFF10B981),
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Text(
-                                        text = message.actionFeedback,
-                                        style = MiuixTheme.textStyles.footnote2.copy(fontWeight = FontWeight.SemiBold),
-                                        color = MiuixTheme.colorScheme.onSurface
-                                    )
-                                }
+                    }
+                }
+            }
+        } else {
+            // Material 3 User Bubble
+            Column(
+                modifier = modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.End
+            ) {
+                Row(
+                    modifier = Modifier
+                        .widthIn(max = 320.dp)
+                        .wrapContentWidth(Alignment.End),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Card(
+                        shape = RoundedCornerShape(
+                            topStart = 18.dp,
+                            topEnd = 18.dp,
+                            bottomStart = 18.dp,
+                            bottomEnd = 4.dp
+                        ),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                            SelectionContainer {
+                                Text(
+                                    text = message.text,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    lineHeight = 20.sp
+                                )
                             }
-                        }
-
-                        // Fuentes citadas de Canvas LMS (Acordeón desplegable)
-                        if (!isUser && message.sources.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            CopilotSourcesAccordion(
-                                sources = message.sources,
-                                themeStyle = AppThemeStyle.MIUIX
-                            )
-                        }
-
-                        // Botón de Copiar en Miuix
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .squircleSurface(
-                                        color = if (isUser) Color.White.copy(alpha = 0.2f) else MiuixTheme.colorScheme.surfaceContainerHigh,
-                                        cornerRadius = 6.dp
-                                    )
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                        onClick = onCopyClick
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .clickable(onClick = onCopyClick)
                                 ) {
-                                    Icon(
-                                        imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                        contentDescription = "Copiar mensaje",
-                                        tint = if (isUser) MiuixTheme.colorScheme.onPrimary.copy(alpha = 0.9f) else MiuixTheme.colorScheme.onSurfaceSecondary,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Text(
-                                        text = if (copied) "Copiado" else "Copiar",
-                                        style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
-                                        color = if (isUser) MiuixTheme.colorScheme.onPrimary.copy(alpha = 0.9f) else MiuixTheme.colorScheme.onSurfaceSecondary
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
+                                            contentDescription = "Copiar mensaje",
+                                            tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Text(
+                                            text = if (copied) "Copiado" else "Copiar",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -267,153 +247,239 @@ fun CopilotMessageBubble(
             }
         }
     } else {
-        // Modo Material Design 3
+        // Respuesta del Copilot: FUERA DE BURBUJA (Estilo Google Gemini / NotiVas Redesign)
+        // Se extiende a lo ancho de la vista sin recuadros ni bordes artificiales
         Column(
-            modifier = modifier.fillMaxWidth(),
-            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            // 1. Bloques de contenido Markdown (Texto, Separadores, Tablas)
+            SelectionContainer {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    blocks.forEach { block ->
+                        when (block) {
+                            is CopilotContentBlock.TextBlock -> {
+                                Text(
+                                    text = formatMarkdown(block.content),
+                                    style = if (themeStyle == AppThemeStyle.MIUIX) {
+                                        MiuixTheme.textStyles.footnote1
+                                    } else {
+                                        MaterialTheme.typography.bodyMedium
+                                    },
+                                    color = if (themeStyle == AppThemeStyle.MIUIX) {
+                                        MiuixTheme.colorScheme.onSurface
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                                    lineHeight = 22.sp
+                                )
+                            }
+                            is CopilotContentBlock.DividerBlock -> {
+                                CopilotDividerComposable(themeStyle = themeStyle)
+                            }
+                            is CopilotContentBlock.TableBlock -> {
+                                CopilotTableComposable(
+                                    table = block,
+                                    themeStyle = themeStyle
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Feedback de acción si aplica (ej: "Grupo de simulación creado")
+            if (!message.actionFeedback.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                if (themeStyle == AppThemeStyle.MIUIX) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .squircleSurface(
+                                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                cornerRadius = 8.dp
+                            )
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = message.actionFeedback,
+                                style = MiuixTheme.textStyles.footnote2.copy(fontWeight = FontWeight.SemiBold),
+                                color = MiuixTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = message.actionFeedback,
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 3. Fuentes citadas de Canvas LMS (Acordeón desplegable)
+            if (message.sources.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                CopilotSourcesAccordion(
+                    sources = message.sources,
+                    themeStyle = themeStyle
+                )
+            }
+
+            // 4. Barra de Acciones debajo del mensaje: Copiar, Compartir, Regenerar
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Botón Copiar
+                CopilotActionButton(
+                    icon = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
+                    label = if (copied) "Copiado" else "Copiar",
+                    themeStyle = themeStyle,
+                    onClick = onCopyClick
+                )
+
+                // Botón Compartir
+                CopilotActionButton(
+                    icon = Icons.Default.Share,
+                    label = "Compartir",
+                    themeStyle = themeStyle,
+                    onClick = {
+                        if (onShare != null) {
+                            onShare(message.text)
+                        } else {
+                            PlatformShareHandler.shareText(message.text)
+                        }
+                    }
+                )
+
+                // Botón Regenerar
+                if (onRegenerate != null) {
+                    CopilotActionButton(
+                        icon = Icons.Default.Refresh,
+                        label = "Regenerar",
+                        themeStyle = themeStyle,
+                        onClick = onRegenerate
+                    )
+                }
+            }
+
+            // 5. Descargo de responsabilidad sutil (Disclaimer)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "NotiVas Copilot es una IA y puede cometer errores.",
+                style = if (themeStyle == AppThemeStyle.MIUIX) {
+                    MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp)
+                } else {
+                    MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
+                },
+                color = if (themeStyle == AppThemeStyle.MIUIX) {
+                    MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.7f)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun CopilotActionButton(
+    icon: ImageVector,
+    label: String,
+    themeStyle: AppThemeStyle,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        Box(
+            modifier = modifier
+                .squircleSurface(
+                    color = MiuixTheme.colorScheme.surfaceVariant,
+                    cornerRadius = 8.dp
+                )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick
+                )
+                .padding(horizontal = 8.dp, vertical = 5.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .widthIn(max = maxBubbleWidth)
-                    .wrapContentWidth(if (isUser) Alignment.End else Alignment.Start),
-                horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                if (!isUser) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier
-                            .padding(top = 4.dp, end = 8.dp)
-                            .size(28.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                }
-
-                Card(
-                    shape = RoundedCornerShape(
-                        topStart = 18.dp,
-                        topEnd = 18.dp,
-                        bottomStart = if (isUser) 18.dp else 4.dp,
-                        bottomEnd = if (isUser) 4.dp else 18.dp
-                    ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isUser) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainer
-                        }
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                        SelectionContainer {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                blocks.forEach { block ->
-                                    when (block) {
-                                        is CopilotContentBlock.TextBlock -> {
-                                            Text(
-                                                text = formatMarkdown(block.content),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = if (isUser) {
-                                                    MaterialTheme.colorScheme.onPrimary
-                                                } else {
-                                                    MaterialTheme.colorScheme.onSurface
-                                                },
-                                                lineHeight = 20.sp
-                                            )
-                                        }
-                                        is CopilotContentBlock.DividerBlock -> {
-                                            CopilotDividerComposable(themeStyle = AppThemeStyle.MATERIAL)
-                                        }
-                                        is CopilotContentBlock.TableBlock -> {
-                                            CopilotTableComposable(
-                                                table = block,
-                                                themeStyle = AppThemeStyle.MATERIAL
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Feedback de acción (ej: Grupo de simulación creado)
-                        if (!isUser && !message.actionFeedback.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.secondaryContainer
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Text(
-                                        text = message.actionFeedback,
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                }
-                            }
-                        }
-
-                        // Fuentes de Canvas en Material (Acordeón desplegable)
-                        if (!isUser && message.sources.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            CopilotSourcesAccordion(
-                                sources = message.sources,
-                                themeStyle = AppThemeStyle.MATERIAL
-                            )
-                        }
-
-                        // Botón de Copiar en Material
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = if (isUser) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .clickable(onClick = onCopyClick)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                        contentDescription = "Copiar mensaje",
-                                        tint = if (isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Text(
-                                        text = if (copied) "Copiado" else "Copiar",
-                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                                        color = if (isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = MiuixTheme.colorScheme.onSurfaceSecondary,
+                    modifier = Modifier.size(13.dp)
+                )
+                Text(
+                    text = label,
+                    style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
+                    color = MiuixTheme.colorScheme.onSurfaceSecondary
+                )
+            }
+        }
+    } else {
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            modifier = modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onClick)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(13.dp)
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

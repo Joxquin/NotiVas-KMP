@@ -74,7 +74,8 @@ data class CopilotUiState(
     val sessionTokens: Int = 0,
     val totalAccountTokens: Long = 0L,
     val balance: Double? = null,
-    val openRouterBalance: OpenRouterAccountBalance? = null
+    val openRouterBalance: OpenRouterAccountBalance? = null,
+    val thinkingStatus: String? = null
 )
 
 class CopilotViewModel(
@@ -87,6 +88,7 @@ class CopilotViewModel(
     private val _selectedCourseId = MutableStateFlow<Long?>(null)
     private val _messages = MutableStateFlow<List<CopilotMessageItem>>(emptyList())
     private val _isLoading = MutableStateFlow(false)
+    private val _thinkingStatus = MutableStateFlow<String?>(null)
     private val _inputText = MutableStateFlow("")
     private val _errorMessage = MutableStateFlow<String?>(null)
     private val _currentSessionId = MutableStateFlow<String?>(null)
@@ -122,9 +124,10 @@ class CopilotViewModel(
             _selectedCourseId,
             _messages,
             _isLoading,
-            _inputText
-        ) { c, sId, msgs, loading, input ->
-            Tuple5(c, sId, msgs, loading, input)
+            _inputText,
+            _thinkingStatus
+        ) { c, sId, msgs, loading, input, thinking ->
+            Tuple6(c, sId, msgs, loading, input, thinking)
         },
         combine(
             preferencesManager.copilotEnabled,
@@ -190,7 +193,7 @@ class CopilotViewModel(
         ) { resources, sessionInfo, tokenInfo ->
             Triple(resources, sessionInfo, tokenInfo)
         }
-    ) { (c, sId, msgs, loading, input),
+    ) { (c, sId, msgs, loading, input, thinking),
         (enabled, hasApiKey, model, error),
         (showMenu, step, query, activeCourse),
         (resources, sessionInfo, tokenInfo) ->
@@ -250,6 +253,7 @@ class CopilotViewModel(
             selectedCourseId = sId,
             messages = msgs,
             isLoading = loading,
+            thinkingStatus = thinking,
             isCopilotEnabled = enabled,
             hasApiKey = hasApiKey,
             currentModel = model,
@@ -485,10 +489,14 @@ class CopilotViewModel(
                 val result = copilotRepository.queryCopilot(
                     history = history,
                     userPrompt = prompt,
-                    selectedCourseId = _selectedCourseId.value
+                    selectedCourseId = _selectedCourseId.value,
+                    onStatusUpdate = { status ->
+                        _thinkingStatus.value = status
+                    }
                 )
 
                 _isLoading.value = false
+                _thinkingStatus.value = null
 
                 result.fold(
                     onSuccess = { response ->
@@ -546,6 +554,83 @@ class CopilotViewModel(
         }
     }
 
+    fun regenerateLastResponse() {
+        if (_isLoading.value) return
+        val currentMsgs = _messages.value
+        val lastUserMessage = currentMsgs.lastOrNull { it.role == CopilotRole.USER } ?: return
+
+        val trimmedMessages = if (currentMsgs.lastOrNull()?.role == CopilotRole.ASSISTANT) {
+            currentMsgs.dropLast(1)
+        } else {
+            currentMsgs
+        }
+
+        _messages.value = trimmedMessages
+        _isLoading.value = true
+        _thinkingStatus.value = null
+        _errorMessage.value = null
+
+        val sessionId = _currentSessionId.value ?: DateTimeUtil.nowEpochMillis().toString().also {
+            _currentSessionId.value = it
+        }
+
+        viewModelScope.launch {
+            try {
+                val history = trimmedMessages
+                    .dropLast(1)
+                    .map { msg ->
+                        OpenRouterMessage(
+                            role = if (msg.role == CopilotRole.USER) "user" else "assistant",
+                            content = msg.text
+                        )
+                    }
+
+                val result = copilotRepository.queryCopilot(
+                    history = history,
+                    userPrompt = lastUserMessage.text,
+                    selectedCourseId = _selectedCourseId.value,
+                    onStatusUpdate = { status ->
+                        _thinkingStatus.value = status
+                    }
+                )
+
+                _isLoading.value = false
+                _thinkingStatus.value = null
+
+                result.fold(
+                    onSuccess = { response ->
+                        val assistantMessage = CopilotMessageItem(
+                            id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
+                            role = CopilotRole.ASSISTANT,
+                            text = response.reply,
+                            sources = response.sources,
+                            actionFeedback = response.actionFeedback,
+                            tokens = response.totalTokens,
+                            timestamp = DateTimeUtil.nowEpochMillis()
+                        )
+                        _messages.value = _messages.value + assistantMessage
+                        val newSessionTokens = _sessionTokens.value + response.totalTokens
+                        _sessionTokens.value = newSessionTokens
+                        chatRepository.saveMessage(sessionId, assistantMessage)
+                        chatRepository.updateSessionTokens(sessionId, newSessionTokens)
+                        refreshOpenRouterBalance()
+                    },
+                    onFailure = { error ->
+                        val errorText = error.message ?: "Ocurrió un error inesperado al regenerar."
+                        _errorMessage.value = errorText
+                    }
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                _isLoading.value = false
+                _thinkingStatus.value = null
+                _errorMessage.value = e.message ?: "Error al regenerar respuesta."
+            }
+        }
+    }
+
     private data class Tuple4<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
     private data class Tuple5<A, B, C, D, E>(val a: A, val b: B, val c: C, val d: D, val e: E)
+    private data class Tuple6<A, B, C, D, E, F>(val a: A, val b: B, val c: C, val d: D, val e: E, val f: F)
 }

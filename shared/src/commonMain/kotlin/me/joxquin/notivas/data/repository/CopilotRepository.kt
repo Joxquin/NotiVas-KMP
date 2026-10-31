@@ -55,8 +55,10 @@ class CopilotRepository(
     suspend fun queryCopilot(
         history: List<OpenRouterMessage>,
         userPrompt: String,
-        selectedCourseId: Long? = null
+        selectedCourseId: Long? = null,
+        onStatusUpdate: (String?) -> Unit = {}
     ): Result<CopilotResult> {
+        onStatusUpdate(null)
         val provider = preferencesManager.copilotProvider.first()
         val apiKey: String?
         val model: String
@@ -198,6 +200,7 @@ class CopilotRepository(
                 for (call in processedToolCalls) {
                     val fnName = call.function.name
                     val fnArgs = call.function.arguments
+                    onStatusUpdate(getToolActivityDescription(fnName))
                     val execution = toolExecutor.executeTool(fnName, fnArgs, selectedCourseId)
 
                     if (execution.source != null) {
@@ -234,6 +237,7 @@ class CopilotRepository(
 
                 val toolResultsSummary = StringBuilder()
                 for (call in textToolCalls) {
+                    onStatusUpdate(getToolActivityDescription(call.name))
                     val execution = toolExecutor.executeTool(call.name, call.argsJson, selectedCourseId)
                     if (execution.source != null) {
                         accumulatedSources.add(execution.source)
@@ -321,6 +325,8 @@ class CopilotRepository(
             preferencesManager.addCopilotTokens(totalTokens.toLong())
         }
 
+        onStatusUpdate(null)
+
         return Result.success(
             CopilotResult(
                 reply = finalReply,
@@ -331,6 +337,20 @@ class CopilotRepository(
                 totalTokens = totalTokens
             )
         )
+    }
+
+    private fun getToolActivityDescription(functionName: String): String {
+        return when (functionName) {
+            "get_academic_overview" -> "Consultando resumen académico..."
+            "get_course_assignments" -> "Listando tareas disponibles..."
+            "fetch_canvas_assignment_details" -> "Obteniendo detalles de la entrega..."
+            "get_course_discussions" -> "Consultando foros y debates..."
+            "fetch_discussion_details" -> "Leyendo tema del foro..."
+            "get_course_modules" -> "Examinando módulos del curso..."
+            "fetch_module_item_content" -> "Leyendo contenido de clase..."
+            "create_simulation_group" -> "Configurando grupo de simulación..."
+            else -> "Procesando información..."
+        }
     }
 
     suspend fun getOpenRouterBalance(): OpenRouterAccountBalance? {
