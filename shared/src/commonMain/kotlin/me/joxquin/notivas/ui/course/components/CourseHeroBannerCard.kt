@@ -62,9 +62,6 @@ fun CourseHeroBannerCard(
     val primaryColor = if (isMiuix) MiuixTheme.colorScheme.primary
     else MaterialTheme.colorScheme.primary
 
-    val primaryContainerColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh
-    else MaterialTheme.colorScheme.primaryContainer
-
     val metricPillBg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh
     else MaterialTheme.colorScheme.surfaceContainerHigh
 
@@ -75,11 +72,9 @@ fun CourseHeroBannerCard(
         Box(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Capa 1: Imagen real de Canvas en cabecera con degradado suave hacia abajo
+            // Capa 1: Imagen real de Canvas en cabecera con degradado suave
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
+                modifier = Modifier.matchParentSize()
             ) {
                 if (!course?.imageUrl.isNullOrBlank()) {
                     AsyncImage(
@@ -102,9 +97,8 @@ fun CourseHeroBannerCard(
                         .background(
                             Brush.verticalGradient(
                                 colorStops = arrayOf(
-                                    0.0f to cardColor.copy(alpha = 0.20f),
-                                    0.45f to cardColor.copy(alpha = 0.65f),
-                                    0.80f to cardColor.copy(alpha = 0.92f),
+                                    0.0f to cardColor.copy(alpha = 0.35f),
+                                    0.55f to cardColor.copy(alpha = 0.80f),
                                     1.0f to cardColor
                                 )
                             )
@@ -112,61 +106,12 @@ fun CourseHeroBannerCard(
                 )
             }
 
-            // Capa 2: Contenido textual y métricas superpuestas con legibilidad garantizada
+            // Capa 2: Las 3 métricas rápidas (subtarjetas)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
+                    .padding(16.dp)
             ) {
-                // Header: Código de curso / etiqueta de sección
-                Text(
-                    text = (course?.courseCode ?: "CURSO").uppercase(),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp,
-                    color = onSurfaceVariantColor
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Badge Pill: Departamento / Programa
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(primaryContainerColor.copy(alpha = 0.9f))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = departmentTag,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = primaryColor
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Nombre del Curso
-                Text(
-                    text = course?.name ?: "Detalle del Curso",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 28.sp,
-                    color = onSurfaceColor
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Nombre del Docente
-                Text(
-                    text = professorName,
-                    fontSize = 13.sp,
-                    color = onSurfaceVariantColor
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // 3 Métricas Rápidas
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
