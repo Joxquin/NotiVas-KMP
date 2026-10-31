@@ -120,13 +120,17 @@ class CopilotViewModel(
 
     val uiState: StateFlow<CopilotUiState> = combine(
         combine(
-            courses,
-            _selectedCourseId,
-            _messages,
-            _isLoading,
-            _inputText,
+            combine(
+                courses,
+                _selectedCourseId,
+                _messages,
+                _isLoading,
+                _inputText
+            ) { c, sId, msgs, loading, input ->
+                Tuple5(c, sId, msgs, loading, input)
+            },
             _thinkingStatus
-        ) { c, sId, msgs, loading, input, thinking ->
+        ) { (c, sId, msgs, loading, input), thinking ->
             Tuple6(c, sId, msgs, loading, input, thinking)
         },
         combine(
