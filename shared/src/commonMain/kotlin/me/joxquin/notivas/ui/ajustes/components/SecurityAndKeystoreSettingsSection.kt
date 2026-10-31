@@ -35,10 +35,14 @@ import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.settings_security_section_title
 import me.joxquin.notivas.shared.resources.logout_button
 import me.joxquin.notivas.shared.resources.logout_button_desc
+import me.joxquin.notivas.shared.resources.pair_web_title
+import me.joxquin.notivas.shared.resources.pair_web_summary
+import androidx.compose.material.icons.outlined.Devices
 
 @Composable
 fun SecurityAndKeystoreSettingsSection(
     onRequestLogout: () -> Unit,
+    onRequestPairWeb: () -> Unit,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
 ) {
@@ -50,6 +54,11 @@ fun SecurityAndKeystoreSettingsSection(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
+                ArrowPreference(
+                    title = stringResource(Res.string.pair_web_title),
+                    summary = stringResource(Res.string.pair_web_summary),
+                    onClick = onRequestPairWeb
+                )
                 ArrowPreference(
                     title = stringResource(Res.string.logout_button),
                     summary = stringResource(Res.string.logout_button_desc),
@@ -87,6 +96,34 @@ fun SecurityAndKeystoreSettingsSection(
                             fontWeight = FontWeight.Bold
                         ),
                         color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                // Botón Vincular NotiVas Web
+                Button(
+                    onClick = onRequestPairWeb,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(
+                        horizontal = 14.dp,
+                        vertical = 10.dp
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Devices,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(Res.string.pair_web_title),
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        )
                     )
                 }
 

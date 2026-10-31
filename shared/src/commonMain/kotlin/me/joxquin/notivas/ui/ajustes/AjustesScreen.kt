@@ -129,6 +129,15 @@ fun AjustesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showPairWebDialog by remember { mutableStateOf(false) }
+
+    if (showPairWebDialog) {
+        me.joxquin.notivas.ui.ajustes.components.PairWebSessionDialog(
+            themeStyle = themeStyle,
+            onDismissRequest = { showPairWebDialog = false },
+            onAuthorizePairing = { pin -> viewModel.pairWebSession(pin) }
+        )
+    }
 
     if (showLogoutDialog) {
         if (themeStyle == AppThemeStyle.MIUIX) {
@@ -363,6 +372,7 @@ fun AjustesScreen(
                 item {
                     SecurityAndKeystoreSettingsSection(
                         onRequestLogout = { showLogoutDialog = true },
+                        onRequestPairWeb = { showPairWebDialog = true },
                         themeStyle = AppThemeStyle.MIUIX
                     )
                 }
@@ -558,6 +568,7 @@ fun AjustesScreen(
             item {
                 SecurityAndKeystoreSettingsSection(
                     onRequestLogout = { showLogoutDialog = true },
+                    onRequestPairWeb = { showPairWebDialog = true },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }

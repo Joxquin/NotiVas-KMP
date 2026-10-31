@@ -282,4 +282,41 @@ class ProfileViewModel(
             _isLoggedOut.value = true
         }
     }
+
+    suspend fun pairWebSession(pin: String): Result<Unit> {
+        val cleanPin = pin.trim()
+        if (cleanPin.length != 6 || !cleanPin.all { it.isDigit() }) {
+            return Result.failure(IllegalArgumentException("El PIN debe tener 6 dígitos numéricos"))
+        }
+
+        // 1. Resolver PIN contra Cloudflare
+        val resolveRes = me.joxquin.notivas.data.remote.SessionPairingClient.resolvePin(cleanPin)
+        if (resolveRes.isFailure) {
+            return Result.failure(resolveRes.exceptionOrNull() ?: Exception("PIN inválido o expirado"))
+        }
+
+        val resolveData = resolveRes.getOrThrow()
+        val payload = me.joxquin.notivas.data.model.SessionPairingPayload(
+            universityUrl = preferencesManager.getUniversityUrl() ?: "https://canvas.utp.edu.pe",
+            authMode = preferencesManager.getAuthMode(),
+            accessToken = preferencesManager.getAccessToken(),
+            sessionCookies = preferencesManager.getSessionCookies(),
+            csrfToken = preferencesManager.getCsrfToken()
+        )
+
+        val jsonStr = kotlinx.serialization.json.Json.encodeToString(
+            me.joxquin.notivas.data.model.SessionPairingPayload.serializer(),
+            payload
+        )
+
+        // 2. Cifrar con el PIN
+        val (encryptedB64, ivB64) = me.joxquin.notivas.util.SessionCrypto.encrypt(jsonStr, cleanPin)
+
+        // 3. Completar entrega al worker
+        return me.joxquin.notivas.data.remote.SessionPairingClient.completePairing(
+            sessionId = resolveData.sessionId,
+            encryptedPayload = encryptedB64,
+            iv = ivB64
+        )
+    }
 }

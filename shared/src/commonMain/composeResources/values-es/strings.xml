@@ -125,6 +125,22 @@
     <string name="settings_security_section_title">SEGURIDAD Y ZONA CRÍTICA</string>
     <string name="logout_button">Desvincular Cuenta Canvas</string>
     <string name="logout_button_desc">Elimina token y datos en caché local</string>
+
+    <!-- Web Pairing -->
+    <string name="pair_web_title">Vincular NotiVas Web</string>
+    <string name="pair_web_summary">Inicia sesión al instante en notivas.joxquin.me con un PIN de 6 dígitos</string>
+    <string name="pair_web_dialog_title">Vincular NotiVas Web</string>
+    <string name="pair_web_dialog_desc">Ingresa el código de 6 dígitos que aparece en la pantalla de NotiVas Web para autorizar el inicio de sesión.</string>
+    <string name="pair_web_input_placeholder">000000</string>
+    <string name="pair_web_authorizing">Autorizando y transfiriendo sesión...</string>
+    <string name="pair_web_success">Sesión transferida a NotiVas Web correctamente.</string>
+    <string name="pair_web_error_invalid_pin">El código ingresado no es válido o ha expirado.</string>
+    <string name="pair_web_error_network">No se pudo conectar con el servidor de enlace. Reintenta.</string>
+    <string name="pair_web_action_authorize">Autorizar inicio de sesión Web</string>
+    <string name="pair_web_tab_title">Vincular desde el Móvil</string>
+    <string name="pair_web_tab_desc">Abre la app NotiVas en tu celular &gt; Ajustes &gt; Seguridad &gt; Vincular NotiVas Web e ingresa este código:</string>
+    <string name="pair_web_expires_in">El código expira en</string>
+    <string name="pair_web_refresh_btn">Generar nuevo código</string>
     <string name="logout_dialog_title">¿Desvincular cuenta?</string>
     <string name="logout_dialog_text">Se cerrará tu sesión, se limpiará la base de datos local y se destruirá el token de acceso seguro.</string>
     <string name="logout_confirm">Confirmar y salir</string>

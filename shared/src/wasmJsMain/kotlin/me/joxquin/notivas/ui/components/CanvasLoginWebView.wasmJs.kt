@@ -4,6 +4,7 @@ package me.joxquin.notivas.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -68,6 +69,21 @@ private external fun jsGetCsrfToken(): String
 @JsFun("() => window.NotiVasBridge ? String(window.NotiVasBridge.errorMessage || '') : ''")
 private external fun jsGetErrorMessage(): String
 
+@JsFun("() => window.NotiVasPairing && window.NotiVasPairing.createChannel()")
+private external fun jsCreatePairingChannel()
+
+@JsFun("() => window.NotiVasPairing ? String(window.NotiVasPairing.pin || '') : ''")
+private external fun jsGetPairingPin(): String
+
+@JsFun("() => window.NotiVasPairing ? String(window.NotiVasPairing.status || '') : ''")
+private external fun jsGetPairingStatus(): String
+
+@JsFun("() => window.NotiVasPairing ? String(window.NotiVasPairing.receivedPayload || '') : ''")
+private external fun jsGetPairingPayload(): String
+
+@JsFun("() => window.NotiVasPairing ? String(window.NotiVasPairing.errorMessage || '') : ''")
+private external fun jsGetPairingErrorMessage(): String
+
 @Composable
 actual fun CanvasLoginWebView(
     url: String,
@@ -80,6 +96,11 @@ actual fun CanvasLoginWebView(
     var isFetching by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Estado del PIN efímero para NotiVas Web
+    var pairingPin by remember { mutableStateOf("") }
+    var pairingStatus by remember { mutableStateOf("IDLE") }
+    var pairingTimer by remember { mutableStateOf(120) }
+
     val cleanDomain = remember(url) {
         url.removePrefix("https://")
             .removePrefix("http://")
@@ -89,6 +110,7 @@ actual fun CanvasLoginWebView(
 
     LaunchedEffect(Unit) {
         onPageFinished?.invoke()
+        jsCreatePairingChannel()
         for (i in 0..20) {
             jsSendPing()
             val available = jsIsBridgeAvailable()
@@ -97,6 +119,44 @@ actual fun CanvasLoginWebView(
                 break
             }
             delay(500)
+        }
+    }
+
+    // Monitoreo del estado de vinculación Web (PIN de 6 dígitos)
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            val st = jsGetPairingStatus()
+            pairingStatus = st
+            val pin = jsGetPairingPin()
+            if (pin.isNotBlank()) {
+                pairingPin = pin
+            }
+
+            if (st == "WAITING") {
+                if (pairingTimer > 0) pairingTimer--
+            } else if (st == "SUCCESS") {
+                val payloadJson = jsGetPairingPayload()
+                if (payloadJson.isNotBlank()) {
+                    try {
+                        val payload = kotlinx.serialization.json.Json.decodeFromString(
+                            me.joxquin.notivas.data.model.SessionPairingPayload.serializer(),
+                            payloadJson
+                        )
+                        if (!payload.sessionCookies.isNullOrBlank()) {
+                            onLoginSuccess(payload.sessionCookies, payload.csrfToken)
+                            break
+                        } else if (!payload.accessToken.isNullOrBlank()) {
+                            onLoginSuccess("access_token=${payload.accessToken}", null)
+                            break
+                        }
+                    } catch (e: Exception) {
+                        errorMessage = "Error al decodificar sesión: " + e.message
+                    }
+                }
+            } else if (st == "EXPIRED") {
+                pairingTimer = 0
+            }
         }
     }
 
@@ -150,67 +210,93 @@ actual fun CanvasLoginWebView(
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Tarjeta Principal: Vinculación Rápida con Móvil (Sin necesidad de extensión)
                 Box(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
-                        .background(
-                            if (isBridgeAvailable) MaterialTheme.colorScheme.primaryContainer
-                            else MaterialTheme.colorScheme.secondaryContainer
-                        ),
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (isBridgeAvailable) Icons.Outlined.CheckCircle else Icons.Outlined.Extension,
+                        imageVector = Icons.Outlined.CheckCircle,
                         contentDescription = null,
                         modifier = Modifier.size(32.dp),
-                        tint = if (isBridgeAvailable) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onSecondaryContainer
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Enlace Web con Canvas",
+                    text = "Vincular con tu móvil",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
-
                 Text(
-                    text = cleanDomain,
+                    text = "Abre NotiVas en tu celular > Ajustes > Vincular NotiVas Web e ingresa este código:",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Surface(
-                    shape = RoundedCornerShape(999.dp),
-                    color = if (isBridgeAvailable) Color(0xFF14532D) else MaterialTheme.colorScheme.surfaceContainerHigh
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(if (isBridgeAvailable) Color(0xFF4ADE80) else Color(0xFFF59E0B))
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (isBridgeAvailable) "Extension Bridge Conectada" else "Buscando Extension NotiVas Bridge...",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isBridgeAvailable) Color(0xFFDCFCE7) else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (pairingPin.isNotBlank()) {
+                            Text(
+                                text = pairingPin,
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 8.sp
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            Text(
+                                text = "Generando código...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                if (pairingStatus == "WAITING" && pairingTimer > 0) {
+                    Text(
+                        text = "El código expira en $pairingTimer s",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else if (pairingStatus == "EXPIRED" || pairingTimer <= 0) {
+                    Text(
+                        text = "Código expirado",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = {
+                            pairingTimer = 120
+                            jsCreatePairingChannel()
+                        },
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(imageVector = Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Generar nuevo código")
                     }
                 }
 
@@ -245,80 +331,49 @@ actual fun CanvasLoginWebView(
                     }
                 }
 
+                // Opción alternativa: Si el usuario tiene la extensión Bridge instalada en el navegador
                 if (isBridgeAvailable) {
-                    Text(
-                        text = "Se ha detectado tu sesion en el navegador. Pulsa el boton para sincronizar tus asignaturas de inmediato.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Button(
-                        onClick = {
-                            errorMessage = null
-                            isFetching = true
-                            jsRequestSession(cleanDomain)
-                        },
-                        enabled = !isFetching,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                     ) {
-                        if (isFetching) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "O sincroniza con la extensión detectada en este navegador",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text("Sincronizando sesion...")
-                        } else {
-                            Icon(imageVector = Icons.Outlined.Sync, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Sincronizar sesion activa")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    errorMessage = null
+                                    isFetching = true
+                                    jsRequestSession(cleanDomain)
+                                },
+                                enabled = !isFetching,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                if (isFetching) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Sincronizando...")
+                                } else {
+                                    Icon(imageVector = Icons.Outlined.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Usar extensión de navegador")
+                                }
+                            }
                         }
-                    }
-                } else {
-                    Text(
-                        text = "Para iniciar sesion de forma automatica sin copiar tokens, asegurate de tener cargada la extension NotiVas Canvas Bridge en este navegador.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-
-                    Button(
-                        onClick = {
-                            try {
-                                uriHandler.openUri("https://github.com/Joxquin/NotiVas-KMP/releases")
-                            } catch (_: Exception) {}
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(imageVector = Icons.Outlined.Extension, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Descargar extension NotiVas Bridge")
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedButton(
-                        onClick = {
-                            jsSendPing()
-                            val available = jsIsBridgeAvailable()
-                            if (available) isBridgeAvailable = true
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(imageVector = Icons.Outlined.Refresh, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Verificar conexion con extension")
                     }
                 }
             }

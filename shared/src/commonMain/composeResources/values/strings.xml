@@ -125,6 +125,22 @@
     <string name="settings_security_section_title">SECURITY &amp; CRITICAL ZONE</string>
     <string name="logout_button">Unlink Canvas Account</string>
     <string name="logout_button_desc">Delete token and locally cached data</string>
+
+    <!-- Web Pairing -->
+    <string name="pair_web_title">Link NotiVas Web</string>
+    <string name="pair_web_summary">Log in instantly to notivas.joxquin.me with a 6-digit PIN</string>
+    <string name="pair_web_dialog_title">Link NotiVas Web</string>
+    <string name="pair_web_dialog_desc">Enter the 6-digit code shown on the NotiVas Web screen to authorize session login.</string>
+    <string name="pair_web_input_placeholder">000000</string>
+    <string name="pair_web_authorizing">Authorizing and transferring session...</string>
+    <string name="pair_web_success">Session transferred to NotiVas Web successfully.</string>
+    <string name="pair_web_error_invalid_pin">The entered code is invalid or has expired.</string>
+    <string name="pair_web_error_network">Could not connect to the pairing server. Please retry.</string>
+    <string name="pair_web_action_authorize">Authorize Web Login</string>
+    <string name="pair_web_tab_title">Link via Mobile</string>
+    <string name="pair_web_tab_desc">Open the NotiVas app on your phone &gt; Settings &gt; Security &gt; Link NotiVas Web and enter this code:</string>
+    <string name="pair_web_expires_in">Code expires in</string>
+    <string name="pair_web_refresh_btn">Generate new code</string>
     <string name="logout_dialog_title">Unlink account?</string>
     <string name="logout_dialog_text">Your session will be closed, the local database will be cleared, and the secure token destroyed.</string>
     <string name="logout_confirm">Confirm and exit</string>

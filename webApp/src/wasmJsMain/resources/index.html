@@ -6,6 +6,86 @@
     <title>NotiVas</title>
     <script src="coi-serviceworker.js"></script>
     <script>
+      window.NotiVasPairing = {
+        sessionId: '',
+        pin: '',
+        expiresIn: 0,
+        status: 'IDLE',
+        receivedPayload: '',
+        errorMessage: '',
+        createChannel: async function() {
+          try {
+            window.NotiVasPairing.status = 'CREATING';
+            window.NotiVasPairing.receivedPayload = '';
+            window.NotiVasPairing.errorMessage = '';
+            const res = await fetch('https://notivas-cors-proxy.jotajoxquin.workers.dev/pair/create', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ publicKey: 'e2ee-aes-gcm-pbkdf2' })
+            });
+            const data = await res.json();
+            if (data.sessionId && data.pin) {
+              window.NotiVasPairing.sessionId = data.sessionId;
+              window.NotiVasPairing.pin = data.pin;
+              window.NotiVasPairing.expiresIn = data.expiresIn || 120;
+              window.NotiVasPairing.status = 'WAITING';
+              window.NotiVasPairing.startPolling(data.sessionId, data.pin);
+            } else {
+              window.NotiVasPairing.status = 'ERROR';
+              window.NotiVasPairing.errorMessage = data.error || 'Error al crear canal de enlace';
+            }
+          } catch (e) {
+            window.NotiVasPairing.status = 'ERROR';
+            window.NotiVasPairing.errorMessage = e.message;
+          }
+        },
+        startPolling: async function(sessionId, pin) {
+          const startTime = Date.now();
+          while (Date.now() - startTime < 120000 && window.NotiVasPairing.sessionId === sessionId) {
+            try {
+              const res = await fetch('https://notivas-cors-proxy.jotajoxquin.workers.dev/pair/poll?sessionId=' + sessionId);
+              if (res.status === 404) {
+                window.NotiVasPairing.status = 'EXPIRED';
+                return;
+              }
+              const data = await res.json();
+              if (data.status === 'completed' && data.encryptedPayload && data.iv) {
+                // Descifrar con Web Crypto PBKDF2 + AES-GCM
+                const decryptedStr = await window.NotiVasPairing.decryptPayload(data.encryptedPayload, data.iv, pin);
+                window.NotiVasPairing.receivedPayload = decryptedStr;
+                window.NotiVasPairing.status = 'SUCCESS';
+                return;
+              }
+            } catch (err) {
+              console.warn('Polling error:', err);
+            }
+            await new Promise(r => setTimeout(r, 1500));
+          }
+          if (window.NotiVasPairing.status === 'WAITING') {
+            window.NotiVasPairing.status = 'EXPIRED';
+          }
+        },
+        decryptPayload: async function(encryptedB64, ivB64, pin) {
+          const enc = new TextEncoder();
+          const dec = new TextDecoder();
+          const salt = enc.encode('NotiVasSessionSalt2026');
+          const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+          const ct = Uint8Array.from(atob(encryptedB64), c => c.charCodeAt(0));
+
+          const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+          const key = await crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['decrypt']
+          );
+
+          const decryptedBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+          return dec.decode(decryptedBuffer);
+        }
+      };
+
       window.NotiVasBridge = {
         isAvailable: false,
         sessionState: 'IDLE',

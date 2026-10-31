@@ -1,3 +1,8 @@
 name = "notivas-cors-proxy"
 main = "src/index.js"
 compatibility_date = "2026-10-30"
+
+[[kv_namespaces]]
+binding = "NOTIVAS_PAIRING_KV"
+id = "7887c82feba44066a302e999f17c5c11"
+
