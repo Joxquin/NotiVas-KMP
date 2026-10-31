@@ -70,47 +70,47 @@ fun CourseHeroBannerCard(
 
     val cardContent = @Composable {
         Box(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(190.dp)
         ) {
-            // Capa 1: Imagen real de Canvas en cabecera con degradado suave
-            Box(
-                modifier = Modifier.matchParentSize()
-            ) {
-                if (!course?.imageUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = course.imageUrl,
-                        contentDescription = course.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    MiuixCourseCoverPlaceholder(
-                        courseId = course?.id ?: 0L,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
-                // Degradado que desvanece la imagen imperceptiblemente hacia el fondo de la tarjeta
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colorStops = arrayOf(
-                                    0.0f to cardColor.copy(alpha = 0.35f),
-                                    0.55f to cardColor.copy(alpha = 0.80f),
-                                    1.0f to cardColor
-                                )
-                            )
-                        )
+            // Capa 1: Imagen real de Canvas en cabecera
+            if (!course?.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = course.imageUrl,
+                    contentDescription = course.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                MiuixCourseCoverPlaceholder(
+                    courseId = course?.id ?: 0L,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
 
-            // Capa 2: Las 3 métricas rápidas (subtarjetas)
+            // Degradado que desvanece suavemente la imagen hacia el fondo de la tarjeta solo en la zona inferior
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0.0f to Color.Transparent,
+                                0.35f to Color.Transparent,
+                                0.70f to cardColor.copy(alpha = 0.75f),
+                                1.0f to cardColor
+                            )
+                        )
+                    )
+            )
+
+            // Capa 2: Las 3 métricas rápidas (subtarjetas) al pie de la tarjeta
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -122,7 +122,7 @@ fun CourseHeroBannerCard(
                         valueColor = primaryColor,
                         label = stringResource(Res.string.course_detail_stat_promedio),
                         labelColor = onSurfaceVariantColor,
-                        bgColor = metricPillBg,
+                        bgColor = metricPillBg.copy(alpha = 0.90f),
                         modifier = Modifier.weight(1f)
                     )
 
@@ -133,7 +133,7 @@ fun CourseHeroBannerCard(
                         valueColor = avanceColor,
                         label = stringResource(Res.string.course_detail_stat_avance),
                         labelColor = onSurfaceVariantColor,
-                        bgColor = metricPillBg,
+                        bgColor = metricPillBg.copy(alpha = 0.90f),
                         modifier = Modifier.weight(1f)
                     )
 
@@ -143,7 +143,7 @@ fun CourseHeroBannerCard(
                         valueColor = onSurfaceColor,
                         label = stringResource(Res.string.course_detail_stat_modulos),
                         labelColor = onSurfaceVariantColor,
-                        bgColor = metricPillBg,
+                        bgColor = metricPillBg.copy(alpha = 0.90f),
                         modifier = Modifier.weight(1f)
                     )
                 }
