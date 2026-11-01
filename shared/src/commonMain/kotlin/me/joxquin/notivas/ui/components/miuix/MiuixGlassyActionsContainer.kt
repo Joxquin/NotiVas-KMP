@@ -20,21 +20,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.unit.dp
-import me.joxquin.notivas.ui.components.miuix.liquid.InnerShadow
 import me.joxquin.notivas.ui.components.miuix.liquid.lens
 import me.joxquin.notivas.ui.components.miuix.liquid.vibrancy
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
-import top.yukonga.miuix.kmp.blur.highlight.BloomStroke
 import top.yukonga.miuix.kmp.blur.highlight.Highlight
 import top.yukonga.miuix.kmp.blur.isRuntimeShaderSupported
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * Contenedor Liquid Glass (Glassy Capsule) canónico para botones de acción o navegación
  * en la barra superior (TopAppBar) de Xiaomi HyperOS / Compose Miuix UI.
  *
- * Utiliza los mismos shaders, distorsión de lente (lens), vibración (vibrancy), sombra interior (innerShadow)
+ * Utiliza los mismos shaders, distorsión de lente (lens), vibración (vibrancy)
  * y resaltado (highlight) que el FloatingNavigationBar.
  */
 @Composable
@@ -46,6 +45,8 @@ fun MiuixGlassyActionsContainer(
 ) {
     val isDark = isSystemInDarkTheme()
     val isBlurActive = isRuntimeShaderSupported() && backdrop != null
+    val surfaceContainer = MiuixTheme.colorScheme.surfaceContainer
+    val containerColor = if (isBlurActive) surfaceContainer.copy(alpha = 0.4f) else surfaceContainer
 
     Box(
         modifier = modifier
@@ -72,36 +73,20 @@ fun MiuixGlassyActionsContainer(
                                 3.dp.toPx(),
                             )
                             lens(
-                                10.dp.toPx(),
-                                14.dp.toPx(),
+                                refractionHeight = 10.dp.toPx(),
+                                refractionAmount = 14.dp.toPx(),
                             )
                         },
                         highlight = {
-                            Highlight(
-                                width = 1.dp.toPx(),
-                                color = Color.White,
-                                alpha = if (isDark) 0.15f else 0.25f,
-                            )
+                            if (isDark) Highlight.GlassStrokeSmallDark.copy(alpha = 0.75f)
+                            else Highlight.GlassStrokeSmallLight.copy(alpha = 0.75f)
                         },
-                        innerShadow = {
-                            InnerShadow(
-                                radius = 6.dp.toPx(),
-                                color = Color.White,
-                                alpha = if (isDark) 0.10f else 0.20f,
-                            )
-                        },
-                        bloomStroke = {
-                            BloomStroke(
-                                strokeWidth = 0.8.dp.toPx(),
-                                color = Color.White,
-                                alpha = if (isDark) 0.20f else 0.35f,
-                            )
-                        },
+                        onDrawSurface = { drawRect(containerColor) },
                     )
                 } else {
                     Modifier
                         .background(
-                            color = if (isDark) Color(0x33282828) else Color(0x99F5F5F5),
+                            color = containerColor,
                             shape = shape,
                         )
                         .border(
