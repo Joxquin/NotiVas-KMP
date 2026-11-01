@@ -21,7 +21,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 
 class OpenRouterApiService(
-    private val client: HttpClient,
+    val client: HttpClient,
     private val baseUrl: String = "https://openrouter.ai/api/v1"
 ) {
     companion object {

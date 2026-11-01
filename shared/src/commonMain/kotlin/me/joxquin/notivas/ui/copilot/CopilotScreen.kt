@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
@@ -67,6 +69,7 @@ import me.joxquin.notivas.ui.copilot.components.CopilotHistoryBottomSheet
 import me.joxquin.notivas.ui.copilot.components.CopilotInputBar
 import me.joxquin.notivas.ui.copilot.components.CopilotMentionPopup
 import me.joxquin.notivas.ui.copilot.components.CopilotMessageList
+import me.joxquin.notivas.ui.copilot.components.CopilotQuickChipsRow
 import me.joxquin.notivas.ui.copilot.components.CopilotWarningBanner
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import org.jetbrains.compose.resources.stringResource
@@ -210,6 +213,18 @@ fun CopilotScreen(
                     onDismiss = { viewModel.dismissMentionPopup() },
                     themeStyle = AppThemeStyle.MIUIX
                 )
+
+                // Fila de sugerencias rápidas deslizable
+                if (uiState.hasApiKey && uiState.isCopilotEnabled && !uiState.isLoading && uiState.messages.isNotEmpty()) {
+                    CopilotQuickChipsRow(
+                        onChipClick = { prompt ->
+                            viewModel.updateInputText(prompt)
+                            viewModel.sendMessage()
+                        },
+                        themeStyle = AppThemeStyle.MIUIX
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
 
                 // Cápsula de entrada flotante Miuix
                 CopilotInputBar(
@@ -366,6 +381,18 @@ fun CopilotScreen(
                 onDismiss = { viewModel.dismissMentionPopup() },
                 themeStyle = AppThemeStyle.MATERIAL
             )
+
+            // Fila de sugerencias rápidas deslizable
+            if (uiState.hasApiKey && uiState.isCopilotEnabled && !uiState.isLoading && uiState.messages.isNotEmpty()) {
+                CopilotQuickChipsRow(
+                    onChipClick = { prompt ->
+                        viewModel.updateInputText(prompt)
+                        viewModel.sendMessage()
+                    },
+                    themeStyle = AppThemeStyle.MATERIAL
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
 
             CopilotInputBar(
                 inputText = uiState.inputText,

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -66,6 +67,11 @@ fun CopilotQuickSuggestionsSection(
             icon = Icons.Default.Calculate,
             text = stringResource(Res.string.copilot_suggestion_final_exam_q),
             iconTint = Color(0xFFFFB74D)
+        ),
+        SuggestionItem(
+            icon = Icons.Default.Search,
+            text = "Buscar artículos científicos y tesis en la web sobre un tema",
+            iconTint = Color(0xFF10B981)
         )
     )
 

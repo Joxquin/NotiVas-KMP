@@ -10,9 +10,12 @@ import me.joxquin.notivas.data.remote.CanvasApiService
 import me.joxquin.notivas.data.remote.OpenRouterApiService
 import me.joxquin.notivas.data.repository.copilot.CopilotPromptBuilder
 import me.joxquin.notivas.data.repository.copilot.CopilotToolExecutor
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasAcademicToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasDiscussionsToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasModulesToolsHandler
+import me.joxquin.notivas.data.repository.copilot.tools.handlers.GoogleSearchToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.SimulatorToolsHandler
 
 data class CopilotResult(
@@ -49,7 +52,8 @@ class CopilotRepository(
         canvasAcademicToolsHandler = CanvasAcademicToolsHandler(canvasApiService, localStore, preferencesManager),
         canvasModulesToolsHandler = CanvasModulesToolsHandler(canvasApiService, localStore, preferencesManager),
         canvasDiscussionsToolsHandler = CanvasDiscussionsToolsHandler(canvasApiService, localStore, preferencesManager),
-        simulatorToolsHandler = SimulatorToolsHandler(localStore)
+        simulatorToolsHandler = SimulatorToolsHandler(localStore),
+        googleSearchToolsHandler = GoogleSearchToolsHandler(openRouterApiService.client)
     )
 
     suspend fun queryCopilot(
@@ -200,7 +204,7 @@ class CopilotRepository(
                 for (call in processedToolCalls) {
                     val fnName = call.function.name
                     val fnArgs = call.function.arguments
-                    onStatusUpdate(getToolActivityDescription(fnName))
+                    onStatusUpdate(getToolActivityDescription(fnName, fnArgs))
                     val execution = toolExecutor.executeTool(fnName, fnArgs, selectedCourseId)
 
                     if (execution.source != null) {
@@ -237,7 +241,7 @@ class CopilotRepository(
 
                 val toolResultsSummary = StringBuilder()
                 for (call in textToolCalls) {
-                    onStatusUpdate(getToolActivityDescription(call.name))
+                    onStatusUpdate(getToolActivityDescription(call.name, call.argsJson))
                     val execution = toolExecutor.executeTool(call.name, call.argsJson, selectedCourseId)
                     if (execution.source != null) {
                         accumulatedSources.add(execution.source)
@@ -339,8 +343,18 @@ class CopilotRepository(
         )
     }
 
-    private fun getToolActivityDescription(functionName: String): String {
+    private fun getToolActivityDescription(functionName: String, rawArgs: String? = null): String {
         return when (functionName) {
+            "google_search", "web_search" -> {
+                val query = rawArgs?.let {
+                    try {
+                        val obj = json.decodeFromString(kotlinx.serialization.json.JsonObject.serializer(), it)
+                        obj["query"]?.jsonPrimitive?.contentOrNull
+                    } catch (_: Exception) { null }
+                }
+                if (!query.isNullOrBlank()) "Buscando en la web con Google: \"$query\"..."
+                else "Buscando en la web con Google Search..."
+            }
             "get_academic_overview" -> "Consultando resumen académico..."
             "get_course_assignments" -> "Listando tareas disponibles..."
             "fetch_canvas_assignment_details" -> "Obteniendo detalles de la entrega..."

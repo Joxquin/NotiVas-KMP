@@ -8,6 +8,7 @@ import me.joxquin.notivas.data.repository.copilot.tools.CopilotToolHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasAcademicToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasDiscussionsToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasModulesToolsHandler
+import me.joxquin.notivas.data.repository.copilot.tools.handlers.GoogleSearchToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.SimulatorToolsHandler
 
 data class ToolExecutionResult(
@@ -20,7 +21,8 @@ class CopilotToolExecutor(
     canvasAcademicToolsHandler: CanvasAcademicToolsHandler,
     canvasModulesToolsHandler: CanvasModulesToolsHandler,
     canvasDiscussionsToolsHandler: CanvasDiscussionsToolsHandler,
-    simulatorToolsHandler: SimulatorToolsHandler
+    simulatorToolsHandler: SimulatorToolsHandler,
+    googleSearchToolsHandler: GoogleSearchToolsHandler
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -32,7 +34,8 @@ class CopilotToolExecutor(
         canvasAcademicToolsHandler,
         canvasModulesToolsHandler,
         canvasDiscussionsToolsHandler,
-        simulatorToolsHandler
+        simulatorToolsHandler,
+        googleSearchToolsHandler
     )
 
     val tools: List<OpenRouterTool> = handlers.flatMap { it.supportedTools }
