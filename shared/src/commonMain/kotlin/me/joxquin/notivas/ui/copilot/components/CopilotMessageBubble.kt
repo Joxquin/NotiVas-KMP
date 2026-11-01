@@ -75,13 +75,26 @@ import me.joxquin.notivas.data.repository.CopilotSource
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.Course
+import me.joxquin.notivas.util.DateTimeUtil
+import kotlinx.datetime.isoDayNumber
 import me.joxquin.notivas.util.PlatformShareHandler
-
 
 sealed interface CopilotContentBlock {
     data class TextBlock(val content: String) : CopilotContentBlock
     object DividerBlock : CopilotContentBlock
     data class TableBlock(val headers: List<String>, val rows: List<List<String>>) : CopilotContentBlock
+    data class ResourceCardBlock(
+        val type: ResourceCardType,
+        val title: String,
+        val courseName: String? = null,
+        val assignmentId: Long? = null,
+        val forumTopicId: Long? = null,
+        val url: String? = null,
+        val dueDate: String? = null,
+        val pointsPossible: Double? = null
+    ) : CopilotContentBlock
 }
 
 @Composable
@@ -92,6 +105,10 @@ fun CopilotMessageBubble(
     onShare: ((String) -> Unit)? = null,
     animateReveal: Boolean = false,
     onAnimationFinished: ((String) -> Unit)? = null,
+    onOpenAssignmentDraft: ((Long, String) -> Unit)? = null,
+    onOpenForoDetail: ((Long) -> Unit)? = null,
+    knownAssignments: List<Assignment> = emptyList(),
+    courses: List<Course> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == CopilotRole.USER
@@ -122,7 +139,9 @@ fun CopilotMessageBubble(
     val displayedText = remember(message.text, revealedLength) {
         if (revealedLength >= message.text.length) message.text else message.text.take(revealedLength)
     }
-    val blocks = remember(displayedText) { parseMessageBlocks(displayedText) }
+    val blocks = remember(displayedText, knownAssignments, courses) {
+        parseMessageBlocks(displayedText, knownAssignments, courses)
+    }
 
     val onCopyClick: () -> Unit = {
         clipboardManager.setText(AnnotatedString(message.text))
@@ -313,6 +332,14 @@ fun CopilotMessageBubble(
                                 CopilotTableComposable(
                                     table = block,
                                     themeStyle = themeStyle
+                                )
+                            }
+                            is CopilotContentBlock.ResourceCardBlock -> {
+                                CopilotResourceCard(
+                                    card = block,
+                                    themeStyle = themeStyle,
+                                    onOpenAssignmentDraft = onOpenAssignmentDraft,
+                                    onOpenForoDetail = onOpenForoDetail
                                 )
                             }
                         }
@@ -652,42 +679,88 @@ fun CopilotTableComposable(
 }
 
 /**
- * Parsea el texto en bloques estructurados: párrafos, divisores y tablas Markdown.
+ * Parsea el texto en bloques estructurados: párrafos, divisores, tablas Markdown y tarjetas interactivas.
  */
-fun parseMessageBlocks(rawText: String): List<CopilotContentBlock> {
+fun parseMessageBlocks(
+    rawText: String,
+    knownAssignments: List<Assignment> = emptyList(),
+    courses: List<Course> = emptyList()
+): List<CopilotContentBlock> {
     val lines = rawText.lines()
     val blocks = mutableListOf<CopilotContentBlock>()
     val currentParagraph = mutableListOf<String>()
 
     fun flushParagraph() {
         if (currentParagraph.isNotEmpty()) {
-            blocks.add(CopilotContentBlock.TextBlock(currentParagraph.joinToString("\n")))
+            val text = currentParagraph.joinToString("\n").trim()
+            if (text.isNotEmpty()) {
+                blocks.add(CopilotContentBlock.TextBlock(text))
+            }
             currentParagraph.clear()
         }
     }
+
+    val emittedAssignmentIds = mutableSetOf<Long>()
+    var pendingAssignmentCard: CopilotContentBlock.ResourceCardBlock? = null
+    var currentCourseContext: Course? = null
 
     var i = 0
     while (i < lines.size) {
         val line = lines[i]
         val trimmed = line.trim()
 
-        // Detectar divisor horizontal: 3 o más guiones, asteriscos o guiones bajos
-        val isHorizontalRule = trimmed.matches(Regex("^([\\-*_])(\\s*\\1){2,}$"))
+        // 1. Detectar si la línea establece un contexto de curso (ej: ### 🧪 1. Tecnologías Emergentes)
+        if (trimmed.startsWith("#") || trimmed.contains("curso:", ignoreCase = true)) {
+            val normHeading = normalizeSearchString(trimmed)
+            val matchedCourse = courses.find { c ->
+                val normC = normalizeSearchString(c.name)
+                normC.length >= 4 && normHeading.contains(normC)
+            }
+            if (matchedCourse != null) {
+                currentCourseContext = matchedCourse
+            }
+        }
 
+        // 2. Detectar etiqueta explícita de tarjeta: ::card[...]::
+        val cardTagMatch = Regex("""^::card\[(.*?)\]::$""").find(trimmed)
+        if (cardTagMatch != null) {
+            flushParagraph()
+            if (pendingAssignmentCard != null) {
+                blocks.add(pendingAssignmentCard!!)
+                pendingAssignmentCard = null
+            }
+            val cardBlock = parseCardTag(cardTagMatch.groupValues[1], knownAssignments, courses, currentCourseContext)
+            if (cardBlock != null) {
+                cardBlock.assignmentId?.let { emittedAssignmentIds.add(it) }
+                blocks.add(cardBlock)
+            }
+            i++
+            continue
+        }
+
+        // 3. Detectar divisor horizontal: 3 o más guiones, asteriscos o guiones bajos
+        val isHorizontalRule = trimmed.matches(Regex("^([\\-*_])(\\s*\\1){2,}$"))
         if (isHorizontalRule) {
             flushParagraph()
+            if (pendingAssignmentCard != null) {
+                blocks.add(pendingAssignmentCard!!)
+                pendingAssignmentCard = null
+            }
             blocks.add(CopilotContentBlock.DividerBlock)
             i++
             continue
         }
 
-        // Detectar posible tabla Markdown:
-        // Una línea con | ... | seguida por una línea separadora | :--- | :--- |
+        // 4. Detectar posible tabla Markdown
         if (trimmed.startsWith("|") && trimmed.endsWith("|") && i + 1 < lines.size) {
             val nextTrimmed = lines[i + 1].trim()
             val isSeparator = isTableSeparatorRow(nextTrimmed)
             if (isSeparator) {
                 flushParagraph()
+                if (pendingAssignmentCard != null) {
+                    blocks.add(pendingAssignmentCard!!)
+                    pendingAssignmentCard = null
+                }
                 val headers = parseTableRow(trimmed)
                 i += 2 // Saltar encabezado y separador
 
@@ -706,12 +779,161 @@ fun parseMessageBlocks(rawText: String): List<CopilotContentBlock> {
             }
         }
 
+        // 5. Autodetección de tareas en viñetas o títulos
+        val isNewSectionOrBullet = trimmed.startsWith("#") ||
+                line.startsWith("* ") || line.startsWith("- ") ||
+                line.matches(Regex("""^\s{0,2}\d+\.\s+.*"""))
+
+        if (isNewSectionOrBullet && pendingAssignmentCard != null) {
+            // Se inicia un nuevo elemento o sección; emitir la tarjeta pendiente acumulada
+            flushParagraph()
+            blocks.add(pendingAssignmentCard!!)
+            pendingAssignmentCard = null
+        }
+
+        // Cotejar si esta línea menciona alguna tarea conocida aún no emitida
+        if (knownAssignments.isNotEmpty()) {
+            val matchedAssignment = knownAssignments.firstOrNull { assignment ->
+                assignment.id !in emittedAssignmentIds &&
+                        isAssignmentMentionedInLine(trimmed, assignment, currentCourseContext)
+            }
+            if (matchedAssignment != null) {
+                val course = courses.find { it.id == matchedAssignment.courseId } ?: currentCourseContext
+                val cleanDue = formatCleanDueDate(matchedAssignment.dueAt)
+                pendingAssignmentCard = CopilotContentBlock.ResourceCardBlock(
+                    type = ResourceCardType.ASSIGNMENT,
+                    title = matchedAssignment.name,
+                    courseName = course?.name,
+                    assignmentId = matchedAssignment.id,
+                    url = matchedAssignment.htmlUrl,
+                    dueDate = cleanDue,
+                    pointsPossible = matchedAssignment.pointsPossible
+                )
+                emittedAssignmentIds.add(matchedAssignment.id)
+            }
+        }
+
         currentParagraph.add(line)
         i++
     }
 
     flushParagraph()
+    if (pendingAssignmentCard != null) {
+        blocks.add(pendingAssignmentCard!!)
+    }
+
     return blocks
+}
+
+private fun parseCardTag(
+    rawTag: String,
+    knownAssignments: List<Assignment>,
+    courses: List<Course>,
+    currentCourseContext: Course?
+): CopilotContentBlock.ResourceCardBlock? {
+    val regex = Regex("""(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^,\s\]]+))""")
+    val matches = regex.findAll(rawTag)
+    val map = mutableMapOf<String, String>()
+    for (m in matches) {
+        val key = m.groupValues[1].lowercase()
+        val value = m.groupValues[2].ifEmpty { m.groupValues[3].ifEmpty { m.groupValues[4] } }
+        map[key] = value
+    }
+
+    val typeStr = map["type"]?.lowercase() ?: "assignment"
+    val type = when (typeStr) {
+        "forum", "foro", "discussion" -> ResourceCardType.FORUM
+        "material", "module", "modulo" -> ResourceCardType.MATERIAL
+        "link", "url", "web" -> ResourceCardType.LINK
+        else -> ResourceCardType.ASSIGNMENT
+    }
+
+    val title = map["title"] ?: map["name"] ?: ""
+    if (title.isBlank()) return null
+
+    var courseName = map["course"] ?: map["course_name"] ?: currentCourseContext?.name
+    var assignmentId = map["id"]?.toLongOrNull() ?: map["assignment_id"]?.toLongOrNull()
+    var forumTopicId = map["id"]?.toLongOrNull() ?: map["topic_id"]?.toLongOrNull()
+    var url = map["url"] ?: map["link"]
+    var dueDate = map["due"] ?: map["due_date"] ?: map["due_at"]
+
+    if (type == ResourceCardType.ASSIGNMENT) {
+        val matchedAssignment = knownAssignments.find { a ->
+            (assignmentId != null && a.id == assignmentId) ||
+            isAssignmentMentionedInLine(title, a, currentCourseContext)
+        }
+        if (matchedAssignment != null) {
+            if (assignmentId == null) assignmentId = matchedAssignment.id
+            if (url.isNullOrBlank()) url = matchedAssignment.htmlUrl
+            if (dueDate.isNullOrBlank() && !matchedAssignment.dueAt.isNullOrBlank()) {
+                dueDate = formatCleanDueDate(matchedAssignment.dueAt)
+            }
+            if (courseName.isNullOrBlank()) {
+                courseName = courses.find { it.id == matchedAssignment.courseId }?.name
+            }
+        }
+    }
+
+    return CopilotContentBlock.ResourceCardBlock(
+        type = type,
+        title = title,
+        courseName = courseName,
+        assignmentId = if (type == ResourceCardType.ASSIGNMENT) assignmentId else null,
+        forumTopicId = if (type == ResourceCardType.FORUM) forumTopicId else null,
+        url = url,
+        dueDate = dueDate
+    )
+}
+
+private fun isAssignmentMentionedInLine(
+    line: String,
+    assignment: Assignment,
+    currentCourseContext: Course?
+): Boolean {
+    val normLine = normalizeSearchString(line)
+    val normName = normalizeSearchString(assignment.name)
+    if (normName.length >= 6 && normLine.contains(normName)) {
+        return true
+    }
+    val tokens = normName.split(" ").filter { it.length >= 3 && it !in setOf("del", "las", "los", "por", "para", "con", "de", "la", "el", "en") }
+    if (tokens.size >= 2) {
+        val matchedTokens = tokens.count { normLine.contains(it) }
+        val requiredTokens = (tokens.size * 0.65).toInt().coerceAtLeast(2)
+        if (matchedTokens >= requiredTokens) {
+            if (currentCourseContext == null || currentCourseContext.id == assignment.courseId) {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+private fun normalizeSearchString(text: String): String {
+    return text.lowercase()
+        .replace(Regex("""[*#_`~:>\-]"""), " ")
+        .replace(Regex("""\s+"""), " ")
+        .trim()
+}
+
+fun formatCleanDueDate(dueAt: String?): String {
+    if (dueAt.isNullOrBlank()) return "Sin fecha límite"
+    val comp = DateTimeUtil.parseIsoToComponents(dueAt) ?: return dueAt
+    val dayName = when (comp.date.dayOfWeek.isoDayNumber) {
+        1 -> "Lunes"
+        2 -> "Martes"
+        3 -> "Miércoles"
+        4 -> "Jueves"
+        5 -> "Viernes"
+        6 -> "Sábado"
+        7 -> "Domingo"
+        else -> ""
+    }
+    val timeStr = "${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
+    return if (dayName.isNotEmpty()) {
+        "$dayName ${comp.date.toIsoDateString()} $timeStr"
+    } else {
+        "${comp.date.toIsoDateString()} $timeStr"
+    }
 }
 
 private fun isTableSeparatorRow(line: String): Boolean {

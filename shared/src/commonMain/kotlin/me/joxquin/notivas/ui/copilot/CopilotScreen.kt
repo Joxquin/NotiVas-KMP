@@ -86,9 +86,12 @@ fun CopilotScreen(
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     lazyListState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState(),
     onNavigateToSettings: () -> Unit = {},
+    onOpenAssignmentDraft: ((Long, String) -> Unit)? = null,
+    onOpenForoDetail: ((Long) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val allAssignments by viewModel.allAssignments.collectAsState()
     val listState = lazyListState
     var isHistorySheetVisible by remember { mutableStateOf(false) }
 
@@ -169,6 +172,10 @@ fun CopilotScreen(
                     onRegenerate = { viewModel.regenerateLastResponse() },
                     isMessageAnimated = { viewModel.isMessageAnimated(it) },
                     onMessageAnimated = { viewModel.markMessageAnimated(it) },
+                    onOpenAssignmentDraft = onOpenAssignmentDraft,
+                    onOpenForoDetail = onOpenForoDetail,
+                    knownAssignments = allAssignments,
+                    courses = uiState.courses,
                     themeStyle = AppThemeStyle.MIUIX,
                     bottomPadding = animatedBottomPadding,
                     modifier = Modifier.fillMaxSize()
@@ -364,6 +371,10 @@ fun CopilotScreen(
                     onRegenerate = { viewModel.regenerateLastResponse() },
                     isMessageAnimated = { viewModel.isMessageAnimated(it) },
                     onMessageAnimated = { viewModel.markMessageAnimated(it) },
+                    onOpenAssignmentDraft = onOpenAssignmentDraft,
+                    onOpenForoDetail = onOpenForoDetail,
+                    knownAssignments = allAssignments,
+                    courses = uiState.courses,
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }

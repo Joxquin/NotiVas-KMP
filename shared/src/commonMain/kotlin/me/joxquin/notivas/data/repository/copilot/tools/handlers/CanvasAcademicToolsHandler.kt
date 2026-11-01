@@ -40,7 +40,7 @@ private fun formatDueAtWithLocalTime(dueAt: String?): String {
     val comp = DateTimeUtil.parseIsoToComponents(dueAt) ?: return dueAt
     val dayName = getSpanishDayOfWeek(comp.date)
     val timeStr = "${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
-    return "$dayName ${comp.date.toIsoDateString()} $timeStr (hora local)"
+    return "$dayName ${comp.date.toIsoDateString()} $timeStr"
 }
 
 @Serializable

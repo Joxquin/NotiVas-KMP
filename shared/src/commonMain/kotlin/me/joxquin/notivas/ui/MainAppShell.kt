@@ -586,6 +586,21 @@ fun MainAppShell(
                                             lazyListState = copilotListState,
                                             onNavigateToSettings = {
                                                 mainPagerState.animateToPage(3)
+                                            },
+                                            onOpenAssignmentDraft = { assignmentId, courseName ->
+                                                coroutineScope.launch {
+                                                    val assignmentUi = dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == assignmentId }
+                                                        ?: canvasRepository.getAssignment(assignmentId)?.let {
+                                                            me.joxquin.notivas.ui.dashboard.AssignmentUiModel(it, courseName)
+                                                        }
+                                                    if (assignmentUi != null) {
+                                                        dashboardViewModel.openDraft(assignmentUi)
+                                                        miuixNavigator.push(MiuixRoute.AssignmentDraft(assignmentId, courseName))
+                                                    }
+                                                }
+                                            },
+                                            onOpenForoDetail = { topicId ->
+                                                miuixNavigator.push(MiuixRoute.ForoDetail(topicId))
                                             }
                                         )
                                     }
@@ -1328,6 +1343,21 @@ fun MainAppShell(
                                             themeStyle = AppThemeStyle.MATERIAL,
                                             onNavigateToSettings = {
                                                 navigateToMaterial(MainDestination.Ajustes)
+                                            },
+                                            onOpenAssignmentDraft = { assignmentId, courseName ->
+                                                coroutineScope.launch {
+                                                    val assignmentUi = dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == assignmentId }
+                                                        ?: canvasRepository.getAssignment(assignmentId)?.let {
+                                                            me.joxquin.notivas.ui.dashboard.AssignmentUiModel(it, courseName)
+                                                        }
+                                                    if (assignmentUi != null) {
+                                                        dashboardViewModel.openDraft(assignmentUi)
+                                                        materialNavigator.push(MiuixRoute.AssignmentDraft(assignmentId, courseName))
+                                                    }
+                                                }
+                                            },
+                                            onOpenForoDetail = { topicId ->
+                                                materialNavigator.push(MiuixRoute.ForoDetail(topicId))
                                             }
                                         )
                                     }

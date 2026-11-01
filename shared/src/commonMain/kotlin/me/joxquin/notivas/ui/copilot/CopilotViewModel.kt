@@ -127,6 +127,9 @@ class CopilotViewModel(
     val courses: StateFlow<List<Course>> =
         canvasRepository.allCourses.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val allAssignments: StateFlow<List<Assignment>> =
+        canvasRepository.allAssignments.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val uiState: StateFlow<CopilotUiState> = combine(
         combine(
             combine(

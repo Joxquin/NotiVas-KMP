@@ -46,6 +46,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.repository.CopilotMessageItem
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
@@ -64,6 +66,10 @@ fun CopilotMessageList(
     onShare: ((String) -> Unit)? = null,
     isMessageAnimated: ((String) -> Boolean)? = null,
     onMessageAnimated: ((String) -> Unit)? = null,
+    onOpenAssignmentDraft: ((Long, String) -> Unit)? = null,
+    onOpenForoDetail: ((Long) -> Unit)? = null,
+    knownAssignments: List<Assignment> = emptyList(),
+    courses: List<Course> = emptyList(),
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     bottomPadding: androidx.compose.ui.unit.Dp = 12.dp,
     modifier: Modifier = Modifier
@@ -126,7 +132,11 @@ fun CopilotMessageList(
                     onRegenerate = onRegenerate,
                     onShare = onShare,
                     animateReveal = (message.id == lastAssistantMessageId) && !isAnimatedAlready,
-                    onAnimationFinished = onMessageAnimated
+                    onAnimationFinished = onMessageAnimated,
+                    onOpenAssignmentDraft = onOpenAssignmentDraft,
+                    onOpenForoDetail = onOpenForoDetail,
+                    knownAssignments = knownAssignments,
+                    courses = courses
                 )
             }
 
