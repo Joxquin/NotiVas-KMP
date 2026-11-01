@@ -78,7 +78,6 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.util.DateTimeUtil
-import kotlinx.datetime.isoDayNumber
 import me.joxquin.notivas.util.PlatformShareHandler
 
 sealed interface CopilotContentBlock {
@@ -918,7 +917,7 @@ private fun normalizeSearchString(text: String): String {
 fun formatCleanDueDate(dueAt: String?): String {
     if (dueAt.isNullOrBlank()) return "Sin fecha límite"
     val comp = DateTimeUtil.parseIsoToComponents(dueAt) ?: return dueAt
-    val dayName = when (comp.date.dayOfWeek.isoDayNumber) {
+    val dayName = when (DateTimeUtil.dayOfWeek(comp.date)) {
         1 -> "Lunes"
         2 -> "Martes"
         3 -> "Miércoles"
