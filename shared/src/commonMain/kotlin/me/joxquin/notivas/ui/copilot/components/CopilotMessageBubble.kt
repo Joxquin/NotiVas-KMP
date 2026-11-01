@@ -80,14 +80,14 @@ import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.util.DateTimeUtil
 import me.joxquin.notivas.util.PlatformShareHandler
 
-private val CARD_TAG_REGEX = Regex("""(?:\s*[•*\-]?\s*)?::card\[(.*?)\]::\s*""")
+private val CARD_TAG_REGEX = Regex("""(?:\s*[-•*]?\s*)?::card\[(.*?)\]::\s*""")
 private val CARD_PROP_REGEX = Regex("""(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^,\s\]]+))""")
-private val HORIZONTAL_RULE_REGEX = Regex("""^([\\-*_])(\s*\1){2,}$""")
+private val HORIZONTAL_RULE_REGEX = Regex("""^([-_*])(\s*\1){2,}$""")
 private val TABLE_SEPARATOR_REGEX = Regex("""^:?-+:?$""")
-private val BULLET_REGEX = Regex("""^(\s*)([*-])\s+(.*)$""")
+private val BULLET_REGEX = Regex("""^(\s*)([-*])\s+(.*)$""")
 private val INLINE_MARKDOWN_REGEX = Regex("""(\*\*([^*]+)\*\*)|(`([^`]+)`)|(\*([^*]+)\*)""")
 private val EXTRACT_DIGITS_REGEX = Regex("""\b\d+\b""")
-private val NORMALIZE_STRIP_REGEX = Regex("""[*#_`~:>\-]""")
+private val NORMALIZE_STRIP_REGEX = Regex("""[-*#_`~:>]""")
 private val MULTI_SPACE_REGEX = Regex("""\s+""")
 
 sealed interface CopilotContentBlock {
