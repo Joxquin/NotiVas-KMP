@@ -39,6 +39,8 @@ import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixStudentHeader
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixUrgentTasksCarousel
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixWeeklyCalendarStrip
+import top.yukonga.miuix.kmp.basic.PullToRefresh
+import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import org.jetbrains.compose.resources.stringResource
@@ -78,6 +80,8 @@ fun InicioMiuixContent(
     }
     val userProfile by viewModel.userProfile.collectAsState()
     val syncStatus by viewModel.syncStatus.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val pullToRefreshState = rememberPullToRefreshState()
     val courses by viewModel.courses.collectAsState()
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
     val allAssignments by viewModel.allAssignmentsUi.collectAsState()
@@ -134,16 +138,23 @@ fun InicioMiuixContent(
             thresholdDp = 72.dp
         )
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .scrollEndHaptic()
-                .overScrollVertical()
-                .nestedScroll(autoSettleConnection),
+        PullToRefresh(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refreshData() },
+            pullToRefreshState = pullToRefreshState,
             contentPadding = resolvedPadding,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .scrollEndHaptic()
+                    .overScrollVertical()
+                    .nestedScroll(autoSettleConnection),
+                contentPadding = resolvedPadding,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // 0. Welcome Header (32.sp) con scroll fade sincronizado con el TopAppBar
             item {
                 val firstIndex = listState.firstVisibleItemIndex
@@ -277,6 +288,7 @@ fun InicioMiuixContent(
                 }
             }
         }
+    }
 
         VerticalScrollBar(
             adapter = rememberScrollBarAdapter(listState),

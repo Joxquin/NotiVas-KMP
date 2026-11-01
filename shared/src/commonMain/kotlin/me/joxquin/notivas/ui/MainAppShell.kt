@@ -628,14 +628,18 @@ fun MainAppShell(
                             navigationIcon = when (currentDestination) {
                                 MainDestination.Copilot -> {
                                     {
-                                        me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                            onClick = { copilotViewModel.showHistorySheet() }
+                                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                            backdrop = contentBackdrop
                                         ) {
-                                            top.yukonga.miuix.kmp.basic.Icon(
-                                                imageVector = MiuixIcons.Recent,
-                                                contentDescription = "Historial",
-                                                tint = MiuixTheme.colorScheme.onBackground
-                                            )
+                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                                onClick = { copilotViewModel.showHistorySheet() }
+                                            ) {
+                                                top.yukonga.miuix.kmp.basic.Icon(
+                                                    imageVector = MiuixIcons.Recent,
+                                                    contentDescription = "Historial",
+                                                    tint = MiuixTheme.colorScheme.onBackground
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -645,19 +649,9 @@ fun MainAppShell(
                                 when {
                                     isDashboardSearchExpandingOrExpanded -> {}
                                     currentDestination == MainDestination.Inicio -> {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                            backdrop = contentBackdrop
                                         ) {
-                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                                onClick = { dashboardViewModel.refreshData() }
-                                            ) {
-                                                top.yukonga.miuix.kmp.basic.Icon(
-                                                    imageVector = MiuixIcons.Refresh,
-                                                    contentDescription = "Sincronizar",
-                                                    tint = MiuixTheme.colorScheme.onBackground
-                                                )
-                                            }
                                             me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
                                                 onClick = { miuixNavigator.push(MiuixRoute.Schedule) }
                                             ) {
@@ -679,26 +673,22 @@ fun MainAppShell(
                                         }
                                     }
                                     currentDestination == MainDestination.Copilot -> {
-                                        me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                            onClick = { copilotViewModel.startNewSession() }
+                                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                            backdrop = contentBackdrop
                                         ) {
-                                            top.yukonga.miuix.kmp.basic.Icon(
-                                                imageVector = MiuixIcons.Create,
-                                                contentDescription = "Nuevo Chat",
-                                                tint = MiuixTheme.colorScheme.onBackground
-                                            )
+                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
+                                                onClick = { copilotViewModel.startNewSession() }
+                                            ) {
+                                                top.yukonga.miuix.kmp.basic.Icon(
+                                                    imageVector = MiuixIcons.Create,
+                                                    contentDescription = "Nuevo Chat",
+                                                    tint = MiuixTheme.colorScheme.onBackground
+                                                )
+                                            }
                                         }
                                     }
                                     currentDestination == MainDestination.Ajustes -> {
-                                        me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                            onClick = { profileViewModel.verifyToken() }
-                                        ) {
-                                            top.yukonga.miuix.kmp.basic.Icon(
-                                                imageVector = MiuixIcons.Refresh,
-                                                contentDescription = "Sincronizar",
-                                                tint = MiuixTheme.colorScheme.onBackground
-                                            )
-                                        }
+                                        // Sin botón circular de refresco fijo; el refresco se hace con Pull-to-Refresh
                                     }
                                     currentDestination == MainDestination.Herramientas -> {
                                         val importCatalogLabel = stringResource(Res.string.groups_menu_import_catalog)
@@ -731,15 +721,19 @@ fun MainAppShell(
                                             )
                                         }
 
-                                        top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu(
-                                            entries = herramientasDropdownEntries,
-                                            collapseOnSelection = true
+                                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                            backdrop = contentBackdrop
                                         ) {
-                                            top.yukonga.miuix.kmp.basic.Icon(
-                                                imageVector = MiuixIcons.Tune,
-                                                contentDescription = stringResource(Res.string.groups_menu_options_title),
-                                                tint = MiuixTheme.colorScheme.onBackground
-                                            )
+                                            top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu(
+                                                entries = herramientasDropdownEntries,
+                                                collapseOnSelection = true
+                                            ) {
+                                                top.yukonga.miuix.kmp.basic.Icon(
+                                                    imageVector = MiuixIcons.Tune,
+                                                    contentDescription = stringResource(Res.string.groups_menu_options_title),
+                                                    tint = MiuixTheme.colorScheme.onBackground
+                                                )
+                                            }
                                         }
                                     }
                                     else -> {}

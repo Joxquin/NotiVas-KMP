@@ -178,26 +178,35 @@ fun InicioScreen(
             containerColor = MaterialTheme.colorScheme.surface
         ) { innerPadding ->
             val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
-            LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(
-                    top = innerPadding.calculateTopPadding() + 8.dp,
-                    bottom = innerPadding.calculateBottomPadding() + if (isWideScreen) 24.dp else 100.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ),
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            val isRefreshing by viewModel.isRefreshing.collectAsState()
+
+            androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refreshData() },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = innerPadding.calculateTopPadding())
             ) {
-                // ─── 0. Header de Bienvenida (Welcome, Salung) ───────────────────
-                item {
-                    val studentName = userProfile?.name ?: "Estudiante"
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 4.dp)
-                            .staggeredEntrance(index = 0, trigger = isEntranceTriggered)
-                    ) {
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = innerPadding.calculateBottomPadding() + if (isWideScreen) 24.dp else 100.dp,
+                        start = 16.dp,
+                        end = 16.dp
+                    ),
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // ─── 0. Header de Bienvenida (Welcome, Salung) ───────────────────
+                    item {
+                        val studentName = userProfile?.name ?: "Estudiante"
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp)
+                                .staggeredEntrance(index = 0, trigger = isEntranceTriggered)
+                        ) {
                         Text(
                             text = "Bienvenido, ${studentName.substringBefore(" ")}",
                             style = MaterialTheme.typography.headlineMedium.copy(
@@ -299,6 +308,7 @@ fun InicioScreen(
                 }
             }
         }
+    }
 
         // Vista Incrustada de Búsqueda con Animación Ease Continua (por encima de Scaffold)
         me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(
