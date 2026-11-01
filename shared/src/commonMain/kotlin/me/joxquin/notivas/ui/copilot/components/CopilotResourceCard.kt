@@ -198,7 +198,7 @@ private fun ResourceCardContent(
     }
 
     val onSurfaceVariantColor = if (themeStyle == AppThemeStyle.MIUIX) {
-        MiuixTheme.colorScheme.onSurfaceVariant
+        MiuixTheme.colorScheme.onSurfaceSecondary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
