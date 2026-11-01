@@ -15,7 +15,8 @@ enum class CopilotRole {
 @Serializable
 data class CopilotSource(
     val title: String,
-    val detail: String
+    val detail: String,
+    val url: String? = null
 )
 
 @Serializable
