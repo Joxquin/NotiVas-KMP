@@ -1167,6 +1167,9 @@ class CanvasRepository(
     suspend fun getAssignment(id: Long): Assignment? =
         localStore.getAssignmentById(id)
 
+    suspend fun getCourse(id: Long): Course? =
+        localStore.getCourseList().firstOrNull { it.id == id }
+
     suspend fun seedInitialActivitiesIfEmpty() = withContext(AppDispatchers.IO) {
         if (localStore.countActivityLogs() > 0) return@withContext
 

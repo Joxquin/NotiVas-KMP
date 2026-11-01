@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.graphics.Color
 import me.joxquin.notivas.data.model.DayBlockInfo
 import me.joxquin.notivas.data.model.DayTaskStatus
 import me.joxquin.notivas.di.AppModule

@@ -335,8 +335,7 @@ private fun PerformanceHeroKpiCard(
                 // Badge de Nivel
                 val (levelText, levelColor) = when (stats.performanceLevel) {
                     GradePerformanceLevel.EXCELLENT -> "Sobresaliente" to completedColor
-                    GradePerformanceLevel.GOOD -> "Buen Rendimiento" to primaryColor
-                    GradePerformanceLevel.REGULAR -> "Regular" to Color(0xFFF59E0B)
+                    GradePerformanceLevel.PASSING -> "Aprobado" to primaryColor
                     GradePerformanceLevel.AT_RISK -> "En Riesgo" to overdueColor
                 }
 
@@ -984,7 +983,7 @@ private fun PerformanceCourseItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Tune,
+                    imageVector = Icons.Filled.Tune,
                     contentDescription = null,
                     tint = primaryColor,
                     modifier = Modifier.size(14.dp)

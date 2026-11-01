@@ -894,45 +894,6 @@ class DashboardViewModel(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val performanceStats: StateFlow<AcademicPerformanceStats> =
-        combine(courseStats, allAssignmentsUi) { stats, allUi ->
-            val validScores = stats.mapNotNull { it.averageScore }.filter { it > 0.0 }
-            val overallAvg = if (validScores.isNotEmpty()) validScores.average() else 0.0
-
-            val total = allUi.size
-            val completed = allUi.count { it.assignment.status == "completed" || it.assignment.isCompleted }
-            val missing = allUi.count { it.assignment.status == "missing" }
-            val pending = total - completed - missing
-            val rate = if (total > 0) (completed.toFloat() / total.toFloat()) * 100f else 0f
-
-            val scoredAssignments = allUi.mapNotNull { ui ->
-                val score = ui.assignment.score
-                val points = ui.assignment.pointsPossible
-                if (score != null && points != null && points > 0) (score / points) * 20.0 else null
-            }
-            val highest = scoredAssignments.maxOrNull()
-            val lowest = scoredAssignments.minOrNull()
-
-            val level = when {
-                overallAvg >= 16.0 -> GradePerformanceLevel.EXCELLENT
-                overallAvg >= 14.0 -> GradePerformanceLevel.GOOD
-                overallAvg >= 12.0 -> GradePerformanceLevel.REGULAR
-                else -> GradePerformanceLevel.AT_RISK
-            }
-
-            AcademicPerformanceStats(
-                overallAverage = overallAvg,
-                totalAssignments = total,
-                completedAssignments = completed,
-                pendingAssignments = pending.coerceAtLeast(0),
-                missingAssignments = missing,
-                completionRatePercentage = rate,
-                highestScore = highest,
-                lowestScore = lowest,
-                performanceLevel = level
-            )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AcademicPerformanceStats(0.0, 0, 0, 0, 0, 0f))
-
     // ─── Estadísticas de Cursos con Motor Académico (3 Estados) ─────────────
     val courseStats: StateFlow<List<CourseStat>> =
         combine(
@@ -960,8 +921,7 @@ class DashboardViewModel(
                     val performanceLevel = when {
                         fallbackAvg == null -> GradePerformanceLevel.AT_RISK
                         fallbackAvg >= 16.0 -> GradePerformanceLevel.EXCELLENT
-                        fallbackAvg >= 14.0 -> GradePerformanceLevel.GOOD
-                        fallbackAvg >= course.passingGrade -> GradePerformanceLevel.REGULAR
+                        fallbackAvg >= course.passingGrade -> GradePerformanceLevel.PASSING
                         else -> GradePerformanceLevel.AT_RISK
                     }
 
@@ -991,6 +951,44 @@ class DashboardViewModel(
                 }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val performanceStats: StateFlow<AcademicPerformanceStats> =
+        combine(courseStats, allAssignmentsUi) { stats, allUi ->
+            val validScores = stats.mapNotNull { it.averageScore }.filter { it > 0.0 }
+            val overallAvg = if (validScores.isNotEmpty()) validScores.average() else 0.0
+
+            val total = allUi.size
+            val completed = allUi.count { it.assignment.status == "completed" || it.assignment.isCompleted }
+            val missing = allUi.count { it.assignment.status == "missing" }
+            val pending = total - completed - missing
+            val rate = if (total > 0) (completed.toFloat() / total.toFloat()) * 100f else 0f
+
+            val scoredAssignments = allUi.mapNotNull { ui ->
+                val score = ui.assignment.score
+                val points = ui.assignment.pointsPossible
+                if (score != null && points != null && points > 0) (score / points) * 20.0 else null
+            }
+            val highest = scoredAssignments.maxOrNull()
+            val lowest = scoredAssignments.minOrNull()
+
+            val level = when {
+                overallAvg >= 16.0 -> GradePerformanceLevel.EXCELLENT
+                overallAvg >= 13.0 -> GradePerformanceLevel.PASSING
+                else -> GradePerformanceLevel.AT_RISK
+            }
+
+            AcademicPerformanceStats(
+                overallAverage = overallAvg,
+                totalAssignments = total,
+                completedAssignments = completed,
+                pendingAssignments = pending.coerceAtLeast(0),
+                missingAssignments = missing,
+                completionRatePercentage = rate,
+                highestScore = highest,
+                lowestScore = lowest,
+                performanceLevel = level
+            )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AcademicPerformanceStats(0.0, 0, 0, 0, 0, 0f))
 
     // ─── Banner Contextual de Cursos sin Configurar ─────────────────────────
     private val _bannerDismissedLocally = MutableStateFlow(false)
