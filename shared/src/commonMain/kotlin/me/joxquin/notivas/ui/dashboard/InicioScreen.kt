@@ -277,7 +277,8 @@ fun InicioScreen(
                             tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
                             onSeeAll = onNavigateToSchedule,
                             onTaskClick = { selectedAssignmentForSubmenu = it },
-                            themeStyle = AppThemeStyle.MATERIAL
+                            themeStyle = AppThemeStyle.MATERIAL,
+                            sectionTitle = if (todayTasks.isNotEmpty()) null else if (urgentAssignments.isNotEmpty()) "Próximas entregas" else null
                         )
                     }
                 }

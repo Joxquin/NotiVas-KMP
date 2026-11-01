@@ -27,11 +27,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,6 +106,10 @@ fun CopilotMessageList(
                 .padding(horizontal = 16.dp)
         }
 
+        val lastAssistantMessageId = remember(messages) {
+            messages.lastOrNull { it.role != me.joxquin.notivas.data.repository.CopilotRole.USER }?.id
+        }
+
         LazyColumn(
             state = listState,
             modifier = modifier.then(scrollModifier),
@@ -110,7 +121,8 @@ fun CopilotMessageList(
                     message = message,
                     themeStyle = themeStyle,
                     onRegenerate = onRegenerate,
-                    onShare = onShare
+                    onShare = onShare,
+                    animateReveal = message.id == lastAssistantMessageId
                 )
             }
 
@@ -122,13 +134,26 @@ fun CopilotMessageList(
                             .padding(vertical = 8.dp, horizontal = 4.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
-                        if (thinkingStatus.isNullOrBlank()) {
-                            CopilotThinkingDots(themeStyle = themeStyle)
-                        } else {
-                            CopilotActivityStatus(
-                                statusText = thinkingStatus,
-                                themeStyle = themeStyle
-                            )
+                        AnimatedContent(
+                            targetState = thinkingStatus,
+                            transitionSpec = {
+                                (fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) +
+                                        slideInVertically(animationSpec = androidx.compose.animation.core.tween(300)) { it / 3 })
+                                    .togetherWith(
+                                        fadeOut(animationSpec = androidx.compose.animation.core.tween(200)) +
+                                                slideOutVertically(animationSpec = androidx.compose.animation.core.tween(200)) { -it / 3 }
+                                    )
+                            },
+                            label = "thinkingStatusAnimation"
+                        ) { status ->
+                            if (status.isNullOrBlank()) {
+                                CopilotThinkingDots(themeStyle = themeStyle)
+                            } else {
+                                CopilotActivityStatus(
+                                    statusText = status,
+                                    themeStyle = themeStyle
+                                )
+                            }
                         }
                     }
                 }

@@ -256,7 +256,8 @@ fun InicioMiuixContent(
                         tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
                         onSeeAll = onNavigateToSchedule,
                         onTaskClick = { selectedAssignmentForSubmenu = it },
-                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                        sectionTitle = if (todayTasks.isNotEmpty()) null else if (urgentAssignments.isNotEmpty()) "Próximas entregas" else null
                     )
                 }
             }

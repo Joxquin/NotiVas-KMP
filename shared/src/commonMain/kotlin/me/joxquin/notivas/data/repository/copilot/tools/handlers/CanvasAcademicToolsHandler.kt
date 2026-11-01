@@ -20,6 +20,14 @@ import me.joxquin.notivas.data.repository.CopilotSource
 import me.joxquin.notivas.data.repository.copilot.ToolExecutionResult
 import me.joxquin.notivas.data.repository.copilot.tools.CopilotToolHandler
 import me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils
+import me.joxquin.notivas.util.DateTimeUtil
+
+private fun formatDueAtWithLocalTime(dueAt: String?): String {
+    if (dueAt.isNullOrBlank()) return "Sin fecha"
+    val comp = DateTimeUtil.parseIsoToComponents(dueAt) ?: return dueAt
+    val timeStr = "${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
+    return "${comp.date.toIsoDateString()} $timeStr (hora local) [UTC: $dueAt]"
+}
 
 @Serializable
 private data class AcademicNextDeadline(
@@ -106,17 +114,21 @@ class CanvasAcademicToolsHandler(
                 } else {
                     val summaryList = courses.map { course ->
                         val courseAssignments = allAssignments.filter { it.courseId == course.id }
-                        val pendingAssignments = courseAssignments.filter { !it.isCompleted }
+                        val pendingAssignments = courseAssignments
+                            .filter { !it.isCompleted }
+                            .sortedWith(compareBy(nullsLast()) { a ->
+                                a.dueAt?.let { DateTimeUtil.parseIsoToComponents(it)?.epochMillis }
+                            })
                         AcademicCourseOverview(
                             course_id = course.id.toString(),
                             name = course.name,
                             course_code = course.courseCode ?: "N/A",
                             pending_assignments_count = pendingAssignments.size.toString(),
-                            next_deadlines = pendingAssignments.take(3).map { a ->
+                            next_deadlines = pendingAssignments.take(5).map { a ->
                                 AcademicNextDeadline(
                                     id = a.id.toString(),
                                     name = a.name,
-                                    due_at = a.dueAt ?: "Sin fecha"
+                                    due_at = formatDueAtWithLocalTime(a.dueAt)
                                 )
                             }
                         )
@@ -141,7 +153,7 @@ class CanvasAcademicToolsHandler(
                             "id" to a.id.toString(),
                             "course_id" to a.courseId.toString(),
                             "name" to a.name,
-                            "due_at" to (a.dueAt ?: "Sin fecha"),
+                            "due_at" to formatDueAtWithLocalTime(a.dueAt),
                             "points_possible" to (a.pointsPossible?.toString() ?: "N/A"),
                             "submitted" to a.isCompleted.toString(),
                             "score" to (a.submission?.score?.toString() ?: "N/A")
@@ -160,7 +172,7 @@ class CanvasAcademicToolsHandler(
                         mapOf(
                             "id" to a.id.toString(),
                             "name" to a.name,
-                            "due_at" to (a.dueAt ?: "Sin fecha"),
+                            "due_at" to formatDueAtWithLocalTime(a.dueAt),
                             "points_possible" to (a.pointsPossible?.toString() ?: "N/A"),
                             "submitted" to a.isCompleted.toString(),
                             "score" to (a.submission?.score?.toString() ?: "N/A"),
@@ -199,7 +211,7 @@ class CanvasAcademicToolsHandler(
                             val resultMap = mapOf(
                                 "id" to localMatch.id.toString(),
                                 "name" to localMatch.name,
-                                "due_at" to (localMatch.dueAt ?: "Sin fecha"),
+                                "due_at" to formatDueAtWithLocalTime(localMatch.dueAt),
                                 "points_possible" to (localMatch.pointsPossible?.toString() ?: "N/A"),
                                 "description" to cleanDesc.take(3000),
                                 "submitted" to localMatch.isCompleted.toString()
@@ -259,7 +271,7 @@ class CanvasAcademicToolsHandler(
                             val resultMap = mutableMapOf<String, String?>(
                                 "id" to details.id.toString(),
                                 "name" to details.name,
-                                "due_at" to details.dueAt,
+                                "due_at" to formatDueAtWithLocalTime(details.dueAt),
                                 "points_possible" to details.pointsPossible?.toString(),
                                 "description" to cleanDesc.take(4000),
                                 "submission_types" to details.submissionTypes?.joinToString(", "),

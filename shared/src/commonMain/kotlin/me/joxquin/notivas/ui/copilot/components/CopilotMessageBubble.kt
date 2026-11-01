@@ -45,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -89,13 +90,36 @@ fun CopilotMessageBubble(
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     onRegenerate: (() -> Unit)? = null,
     onShare: ((String) -> Unit)? = null,
+    animateReveal: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == CopilotRole.USER
-    val blocks = remember(message.text) { parseMessageBlocks(message.text) }
     val clipboardManager = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    // Animación progresiva suave para respuestas recién emitidas por el asistente
+    var revealedLength by remember(message.id) {
+        mutableStateOf(if (animateReveal && !isUser) 0 else message.text.length)
+    }
+
+    LaunchedEffect(message.id, message.text, animateReveal) {
+        if (animateReveal && !isUser && revealedLength < message.text.length) {
+            val totalChars = message.text.length
+            val step = (totalChars / 25).coerceIn(3, 22)
+            while (revealedLength < totalChars) {
+                delay(18)
+                revealedLength = (revealedLength + step).coerceAtMost(totalChars)
+            }
+        } else {
+            revealedLength = message.text.length
+        }
+    }
+
+    val displayedText = remember(message.text, revealedLength) {
+        if (revealedLength >= message.text.length) message.text else message.text.take(revealedLength)
+    }
+    val blocks = remember(displayedText) { parseMessageBlocks(displayedText) }
 
     val onCopyClick: () -> Unit = {
         clipboardManager.setText(AnnotatedString(message.text))
@@ -131,9 +155,9 @@ fun CopilotMessageBubble(
                             SelectionContainer {
                                 Text(
                                     text = message.text,
-                                    style = MiuixTheme.textStyles.footnote1,
+                                    style = MiuixTheme.textStyles.body1.copy(fontSize = 15.5.sp),
                                     color = MiuixTheme.colorScheme.onPrimary,
-                                    lineHeight = 20.sp
+                                    lineHeight = 22.sp
                                 )
                             }
                             Spacer(modifier = Modifier.height(6.dp))
@@ -204,9 +228,9 @@ fun CopilotMessageBubble(
                             SelectionContainer {
                                 Text(
                                     text = message.text,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.5.sp),
                                     color = MaterialTheme.colorScheme.onPrimary,
-                                    lineHeight = 20.sp
+                                    lineHeight = 22.sp
                                 )
                             }
                             Spacer(modifier = Modifier.height(6.dp))
@@ -267,16 +291,16 @@ fun CopilotMessageBubble(
                                 Text(
                                     text = formatMarkdown(block.content),
                                     style = if (themeStyle == AppThemeStyle.MIUIX) {
-                                        MiuixTheme.textStyles.footnote1
+                                        MiuixTheme.textStyles.body1.copy(fontSize = 16.sp)
                                     } else {
-                                        MaterialTheme.typography.bodyMedium
+                                        MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp)
                                     },
                                     color = if (themeStyle == AppThemeStyle.MIUIX) {
                                         MiuixTheme.colorScheme.onSurface
                                     } else {
                                         MaterialTheme.colorScheme.onSurface
                                     },
-                                    lineHeight = 22.sp
+                                    lineHeight = 24.sp
                                 )
                             }
                             is CopilotContentBlock.DividerBlock -> {
@@ -318,7 +342,7 @@ fun CopilotMessageBubble(
                             )
                             Text(
                                 text = message.actionFeedback,
-                                style = MiuixTheme.textStyles.footnote2.copy(fontWeight = FontWeight.SemiBold),
+                                style = MiuixTheme.textStyles.body2.copy(fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold),
                                 color = MiuixTheme.colorScheme.onSurface
                             )
                         }
@@ -341,7 +365,7 @@ fun CopilotMessageBubble(
                             )
                             Text(
                                 text = message.actionFeedback,
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
@@ -358,61 +382,69 @@ fun CopilotMessageBubble(
                 )
             }
 
-            // 4. Barra de Acciones debajo del mensaje: Copiar, Compartir, Regenerar
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // 4. Barra de Acciones debajo del mensaje (Copiar, Compartir, Regenerar) y Disclaimer
+            // Revelación fluida una vez que el texto termina de fluir
+            AnimatedVisibility(
+                visible = revealedLength >= message.text.length,
+                enter = fadeIn() + expandVertically()
             ) {
-                // Botón Copiar
-                CopilotActionButton(
-                    icon = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                    label = if (copied) "Copiado" else "Copiar",
-                    themeStyle = themeStyle,
-                    onClick = onCopyClick
-                )
+                Column {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Botón Copiar
+                        CopilotActionButton(
+                            icon = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
+                            label = if (copied) "Copiado" else "Copiar",
+                            themeStyle = themeStyle,
+                            onClick = onCopyClick
+                        )
 
-                // Botón Compartir
-                CopilotActionButton(
-                    icon = Icons.Default.Share,
-                    label = "Compartir",
-                    themeStyle = themeStyle,
-                    onClick = {
-                        if (onShare != null) {
-                            onShare(message.text)
-                        } else {
-                            PlatformShareHandler.shareText(message.text)
+                        // Botón Compartir
+                        CopilotActionButton(
+                            icon = Icons.Default.Share,
+                            label = "Compartir",
+                            themeStyle = themeStyle,
+                            onClick = {
+                                if (onShare != null) {
+                                    onShare(message.text)
+                                } else {
+                                    PlatformShareHandler.shareText(message.text)
+                                }
+                            }
+                        )
+
+                        // Botón Regenerar
+                        if (onRegenerate != null) {
+                            CopilotActionButton(
+                                icon = Icons.Default.Refresh,
+                                label = "Regenerar",
+                                themeStyle = themeStyle,
+                                onClick = onRegenerate
+                            )
                         }
                     }
-                )
 
-                // Botón Regenerar
-                if (onRegenerate != null) {
-                    CopilotActionButton(
-                        icon = Icons.Default.Refresh,
-                        label = "Regenerar",
-                        themeStyle = themeStyle,
-                        onClick = onRegenerate
+                    // 5. Descargo de responsabilidad sutil (Disclaimer)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "NotiVas Copilot es una IA y puede cometer errores.",
+                        style = if (themeStyle == AppThemeStyle.MIUIX) {
+                            MiuixTheme.textStyles.footnote2.copy(fontSize = 11.5.sp)
+                        } else {
+                            MaterialTheme.typography.labelSmall.copy(fontSize = 11.5.sp)
+                        },
+                        color = if (themeStyle == AppThemeStyle.MIUIX) {
+                            MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.7f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        }
                     )
                 }
             }
-
-            // 5. Descargo de responsabilidad sutil (Disclaimer)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "NotiVas Copilot es una IA y puede cometer errores.",
-                style = if (themeStyle == AppThemeStyle.MIUIX) {
-                    MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp)
-                } else {
-                    MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
-                },
-                color = if (themeStyle == AppThemeStyle.MIUIX) {
-                    MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.7f)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                }
-            )
         }
     }
 }
@@ -885,7 +917,7 @@ fun formatMarkdown(text: String): AnnotatedString {
                     withStyle(
                         SpanStyle(
                             fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp,
+                            fontSize = 13.5.sp,
                             background = Color(0x22888888)
                         )
                     ) {
@@ -927,7 +959,7 @@ fun formatMarkdown(text: String): AnnotatedString {
             }
 
             if (isHeader) {
-                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 17.5.sp)) {
                     appendInlineMarkdown(lineContent)
                 }
             } else {
@@ -944,7 +976,7 @@ fun formatMarkdown(text: String): AnnotatedString {
             withStyle(
                 SpanStyle(
                     fontFamily = FontFamily.Monospace,
-                    fontSize = 12.sp,
+                    fontSize = 13.5.sp,
                     background = Color(0x22888888)
                 )
             ) {
@@ -973,6 +1005,7 @@ private fun AnnotatedString.Builder.appendInlineMarkdown(content: String) {
                 withStyle(
                     SpanStyle(
                         fontFamily = FontFamily.Monospace,
+                        fontSize = 14.sp,
                         background = Color(0x22888888)
                     )
                 ) {

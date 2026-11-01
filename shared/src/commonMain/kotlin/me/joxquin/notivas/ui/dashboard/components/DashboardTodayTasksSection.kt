@@ -56,7 +56,8 @@ fun DashboardTodayTasksSection(
     onSeeAll: () -> Unit,
     onTaskClick: (AssignmentUiModel) -> Unit,
     themeStyle: AppThemeStyle,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sectionTitle: String? = null
 ) {
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
     val onSurfaceColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
@@ -72,7 +73,7 @@ fun DashboardTodayTasksSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(Res.string.dashboard_todays_tasks_section),
+                text = sectionTitle ?: stringResource(Res.string.dashboard_todays_tasks_section),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = onSurfaceColor
             )
@@ -140,8 +141,18 @@ private fun TodayTaskCard(
     val dueRaw = item.assignment.dueAt ?: item.assignment.lockAt ?: ""
     val timeFormatted = remember(dueRaw) {
         val comp = DateTimeUtil.parseIsoToComponents(dueRaw)
-        if (comp != null) "Hoy: ${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
-        else "Hoy: 23:59"
+        if (comp != null) {
+            val today = DateTimeUtil.nowLocalDate()
+            val tomorrow = DateTimeUtil.addDays(today, 1)
+            val timeStr = "${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
+            when (comp.date) {
+                today -> "Hoy: $timeStr"
+                tomorrow -> "Mañana: $timeStr"
+                else -> "${comp.date.day}/${comp.date.month}: $timeStr"
+            }
+        } else {
+            "Hoy: 23:59"
+        }
     }
 
     val isCompleted = item.assignment.isCompleted || item.assignment.status == "completed"

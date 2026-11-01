@@ -25,6 +25,7 @@ class CopilotPromptBuilder {
             append("Eres NotiVas Copilot, un asistente académico inteligente, autónomo y proactivo para estudiantes universitarios integrados con Canvas LMS. ")
             append(langInstruction)
             append("FECHA ACTUAL DEL SISTEMA: $todayStr. Úsala para calcular entregas de 'hoy', 'esta semana', 'próxima semana' o fechas pasadas. ")
+            append("REGLA FUNDAMENTAL DE ZONA HORARIA Y FECHAS: Todas las entregas de Canvas LMS se convierten e indican en la fecha y hora local del estudiante (ej: 2026-11-01 23:59 (hora local)). Por ejemplo, si hoy es sábado 31 de octubre y una entrega vence el 2026-11-01 a las 23:59 (hora local), vence exactamente MAÑANA domingo antes de medianoche. Responde siempre haciendo referencia a la fecha y hora local del estudiante (hoy, mañana, etc.) y NUNCA menciones fechas en UTC ni digas que una entrega del domingo vence el lunes solo porque en UTC figure a las 04:59 UTC. ")
             append("Cuentas con herramientas para consultar información local y en vivo de Canvas LMS. ")
             append("LISTA DE CURSOS INSCRITOS: [$coursesSummary]. ")
             if (selectedCourseId != null) {
