@@ -103,7 +103,10 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.squircle.squircleBorder
+import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
 /**
  * Vista nativa dedicada de Rendimiento Académico para Xiaomi HyperOS / Compose MIUIX UI.
@@ -225,7 +228,7 @@ fun AcademicPerformanceMiuixView(
                         onTabSelected = { isMonthlyView = (it == 1) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
+                            .padding(horizontal = 16.dp)
                             .padding(bottom = 8.dp)
                     )
 
@@ -320,7 +323,7 @@ private fun MiuixHeroKpiCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 16.dp)
             .padding(bottom = 12.dp),
         insideMargin = PaddingValues(16.dp),
         colors = CardDefaults.defaultColors(
@@ -373,8 +376,15 @@ private fun MiuixHeroKpiCard(
 
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(levelColor.copy(alpha = 0.12f))
+                        .squircleSurface(
+                            color = levelColor.copy(alpha = 0.12f),
+                            cornerRadius = 12.dp
+                        )
+                        .squircleBorder(
+                            width = 1.dp,
+                            color = levelColor.copy(alpha = 0.35f),
+                            cornerRadius = 12.dp
+                        )
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
@@ -451,8 +461,10 @@ private fun MiuixMetricPill(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(MiuixTheme.colorScheme.surfaceContainerHigh)
+            .squircleSurface(
+                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                cornerRadius = 10.dp
+            )
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
         Column {
@@ -499,9 +511,9 @@ private fun MiuixHeatmapCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 16.dp)
             .padding(bottom = 12.dp),
-        insideMargin = PaddingValues(14.dp),
+        insideMargin = PaddingValues(16.dp),
         colors = CardDefaults.defaultColors(
             color = MiuixTheme.colorScheme.surfaceContainer
         )
@@ -655,17 +667,20 @@ private fun MiuixDayBlockItem(
     }
 
     val blockBorder = if (isSelected) {
-        Modifier.border(2.dp, primaryColor, RoundedCornerShape(10.dp))
+        Modifier.squircleBorder(width = 2.dp, color = primaryColor, cornerRadius = 10.dp)
     } else if (block.isToday) {
-        Modifier.border(1.5.dp, primaryColor.copy(alpha = 0.6f), RoundedCornerShape(10.dp))
+        Modifier.squircleBorder(width = 1.5.dp, color = primaryColor.copy(alpha = 0.6f), cornerRadius = 10.dp)
     } else if (block.status == DayTaskStatus.NONE) {
-        Modifier.border(1.dp, outlineColor.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+        Modifier.squircleBorder(width = 1.dp, color = outlineColor.copy(alpha = 0.25f), cornerRadius = 10.dp)
     } else Modifier
 
     Column(
         modifier = modifier
             .padding(horizontal = 2.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .squircleSurface(
+                color = Color.Transparent,
+                cornerRadius = 10.dp
+            )
             .clickable { onClick() }
             .then(blockBorder)
             .padding(vertical = if (isMonthlyGrid) 4.dp else 6.dp),
@@ -682,8 +697,10 @@ private fun MiuixDayBlockItem(
         Box(
             modifier = Modifier
                 .size(if (isMonthlyGrid) 22.dp else 26.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(blockBg),
+                .squircleSurface(
+                    color = blockBg,
+                    cornerRadius = 6.dp
+                ),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -746,9 +763,9 @@ private fun MiuixSelectedDaySection(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 16.dp)
             .padding(bottom = 12.dp),
-        insideMargin = PaddingValues(14.dp),
+        insideMargin = PaddingValues(16.dp),
         colors = CardDefaults.defaultColors(
             color = MiuixTheme.colorScheme.surfaceContainer
         )
@@ -827,8 +844,10 @@ private fun MiuixTaskRowItem(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(MiuixTheme.colorScheme.surfaceContainerHigh)
+            .squircleSurface(
+                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                cornerRadius = 10.dp
+            )
             .clickable { onClick() }
             .padding(10.dp)
     ) {
@@ -901,10 +920,11 @@ private fun MiuixCourseItemCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .padding(bottom = 10.dp)
-            .clickable { onCourseClick() },
-        insideMargin = PaddingValues(14.dp),
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 12.dp),
+        insideMargin = PaddingValues(16.dp),
+        onClick = onCourseClick,
+        pressFeedbackType = PressFeedbackType.Sink,
         colors = CardDefaults.defaultColors(
             color = MiuixTheme.colorScheme.surfaceContainer
         )
@@ -938,12 +958,17 @@ private fun MiuixCourseItemCard(
                 if (courseStat.averageScore != null) {
                     val score = courseStat.averageScore
                     val isPassing = score >= courseStat.course.passingGrade
+                    val badgeColor = if (isPassing) completedColor else overdueColor
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                if (isPassing) completedColor.copy(alpha = 0.12f)
-                                else overdueColor.copy(alpha = 0.12f)
+                            .squircleSurface(
+                                color = badgeColor.copy(alpha = 0.12f),
+                                cornerRadius = 8.dp
+                            )
+                            .squircleBorder(
+                                width = 1.dp,
+                                color = badgeColor.copy(alpha = 0.35f),
+                                cornerRadius = 8.dp
                             )
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
@@ -951,7 +976,7 @@ private fun MiuixCourseItemCard(
                             text = "${formatScoreMiuix(score)} / 20",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isPassing) completedColor else overdueColor
+                            color = badgeColor
                         )
                     }
                 }
@@ -1019,8 +1044,10 @@ private fun MiuixTaskCounterChip(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(MiuixTheme.colorScheme.surfaceContainerHigh)
+            .squircleSurface(
+                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                cornerRadius = 8.dp
+            )
             .padding(horizontal = 6.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {

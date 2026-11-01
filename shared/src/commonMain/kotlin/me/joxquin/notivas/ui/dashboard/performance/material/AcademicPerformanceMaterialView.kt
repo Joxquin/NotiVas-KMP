@@ -77,6 +77,7 @@ import me.joxquin.notivas.data.model.GradePerformanceLevel
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.performance_average_label
 import me.joxquin.notivas.shared.resources.performance_average_scale
+import me.joxquin.notivas.shared.resources.back
 import me.joxquin.notivas.shared.resources.performance_completion_rate
 import me.joxquin.notivas.shared.resources.performance_configure_formula
 import me.joxquin.notivas.shared.resources.performance_courses_breakdown
@@ -150,51 +151,67 @@ fun AcademicPerformanceMaterialView(
 
     Scaffold(
         topBar = {
-            Surface(
-                color = topAppBarContainerColor,
-                shadowElevation = if (isScrolled) 3.dp else 0.dp
-            ) {
-                TopAppBar(
-                    title = {
+            TopAppBar(
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Insights,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                         Column {
                             Text(
                                 text = stringResource(Res.string.performance_title),
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = onSurfaceColor
                             )
                             Text(
                                 text = stringResource(Res.string.performance_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = onVariantColor
+                                color = onVariantColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(Res.string.back),
+                            tint = onSurfaceColor
+                        )
+                    }
+                },
+                actions = {
+                    if (weekOffset != 0 && !isMonthlyView) {
+                        IconButton(onClick = onResetWeek) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
-                                tint = onSurfaceColor
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = stringResource(Res.string.performance_current_week),
+                                tint = primaryColor
                             )
                         }
-                    },
-                    actions = {
-                        if (weekOffset != 0 && !isMonthlyView) {
-                            IconButton(onClick = onResetWeek) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = stringResource(Res.string.performance_current_week),
-                                    tint = primaryColor
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = topAppBarContainerColor,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                    )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = topAppBarContainerColor,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
-            }
+            )
         },
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface
