@@ -936,17 +936,27 @@ fun formatMarkdown(text: String): AnnotatedString {
             }
 
             var formattedLine = line
-            var isHeader = false
+            var headerLevel = 0
 
-            if (formattedLine.startsWith("### ")) {
-                formattedLine = formattedLine.removePrefix("### ")
-                isHeader = true
-            } else if (formattedLine.startsWith("## ")) {
-                formattedLine = formattedLine.removePrefix("## ")
-                isHeader = true
-            } else if (formattedLine.startsWith("# ")) {
-                formattedLine = formattedLine.removePrefix("# ")
-                isHeader = true
+            val trimmedLeading = formattedLine.trimStart()
+            if (trimmedLeading.startsWith("###### ")) {
+                formattedLine = trimmedLeading.removePrefix("###### ")
+                headerLevel = 6
+            } else if (trimmedLeading.startsWith("##### ")) {
+                formattedLine = trimmedLeading.removePrefix("##### ")
+                headerLevel = 5
+            } else if (trimmedLeading.startsWith("#### ")) {
+                formattedLine = trimmedLeading.removePrefix("#### ")
+                headerLevel = 4
+            } else if (trimmedLeading.startsWith("### ")) {
+                formattedLine = trimmedLeading.removePrefix("### ")
+                headerLevel = 3
+            } else if (trimmedLeading.startsWith("## ")) {
+                formattedLine = trimmedLeading.removePrefix("## ")
+                headerLevel = 2
+            } else if (trimmedLeading.startsWith("# ")) {
+                formattedLine = trimmedLeading.removePrefix("# ")
+                headerLevel = 1
             }
 
             val bulletRegex = Regex("^(\\s*)([*-])\\s+(.*)$")
@@ -961,8 +971,16 @@ fun formatMarkdown(text: String): AnnotatedString {
                 lineContent = formattedLine
             }
 
-            if (isHeader) {
-                withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 17.5.sp)) {
+            if (headerLevel > 0) {
+                val headerFontSize = when (headerLevel) {
+                    1 -> 19.sp
+                    2 -> 18.sp
+                    3 -> 17.5.sp
+                    4 -> 16.5.sp
+                    5 -> 16.sp
+                    else -> 15.5.sp
+                }
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = headerFontSize)) {
                     appendInlineMarkdown(lineContent)
                 }
             } else {

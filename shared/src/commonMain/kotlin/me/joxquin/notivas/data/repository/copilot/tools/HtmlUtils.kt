@@ -260,8 +260,8 @@ object HtmlUtils {
             text = text.replace(Regex("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)")) { "<em>${it.groupValues[1]}</em>" }
             text = text.replace(Regex("(?<!_)_(?!_)(.+?)(?<!_)_(?!_)")) { "<em>${it.groupValues[1]}</em>" }
 
-            // Encabezados markdown (# H1, ## H2, ### H3)
-            val headerMatch = Regex("^(#{1,3})\\s+(.+)$").find(text)
+            // Encabezados markdown (# H1 a ###### H6)
+            val headerMatch = Regex("^(#{1,6})\\s+(.+)$").find(text)
             if (headerMatch != null) {
                 val level = headerMatch.groupValues[1].length
                 val title = headerMatch.groupValues[2]
