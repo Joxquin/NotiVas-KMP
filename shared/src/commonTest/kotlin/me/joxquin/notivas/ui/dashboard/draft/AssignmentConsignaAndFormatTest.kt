@@ -108,4 +108,50 @@ class AssignmentConsignaAndFormatTest {
         assertEquals(1, sections[0].imageUrls.size)
         assertEquals("https://tecsup.instructure.com/courses/72704/files/9876/preview", sections[0].imageUrls[0])
     }
+
+    @Test
+    fun testParseConsignaSections_withHeaderIconsAndPreservedLinkText() {
+        val sampleHtml = """
+            <div style="background-color: #f8fafc; border-left: 5px solid #003366;">
+                <div style="display: table-cell; vertical-align: middle; width: 45px;">
+                    <img src="https://canvas.test/icon_capacidad.png" alt="Capacidad" width="35" height="35">
+                </div>
+                <div style="display: table-cell; vertical-align: middle; padding-left: 12px;">
+                    <h3>Capacidad</h3>
+                </div>
+                <div style="margin-top: 10px;">Aprender y aplicar los conocimientos prácticos asignados en esta sesión de laboratorio.</div>
+            </div>
+            <div style="background-color: #f8fafc; border-left: 5px solid #003366;">
+                <div style="display: table-cell; vertical-align: middle; width: 45px;">
+                    <img src="https://canvas.test/icon_proc.png" alt="Procedimientos" width="35" height="35">
+                </div>
+                <div style="display: table-cell; vertical-align: middle; padding-left: 12px;">
+                    <h3>Procedimientos</h3>
+                </div>
+                <div>
+                    <p>Descargue la guía adjunta e implemente los ejercicios propuestos:</p>
+                    <a href="https://docs.google.com/document/d/sample/edit">Descargar Guía de Laboratorio</a>
+                    <p>Para consultas, ingresar al <a href="https://forum.test">Foro de Consulta del Curso</a>.</p>
+                </div>
+            </div>
+        """.trimIndent()
+
+        val sections = parseConsignaSections(sampleHtml)
+        assertEquals(2, sections.size)
+
+        // Capacidad
+        assertEquals("Capacidad", sections[0].title)
+        assertEquals("https://canvas.test/icon_capacidad.png", sections[0].iconUrl)
+        assertTrue(sections[0].imageUrls.isEmpty(), "Header icon should not leak into imageUrls")
+        assertTrue(sections[0].introText.contains("Aprender y aplicar"))
+
+        // Procedimientos
+        assertEquals("Procedimientos", sections[1].title)
+        assertEquals("https://canvas.test/icon_proc.png", sections[1].iconUrl)
+        assertTrue(sections[1].imageUrls.isEmpty(), "Header icon should not leak into imageUrls")
+        assertNotNull(sections[1].downloadLink)
+        assertEquals("https://docs.google.com/document/d/sample/edit", sections[1].downloadLink?.second)
+        // Link text is preserved
+        assertTrue(sections[1].introText.contains("Foro de Consulta del Curso"), "Link text must be preserved")
+    }
 }

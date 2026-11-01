@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -81,7 +82,8 @@ data class ConsignaSection(
     val downloadLink: Pair<String, String>? = null,
     val bullets: List<ConsignaBullet> = emptyList(),
     val otherLinks: List<Pair<String, String>> = emptyList(),
-    val imageUrls: List<String> = emptyList()
+    val imageUrls: List<String> = emptyList(),
+    val iconUrl: String? = null
 )
 
 @Composable
@@ -217,12 +219,27 @@ fun AssignmentConsignaCard(
                                         modifier = Modifier.size(32.dp)
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = icon,
-                                                contentDescription = null,
-                                                tint = primaryColor,
-                                                modifier = Modifier.size(18.dp)
-                                            )
+                                            if (!section.iconUrl.isNullOrBlank()) {
+                                                val headerImageRequest = rememberConsignaImageRequest(
+                                                    imageUrl = section.iconUrl,
+                                                    baseUrl = baseUrl,
+                                                    token = token,
+                                                    cookies = cookies
+                                                )
+                                                AsyncImage(
+                                                    model = headerImageRequest,
+                                                    contentDescription = section.title,
+                                                    contentScale = ContentScale.Fit,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = null,
+                                                    tint = primaryColor,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
                                         }
                                     }
                                     MiuixText(
@@ -241,27 +258,6 @@ fun AssignmentConsignaCard(
                                         lineHeight = 19.sp,
                                         color = onSurfaceVariantColor
                                     )
-                                }
-
-                                // Imagenes de la consigna
-                                if (section.imageUrls.isNotEmpty()) {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        for (imageUrl in section.imageUrls) {
-                                            ConsignaImageItem(
-                                                imageUrl = imageUrl,
-                                                baseUrl = baseUrl,
-                                                token = token,
-                                                cookies = cookies,
-                                                backgroundColor = MiuixTheme.colorScheme.surfaceContainerHigh,
-                                                onOpenUrl = { url ->
-                                                    try { uriHandler.openUri(url) } catch (_: Exception) {}
-                                                }
-                                            )
-                                        }
-                                    }
                                 }
 
                                 // Botón interactivo para Descargar Guía / Archivo
@@ -289,6 +285,27 @@ fun AssignmentConsignaCard(
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = onPrimaryColor
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Imagenes de la consigna
+                                if (section.imageUrls.isNotEmpty()) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        for (imageUrl in section.imageUrls) {
+                                            ConsignaImageItem(
+                                                imageUrl = imageUrl,
+                                                baseUrl = baseUrl,
+                                                token = token,
+                                                cookies = cookies,
+                                                backgroundColor = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                                onOpenUrl = { url ->
+                                                    try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                                }
                                             )
                                         }
                                     }
@@ -413,12 +430,27 @@ fun AssignmentConsignaCard(
                                         modifier = Modifier.size(32.dp)
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = icon,
-                                                contentDescription = null,
-                                                tint = primaryColor,
-                                                modifier = Modifier.size(18.dp)
-                                            )
+                                            if (!section.iconUrl.isNullOrBlank()) {
+                                                val headerImageRequest = rememberConsignaImageRequest(
+                                                    imageUrl = section.iconUrl,
+                                                    baseUrl = baseUrl,
+                                                    token = token,
+                                                    cookies = cookies
+                                                )
+                                                AsyncImage(
+                                                    model = headerImageRequest,
+                                                    contentDescription = section.title,
+                                                    contentScale = ContentScale.Fit,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = null,
+                                                    tint = primaryColor,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
                                         }
                                     }
                                     Text(
@@ -434,26 +466,6 @@ fun AssignmentConsignaCard(
                                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
                                         color = onSurfaceVariantColor
                                     )
-                                }
-
-                                if (section.imageUrls.isNotEmpty()) {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        for (imageUrl in section.imageUrls) {
-                                            ConsignaImageItem(
-                                                imageUrl = imageUrl,
-                                                baseUrl = baseUrl,
-                                                token = token,
-                                                cookies = cookies,
-                                                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                                onOpenUrl = { url ->
-                                                    try { uriHandler.openUri(url) } catch (_: Exception) {}
-                                                }
-                                            )
-                                        }
-                                    }
                                 }
 
                                 section.downloadLink?.let { (label, url) ->
@@ -479,6 +491,26 @@ fun AssignmentConsignaCard(
                                                 text = label.ifBlank { "Descargar Guia de Laboratorio" },
                                                 style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold),
                                                 color = onPrimaryColor
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (section.imageUrls.isNotEmpty()) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        for (imageUrl in section.imageUrls) {
+                                            ConsignaImageItem(
+                                                imageUrl = imageUrl,
+                                                baseUrl = baseUrl,
+                                                token = token,
+                                                cookies = cookies,
+                                                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                onOpenUrl = { url ->
+                                                    try { uriHandler.openUri(url) } catch (_: Exception) {}
+                                                }
                                             )
                                         }
                                     }
@@ -568,21 +600,19 @@ fun AssignmentConsignaCard(
 }
 
 @Composable
-private fun ConsignaImageItem(
+private fun rememberConsignaImageRequest(
     imageUrl: String,
     baseUrl: String?,
     token: String?,
-    cookies: String?,
-    backgroundColor: Color,
-    onOpenUrl: (String) -> Unit
-) {
+    cookies: String?
+): ImageRequest {
     val platformContext = LocalPlatformContext.current
     val isCanvasUrl = remember(imageUrl, baseUrl) {
         (baseUrl != null && imageUrl.startsWith(baseUrl)) ||
             imageUrl.contains(".instructure.com") ||
             imageUrl.contains("canvas.")
     }
-    val imageRequest = remember(imageUrl, token, cookies, isCanvasUrl) {
+    return remember(imageUrl, token, cookies, isCanvasUrl) {
         val reqBuilder = ImageRequest.Builder(platformContext)
             .data(imageUrl)
             .crossfade(true)
@@ -598,19 +628,41 @@ private fun ConsignaImageItem(
         }
         reqBuilder.build()
     }
+}
+
+@Composable
+private fun ConsignaImageItem(
+    imageUrl: String,
+    baseUrl: String?,
+    token: String?,
+    cookies: String?,
+    backgroundColor: Color,
+    onOpenUrl: (String) -> Unit
+) {
+    val imageRequest = rememberConsignaImageRequest(
+        imageUrl = imageUrl,
+        baseUrl = baseUrl,
+        token = token,
+        cookies = cookies
+    )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(backgroundColor)
+            .background(backgroundColor.copy(alpha = 0.5f))
             .clickable { onOpenUrl(imageUrl) }
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
     ) {
         AsyncImage(
             model = imageRequest,
             contentDescription = null,
-            contentScale = ContentScale.FillWidth,
-            modifier = Modifier.fillMaxWidth()
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 80.dp, max = 320.dp)
+                .clip(RoundedCornerShape(8.dp))
         )
     }
 }
@@ -633,16 +685,33 @@ private fun extractImageUrls(html: String, baseUrl: String?): List<String> {
 internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List<ConsignaSection> {
     if (html.isNullOrBlank()) return emptyList()
 
-    val sectionMatches = Regex("""(?s)<h3[^>]*>(.*?)</h3>(.*?)((?=<h3)|$)""").findAll(html).toList()
+    val h3Regex = Regex("""(?s)<h3[^>]*>(.*?)</h3>""")
+    val sectionMatches = h3Regex.findAll(html).toList()
 
     if (sectionMatches.isNotEmpty()) {
-        val firstH3Index = html.indexOf("<h3", ignoreCase = true)
-        val prelude = if (firstH3Index > 0) html.substring(0, firstH3Index) else ""
-        val preludeImages = if (prelude.isNotBlank()) extractImageUrls(prelude, baseUrl) else emptyList()
+        val nextCardRegex = Regex("""(?i)(<div[^>]*style=["'][^"']*(?:border-|background-color|display:\s*table)|<div[^>]*class=["'][^"']*card)""")
 
         return sectionMatches.mapIndexed { index, match ->
             val rawTitle = match.groupValues[1]
-            val rawBody = match.groupValues[2]
+            val currH3Start = match.range.first
+            val currH3End = match.range.last + 1
+            val prevH3End = if (index > 0) sectionMatches[index - 1].range.last + 1 else 0
+            val nextH3Start = if (index < sectionMatches.size - 1) sectionMatches[index + 1].range.first else html.length
+
+            val leadIn = html.substring(prevH3End, currH3Start)
+            val leadInImages = extractImageUrls(leadIn, baseUrl)
+            val iconUrl = leadInImages.lastOrNull()
+            val preludeImages = if (index == 0 && leadInImages.size > 1) leadInImages.dropLast(1) else emptyList()
+
+            val rawBodyChunk = html.substring(currH3End, nextH3Start)
+            val cardBoundaryMatch = if (index < sectionMatches.size - 1) {
+                nextCardRegex.find(rawBodyChunk)
+            } else null
+            val rawBody = if (cardBoundaryMatch != null) {
+                rawBodyChunk.substring(0, cardBoundaryMatch.range.first)
+            } else {
+                rawBodyChunk
+            }
 
             val cleanTitle = rawTitle.replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
             val iconType = when {
@@ -696,11 +765,18 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
 
             var cleanText = rawBody
                 .replace(Regex("""(?s)<ul[^>]*>.*?</ul>"""), "")
-                .replace(Regex("""(?s)<a[^>]*>.*?</a>"""), "")
+                .replace(Regex("""(?s)<a[^>]*>(.*?)</a>""")) { it.groupValues[1] }
                 .replace(Regex("<[^>]*>"), " ")
                 .cleanEmoji()
                 .trim()
             cleanText = cleanText.replace(Regex("""\s+"""), " ")
+
+            if (downloadLink != null && downloadLink.first.isNotBlank()) {
+                val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
+                if (cleanDlLabel.isNotBlank()) {
+                    cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(Regex("""\s+"""), " ")
+                }
+            }
 
             val bodyImages = extractImageUrls(rawBody, baseUrl)
             val sectionImages = if (index == 0) preludeImages + bodyImages else bodyImages
@@ -712,7 +788,8 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
                 downloadLink = downloadLink,
                 bullets = lis,
                 otherLinks = otherLinks,
-                imageUrls = sectionImages
+                imageUrls = sectionImages,
+                iconUrl = iconUrl
             )
         }
     }
@@ -731,7 +808,20 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
     }
 
     val imageUrls = extractImageUrls(html, baseUrl)
-    val cleanText = html.replace(Regex("<[^>]*>"), " ").cleanEmoji().trim().replace(Regex("""\s+"""), " ")
+    var cleanText = html
+        .replace(Regex("""(?s)<ul[^>]*>.*?</ul>"""), "")
+        .replace(Regex("""(?s)<a[^>]*>(.*?)</a>""")) { it.groupValues[1] }
+        .replace(Regex("<[^>]*>"), " ")
+        .cleanEmoji()
+        .trim()
+        .replace(Regex("""\s+"""), " ")
+
+    if (downloadLink != null && downloadLink.first.isNotBlank()) {
+        val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
+        if (cleanDlLabel.isNotBlank()) {
+            cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(Regex("""\s+"""), " ")
+        }
+    }
 
     if (cleanText.isBlank() && allLinks.isEmpty() && imageUrls.isEmpty()) {
         return emptyList()
@@ -745,7 +835,8 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
             downloadLink = downloadLink,
             bullets = emptyList(),
             otherLinks = allLinks.filter { it != downloadLink },
-            imageUrls = imageUrls
+            imageUrls = imageUrls,
+            iconUrl = null
         )
     )
 }
