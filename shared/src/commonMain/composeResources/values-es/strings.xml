@@ -750,4 +750,23 @@
     <string name="refresh_release">Suelta para actualizar</string>
     <string name="refresh_refresh">Actualizando...</string>
     <string name="refresh_complete">Actualizado</string>
+
+    <!-- Rendimiento Académico -->
+    <string name="performance_title">Rendimiento Académico</string>
+    <string name="performance_subtitle">Seguimiento global de calificaciones y entregas</string>
+    <string name="performance_weekly">Semanal</string>
+    <string name="performance_monthly">Mensual</string>
+    <string name="performance_legend_completed">Completada</string>
+    <string name="performance_legend_pending">Pendiente</string>
+    <string name="performance_legend_overdue">Vencida</string>
+    <string name="performance_legend_empty">Sin entregas</string>
+    <string name="performance_completion_rate">Cumplimiento</string>
+    <string name="performance_highest_score">Mejor nota</string>
+    <string name="performance_lowest_score">Menor nota</string>
+    <string name="performance_courses_breakdown">Desglose por Asignatura</string>
+    <string name="performance_no_tasks_day">No hay entregas programadas para este día</string>
+    <string name="performance_prev_week">Semana anterior</string>
+    <string name="performance_next_week">Semana siguiente</string>
+    <string name="performance_current_week">Semana actual</string>
+    <string name="performance_day_tasks_title">Entregas del día</string>
 </resources>

@@ -42,4 +42,7 @@ sealed interface MiuixRoute : NavKey {
 
     @Serializable
     data class CourseModules(val courseId: Long) : MiuixRoute
+
+    @Serializable
+    data object AcademicPerformance : MiuixRoute
 }

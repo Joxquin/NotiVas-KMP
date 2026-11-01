@@ -22,6 +22,9 @@ import me.joxquin.notivas.ui.components.miuix.SearchStatus
 import me.joxquin.notivas.data.local.db.dao.SimulationDao
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
+import me.joxquin.notivas.data.model.AcademicPerformanceStats
+import me.joxquin.notivas.data.model.DayBlockInfo
+import me.joxquin.notivas.data.model.DayTaskStatus
 import me.joxquin.notivas.data.model.GradePerformanceLevel
 import me.joxquin.notivas.data.model.UserProfile
 import me.joxquin.notivas.data.repository.CanvasRepository
@@ -770,6 +773,166 @@ class DashboardViewModel(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // ─── Rendimiento Académico: Bloques Semanales y Mensuales (3 Estados) ───
+    private val _selectedPerformanceWeekOffset = MutableStateFlow(0)
+    val selectedPerformanceWeekOffset: StateFlow<Int> = _selectedPerformanceWeekOffset.asStateFlow()
+
+    private val _selectedPerformanceDay = MutableStateFlow<DateComponents?>(null)
+    val selectedPerformanceDay: StateFlow<DateComponents?> = _selectedPerformanceDay.asStateFlow()
+
+    fun selectPerformanceDay(date: DateComponents?) {
+        _selectedPerformanceDay.value = if (_selectedPerformanceDay.value == date) null else date
+    }
+
+    fun previousPerformanceWeek() {
+        _selectedPerformanceWeekOffset.value -= 1
+    }
+
+    fun nextPerformanceWeek() {
+        _selectedPerformanceWeekOffset.value += 1
+    }
+
+    fun resetPerformanceWeek() {
+        _selectedPerformanceWeekOffset.value = 0
+    }
+
+    private val dayLetters = listOf("L", "M", "X", "J", "V", "S", "D")
+
+    private fun computeDayStatus(
+        tasksForDay: List<AssignmentUiModel>,
+        today: DateComponents,
+        nowMillis: Long
+    ): DayTaskStatus {
+        if (tasksForDay.isEmpty()) return DayTaskStatus.NONE
+
+        val hasOverdue = tasksForDay.any { ui ->
+            val a = ui.assignment
+            if (a.status == "missing") true
+            else if (a.status == "upcoming") {
+                val dueRaw = a.dueAt ?: a.lockAt
+                if (dueRaw != null) {
+                    val comp = DateTimeUtil.parseIsoToComponents(dueRaw)
+                    comp != null && comp.epochMillis < nowMillis
+                } else false
+            } else false
+        }
+        if (hasOverdue) return DayTaskStatus.OVERDUE
+
+        val allCompleted = tasksForDay.all { it.assignment.status == "completed" || it.assignment.isCompleted }
+        if (allCompleted) return DayTaskStatus.COMPLETED
+
+        return DayTaskStatus.PENDING
+    }
+
+    val weeklyDayBlocks: StateFlow<List<DayBlockInfo>> =
+        combine(allAssignmentsUi, _selectedPerformanceWeekOffset) { allAssignments, weekOffset ->
+            val nowMillis = DateTimeUtil.nowEpochMillis()
+            val today = DateTimeUtil.nowLocalDate()
+            val dayOfWeek = DateTimeUtil.dayOfWeek(today) // 1 = LUN ... 7 = DOM
+            val currentMonday = DateTimeUtil.addDays(today, -(dayOfWeek - 1))
+            val startOfWeek = DateTimeUtil.addDays(currentMonday, weekOffset * 7)
+
+            (0..6).map { dayOffset ->
+                val date = DateTimeUtil.addDays(startOfWeek, dayOffset)
+                val tasks = allAssignments.filter { ui ->
+                    val due = ui.assignment.dueAt ?: ui.assignment.lockAt ?: return@filter false
+                    val comp = DateTimeUtil.parseIsoToComponents(due) ?: return@filter false
+                    comp.date == date
+                }
+                val status = computeDayStatus(tasks, today, nowMillis)
+                DayBlockInfo(
+                    date = date,
+                    dayLetter = dayLetters[dayOffset],
+                    dayNumber = date.day,
+                    status = status,
+                    tasks = tasks,
+                    isToday = date == today,
+                    isCurrentMonth = date.month == today.month
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val monthlyDayBlocks: StateFlow<List<List<DayBlockInfo>>> =
+        allAssignmentsUi.map { allAssignments ->
+            val nowMillis = DateTimeUtil.nowEpochMillis()
+            val today = DateTimeUtil.nowLocalDate()
+            val dayOfWeek = DateTimeUtil.dayOfWeek(today)
+            val currentMonday = DateTimeUtil.addDays(today, -(dayOfWeek - 1))
+            // 4 semanas: 2 anteriores, actual y siguiente
+            val startPeriod = DateTimeUtil.addDays(currentMonday, -14)
+
+            (0..3).map { weekIndex ->
+                (0..6).map { dayIndex ->
+                    val offset = (weekIndex * 7) + dayIndex
+                    val date = DateTimeUtil.addDays(startPeriod, offset)
+                    val tasks = allAssignments.filter { ui ->
+                        val due = ui.assignment.dueAt ?: ui.assignment.lockAt ?: return@filter false
+                        val comp = DateTimeUtil.parseIsoToComponents(due) ?: return@filter false
+                        comp.date == date
+                    }
+                    val status = computeDayStatus(tasks, today, nowMillis)
+                    DayBlockInfo(
+                        date = date,
+                        dayLetter = dayLetters[dayIndex],
+                        dayNumber = date.day,
+                        status = status,
+                        tasks = tasks,
+                        isToday = date == today,
+                        isCurrentMonth = date.month == today.month
+                    )
+                }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val selectedPerformanceDayTasks: StateFlow<List<AssignmentUiModel>> =
+        combine(allAssignmentsUi, _selectedPerformanceDay) { all, selectedDay ->
+            if (selectedDay == null) emptyList()
+            else all.filter { ui ->
+                val due = ui.assignment.dueAt ?: ui.assignment.lockAt ?: return@filter false
+                val comp = DateTimeUtil.parseIsoToComponents(due) ?: return@filter false
+                comp.date == selectedDay
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val performanceStats: StateFlow<AcademicPerformanceStats> =
+        combine(courseStats, allAssignmentsUi) { stats, allUi ->
+            val validScores = stats.mapNotNull { it.averageScore }.filter { it > 0.0 }
+            val overallAvg = if (validScores.isNotEmpty()) validScores.average() else 0.0
+
+            val total = allUi.size
+            val completed = allUi.count { it.assignment.status == "completed" || it.assignment.isCompleted }
+            val missing = allUi.count { it.assignment.status == "missing" }
+            val pending = total - completed - missing
+            val rate = if (total > 0) (completed.toFloat() / total.toFloat()) * 100f else 0f
+
+            val scoredAssignments = allUi.mapNotNull { ui ->
+                val score = ui.assignment.score
+                val points = ui.assignment.pointsPossible
+                if (score != null && points != null && points > 0) (score / points) * 20.0 else null
+            }
+            val highest = scoredAssignments.maxOrNull()
+            val lowest = scoredAssignments.minOrNull()
+
+            val level = when {
+                overallAvg >= 16.0 -> GradePerformanceLevel.EXCELLENT
+                overallAvg >= 14.0 -> GradePerformanceLevel.GOOD
+                overallAvg >= 12.0 -> GradePerformanceLevel.REGULAR
+                else -> GradePerformanceLevel.AT_RISK
+            }
+
+            AcademicPerformanceStats(
+                overallAverage = overallAvg,
+                totalAssignments = total,
+                completedAssignments = completed,
+                pendingAssignments = pending.coerceAtLeast(0),
+                missingAssignments = missing,
+                completionRatePercentage = rate,
+                highestScore = highest,
+                lowestScore = lowest,
+                performanceLevel = level
+            )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AcademicPerformanceStats(0.0, 0, 0, 0, 0, 0f))
+
     // ─── Estadísticas de Cursos con Motor Académico (3 Estados) ─────────────
     val courseStats: StateFlow<List<CourseStat>> =
         combine(
@@ -788,16 +951,29 @@ class DashboardViewModel(
                 val groups = relationsByCourse[course.id]?.map { it.toDomain() } ?: emptyList()
 
                 if (groups.isEmpty()) {
-                    // Estado A: Sin grupos configurados
+                    // Estado A: Sin grupos configurados -> fallback a notas reales de Canvas
+                    val gradedAssignments = courseAssignments.filter { it.score != null && (it.pointsPossible ?: 0.0) > 0.0 }
+                    val fallbackAvg = if (gradedAssignments.isNotEmpty()) {
+                        gradedAssignments.map { (it.score!! / it.pointsPossible!!) * 20.0 }.average()
+                    } else null
+
+                    val performanceLevel = when {
+                        fallbackAvg == null -> GradePerformanceLevel.AT_RISK
+                        fallbackAvg >= 16.0 -> GradePerformanceLevel.EXCELLENT
+                        fallbackAvg >= 14.0 -> GradePerformanceLevel.GOOD
+                        fallbackAvg >= course.passingGrade -> GradePerformanceLevel.REGULAR
+                        else -> GradePerformanceLevel.AT_RISK
+                    }
+
                     CourseStat(
                         course = course,
                         pendingCount = pending,
                         completedCount = completed,
                         missingCount = missing,
-                        averageScore = null,
+                        averageScore = fallbackAvg,
                         hasConfiguredGroups = false,
-                        evaluatedProgressPercentage = 0f,
-                        performanceLevel = GradePerformanceLevel.AT_RISK
+                        evaluatedProgressPercentage = if (courseAssignments.isNotEmpty()) (completed.toFloat() / courseAssignments.size.toFloat()) * 100f else 0f,
+                        performanceLevel = performanceLevel
                     )
                 } else {
                     // Calcular con motor académico estricto

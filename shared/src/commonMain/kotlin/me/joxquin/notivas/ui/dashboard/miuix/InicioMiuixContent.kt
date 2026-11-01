@@ -63,6 +63,7 @@ fun InicioMiuixContent(
     onNavigateToCopilot: () -> Unit = {},
     onNavigateToHerramientas: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
+    onNavigateToAcademicPerformance: () -> Unit = onNavigateToHerramientas,
     onOpenAssignmentDraft: ((me.joxquin.notivas.ui.dashboard.AssignmentUiModel) -> Unit)? = null,
     onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     isEntranceTriggered: Boolean = true,
@@ -88,6 +89,7 @@ fun InicioMiuixContent(
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
     val allAssignments by viewModel.allAssignmentsUi.collectAsState()
     val courseStats by viewModel.courseStats.collectAsState()
+    val weeklyDayBlocks by viewModel.weeklyDayBlocks.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
     val discussions by viewModel.discussions.collectAsState()
@@ -204,9 +206,10 @@ fun InicioMiuixContent(
                 ) {
                     me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
                         courseStats = courseStats,
+                        weeklyDayBlocks = weeklyDayBlocks,
                         unconfiguredCount = unconfiguredBannerState.first,
                         firstUnconfiguredCourse = unconfiguredBannerState.second,
-                        onCheckPerformance = { onNavigateToHerramientas() },
+                        onCheckPerformance = onNavigateToAcademicPerformance,
                         onConfigureFormulas = { course ->
                             if (course != null) {
                                 onNavigateToCourseProgreso(course)

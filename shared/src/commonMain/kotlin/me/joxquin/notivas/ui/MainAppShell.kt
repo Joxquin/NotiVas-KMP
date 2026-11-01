@@ -503,6 +503,9 @@ fun MainAppShell(
                                             onNavigateToSchedule = {
                                                 miuixNavigator.push(MiuixRoute.Schedule)
                                             },
+                                            onNavigateToAcademicPerformance = {
+                                                miuixNavigator.push(MiuixRoute.AcademicPerformance)
+                                            },
                                             onOpenAssignmentDraft = { assignmentUi ->
                                                 dashboardViewModel.openDraft(assignmentUi)
                                                 miuixNavigator.push(
@@ -1077,6 +1080,31 @@ fun MainAppShell(
                         }
                     )
                 }
+
+                entry<MiuixRoute.AcademicPerformance>(swipeDismiss = swipeBackDirection) {
+                    me.joxquin.notivas.ui.dashboard.performance.AcademicPerformanceScreen(
+                        viewModel = dashboardViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() },
+                        onNavigateToCourseProgreso = { courseId ->
+                            coroutineScope.launch {
+                                val course = canvasRepository.getCourse(courseId)
+                                if (course != null) notasViewModel.selectCourse(course)
+                                miuixNavigator.push(MiuixRoute.CourseProgreso(courseId))
+                            }
+                        },
+                        onNavigateToAssignmentDraft = { assignmentId, courseName ->
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    val assignmentUi = AssignmentUiModel(assignment, courseName)
+                                    dashboardViewModel.openDraft(assignmentUi)
+                                    miuixNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                                }
+                            }
+                        }
+                    )
+                }
             }
 
             SnackbarHost(
@@ -1247,6 +1275,9 @@ fun MainAppShell(
                                             },
                                             onNavigateToSchedule = {
                                                 materialNavigator.push(MiuixRoute.Schedule)
+                                            },
+                                            onNavigateToAcademicPerformance = {
+                                                materialNavigator.push(MiuixRoute.AcademicPerformance)
                                             },
                                             onOpenAssignmentDraft = { assignmentUi ->
                                                 dashboardViewModel.openDraft(assignmentUi)
@@ -1610,6 +1641,31 @@ fun MainAppShell(
                             try {
                                 uriHandler.openUri(url)
                             } catch (_: Exception) {}
+                        }
+                    )
+                }
+
+                entry<MiuixRoute.AcademicPerformance>(swipeDismiss = materialSwipeBackDirection) {
+                    me.joxquin.notivas.ui.dashboard.performance.AcademicPerformanceScreen(
+                        viewModel = dashboardViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() },
+                        onNavigateToCourseProgreso = { courseId ->
+                            coroutineScope.launch {
+                                val course = canvasRepository.getCourse(courseId)
+                                if (course != null) notasViewModel.selectCourse(course)
+                                materialNavigator.push(MiuixRoute.CourseProgreso(courseId))
+                            }
+                        },
+                        onNavigateToAssignmentDraft = { assignmentId, courseName ->
+                            coroutineScope.launch {
+                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                if (assignment != null) {
+                                    val assignmentUi = AssignmentUiModel(assignment, courseName)
+                                    dashboardViewModel.openDraft(assignmentUi)
+                                    materialNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
+                                }
+                            }
                         }
                     )
                 }

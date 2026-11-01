@@ -750,4 +750,23 @@
     <string name="refresh_release">Release to refresh</string>
     <string name="refresh_refresh">Refreshing...</string>
     <string name="refresh_complete">Refresh complete</string>
+
+    <!-- Academic Performance -->
+    <string name="performance_title">Academic Performance</string>
+    <string name="performance_subtitle">Global tracking of grades and assignment deliverables</string>
+    <string name="performance_weekly">Weekly</string>
+    <string name="performance_monthly">Monthly</string>
+    <string name="performance_legend_completed">Completed</string>
+    <string name="performance_legend_pending">Pending</string>
+    <string name="performance_legend_overdue">Overdue</string>
+    <string name="performance_legend_empty">No deliverables</string>
+    <string name="performance_completion_rate">Completion</string>
+    <string name="performance_highest_score">Best grade</string>
+    <string name="performance_lowest_score">Lowest grade</string>
+    <string name="performance_courses_breakdown">Course Breakdown</string>
+    <string name="performance_no_tasks_day">No deliverables scheduled for this day</string>
+    <string name="performance_prev_week">Previous week</string>
+    <string name="performance_next_week">Next week</string>
+    <string name="performance_current_week">Current week</string>
+    <string name="performance_day_tasks_title">Tasks for the day</string>
 </resources>

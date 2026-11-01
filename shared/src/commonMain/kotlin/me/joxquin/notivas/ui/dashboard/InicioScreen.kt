@@ -52,6 +52,7 @@ fun InicioScreen(
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToActivity: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
+    onNavigateToAcademicPerformance: () -> Unit = onNavigateToHerramientas,
     onOpenAssignmentDraft: ((AssignmentUiModel) -> Unit)? = null,
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     onNavigateToCourseDetail: ((me.joxquin.notivas.data.model.Course) -> Unit)? = null,
@@ -74,6 +75,7 @@ fun InicioScreen(
             onNavigateToCopilot = onNavigateToCopilot,
             onNavigateToHerramientas = onNavigateToHerramientas,
             onNavigateToSchedule = onNavigateToSchedule,
+            onNavigateToAcademicPerformance = onNavigateToAcademicPerformance,
             onOpenAssignmentDraft = onOpenAssignmentDraft,
             onNavigateToForoDetail = onNavigateToForoDetail,
             isEntranceTriggered = isEntranceTriggered,
@@ -88,6 +90,7 @@ fun InicioScreen(
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
     val allAssignments by viewModel.allAssignmentsUi.collectAsState()
     val courseStats by viewModel.courseStats.collectAsState()
+    val weeklyDayBlocks by viewModel.weeklyDayBlocks.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
     val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
@@ -260,9 +263,10 @@ fun InicioScreen(
                     ) {
                         me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
                             courseStats = courseStats,
+                            weeklyDayBlocks = weeklyDayBlocks,
                             unconfiguredCount = unconfiguredBannerState.first,
                             firstUnconfiguredCourse = unconfiguredBannerState.second,
-                            onCheckPerformance = { onNavigateToHerramientas() },
+                            onCheckPerformance = onNavigateToAcademicPerformance,
                             onConfigureFormulas = { course ->
                                 if (course != null) {
                                     onNavigateToCourseProgreso(course)

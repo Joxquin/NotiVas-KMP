@@ -4,7 +4,14 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.graphics.Color
+import me.joxquin.notivas.data.model.DayBlockInfo
+import me.joxquin.notivas.data.model.DayTaskStatus
+import me.joxquin.notivas.di.AppModule
+import me.joxquin.notivas.util.DateComponents
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,6 +86,7 @@ fun DashboardHeroCarousel(
     onCheckPerformance: () -> Unit,
     onConfigureFormulas: (Course?) -> Unit,
     themeStyle: AppThemeStyle,
+    weeklyDayBlocks: List<DayBlockInfo> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
@@ -88,12 +96,12 @@ fun DashboardHeroCarousel(
     ) { totalPages }
     val coroutineScope = rememberCoroutineScope()
 
-    // Cálculo del promedio ponderado global
+    // Cálculo del promedio ponderado global real
     val validScores = remember(courseStats) {
         courseStats.mapNotNull { it.averageScore }.filter { it > 0.0 }
     }
     val overallAverage = remember(validScores) {
-        if (validScores.isNotEmpty()) validScores.average() else 16.5
+        if (validScores.isNotEmpty()) validScores.average() else null
     }
 
     val containerColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow
@@ -112,6 +120,7 @@ fun DashboardHeroCarousel(
                     0 -> {
                         PerformanceSlideContent(
                             overallAverage = overallAverage,
+                            weeklyDayBlocks = weeklyDayBlocks,
                             onCheckPerformance = onCheckPerformance,
                             isMiuix = isMiuix
                         )
@@ -194,7 +203,8 @@ fun DashboardHeroCarousel(
  */
 @Composable
 private fun PerformanceSlideContent(
-    overallAverage: Double,
+    overallAverage: Double?,
+    weeklyDayBlocks: List<DayBlockInfo>,
     onCheckPerformance: () -> Unit,
     isMiuix: Boolean
 ) {
@@ -202,9 +212,12 @@ private fun PerformanceSlideContent(
     val onVariantColor = if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
     val primaryColor = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
     val primaryContainer = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.primaryContainer
+    val outlineColor = if (isMiuix) MiuixTheme.colorScheme.outline else MaterialTheme.colorScheme.outline
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckPerformance() },
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Encabezado
@@ -263,7 +276,7 @@ private fun PerformanceSlideContent(
             }
         }
 
-        // Métricas de Nota + Gráfico de Barras Estilizado
+        // Métricas de Nota + Resumen Semanal de Bloques (Lunes a Domingo)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -276,8 +289,11 @@ private fun PerformanceSlideContent(
                     color = onVariantColor
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
+                    val averageDisplay = overallAverage?.let {
+                        ((it * 10).toInt().toDouble() / 10).toString()
+                    } ?: "--"
                     Text(
-                        text = (overallAverage * 10).toInt().toDouble().div(10).toString(),
+                        text = averageDisplay,
                         style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.ExtraBold),
                         color = onSurfaceColor
                     )
@@ -290,41 +306,14 @@ private fun PerformanceSlideContent(
                 }
             }
 
-            // Gráfico de Barras Estilizado
-            Row(
-                modifier = Modifier.height(48.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.Bottom
-            ) {
-                val heights = listOf(0.45f, 0.70f, 0.55f, 0.90f, 0.65f)
-                val days = listOf("L", "M", "X", "J", "V")
-                heights.forEachIndexed { idx, h ->
-                    val isPeak = idx == 3
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Bottom,
-                        modifier = Modifier.fillMaxHeight()
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(8.dp)
-                                .fillMaxHeight(h)
-                                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                .background(
-                                    if (isPeak) primaryColor
-                                    else if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh
-                                    else MaterialTheme.colorScheme.surfaceContainerHighest
-                                )
-                        )
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Text(
-                            text = days[idx],
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                            color = onVariantColor
-                        )
-                    }
-                }
-            }
+            // Bloques de Lunes a Domingo con 3 estados
+            PerformanceDayBlocksRow(
+                weeklyDayBlocks = weeklyDayBlocks,
+                primaryColor = primaryColor,
+                onVariantColor = onVariantColor,
+                outlineColor = outlineColor,
+                isMiuix = isMiuix
+            )
         }
 
         // Botón de Acción a Pantalla Completa
@@ -354,6 +343,77 @@ private fun PerformanceSlideContent(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PerformanceDayBlocksRow(
+    weeklyDayBlocks: List<DayBlockInfo>,
+    primaryColor: Color,
+    onVariantColor: Color,
+    outlineColor: Color,
+    isMiuix: Boolean
+) {
+    val dynamicColorEnabled by AppModule.preferencesManager.dynamicColorEnabled.collectAsState(initial = true)
+    val completedColor = if (dynamicColorEnabled) primaryColor else Color(0xFF10B981)
+    val overdueColor = Color(0xFFE53935)
+    val pendingColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHighest
+
+    val blocks = remember(weeklyDayBlocks) {
+        if (weeklyDayBlocks.isNotEmpty()) weeklyDayBlocks
+        else {
+            val defaultLetters = listOf("L", "M", "X", "J", "V", "S", "D")
+            defaultLetters.mapIndexed { i, letter ->
+                DayBlockInfo(
+                    date = DateComponents(2026, 1, 1),
+                    dayLetter = letter,
+                    dayNumber = i + 1,
+                    status = DayTaskStatus.NONE
+                )
+            }
+        }
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        blocks.forEach { block ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val blockModifier = when (block.status) {
+                    DayTaskStatus.COMPLETED -> Modifier
+                        .size(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(completedColor)
+                    DayTaskStatus.OVERDUE -> Modifier
+                        .size(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(overdueColor)
+                    DayTaskStatus.PENDING -> Modifier
+                        .size(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(pendingColor)
+                    DayTaskStatus.NONE -> Modifier
+                        .size(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .border(1.dp, outlineColor.copy(alpha = 0.25f), RoundedCornerShape(4.dp))
+                }
+
+                Box(modifier = blockModifier)
+
+                Text(
+                    text = block.dayLetter,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                        fontWeight = if (block.isToday) FontWeight.Bold else FontWeight.Normal
+                    ),
+                    color = if (block.isToday) primaryColor else onVariantColor
                 )
             }
         }
