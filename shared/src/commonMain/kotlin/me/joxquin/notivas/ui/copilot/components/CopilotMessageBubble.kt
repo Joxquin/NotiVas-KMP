@@ -700,6 +700,7 @@ fun parseMessageBlocks(
     }
 
     val emittedAssignmentIds = mutableSetOf<Long>()
+    val emittedTitles = mutableSetOf<String>()
     var pendingAssignmentCard: CopilotContentBlock.ResourceCardBlock? = null
     var currentCourseContext: Course? = null
 
@@ -720,9 +721,14 @@ fun parseMessageBlocks(
             }
         }
 
-        // 2. Detectar etiqueta explícita de tarjeta: ::card[...]::
-        val cardTagMatch = Regex("""^::card\[(.*?)\]::$""").find(trimmed)
+        // 2. Detectar etiqueta explícita de tarjeta: ::card[...]:: (incluso si viene precedida por viñetas •, *, - o espacios)
+        val cardTagRegex = Regex("""(?:\s*[•*\-]?\s*)?::card\[(.*?)\]::\s*""")
+        val cardTagMatch = cardTagRegex.find(trimmed)
         if (cardTagMatch != null) {
+            val lineWithoutCard = trimmed.replace(cardTagRegex, "").trim()
+            if (lineWithoutCard.isNotEmpty() && lineWithoutCard !in listOf("•", "*", "-", "• ", "* ", "- ")) {
+                currentParagraph.add(lineWithoutCard)
+            }
             flushParagraph()
             if (pendingAssignmentCard != null) {
                 blocks.add(pendingAssignmentCard!!)
@@ -731,6 +737,7 @@ fun parseMessageBlocks(
             val cardBlock = parseCardTag(cardTagMatch.groupValues[1], knownAssignments, courses, currentCourseContext)
             if (cardBlock != null) {
                 cardBlock.assignmentId?.let { emittedAssignmentIds.add(it) }
+                emittedTitles.add(normalizeSearchString(cardBlock.title))
                 blocks.add(cardBlock)
             }
             i++
@@ -794,6 +801,7 @@ fun parseMessageBlocks(
         if (knownAssignments.isNotEmpty()) {
             val matchedAssignment = knownAssignments.firstOrNull { assignment ->
                 assignment.id !in emittedAssignmentIds &&
+                        normalizeSearchString(assignment.name) !in emittedTitles &&
                         isAssignmentMentionedInLine(trimmed, assignment, currentCourseContext)
             }
             if (matchedAssignment != null) {
@@ -809,6 +817,7 @@ fun parseMessageBlocks(
                     pointsPossible = matchedAssignment.pointsPossible
                 )
                 emittedAssignmentIds.add(matchedAssignment.id)
+                emittedTitles.add(normalizeSearchString(matchedAssignment.name))
             }
         }
 
@@ -855,11 +864,20 @@ private fun parseCardTag(
     var forumTopicId = map["id"]?.toLongOrNull() ?: map["topic_id"]?.toLongOrNull()
     var url = map["url"] ?: map["link"]
     var dueDate = map["due"] ?: map["due_date"] ?: map["due_at"]
+    var pointsPossible = map["points"]?.toDoubleOrNull() ?: map["points_possible"]?.toDoubleOrNull()
 
     if (type == ResourceCardType.ASSIGNMENT) {
+        val explicitCourse = if (!courseName.isNullOrBlank()) {
+            courses.find { c ->
+                val normC = normalizeSearchString(c.name)
+                val normTarget = normalizeSearchString(courseName ?: "")
+                normC.isNotEmpty() && normTarget.isNotEmpty() && (normC.contains(normTarget) || normTarget.contains(normC))
+            }
+        } else currentCourseContext
+
         val matchedAssignment = knownAssignments.find { a ->
             (assignmentId != null && a.id == assignmentId) ||
-            isAssignmentMentionedInLine(title, a, currentCourseContext)
+            isAssignmentMentionedInLine(title, a, explicitCourse)
         }
         if (matchedAssignment != null) {
             if (assignmentId == null) assignmentId = matchedAssignment.id
@@ -868,7 +886,10 @@ private fun parseCardTag(
                 dueDate = formatCleanDueDate(matchedAssignment.dueAt)
             }
             if (courseName.isNullOrBlank()) {
-                courseName = courses.find { it.id == matchedAssignment.courseId }?.name
+                courseName = explicitCourse?.name ?: courses.find { it.id == matchedAssignment.courseId }?.name
+            }
+            if (pointsPossible == null) {
+                pointsPossible = matchedAssignment.pointsPossible
             }
         }
     }
@@ -880,7 +901,8 @@ private fun parseCardTag(
         assignmentId = if (type == ResourceCardType.ASSIGNMENT) assignmentId else null,
         forumTopicId = if (type == ResourceCardType.FORUM) forumTopicId else null,
         url = url,
-        dueDate = dueDate
+        dueDate = dueDate,
+        pointsPossible = pointsPossible
     )
 }
 
@@ -889,15 +911,32 @@ private fun isAssignmentMentionedInLine(
     assignment: Assignment,
     currentCourseContext: Course?
 ): Boolean {
+    // Si tenemos contexto de curso y la tarea es de otro curso, no asociar
+    if (currentCourseContext != null && assignment.courseId != currentCourseContext.id) {
+        return false
+    }
+
     val normLine = normalizeSearchString(line)
     val normName = normalizeSearchString(assignment.name)
+
+    // Si ambos tienen números explícitos (ej: S11 vs S1, o Lab 1 vs Lab 11), deben coincidir
+    val lineNumbers = Regex("""\b\d+\b""").findAll(normLine).map { it.value }.toSet()
+    val nameNumbers = Regex("""\b\d+\b""").findAll(normName).map { it.value }.toSet()
+    if (nameNumbers.isNotEmpty() && lineNumbers.isNotEmpty()) {
+        val sharedNumbers = nameNumbers.intersect(lineNumbers)
+        if (sharedNumbers.isEmpty()) {
+            return false
+        }
+    }
+
     if (normName.length >= 6 && normLine.contains(normName)) {
         return true
     }
-    val tokens = normName.split(" ").filter { it.length >= 3 && it !in setOf("del", "las", "los", "por", "para", "con", "de", "la", "el", "en") }
+    val stopWords = setOf("del", "las", "los", "por", "para", "con", "de", "la", "el", "en", "lab", "laboratorio", "entrega", "consigna", "semana")
+    val tokens = normName.split(" ").filter { it.length >= 3 && it !in stopWords }
     if (tokens.size >= 2) {
         val matchedTokens = tokens.count { normLine.contains(it) }
-        val requiredTokens = (tokens.size * 0.65).toInt().coerceAtLeast(2)
+        val requiredTokens = (tokens.size * 0.7).toInt().coerceAtLeast(2)
         if (matchedTokens >= requiredTokens) {
             if (currentCourseContext == null || currentCourseContext.id == assignment.courseId) {
                 return true
