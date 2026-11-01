@@ -251,6 +251,8 @@ fun InicioMiuixContent(
                 }
             }
         }
+    }
+}
 
         if (searchStatus.shouldCollapsed()) {
             VerticalScrollBar(
