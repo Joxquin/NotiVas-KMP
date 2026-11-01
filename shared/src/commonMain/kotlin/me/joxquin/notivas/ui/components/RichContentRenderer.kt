@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.copilot.components.CopilotContentBlock
 import me.joxquin.notivas.ui.copilot.components.CopilotDividerComposable
+import me.joxquin.notivas.ui.copilot.components.CopilotResourceCard
 import me.joxquin.notivas.ui.copilot.components.CopilotTableComposable
 import me.joxquin.notivas.ui.copilot.components.formatMarkdown
 import me.joxquin.notivas.ui.copilot.components.parseMessageBlocks
@@ -83,6 +84,12 @@ fun RichContentRenderer(
                     is CopilotContentBlock.TableBlock -> {
                         CopilotTableComposable(
                             table = block,
+                            themeStyle = themeStyle
+                        )
+                    }
+                    is CopilotContentBlock.ResourceCardBlock -> {
+                        CopilotResourceCard(
+                            card = block,
                             themeStyle = themeStyle
                         )
                     }
