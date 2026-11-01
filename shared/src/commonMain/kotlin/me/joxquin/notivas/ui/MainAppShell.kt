@@ -398,20 +398,6 @@ fun MainAppShell(
             return miuixNavigator.pop()
         }
 
-        // Sincronizar estado reactivo de Borrador de Tarea con la navegacion de HyperOS
-        LaunchedEffect(selectedAssignmentForDraft) {
-            val draft = selectedAssignmentForDraft
-            if (draft != null) {
-                val targetRoute = MiuixRoute.AssignmentDraft(draft.assignment.id, draft.courseName)
-                if (miuixNavigator.current() != targetRoute) {
-                    miuixNavigator.push(targetRoute)
-                }
-            } else {
-                if (miuixNavigator.current() is MiuixRoute.AssignmentDraft) {
-                    miuixNavigator.pop()
-                }
-            }
-        }
 
         // Interceptar boton Atras fisico/gestual para HyperOS MIUIX:
         // IMPORTANTE: Unicamente habilitado cuando estemos en la ruta raíz (MiuixRoute.Main) y en una pestaña
@@ -1118,20 +1104,6 @@ fun MainAppShell(
                 else -> {}
             }
             return materialNavigator.pop()
-        }
-
-        LaunchedEffect(selectedAssignmentForDraft) {
-            val draft = selectedAssignmentForDraft
-            if (draft != null) {
-                val targetRoute = MiuixRoute.AssignmentDraft(draft.assignment.id, draft.courseName)
-                if (materialNavigator.current() != targetRoute) {
-                    materialNavigator.push(targetRoute)
-                }
-            } else {
-                if (materialNavigator.current() is MiuixRoute.AssignmentDraft) {
-                    materialNavigator.pop()
-                }
-            }
         }
 
         val isMaterialMainBackHandlerEnabled by remember {

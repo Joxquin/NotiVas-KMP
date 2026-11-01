@@ -380,8 +380,7 @@ private fun ResourceCardBody(
             Surface(
                 shape = RoundedCornerShape(10.dp),
                 color = primaryColor,
-                contentColor = onPrimaryColor,
-                modifier = Modifier.clickable(onClick = onPrimaryClick)
+                contentColor = onPrimaryColor
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp),
