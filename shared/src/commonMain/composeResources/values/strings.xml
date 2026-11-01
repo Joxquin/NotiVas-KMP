@@ -744,4 +744,10 @@
     <string name="task_submenu_view_quiz_detail">View Quiz Details</string>
     <string name="task_submenu_view_quiz_detail_desc">Check instructions, score, and official link</string>
     <string name="task_submenu_open_quiz">Open quiz on Canvas LMS</string>
+
+    <!-- Pull to Refresh -->
+    <string name="refresh_pulling">Pull down to refresh</string>
+    <string name="refresh_release">Release to refresh</string>
+    <string name="refresh_refresh">Refreshing...</string>
+    <string name="refresh_complete">Refresh complete</string>
 </resources>

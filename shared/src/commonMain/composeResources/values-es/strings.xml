@@ -744,4 +744,10 @@
     <string name="task_submenu_view_quiz_detail">Ver Detalle de Evaluación</string>
     <string name="task_submenu_view_quiz_detail_desc">Consultar instrucciones, puntaje y enlace oficial</string>
     <string name="task_submenu_open_quiz">Abrir evaluación en Canvas LMS</string>
+
+    <!-- Pull to Refresh -->
+    <string name="refresh_pulling">Desliza para actualizar</string>
+    <string name="refresh_release">Suelta para actualizar</string>
+    <string name="refresh_refresh">Actualizando...</string>
+    <string name="refresh_complete">Actualizado</string>
 </resources>

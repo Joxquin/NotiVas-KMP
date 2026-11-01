@@ -43,6 +43,7 @@ import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.ui.components.miuix.SearchBox
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
@@ -134,28 +135,32 @@ fun InicioMiuixContent(
             .fillMaxSize()
             .background(MiuixTheme.colorScheme.surface)
     ) {
-        val autoSettleConnection = me.joxquin.notivas.ui.components.miuix.rememberMiuixAutoSettleScrollConnection(
-            listState = listState,
-            thresholdDp = 72.dp
-        )
+        searchStatus.SearchBox {
+            val refreshTexts = listOf(
+                stringResource(Res.string.refresh_pulling),
+                stringResource(Res.string.refresh_release),
+                stringResource(Res.string.refresh_refresh),
+                stringResource(Res.string.refresh_complete),
+            )
 
-        PullToRefresh(
-            isRefreshing = isRefreshing,
-            onRefresh = { viewModel.refreshData() },
-            pullToRefreshState = pullToRefreshState,
-            contentPadding = resolvedPadding,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scrollEndHaptic()
-                    .overScrollVertical()
-                    .nestedScroll(autoSettleConnection),
+            PullToRefresh(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refreshData() },
+                pullToRefreshState = pullToRefreshState,
+                refreshTexts = refreshTexts,
                 contentPadding = resolvedPadding,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.fillMaxSize()
             ) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .scrollEndHaptic()
+                        .overScrollVertical(),
+                    contentPadding = resolvedPadding,
+                    overscrollEffect = null,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
 
             if (isSessionExpired) {
                 item {
@@ -246,13 +251,14 @@ fun InicioMiuixContent(
                 }
             }
         }
-    }
 
-        VerticalScrollBar(
-            adapter = rememberScrollBarAdapter(listState),
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            trackPadding = resolvedPadding
-        )
+        if (searchStatus.shouldCollapsed()) {
+            VerticalScrollBar(
+                adapter = rememberScrollBarAdapter(listState),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                trackPadding = resolvedPadding
+            )
+        }
 
         // Vista Incrustada de Búsqueda con Animación Ease Continua
         me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(

@@ -95,7 +95,9 @@ fun MiuixTopAppBar(
     val fallbackBg = MiuixTheme.colorScheme.surface.copy(alpha = 0.85f * blurAlpha)
 
     Box(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = contentAlpha }
     ) {
         // Capa 1: Progressive Blur Shader Reactivo al Desplazamiento (Cubre de borde a borde, incluyendo status bar)
         if (isBlurActive && backdrop != null) {
@@ -128,15 +130,13 @@ fun MiuixTopAppBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars.only(WindowInsetsSides.Top))
+                .graphicsLayer { alpha = contentAlpha }
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(MiuixTopAppBarDefaults.HeaderHeight)
-                    .padding(horizontal = 16.dp)
-                    .graphicsLayer {
-                        alpha = contentAlpha
-                    },
+                    .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 // Controles de Acción Izquierda

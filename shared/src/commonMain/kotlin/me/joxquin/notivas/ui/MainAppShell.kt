@@ -606,7 +606,11 @@ fun MainAppShell(
                         val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
                         val userProfile by dashboardViewModel.userProfile.collectAsState()
                         val isDashboardSearchExpandingOrExpanded = currentDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
-                        val topBarContentAlpha = if (isDashboardSearchExpandingOrExpanded) 0f else 1f
+                        val topBarContentAlpha by androidx.compose.animation.core.animateFloatAsState(
+                            targetValue = if (isDashboardSearchExpandingOrExpanded) 0f else 1f,
+                            animationSpec = androidx.compose.animation.core.tween(200),
+                            label = "TopBarContentAlpha"
+                        )
 
                         // Capa 2: Barra Superior Canonica Unificada (Top Overlay) para la ruta principal
                         MiuixTopAppBar(
@@ -750,6 +754,7 @@ fun MainAppShell(
                             bottomContent = if (currentDestination == MainDestination.Inicio) {
                                 {
                                     val largeTitleAlpha = (1f - (inicioScrollOffset / 56f)).coerceIn(0f, 1f)
+                                    val effectiveTitleAlpha = largeTitleAlpha * topBarContentAlpha
                                     val largeTitleTranslationY = -inicioScrollOffset * 0.35f
                                     val studentName = userProfile?.name ?: "Estudiante"
 
@@ -758,7 +763,7 @@ fun MainAppShell(
                                             .fillMaxWidth()
                                             .padding(horizontal = 20.dp, vertical = 2.dp)
                                             .graphicsLayer {
-                                                alpha = largeTitleAlpha
+                                                alpha = effectiveTitleAlpha
                                                 translationY = largeTitleTranslationY
                                             }
                                     ) {
