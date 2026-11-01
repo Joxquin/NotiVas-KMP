@@ -70,7 +70,7 @@ fun InicioMiuixContent(
     val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val resolvedPadding = contentPadding ?: PaddingValues(
-        top = statusBarTop + 104.dp,
+        top = statusBarTop + 130.dp,
         bottom = if (isWideScreen) 24.dp else 100.dp,
         start = 16.dp,
         end = 16.dp
