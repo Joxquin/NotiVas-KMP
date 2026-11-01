@@ -80,8 +80,21 @@ import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.util.DateTimeUtil
 import me.joxquin.notivas.util.PlatformShareHandler
 
+private val CARD_TAG_REGEX = Regex("""(?:\s*[•*\-]?\s*)?::card\[(.*?)\]::\s*""")
+private val CARD_PROP_REGEX = Regex("""(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^,\s\]]+))""")
+private val HORIZONTAL_RULE_REGEX = Regex("""^([\\-*_])(\s*\1){2,}$""")
+private val TABLE_SEPARATOR_REGEX = Regex("""^:?-+:?$""")
+private val BULLET_REGEX = Regex("""^(\s*)([*-])\s+(.*)$""")
+private val INLINE_MARKDOWN_REGEX = Regex("""(\*\*([^*]+)\*\*)|(`([^`]+)`)|(\*([^*]+)\*)""")
+private val EXTRACT_DIGITS_REGEX = Regex("""\b\d+\b""")
+private val NORMALIZE_STRIP_REGEX = Regex("""[*#_`~:>\-]""")
+private val MULTI_SPACE_REGEX = Regex("""\s+""")
+
 sealed interface CopilotContentBlock {
-    data class TextBlock(val content: String) : CopilotContentBlock
+    data class TextBlock(
+        val content: String,
+        val formatted: AnnotatedString = formatMarkdown(content)
+    ) : CopilotContentBlock
     object DividerBlock : CopilotContentBlock
     data class TableBlock(val headers: List<String>, val rows: List<List<String>>) : CopilotContentBlock
     data class ResourceCardBlock(
@@ -310,7 +323,7 @@ fun CopilotMessageBubble(
                         when (block) {
                             is CopilotContentBlock.TextBlock -> {
                                 Text(
-                                    text = formatMarkdown(block.content),
+                                    text = block.formatted,
                                     style = if (themeStyle == AppThemeStyle.MIUIX) {
                                         MiuixTheme.textStyles.body1.copy(fontSize = 16.sp)
                                     } else {
@@ -699,9 +712,7 @@ fun parseMessageBlocks(
         }
     }
 
-    val emittedAssignmentIds = mutableSetOf<Long>()
-    val emittedTitles = mutableSetOf<String>()
-    var pendingAssignmentCard: CopilotContentBlock.ResourceCardBlock? = null
+    val emittedCardKeys = mutableSetOf<String>()
     var currentCourseContext: Course? = null
 
     var i = 0
@@ -721,37 +732,30 @@ fun parseMessageBlocks(
             }
         }
 
-        // 2. Detectar etiqueta explícita de tarjeta: ::card[...]:: (incluso si viene precedida por viñetas •, *, - o espacios)
-        val cardTagRegex = Regex("""(?:\s*[•*\-]?\s*)?::card\[(.*?)\]::\s*""")
-        val cardTagMatch = cardTagRegex.find(trimmed)
+        // 2. Detectar etiqueta explícita de tarjeta: ::card[...]::
+        val cardTagMatch = CARD_TAG_REGEX.find(trimmed)
         if (cardTagMatch != null) {
-            val lineWithoutCard = trimmed.replace(cardTagRegex, "").trim()
+            val lineWithoutCard = trimmed.replace(CARD_TAG_REGEX, "").trim()
             if (lineWithoutCard.isNotEmpty() && lineWithoutCard !in listOf("•", "*", "-", "• ", "* ", "- ")) {
                 currentParagraph.add(lineWithoutCard)
             }
             flushParagraph()
-            if (pendingAssignmentCard != null) {
-                blocks.add(pendingAssignmentCard!!)
-                pendingAssignmentCard = null
-            }
+
             val cardBlock = parseCardTag(cardTagMatch.groupValues[1], knownAssignments, courses, currentCourseContext)
             if (cardBlock != null) {
-                cardBlock.assignmentId?.let { emittedAssignmentIds.add(it) }
-                emittedTitles.add(normalizeSearchString(cardBlock.title))
-                blocks.add(cardBlock)
+                val cardKey = (cardBlock.assignmentId?.toString() ?: normalizeSearchString(cardBlock.title))
+                if (cardKey !in emittedCardKeys) {
+                    emittedCardKeys.add(cardKey)
+                    blocks.add(cardBlock)
+                }
             }
             i++
             continue
         }
 
         // 3. Detectar divisor horizontal: 3 o más guiones, asteriscos o guiones bajos
-        val isHorizontalRule = trimmed.matches(Regex("^([\\-*_])(\\s*\\1){2,}$"))
-        if (isHorizontalRule) {
+        if (trimmed.matches(HORIZONTAL_RULE_REGEX)) {
             flushParagraph()
-            if (pendingAssignmentCard != null) {
-                blocks.add(pendingAssignmentCard!!)
-                pendingAssignmentCard = null
-            }
             blocks.add(CopilotContentBlock.DividerBlock)
             i++
             continue
@@ -760,13 +764,8 @@ fun parseMessageBlocks(
         // 4. Detectar posible tabla Markdown
         if (trimmed.startsWith("|") && trimmed.endsWith("|") && i + 1 < lines.size) {
             val nextTrimmed = lines[i + 1].trim()
-            val isSeparator = isTableSeparatorRow(nextTrimmed)
-            if (isSeparator) {
+            if (isTableSeparatorRow(nextTrimmed)) {
                 flushParagraph()
-                if (pendingAssignmentCard != null) {
-                    blocks.add(pendingAssignmentCard!!)
-                    pendingAssignmentCard = null
-                }
                 val headers = parseTableRow(trimmed)
                 i += 2 // Saltar encabezado y separador
 
@@ -785,51 +784,11 @@ fun parseMessageBlocks(
             }
         }
 
-        // 5. Autodetección de tareas en viñetas o títulos
-        val isNewSectionOrBullet = trimmed.startsWith("#") ||
-                line.startsWith("* ") || line.startsWith("- ") ||
-                line.matches(Regex("""^\s{0,2}\d+\.\s+.*"""))
-
-        if (isNewSectionOrBullet && pendingAssignmentCard != null) {
-            // Se inicia un nuevo elemento o sección; emitir la tarjeta pendiente acumulada
-            flushParagraph()
-            blocks.add(pendingAssignmentCard!!)
-            pendingAssignmentCard = null
-        }
-
-        // Cotejar si esta línea menciona alguna tarea conocida aún no emitida
-        if (knownAssignments.isNotEmpty()) {
-            val matchedAssignment = knownAssignments.firstOrNull { assignment ->
-                assignment.id !in emittedAssignmentIds &&
-                        normalizeSearchString(assignment.name) !in emittedTitles &&
-                        isAssignmentMentionedInLine(trimmed, assignment, currentCourseContext)
-            }
-            if (matchedAssignment != null) {
-                val course = courses.find { it.id == matchedAssignment.courseId } ?: currentCourseContext
-                val cleanDue = formatCleanDueDate(matchedAssignment.dueAt)
-                pendingAssignmentCard = CopilotContentBlock.ResourceCardBlock(
-                    type = ResourceCardType.ASSIGNMENT,
-                    title = matchedAssignment.name,
-                    courseName = course?.name,
-                    assignmentId = matchedAssignment.id,
-                    url = matchedAssignment.htmlUrl,
-                    dueDate = cleanDue,
-                    pointsPossible = matchedAssignment.pointsPossible
-                )
-                emittedAssignmentIds.add(matchedAssignment.id)
-                emittedTitles.add(normalizeSearchString(matchedAssignment.name))
-            }
-        }
-
         currentParagraph.add(line)
         i++
     }
 
     flushParagraph()
-    if (pendingAssignmentCard != null) {
-        blocks.add(pendingAssignmentCard!!)
-    }
-
     return blocks
 }
 
@@ -839,8 +798,7 @@ private fun parseCardTag(
     courses: List<Course>,
     currentCourseContext: Course?
 ): CopilotContentBlock.ResourceCardBlock? {
-    val regex = Regex("""(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^,\s\]]+))""")
-    val matches = regex.findAll(rawTag)
+    val matches = CARD_PROP_REGEX.findAll(rawTag)
     val map = mutableMapOf<String, String>()
     for (m in matches) {
         val key = m.groupValues[1].lowercase()
@@ -877,7 +835,7 @@ private fun parseCardTag(
 
         val matchedAssignment = knownAssignments.find { a ->
             (assignmentId != null && a.id == assignmentId) ||
-            isAssignmentMentionedInLine(title, a, explicitCourse)
+            matchesAssignmentTitle(title, a, explicitCourse)
         }
         if (matchedAssignment != null) {
             if (assignmentId == null) assignmentId = matchedAssignment.id
@@ -906,50 +864,33 @@ private fun parseCardTag(
     )
 }
 
-private fun isAssignmentMentionedInLine(
-    line: String,
+private fun matchesAssignmentTitle(
+    title: String,
     assignment: Assignment,
-    currentCourseContext: Course?
+    explicitCourse: Course?
 ): Boolean {
-    // Si tenemos contexto de curso y la tarea es de otro curso, no asociar
-    if (currentCourseContext != null && assignment.courseId != currentCourseContext.id) {
+    if (explicitCourse != null && assignment.courseId != explicitCourse.id) {
         return false
     }
-
-    val normLine = normalizeSearchString(line)
+    val normTitle = normalizeSearchString(title)
     val normName = normalizeSearchString(assignment.name)
+    if (normName == normTitle) return true
 
-    // Si ambos tienen números explícitos (ej: S11 vs S1, o Lab 1 vs Lab 11), deben coincidir
-    val lineNumbers = Regex("""\b\d+\b""").findAll(normLine).map { it.value }.toSet()
-    val nameNumbers = Regex("""\b\d+\b""").findAll(normName).map { it.value }.toSet()
-    if (nameNumbers.isNotEmpty() && lineNumbers.isNotEmpty()) {
-        val sharedNumbers = nameNumbers.intersect(lineNumbers)
-        if (sharedNumbers.isEmpty()) {
-            return false
+    if (normName.contains(normTitle) || normTitle.contains(normName)) {
+        val titleNumbers = EXTRACT_DIGITS_REGEX.findAll(normTitle).map { it.value }.toSet()
+        val nameNumbers = EXTRACT_DIGITS_REGEX.findAll(normName).map { it.value }.toSet()
+        if (titleNumbers.isNotEmpty() && nameNumbers.isNotEmpty()) {
+            return titleNumbers == nameNumbers || nameNumbers.containsAll(titleNumbers)
         }
-    }
-
-    if (normName.length >= 6 && normLine.contains(normName)) {
         return true
-    }
-    val stopWords = setOf("del", "las", "los", "por", "para", "con", "de", "la", "el", "en", "lab", "laboratorio", "entrega", "consigna", "semana")
-    val tokens = normName.split(" ").filter { it.length >= 3 && it !in stopWords }
-    if (tokens.size >= 2) {
-        val matchedTokens = tokens.count { normLine.contains(it) }
-        val requiredTokens = (tokens.size * 0.7).toInt().coerceAtLeast(2)
-        if (matchedTokens >= requiredTokens) {
-            if (currentCourseContext == null || currentCourseContext.id == assignment.courseId) {
-                return true
-            }
-        }
     }
     return false
 }
 
 private fun normalizeSearchString(text: String): String {
     return text.lowercase()
-        .replace(Regex("""[*#_`~:>\-]"""), " ")
-        .replace(Regex("""\s+"""), " ")
+        .replace(NORMALIZE_STRIP_REGEX, " ")
+        .replace(MULTI_SPACE_REGEX, " ")
         .trim()
 }
 
@@ -980,8 +921,7 @@ private fun isTableSeparatorRow(line: String): Boolean {
     val cells = inner.split("|")
     if (cells.isEmpty()) return false
     return cells.all { cell ->
-        val c = cell.trim()
-        c.matches(Regex("^:?-+:?$"))
+        TABLE_SEPARATOR_REGEX.matches(cell.trim())
     }
 }
 
@@ -1219,8 +1159,7 @@ fun formatMarkdown(text: String): AnnotatedString {
                 headerLevel = 1
             }
 
-            val bulletRegex = Regex("^(\\s*)([*-])\\s+(.*)$")
-            val bulletMatch = bulletRegex.find(formattedLine)
+            val bulletMatch = BULLET_REGEX.find(formattedLine)
             val leadingIndent: String
             val lineContent: String
             if (bulletMatch != null) {
@@ -1268,10 +1207,9 @@ fun formatMarkdown(text: String): AnnotatedString {
 }
 
 private fun AnnotatedString.Builder.appendInlineMarkdown(content: String) {
-    val inlinePattern = Regex("(\\*\\*([^*]+)\\*\\*)|(`([^`]+)`)|(\\*([^*]+)\\*)")
     var lastIndex = 0
 
-    for (match in inlinePattern.findAll(content)) {
+    for (match in INLINE_MARKDOWN_REGEX.findAll(content)) {
         if (match.range.first > lastIndex) {
             append(content.substring(lastIndex, match.range.first))
         }

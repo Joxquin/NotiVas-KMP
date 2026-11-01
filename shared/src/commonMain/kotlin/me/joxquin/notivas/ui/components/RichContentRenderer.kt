@@ -73,7 +73,7 @@ fun RichContentRenderer(
                 when (block) {
                     is CopilotContentBlock.TextBlock -> {
                         Text(
-                            text = remember(block.content) { formatMarkdown(block.content) },
+                            text = block.formatted,
                             style = textStyle,
                             color = resolvedTextColor
                         )
