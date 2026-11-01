@@ -769,4 +769,11 @@
     <string name="performance_next_week">Semana siguiente</string>
     <string name="performance_current_week">Semana actual</string>
     <string name="performance_day_tasks_title">Entregas del día</string>
+    <string name="performance_average_label">Promedio Real</string>
+    <string name="performance_average_scale">/ 20</string>
+    <string name="performance_heatmap_title">Calendario de Entregas</string>
+    <string name="performance_day_deliverables">Entregables del día</string>
+    <string name="performance_score_prefix">Nota: %s</string>
+    <string name="performance_view_simulation">Ver simulación y grupos</string>
+    <string name="performance_configure_formula">Configurar fórmulas</string>
 </resources>

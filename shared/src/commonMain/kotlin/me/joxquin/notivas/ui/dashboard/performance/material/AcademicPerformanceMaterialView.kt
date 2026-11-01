@@ -70,7 +70,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.model.AcademicPerformanceStats
-import me.joxquin.notivas.data.model.CourseStat
+import me.joxquin.notivas.ui.dashboard.CourseStat
 import me.joxquin.notivas.data.model.DayBlockInfo
 import me.joxquin.notivas.data.model.DayTaskStatus
 import me.joxquin.notivas.data.model.GradePerformanceLevel
@@ -111,7 +111,7 @@ fun AcademicPerformanceMaterialView(
     stats: AcademicPerformanceStats,
     courseStats: List<CourseStat>,
     weeklyBlocks: List<DayBlockInfo>,
-    monthlyBlocks: List<DayBlockInfo>,
+    monthlyBlocks: List<List<DayBlockInfo>>,
     selectedDay: DateComponents?,
     selectedDayTasks: List<AssignmentUiModel>,
     weekOffset: Int,
@@ -460,7 +460,7 @@ private fun MaterialHeatmapCard(
     isMonthlyView: Boolean,
     onToggleMonthly: (Boolean) -> Unit,
     weeklyBlocks: List<DayBlockInfo>,
-    monthlyBlocks: List<DayBlockInfo>,
+    monthlyBlocks: List<List<DayBlockInfo>>,
     selectedDay: DateComponents?,
     weekOffset: Int,
     primaryColor: Color,
@@ -591,7 +591,7 @@ private fun MaterialHeatmapCard(
                         }
                     }
 
-                    monthlyBlocks.chunked(7).forEach { weekChunk ->
+                    monthlyBlocks.forEach { weekChunk ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
