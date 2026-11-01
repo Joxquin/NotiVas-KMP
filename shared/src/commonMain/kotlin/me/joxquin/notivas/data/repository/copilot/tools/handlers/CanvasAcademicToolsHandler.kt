@@ -22,11 +22,25 @@ import me.joxquin.notivas.data.repository.copilot.tools.CopilotToolHandler
 import me.joxquin.notivas.data.repository.copilot.tools.HtmlUtils
 import me.joxquin.notivas.util.DateTimeUtil
 
+private fun getSpanishDayOfWeek(date: me.joxquin.notivas.util.DateComponents): String {
+    return when (DateTimeUtil.dayOfWeek(date)) {
+        1 -> "Lunes"
+        2 -> "Martes"
+        3 -> "Miércoles"
+        4 -> "Jueves"
+        5 -> "Viernes"
+        6 -> "Sábado"
+        7 -> "Domingo"
+        else -> ""
+    }
+}
+
 private fun formatDueAtWithLocalTime(dueAt: String?): String {
     if (dueAt.isNullOrBlank()) return "Sin fecha"
     val comp = DateTimeUtil.parseIsoToComponents(dueAt) ?: return dueAt
+    val dayName = getSpanishDayOfWeek(comp.date)
     val timeStr = "${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
-    return "${comp.date.toIsoDateString()} $timeStr (hora local) [UTC: $dueAt]"
+    return "$dayName ${comp.date.toIsoDateString()} $timeStr (hora local)"
 }
 
 @Serializable
@@ -42,7 +56,9 @@ private data class AcademicCourseOverview(
     val name: String,
     val course_code: String,
     val pending_assignments_count: String,
-    val next_deadlines: List<AcademicNextDeadline>
+    val overdue_assignments_count: String,
+    val next_deadlines: List<AcademicNextDeadline>,
+    val overdue_deadlines: List<AcademicNextDeadline>
 )
 
 class CanvasAcademicToolsHandler(
@@ -112,19 +128,45 @@ class CanvasAcademicToolsHandler(
                 if (courses.isEmpty()) {
                     ToolExecutionResult("""{"message": "No hay cursos registrados en el almacenamiento local."}""")
                 } else {
+                    val nowMillis = DateTimeUtil.nowEpochMillis()
                     val summaryList = courses.map { course ->
                         val courseAssignments = allAssignments.filter { it.courseId == course.id }
-                        val pendingAssignments = courseAssignments
-                            .filter { !it.isCompleted }
+                        val pendingAssignments = courseAssignments.filter { !it.isCompleted }
+
+                        // Entregas próximas: desde hoy en adelante (o sin fecha fija)
+                        val upcoming = pendingAssignments
+                            .filter { a ->
+                                val epoch = a.dueAt?.let { DateTimeUtil.parseIsoToComponents(it)?.epochMillis }
+                                epoch == null || epoch >= (nowMillis - 12 * 3600 * 1000L)
+                            }
                             .sortedWith(compareBy(nullsLast()) { a ->
                                 a.dueAt?.let { DateTimeUtil.parseIsoToComponents(it)?.epochMillis }
                             })
+
+                        // Entregas pasadas vencidas
+                        val overdue = pendingAssignments
+                            .filter { a ->
+                                val epoch = a.dueAt?.let { DateTimeUtil.parseIsoToComponents(it)?.epochMillis }
+                                epoch != null && epoch < (nowMillis - 12 * 3600 * 1000L)
+                            }
+                            .sortedWith(compareByDescending { a ->
+                                a.dueAt?.let { DateTimeUtil.parseIsoToComponents(it)?.epochMillis }
+                            })
+
                         AcademicCourseOverview(
                             course_id = course.id.toString(),
                             name = course.name,
                             course_code = course.courseCode ?: "N/A",
                             pending_assignments_count = pendingAssignments.size.toString(),
-                            next_deadlines = pendingAssignments.take(5).map { a ->
+                            overdue_assignments_count = overdue.size.toString(),
+                            next_deadlines = upcoming.take(5).map { a ->
+                                AcademicNextDeadline(
+                                    id = a.id.toString(),
+                                    name = a.name,
+                                    due_at = formatDueAtWithLocalTime(a.dueAt)
+                                )
+                            },
+                            overdue_deadlines = overdue.take(3).map { a ->
                                 AcademicNextDeadline(
                                     id = a.id.toString(),
                                     name = a.name,
@@ -148,7 +190,10 @@ class CanvasAcademicToolsHandler(
                         title = "Todas las Tareas (${allAssignments.size} items)",
                         detail = "Lista global de tareas"
                     )
-                    val simplified = allAssignments.map { a ->
+                    val sortedAll = allAssignments.sortedWith(compareBy(nullsLast()) { a ->
+                        a.dueAt?.let { DateTimeUtil.parseIsoToComponents(it)?.epochMillis }
+                    })
+                    val simplified = sortedAll.map { a ->
                         mapOf(
                             "id" to a.id.toString(),
                             "course_id" to a.courseId.toString(),
@@ -163,7 +208,11 @@ class CanvasAcademicToolsHandler(
                 } else {
                     val course = courses.find { it.id == cid }
                     val courseName = course?.name ?: "Curso $cid"
-                    val assignments = allAssignments.filter { it.courseId == cid }
+                    val assignments = allAssignments
+                        .filter { it.courseId == cid }
+                        .sortedWith(compareBy(nullsLast()) { a ->
+                            a.dueAt?.let { DateTimeUtil.parseIsoToComponents(it)?.epochMillis }
+                        })
                     val source = CopilotSource(
                         title = "$courseName (${assignments.size} tareas)",
                         detail = "Tareas y estado de entregas"

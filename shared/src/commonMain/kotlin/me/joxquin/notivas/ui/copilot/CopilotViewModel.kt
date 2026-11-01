@@ -105,6 +105,15 @@ class CopilotViewModel(
     private val _coursePlannerItems = MutableStateFlow<List<PlannerItem>>(emptyList())
     private val _courseModules = MutableStateFlow<List<CanvasModule>>(emptyList())
 
+    // Animaciones de mensajes ejecutadas (para evitar que se repitan al hacer scroll o cambiar de vistas)
+    private val _animatedMessageIds = mutableSetOf<String>()
+
+    fun isMessageAnimated(messageId: String): Boolean = messageId in _animatedMessageIds
+
+    fun markMessageAnimated(messageId: String) {
+        _animatedMessageIds.add(messageId)
+    }
+
     init {
         refreshOpenRouterBalance()
     }
@@ -310,6 +319,7 @@ class CopilotViewModel(
         viewModelScope.launch {
             val session = chatRepository.getSessionById(sessionId)
             val messages = chatRepository.getMessagesForSession(sessionId)
+            messages.forEach { _animatedMessageIds.add(it.id) }
             _currentSessionId.value = sessionId
             _selectedCourseId.value = session?.courseId
             _messages.value = messages

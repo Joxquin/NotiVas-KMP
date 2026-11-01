@@ -164,6 +164,8 @@ fun CopilotScreen(
                     },
                     thinkingStatus = uiState.thinkingStatus,
                     onRegenerate = { viewModel.regenerateLastResponse() },
+                    isMessageAnimated = { viewModel.isMessageAnimated(it) },
+                    onMessageAnimated = { viewModel.markMessageAnimated(it) },
                     themeStyle = AppThemeStyle.MIUIX,
                     bottomPadding = animatedBottomPadding,
                     modifier = Modifier.fillMaxSize()
@@ -345,6 +347,8 @@ fun CopilotScreen(
                     },
                     thinkingStatus = uiState.thinkingStatus,
                     onRegenerate = { viewModel.regenerateLastResponse() },
+                    isMessageAnimated = { viewModel.isMessageAnimated(it) },
+                    onMessageAnimated = { viewModel.markMessageAnimated(it) },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }

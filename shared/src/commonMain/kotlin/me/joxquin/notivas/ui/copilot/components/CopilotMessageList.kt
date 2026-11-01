@@ -62,6 +62,8 @@ fun CopilotMessageList(
     thinkingStatus: String? = null,
     onRegenerate: (() -> Unit)? = null,
     onShare: ((String) -> Unit)? = null,
+    isMessageAnimated: ((String) -> Boolean)? = null,
+    onMessageAnimated: ((String) -> Unit)? = null,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     bottomPadding: androidx.compose.ui.unit.Dp = 12.dp,
     modifier: Modifier = Modifier
@@ -117,12 +119,14 @@ fun CopilotMessageList(
             contentPadding = PaddingValues(top = topInset, bottom = bottomInset)
         ) {
             items(messages, key = { it.id }) { message ->
+                val isAnimatedAlready = isMessageAnimated?.invoke(message.id) == true
                 CopilotMessageBubble(
                     message = message,
                     themeStyle = themeStyle,
                     onRegenerate = onRegenerate,
                     onShare = onShare,
-                    animateReveal = message.id == lastAssistantMessageId
+                    animateReveal = (message.id == lastAssistantMessageId) && !isAnimatedAlready,
+                    onAnimationFinished = onMessageAnimated
                 )
             }
 

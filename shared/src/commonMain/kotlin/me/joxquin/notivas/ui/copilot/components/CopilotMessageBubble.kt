@@ -91,6 +91,7 @@ fun CopilotMessageBubble(
     onRegenerate: (() -> Unit)? = null,
     onShare: ((String) -> Unit)? = null,
     animateReveal: Boolean = false,
+    onAnimationFinished: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == CopilotRole.USER
@@ -111,8 +112,10 @@ fun CopilotMessageBubble(
                 delay(18)
                 revealedLength = (revealedLength + step).coerceAtMost(totalChars)
             }
+            onAnimationFinished?.invoke(message.id)
         } else {
             revealedLength = message.text.length
+            onAnimationFinished?.invoke(message.id)
         }
     }
 

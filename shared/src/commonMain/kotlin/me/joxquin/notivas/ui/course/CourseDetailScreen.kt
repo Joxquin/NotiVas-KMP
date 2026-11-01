@@ -46,7 +46,6 @@ import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.components.miuix.shortenCourseSubtitle
 import me.joxquin.notivas.ui.course.components.CourseHeroBannerCard
 import me.joxquin.notivas.ui.course.components.CourseLearningRoadmapCard
-import me.joxquin.notivas.ui.course.components.CourseServicesBentoSection
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
@@ -165,27 +164,6 @@ fun CourseDetailScreen(
                                 }
                             )
                         }
-
-                        // 3. Servicios & Conexiones (Bento Cards 2x2)
-                        item {
-                            CourseServicesBentoSection(
-                                latestAnnouncement = uiState.latestAnnouncement,
-                                unreadAnnouncementsCount = uiState.unreadAnnouncementsCount,
-                                coachTip = uiState.coachTip,
-                                studentsCount = uiState.studentsCount,
-                                studentAvatars = uiState.studentAvatars,
-                                themeStyle = AppThemeStyle.MIUIX,
-                                onOpenAnnouncements = onNavigateToAnnouncements,
-                                onConsultCoach = {
-                                    val prompt = "Tengo preguntas sobre el curso ${uiState.course?.name ?: ""}. ¿Cómo me preparo mejor?"
-                                    onNavigateToCopilot(prompt)
-                                },
-                                onOpenDirectory = {
-                                    uiState.course?.let { onOpenUrl(it.imageUrl ?: "") }
-                                },
-                                onOpenProgreso = onNavigateToProgreso
-                            )
-                        }
                     }
 
                     VerticalScrollBar(
@@ -286,27 +264,6 @@ fun CourseDetailScreen(
                                     onOpenUrl(item.actionUrl)
                                 }
                             }
-                        )
-                    }
-
-                    // 3. Servicios & Conexiones (Bento Cards 2x2)
-                    item {
-                        CourseServicesBentoSection(
-                            latestAnnouncement = uiState.latestAnnouncement,
-                            unreadAnnouncementsCount = uiState.unreadAnnouncementsCount,
-                            coachTip = uiState.coachTip,
-                            studentsCount = uiState.studentsCount,
-                            studentAvatars = uiState.studentAvatars,
-                            themeStyle = AppThemeStyle.MATERIAL,
-                            onOpenAnnouncements = onNavigateToAnnouncements,
-                            onConsultCoach = {
-                                val prompt = "Tengo preguntas sobre el curso ${uiState.course?.name ?: ""}. ¿Cómo me preparo mejor?"
-                                onNavigateToCopilot(prompt)
-                            },
-                            onOpenDirectory = {
-                                uiState.course?.let { onOpenUrl(it.imageUrl ?: "") }
-                            },
-                            onOpenProgreso = onNavigateToProgreso
                         )
                     }
                 }
