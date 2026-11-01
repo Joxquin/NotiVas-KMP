@@ -224,7 +224,7 @@ private fun ResourceCardContent(
                     Text(
                         text = card.courseName ?: typeLabel,
                         style = if (themeStyle == AppThemeStyle.MIUIX) {
-                            MiuixTheme.textStyles.footnote.copy(
+                            MiuixTheme.textStyles.footnote1.copy(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -244,7 +244,7 @@ private fun ResourceCardContent(
                     Text(
                         text = "•  ${card.pointsPossible.toInt()} pts",
                         style = if (themeStyle == AppThemeStyle.MIUIX) {
-                            MiuixTheme.textStyles.footnote.copy(fontSize = 11.sp)
+                            MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp)
                         } else {
                             MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
                         },
@@ -332,7 +332,7 @@ private fun ResourceCardContent(
                         Text(
                             text = card.dueDate,
                             style = if (themeStyle == AppThemeStyle.MIUIX) {
-                                MiuixTheme.textStyles.footnote.copy(fontSize = 12.sp)
+                                MiuixTheme.textStyles.footnote2.copy(fontSize = 12.sp)
                             } else {
                                 MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
                             },
@@ -361,7 +361,7 @@ private fun ResourceCardContent(
                     Text(
                         text = actionText,
                         style = if (themeStyle == AppThemeStyle.MIUIX) {
-                            MiuixTheme.textStyles.footnote.copy(
+                            MiuixTheme.textStyles.footnote1.copy(
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
