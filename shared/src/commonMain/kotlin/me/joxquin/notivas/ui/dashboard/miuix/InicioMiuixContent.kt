@@ -68,8 +68,9 @@ fun InicioMiuixContent(
     modifier: Modifier = Modifier
 ) {
     val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val resolvedPadding = contentPadding ?: PaddingValues(
-        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
+        top = statusBarTop + 104.dp,
         bottom = if (isWideScreen) 24.dp else 100.dp,
         start = 16.dp,
         end = 16.dp
@@ -155,49 +156,6 @@ fun InicioMiuixContent(
                 contentPadding = resolvedPadding,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-            // 0. Welcome Header (32.sp) con scroll fade sincronizado con el TopAppBar
-            item {
-                val firstIndex = listState.firstVisibleItemIndex
-                val firstOffset = listState.firstVisibleItemScrollOffset
-                val isHeaderCollapsed = firstIndex > 0 || firstOffset >= 72
-
-                val largeTitleAlpha by androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (isHeaderCollapsed) 0f else 1f,
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
-                    label = "LargeTitleAlpha"
-                )
-                val largeTitleTranslationY by androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (isHeaderCollapsed) -20f else 0f,
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
-                    label = "LargeTitleTranslationY"
-                )
-
-                val studentName = userProfile?.name ?: "Estudiante"
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp, vertical = 4.dp)
-                        .staggeredEntrance(index = 0, trigger = isEntranceTriggered)
-                        .graphicsLayer {
-                            alpha = largeTitleAlpha
-                            translationY = largeTitleTranslationY
-                        }
-                ) {
-                    MiuixText(
-                        text = "Bienvenido, ${studentName.substringBefore(" ")}",
-                        fontSize = MiuixTheme.textStyles.title1.fontSize,
-                        fontWeight = FontWeight.Normal,
-                        color = MiuixTheme.colorScheme.onSurface
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    MiuixText(
-                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.dashboard_academic_title),
-                        style = MiuixTheme.textStyles.body2,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                    )
-                }
-            }
 
             if (isSessionExpired) {
                 item {

@@ -165,7 +165,11 @@ fun TaskHistoryArchiveScreen(
                         title = stringResource(Res.string.archive_screen_title),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            BackNavigationIcon(onClick = onBack)
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = backdrop
+                            ) {
+                                BackNavigationIcon(onClick = onBack)
+                            }
                         }
                     )
                 }

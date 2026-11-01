@@ -109,7 +109,11 @@ fun CourseModulesScreen(
                         subtitle = shortenCourseSubtitle(uiState.course?.name),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            BackNavigationIcon(onClick = onBack)
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = blurBackdrop
+                            ) {
+                                BackNavigationIcon(onClick = onBack)
+                            }
                         }
                     )
                 }

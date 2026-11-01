@@ -115,7 +115,11 @@ fun RecentActivityScreen(
                         title = stringResource(Res.string.recent_activity_title),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(onClick = onBack)
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = backdrop
+                            ) {
+                                me.joxquin.notivas.ui.components.miuix.BackNavigationIcon(onClick = onBack)
+                            }
                         },
                         bottomContent = {
                             Box(

@@ -156,26 +156,34 @@ fun ForosScreen(
                         subtitle = if (uiState.isLoading) stringResource(Res.string.foros_syncing) else stringResource(Res.string.foros_subtitle_format, uiState.pendingCount),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            BackNavigationIcon(onClick = onBack)
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = backdrop
+                            ) {
+                                BackNavigationIcon(onClick = onBack)
+                            }
                         },
                         actions = {
-                            top.yukonga.miuix.kmp.basic.IconButton(
-                                onClick = { isGroupedByWeek = !isGroupedByWeek }
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = backdrop
                             ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = if (isGroupedByWeek) MiuixIcons.ListView else MiuixIcons.GridView,
-                                    contentDescription = if (isGroupedByWeek) stringResource(Res.string.foros_view_mode_flat) else stringResource(Res.string.foros_view_mode_grouped),
-                                    tint = if (isGroupedByWeek) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
-                                )
-                            }
-                            top.yukonga.miuix.kmp.basic.IconButton(
-                                onClick = { viewModel.setShowFilterBottomSheet(true) }
-                            ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = MiuixIcons.Tune,
-                                    contentDescription = stringResource(Res.string.foros_filter_sheet_title),
-                                    tint = MiuixTheme.colorScheme.onBackground
-                                )
+                                top.yukonga.miuix.kmp.basic.IconButton(
+                                    onClick = { isGroupedByWeek = !isGroupedByWeek }
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = if (isGroupedByWeek) MiuixIcons.ListView else MiuixIcons.GridView,
+                                        contentDescription = if (isGroupedByWeek) stringResource(Res.string.foros_view_mode_flat) else stringResource(Res.string.foros_view_mode_grouped),
+                                        tint = if (isGroupedByWeek) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
+                                    )
+                                }
+                                top.yukonga.miuix.kmp.basic.IconButton(
+                                    onClick = { viewModel.setShowFilterBottomSheet(true) }
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Tune,
+                                        contentDescription = stringResource(Res.string.foros_filter_sheet_title),
+                                        tint = MiuixTheme.colorScheme.onBackground
+                                    )
+                                }
                             }
                         },
                         bottomContent = {

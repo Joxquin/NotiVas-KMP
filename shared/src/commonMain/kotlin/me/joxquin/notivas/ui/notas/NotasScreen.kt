@@ -114,7 +114,11 @@ fun NotasScreen(
                         title = stringResource(Res.string.grades_progreso_title),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            BackNavigationIcon(onClick = onBack)
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = backdrop
+                            ) {
+                                BackNavigationIcon(onClick = onBack)
+                            }
                         }
                     )
                 }

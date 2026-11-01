@@ -602,6 +602,7 @@ fun MainAppShell(
 
                         val copilotUiState by copilotViewModel.uiState.collectAsState()
                         val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
+                        val userProfile by dashboardViewModel.userProfile.collectAsState()
                         val isDashboardSearchExpandingOrExpanded = currentDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
                         val topBarContentAlpha = if (isDashboardSearchExpandingOrExpanded) 0f else 1f
 
@@ -744,7 +745,36 @@ fun MainAppShell(
                                     else -> {}
                                 }
                             },
-                            bottomContent = null,
+                            bottomContent = if (currentDestination == MainDestination.Inicio) {
+                                {
+                                    val largeTitleAlpha = (1f - (inicioScrollOffset / 56f)).coerceIn(0f, 1f)
+                                    val largeTitleTranslationY = -inicioScrollOffset * 0.35f
+                                    val studentName = userProfile?.name ?: "Estudiante"
+
+                                    androidx.compose.foundation.layout.Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 20.dp, vertical = 2.dp)
+                                            .graphicsLayer {
+                                                alpha = largeTitleAlpha
+                                                translationY = largeTitleTranslationY
+                                            }
+                                    ) {
+                                        top.yukonga.miuix.kmp.basic.Text(
+                                            text = "Bienvenido, ${studentName.substringBefore(" ")}",
+                                            fontSize = MiuixTheme.textStyles.title1.fontSize,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Normal,
+                                            color = MiuixTheme.colorScheme.onSurface
+                                        )
+                                        androidx.compose.foundation.layout.Spacer(Modifier.height(2.dp))
+                                        top.yukonga.miuix.kmp.basic.Text(
+                                            text = stringResource(Res.string.dashboard_academic_title),
+                                            style = MiuixTheme.textStyles.body2,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                        )
+                                    }
+                                }
+                            } else null,
                             onNavigationClick = null,
                             contentAlpha = topBarContentAlpha,
                             modifier = Modifier.align(Alignment.TopCenter)

@@ -150,7 +150,11 @@ fun ScheduleScreen(
                         title = stringResource(Res.string.schedule_screen_title),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            BackNavigationIcon(onClick = onBack)
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = backdrop
+                            ) {
+                                BackNavigationIcon(onClick = onBack)
+                            }
                         }
                     )
                 }

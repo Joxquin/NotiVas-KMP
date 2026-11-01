@@ -236,18 +236,26 @@ fun AssignmentDraftScreen(
                         subtitle = shortenCourseSubtitle(courseName.ifBlank { "Canvas LMS" }),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            BackNavigationIcon(onClick = onBack)
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = backdrop
+                            ) {
+                                BackNavigationIcon(onClick = onBack)
+                            }
                         },
                         actions = {
-                            WindowIconDropdownMenu(
-                                entries = dropdownEntries,
-                                collapseOnSelection = true
+                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                backdrop = backdrop
                             ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = MiuixIcons.Tune,
-                                    contentDescription = stringResource(Res.string.assignment_detail_tab_options),
-                                    tint = MiuixTheme.colorScheme.onBackground
-                                )
+                                WindowIconDropdownMenu(
+                                    entries = dropdownEntries,
+                                    collapseOnSelection = true
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Tune,
+                                        contentDescription = stringResource(Res.string.assignment_detail_tab_options),
+                                        tint = MiuixTheme.colorScheme.onBackground
+                                    )
+                                }
                             }
                         }
                     )
