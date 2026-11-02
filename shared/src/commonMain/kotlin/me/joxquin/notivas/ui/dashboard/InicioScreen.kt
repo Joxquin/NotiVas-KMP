@@ -75,6 +75,7 @@ fun InicioScreen(
             onNavigateToCopilot = onNavigateToCopilot,
             onNavigateToHerramientas = onNavigateToHerramientas,
             onNavigateToSchedule = onNavigateToSchedule,
+            onNavigateToRecentActivity = onNavigateToActivity,
             onNavigateToAcademicPerformance = onNavigateToAcademicPerformance,
             onOpenAssignmentDraft = onOpenAssignmentDraft,
             onNavigateToForoDetail = onNavigateToForoDetail,

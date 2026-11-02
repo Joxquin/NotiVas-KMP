@@ -28,29 +28,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.IconButton
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Alarm
+import top.yukonga.miuix.kmp.icon.extended.Weeks
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import me.joxquin.notivas.ui.animation.staggeredEntrance
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
-import me.joxquin.notivas.ui.dashboard.components.SelectedDateAssignmentsSection
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
 import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
-import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixStudentHeader
-import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixUrgentTasksCarousel
-import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixWeeklyCalendarStrip
 import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import me.joxquin.notivas.ui.components.miuix.SearchBox
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
 /**
  * Dashboard Académico Miuix:
- * Implementación fiel del diseño HyperOS Miuix de Stitch.
- * Orquestador declarativo (< 120 líneas) que delega en MiuixDashboardComponents.
+ * Implementación fiel del diseño HyperOS Miuix de Stitch y arquitectura canónica estilo KernelSU.
  */
 @Composable
 fun InicioMiuixContent(
@@ -63,6 +72,7 @@ fun InicioMiuixContent(
     onNavigateToCopilot: () -> Unit = {},
     onNavigateToHerramientas: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
+    onNavigateToRecentActivity: () -> Unit = {},
     onNavigateToAcademicPerformance: () -> Unit = onNavigateToHerramientas,
     onOpenAssignmentDraft: ((me.joxquin.notivas.ui.dashboard.AssignmentUiModel) -> Unit)? = null,
     onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
@@ -70,13 +80,6 @@ fun InicioMiuixContent(
     modifier: Modifier = Modifier
 ) {
     val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val resolvedPadding = contentPadding ?: PaddingValues(
-        top = statusBarTop + 130.dp,
-        bottom = if (isWideScreen) 24.dp else 100.dp,
-        start = 16.dp,
-        end = 16.dp
-    )
     val handleCourseClick: (me.joxquin.notivas.data.model.Course) -> Unit = { course ->
         if (onNavigateToCourseDetail != null) onNavigateToCourseDetail(course)
         else onNavigateToCourseProgreso(course)
@@ -119,7 +122,6 @@ fun InicioMiuixContent(
         }
     }
 
-
     var selectedAssignmentForSubmenu by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf<me.joxquin.notivas.ui.dashboard.AssignmentUiModel?>(null)
     }
@@ -132,137 +134,226 @@ fun InicioMiuixContent(
         androidx.compose.runtime.mutableStateOf(me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED)
     }
 
+    val backdrop = rememberMiuixBlurBackdrop()
+    val scrollBehavior = MiuixScrollBehavior()
+    val studentName = userProfile?.name?.substringBefore(" ") ?: "Estudiante"
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MiuixTheme.colorScheme.surface)
     ) {
-        searchStatus.SearchBox {
-            val refreshTexts = listOf(
-                stringResource(Res.string.refresh_pulling),
-                stringResource(Res.string.refresh_release),
-                stringResource(Res.string.refresh_refresh),
-                stringResource(Res.string.refresh_complete),
-            )
-
-            PullToRefresh(
-                isRefreshing = isRefreshing,
-                onRefresh = { viewModel.refreshData() },
-                pullToRefreshState = pullToRefreshState,
-                refreshTexts = refreshTexts,
-                contentPadding = resolvedPadding,
-                modifier = Modifier.fillMaxSize()
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+            MiuixBlurredBar(
+                backdrop = backdrop,
+                scrollBehavior = scrollBehavior
             ) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .scrollEndHaptic()
-                        .overScrollVertical(),
-                    contentPadding = resolvedPadding,
-                    overscrollEffect = null,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-
-            if (isSessionExpired) {
-                item {
-                    SessionExpiredBanner(
-                        onReconnect = { viewModel.openQuickRelogin() },
-                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
-                    )
-                }
-            }
-
-            // 1. Buscador Global (Cápsula Ancla con medición de coordenada Y)
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .staggeredEntrance(index = 1, trigger = isEntranceTriggered)
-                ) {
-                    me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
-                        query = searchQuery,
-                        onSearchClick = {
-                            viewModel.updateSearchStatus(searchStatus.copy(current = me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING))
-                            viewModel.setSearchExpanded(true)
-                        },
-                        onPositionChanged = {
-                            searchOffsetY = it
-                            viewModel.setSearchOffsetY(it)
-                        },
-                        onAskAi = { query -> onNavigateToCopilot() },
-                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-                        isVisible = searchStatus.isCollapsed() && searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded
-                    )
-                }
-            }
-
-            // 2. Carrusel Hero: Rendimiento Académico + Configuración de Fórmulas
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .staggeredEntrance(index = 2, trigger = isEntranceTriggered)
-                ) {
-                    me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
-                        courseStats = courseStats,
-                        weeklyDayBlocks = weeklyDayBlocks,
-                        unconfiguredCount = unconfiguredBannerState.first,
-                        firstUnconfiguredCourse = unconfiguredBannerState.second,
-                        onCheckPerformance = onNavigateToAcademicPerformance,
-                        onConfigureFormulas = { course ->
-                            if (course != null) {
-                                onNavigateToCourseProgreso(course)
-                            } else if (courses.isNotEmpty()) {
-                                onNavigateToCourseProgreso(courses.first())
+                MiuixPageTopAppBar(
+                    title = stringResource(Res.string.app_name),
+                    largeTitle = "Bienvenido, ${studentName.uppercase()}",
+                    subtitle = "",
+                    scrollBehavior = scrollBehavior,
+                    actions = {
+                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                            backdrop = backdrop
+                        ) {
+                            top.yukonga.miuix.kmp.basic.IconButton(
+                                onClick = onNavigateToSchedule
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Weeks,
+                                    contentDescription = stringResource(Res.string.schedule_screen_title),
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
                             }
-                        },
-                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
-                    )
-                }
-            }
+                            top.yukonga.miuix.kmp.basic.IconButton(
+                                onClick = onNavigateToRecentActivity
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Alarm,
+                                    contentDescription = stringResource(Res.string.recent_activity_title),
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+                    },
+                    bottomContent = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            val collapsedFraction = scrollBehavior.state.collapsedFraction
+                            val subtitleAlpha = (1f - (collapsedFraction * 2.5f)).coerceIn(0f, 1f)
+                            val density = androidx.compose.ui.platform.LocalDensity.current
+                            val searchTranslationY = with(density) {
+                                (-26.dp * collapsedFraction).toPx()
+                            }
 
-            // 3. Today's Tasks: Entregas del Día
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .staggeredEntrance(index = 3, trigger = isEntranceTriggered)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .graphicsLayer { alpha = subtitleAlpha }
+                                    .padding(bottom = 6.dp)
+                            ) {
+                                MiuixText(
+                                    text = "Dashboard Académico y Seguimiento Canvas",
+                                    style = MiuixTheme.textStyles.body2,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                )
+                            }
+
+                            me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
+                                query = searchQuery,
+                                onSearchClick = {
+                                    viewModel.updateSearchStatus(searchStatus.copy(current = me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING))
+                                    viewModel.setSearchExpanded(true)
+                                },
+                                onPositionChanged = {
+                                    searchOffsetY = it
+                                    viewModel.setSearchOffsetY(it)
+                                },
+                                onAskAi = { query -> onNavigateToCopilot() },
+                                themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                                isVisible = searchStatus.isCollapsed() && searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .graphicsLayer {
+                                        translationY = searchTranslationY
+                                    }
+                            )
+                        }
+                    }
+                )
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        val pagePadding = miuixPageContentPadding(
+            innerPadding = innerPadding,
+            extraTop = 8.dp,
+            extraStart = 0.dp,
+            extraEnd = 0.dp,
+            extraBottom = if (isWideScreen) 24.dp else 100.dp
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MiuixTheme.colorScheme.surface)
+                .miuixBackdropModifier(backdrop)
+        ) {
+            searchStatus.SearchBox {
+                val refreshTexts = listOf(
+                    stringResource(Res.string.refresh_pulling),
+                    stringResource(Res.string.refresh_release),
+                    stringResource(Res.string.refresh_refresh),
+                    stringResource(Res.string.refresh_complete),
+                )
+
+                PullToRefresh(
+                    isRefreshing = isRefreshing,
+                    onRefresh = { viewModel.refreshData() },
+                    pullToRefreshState = pullToRefreshState,
+                    topAppBarScrollBehavior = scrollBehavior,
+                    refreshTexts = refreshTexts,
+                    contentPadding = pagePadding,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
-                        tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
-                        onSeeAll = onNavigateToSchedule,
-                        onTaskClick = { selectedAssignmentForSubmenu = it },
-                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-                        sectionTitle = if (todayTasks.isNotEmpty()) null else if (urgentAssignments.isNotEmpty()) "Próximas entregas" else null
-                    )
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .miuixPageScrollModifiers(scrollBehavior),
+                        contentPadding = pagePadding,
+                        overscrollEffect = null,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        if (isSessionExpired) {
+                            item {
+                                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                    SessionExpiredBanner(
+                                        onReconnect = { viewModel.openQuickRelogin() },
+                                        themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                                    )
+                                }
+                            }
+                        }
+
+                        // 1. Carrusel Hero: Rendimiento Académico + Configuración de Fórmulas
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .staggeredEntrance(index = 1, trigger = isEntranceTriggered)
+                            ) {
+                                me.joxquin.notivas.ui.dashboard.components.DashboardHeroCarousel(
+                                    courseStats = courseStats,
+                                    weeklyDayBlocks = weeklyDayBlocks,
+                                    unconfiguredCount = unconfiguredBannerState.first,
+                                    firstUnconfiguredCourse = unconfiguredBannerState.second,
+                                    onCheckPerformance = onNavigateToAcademicPerformance,
+                                    onConfigureFormulas = { course ->
+                                        if (course != null) {
+                                            onNavigateToCourseProgreso(course)
+                                        } else if (courses.isNotEmpty()) {
+                                            onNavigateToCourseProgreso(courses.first())
+                                        }
+                                    },
+                                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                                )
+                            }
+                        }
+
+                        // 2. Today's Tasks: Entregas del Día
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .staggeredEntrance(index = 2, trigger = isEntranceTriggered)
+                            ) {
+                                me.joxquin.notivas.ui.dashboard.components.DashboardTodayTasksSection(
+                                    tasks = if (todayTasks.isNotEmpty()) todayTasks else urgentAssignments.take(3),
+                                    onSeeAll = onNavigateToSchedule,
+                                    onTaskClick = { selectedAssignmentForSubmenu = it },
+                                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                                    sectionTitle = if (todayTasks.isNotEmpty()) null else if (urgentAssignments.isNotEmpty()) "Próximas entregas" else null
+                                )
+                            }
+                        }
+
+                        // 3. Courses Summary List (Grid de 2 columnas de cursos estilo MIUIX)
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .staggeredEntrance(index = 3, trigger = isEntranceTriggered)
+                            ) {
+                                MiuixCourseSummaryList(
+                                    courses = filteredCourses,
+                                    courseStats = courseStats,
+                                    onCourseClick = handleCourseClick
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            // 4. Courses Summary List (Grid de 2 columnas de cursos estilo MIUIX)
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .staggeredEntrance(index = 4, trigger = isEntranceTriggered)
-                ) {
-                    MiuixCourseSummaryList(
-                        courses = filteredCourses,
-                        courseStats = courseStats,
-                        onCourseClick = handleCourseClick
+                if (searchStatus.shouldCollapsed()) {
+                    VerticalScrollBar(
+                        adapter = rememberScrollBarAdapter(listState),
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .fillMaxHeight(),
+                        trackPadding = pagePadding
                     )
                 }
             }
-        }
-    }
-}
-
-        if (searchStatus.shouldCollapsed()) {
-            VerticalScrollBar(
-                adapter = rememberScrollBarAdapter(listState),
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                trackPadding = resolvedPadding
-            )
         }
 
         // Vista Incrustada de Búsqueda con Animación Ease Continua

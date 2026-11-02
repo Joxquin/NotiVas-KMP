@@ -75,11 +75,13 @@ fun miuixPageContentPadding(
  * Backdrop de difuminado reactivo en tiempo real para HyperOS Miuix.
  */
 @Composable
-fun rememberMiuixBlurBackdrop(): LayerBackdrop? {
+fun rememberMiuixBlurBackdrop(withSurfaceBackground: Boolean = true): LayerBackdrop? {
     if (!isRuntimeShaderSupported()) return null
     val surfaceColor = MiuixTheme.colorScheme.surface
     return rememberLayerBackdrop {
-        drawRect(surfaceColor)
+        if (withSurfaceBackground) {
+            drawRect(surfaceColor)
+        }
         drawContent()
     }
 }
@@ -95,6 +97,7 @@ fun MiuixBlurredBar(
     backdrop: LayerBackdrop?,
     blurEnabled: Boolean = true,
     scrollBehavior: ScrollBehavior? = null,
+    alpha: Float? = null,
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -109,9 +112,9 @@ fun MiuixBlurredBar(
                 modifier = Modifier
                     .matchParentSize()
                     .graphicsLayer {
-                        alpha = scrollBehavior?.state?.let {
+                        this.alpha = alpha ?: (scrollBehavior?.state?.let {
                             (-it.contentOffset / thresholdPx).coerceIn(0f, 1f)
-                        } ?: 1f
+                        } ?: 1f)
                     }
                     .progressiveTextureBlur(
                         backdrop = backdrop,
