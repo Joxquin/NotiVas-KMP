@@ -643,6 +643,8 @@ class CanvasRepository(
             val remainingMissing = missingMap.values.filter { m -> currentAssignmentsList.none { it.id == m.id } }
             val combinedAssignments = currentWithMissing + remainingMissing
 
+            val existingLocalAssignmentIds = localStore.getAssignmentList().map { it.id }.toSet()
+
             localStore.insertAssignments(combinedAssignments)
             preferencesManager.setSessionExpired(false)
 
@@ -655,7 +657,9 @@ class CanvasRepository(
                 }
 
                 val hasCompletedInitialSync = preferencesManager.hasCompletedInitialSync.first()
-                val knownAssignmentIds = preferencesManager.knownAssignmentIds.first()
+                val persistedKnownAssignmentIds = preferencesManager.knownAssignmentIds.first()
+                // Combinar los IDs persistidos con los que ya existian localmente en SQLite
+                val knownAssignmentIds = persistedKnownAssignmentIds + existingLocalAssignmentIds
                 val knownForumIds = preferencesManager.knownForumIds.first()
                 val notifAssignments = preferencesManager.notifNewAssignments.first()
                 val notifQuizzes = preferencesManager.notifNewQuizzes.first()
@@ -672,57 +676,152 @@ class CanvasRepository(
                     filterNewForos = notifForos
                 )
 
-                // Actualizar estado conocido en preferencias
+                // Actualizar estado conocido en preferencias de forma acumulativa (union)
+                val updatedKnownAssignmentIds = knownAssignmentIds + diff.allAssignmentIds
+                val updatedKnownForumIds = knownForumIds + diff.allForumIds
+                val isSuccessfulContentSync = combinedAssignments.isNotEmpty() || allCoursesList.isEmpty()
+                val nextHasCompletedInitialSync = hasCompletedInitialSync || isSuccessfulContentSync
+
                 preferencesManager.updateSyncContentState(
-                    knownAssignmentIds = diff.allAssignmentIds,
-                    knownForumIds = diff.allForumIds,
-                    hasCompletedInitialSync = true
+                    knownAssignmentIds = updatedKnownAssignmentIds,
+                    knownForumIds = updatedKnownForumIds,
+                    hasCompletedInitialSync = nextHasCompletedInitialSync
                 )
 
                 // Registrar en ActivityLog / notificar cambios relevantes
                 if (hasCompletedInitialSync) {
                     val coursesMap = allCoursesList.associateBy { it.id }
 
-                    diff.newAssignments.forEach { item ->
-                        val course = item.courseId?.let { coursesMap[it] }
-                        val courseName = course?.name ?: "Curso"
+                    // 1. Tareas publicadas
+                    if (diff.newAssignments.size > 3) {
                         notifyNewContentDiscovered(
-                            type = "NEW_ASSIGNMENT",
-                            title = "Nueva Tarea Publicada · $courseName",
-                            message = "Se ha publicado: ${item.title}",
-                            targetId = item.id,
-                            secondaryId = item.courseId,
-                            courseCode = course?.courseCode,
-                            courseName = courseName
+                            type = "NEW_ASSIGNMENT_BATCH",
+                            title = "Nuevas Tareas Publicadas",
+                            message = "Se han publicado ${diff.newAssignments.size} nuevas tareas en tus cursos",
+                            targetId = diff.newAssignments.firstOrNull()?.id,
+                            secondaryId = diff.newAssignments.firstOrNull()?.courseId,
+                            courseCode = null,
+                            courseName = "Varios cursos"
                         )
+                        val logs = diff.newAssignments.map { item ->
+                            val course = item.courseId?.let { coursesMap[it] }
+                            val courseName = course?.name ?: "Curso"
+                            val derivedCode = me.joxquin.notivas.util.CourseUtil.extractCourseTag(course?.courseCode, courseName)
+                            me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                                type = "CANVAS_NOTIFICATION",
+                                title = "Nueva Tarea Publicada · $courseName",
+                                description = "Se ha publicado: ${item.title}",
+                                timestamp = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis(),
+                                courseCode = derivedCode,
+                                courseName = courseName,
+                                targetId = item.id,
+                                secondaryId = item.courseId,
+                                extraInfo = "Notificación Canvas"
+                            )
+                        }
+                        localStore.saveActivityLogs(logs)
+                    } else {
+                        diff.newAssignments.forEach { item ->
+                            val course = item.courseId?.let { coursesMap[it] }
+                            val courseName = course?.name ?: "Curso"
+                            notifyNewContentDiscovered(
+                                type = "NEW_ASSIGNMENT",
+                                title = "Nueva Tarea Publicada · $courseName",
+                                message = "Se ha publicado: ${item.title}",
+                                targetId = item.id,
+                                secondaryId = item.courseId,
+                                courseCode = course?.courseCode,
+                                courseName = courseName
+                            )
+                        }
                     }
 
-                    diff.newQuizzes.forEach { item ->
-                        val course = item.courseId?.let { coursesMap[it] }
-                        val courseName = course?.name ?: "Curso"
+                    // 2. Exámenes disponibles
+                    if (diff.newQuizzes.size > 3) {
                         notifyNewContentDiscovered(
-                            type = "NEW_QUIZ",
-                            title = "Examen Disponible · $courseName",
-                            message = "${item.title} ya está disponible para resolver",
-                            targetId = item.id,
-                            secondaryId = item.courseId,
-                            courseCode = course?.courseCode,
-                            courseName = courseName
+                            type = "NEW_QUIZ_BATCH",
+                            title = "Nuevos Exámenes Disponibles",
+                            message = "Hay ${diff.newQuizzes.size} nuevos exámenes disponibles para resolver",
+                            targetId = diff.newQuizzes.firstOrNull()?.id,
+                            secondaryId = diff.newQuizzes.firstOrNull()?.courseId,
+                            courseCode = null,
+                            courseName = "Varios cursos"
                         )
+                        val logs = diff.newQuizzes.map { item ->
+                            val course = item.courseId?.let { coursesMap[it] }
+                            val courseName = course?.name ?: "Curso"
+                            val derivedCode = me.joxquin.notivas.util.CourseUtil.extractCourseTag(course?.courseCode, courseName)
+                            me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                                type = "CANVAS_NOTIFICATION",
+                                title = "Examen Disponible · $courseName",
+                                description = "${item.title} ya está disponible para resolver",
+                                timestamp = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis(),
+                                courseCode = derivedCode,
+                                courseName = courseName,
+                                targetId = item.id,
+                                secondaryId = item.courseId,
+                                extraInfo = "Notificación Canvas"
+                            )
+                        }
+                        localStore.saveActivityLogs(logs)
+                    } else {
+                        diff.newQuizzes.forEach { item ->
+                            val course = item.courseId?.let { coursesMap[it] }
+                            val courseName = course?.name ?: "Curso"
+                            notifyNewContentDiscovered(
+                                type = "NEW_QUIZ",
+                                title = "Examen Disponible · $courseName",
+                                message = "${item.title} ya está disponible para resolver",
+                                targetId = item.id,
+                                secondaryId = item.courseId,
+                                courseCode = course?.courseCode,
+                                courseName = courseName
+                            )
+                        }
                     }
 
-                    diff.newForos.forEach { item ->
-                        val course = item.courseId?.let { coursesMap[it] }
-                        val courseName = course?.name ?: "Curso"
+                    // 3. Foros académicos
+                    if (diff.newForos.size > 3) {
                         notifyNewContentDiscovered(
-                            type = "NEW_FORO",
-                            title = "Nuevo Foro Académico · $courseName",
-                            message = "Nuevo tema de debate: ${item.title}",
-                            targetId = item.id,
-                            secondaryId = item.courseId,
-                            courseCode = course?.courseCode,
-                            courseName = courseName
+                            type = "NEW_FORO_BATCH",
+                            title = "Nuevos Foros Académicos",
+                            message = "Se han abierto ${diff.newForos.size} nuevos temas de debate",
+                            targetId = diff.newForos.firstOrNull()?.id,
+                            secondaryId = diff.newForos.firstOrNull()?.courseId,
+                            courseCode = null,
+                            courseName = "Varios cursos"
                         )
+                        val logs = diff.newForos.map { item ->
+                            val course = item.courseId?.let { coursesMap[it] }
+                            val courseName = course?.name ?: "Curso"
+                            val derivedCode = me.joxquin.notivas.util.CourseUtil.extractCourseTag(course?.courseCode, courseName)
+                            me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
+                                type = "CANVAS_NOTIFICATION",
+                                title = "Nuevo Foro Académico · $courseName",
+                                description = "Nuevo tema de debate: ${item.title}",
+                                timestamp = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis(),
+                                courseCode = derivedCode,
+                                courseName = courseName,
+                                targetId = item.id,
+                                secondaryId = item.courseId,
+                                extraInfo = "Notificación Canvas"
+                            )
+                        }
+                        localStore.saveActivityLogs(logs)
+                    } else {
+                        diff.newForos.forEach { item ->
+                            val course = item.courseId?.let { coursesMap[it] }
+                            val courseName = course?.name ?: "Curso"
+                            notifyNewContentDiscovered(
+                                type = "NEW_FORO",
+                                title = "Nuevo Foro Académico · $courseName",
+                                message = "Nuevo tema de debate: ${item.title}",
+                                targetId = item.id,
+                                secondaryId = item.courseId,
+                                courseCode = course?.courseCode,
+                                courseName = courseName
+                            )
+                        }
                     }
                 }
             } catch (e: CancellationException) {

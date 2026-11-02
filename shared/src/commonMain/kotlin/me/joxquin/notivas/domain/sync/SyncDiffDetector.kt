@@ -63,34 +63,38 @@ object SyncDiffDetector {
         val newAssignments = mutableListOf<NewContentItem.PublishedAssignment>()
         val newQuizzes = mutableListOf<NewContentItem.OpenQuiz>()
 
-        currentAssignments.forEach { assignment ->
-            if (!knownAssignmentIds.contains(assignment.id)) {
-                if (assignment.isQuiz) {
-                    if (filterNewQuizzes) {
-                        newQuizzes.add(
-                            NewContentItem.OpenQuiz(
-                                id = assignment.id,
-                                courseId = assignment.courseId,
-                                title = assignment.name
+        // Si no habia asignaciones previamente conocidas, se inicializa el estado sin emitir alertas masivas
+        if (knownAssignmentIds.isNotEmpty()) {
+            currentAssignments.forEach { assignment ->
+                if (!knownAssignmentIds.contains(assignment.id)) {
+                    if (assignment.isQuiz) {
+                        if (filterNewQuizzes) {
+                            newQuizzes.add(
+                                NewContentItem.OpenQuiz(
+                                    id = assignment.id,
+                                    courseId = assignment.courseId,
+                                    title = assignment.name
+                                )
                             )
-                        )
-                    }
-                } else {
-                    if (filterNewAssignments) {
-                        newAssignments.add(
-                            NewContentItem.PublishedAssignment(
-                                id = assignment.id,
-                                courseId = assignment.courseId,
-                                title = assignment.name
+                        }
+                    } else {
+                        if (filterNewAssignments) {
+                            newAssignments.add(
+                                NewContentItem.PublishedAssignment(
+                                    id = assignment.id,
+                                    courseId = assignment.courseId,
+                                    title = assignment.name
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
         }
 
         val newForos = mutableListOf<NewContentItem.AcademicForum>()
-        if (filterNewForos) {
+        // Si no habia foros previamente conocidos, se inicializa el estado sin emitir alertas masivas
+        if (filterNewForos && knownForumIds.isNotEmpty()) {
             currentForums.forEach { forum ->
                 if (!knownForumIds.contains(forum.id)) {
                     newForos.add(
