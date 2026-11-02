@@ -1,8 +1,8 @@
 {
-  "version": "1.4.0",
-  "versionCode": 6,
-  "title": "NotiVas v1.4.0",
-  "notes": "• Browser Companion Extension Bridge: Added session forwarding for canvas web login and enabled the webApp module with compose and sqlite worker support.\n• Adaptive Navigation Rail: Implemented an adaptive navigation rail for wide screens across Miuix and Material interfaces.\n• Cloudflare Worker Proxy: Added a cloudflare worker proxy source, wrangler configuration, and CORS proxy middleware for improved web connectivity.\n• ProGuard Rules: Retained WorkManager and Room database constructors in ProGuard rules for Android stability.\n• Formulas Hero Card: Aligned the formulas hero card design tokens and badge with the performance card.",
+  "version": "1.5.0",
+  "versionCode": 7,
+  "title": "NotiVas v1.5.0",
+  "notes": "• Dual-Theme Architecture: Introduced canonical MIUIX dual-theme architecture with decoupled scaffolds, animated searchbars, and edge-to-edge copilot aura.\n• Academic Performance Views: Added separate academic performance views tailored for MIUIX and Material 3 Expressive, featuring real course averages and interactive widgets.\n• Interactive Resource Cards: Added interactive resource cards in the assistant with live thinking status, quick suggestions, and Google Search grounding tools.\n• Assistant Redesign: Redesigned assistant responses to an unbubbled style featuring waiting dots and live activity status.\n• Enhanced Features and Alerts: Added custom reminders with MIUIX snackbars, foros week grouping, new content alerts, and liquid glass topbar actions capsules with native pull-to-refresh.",
   "downloadUrl": "https://github.com/Joxquin/NotiVas-KMP/releases/latest",
   "mandatory": false
 }
