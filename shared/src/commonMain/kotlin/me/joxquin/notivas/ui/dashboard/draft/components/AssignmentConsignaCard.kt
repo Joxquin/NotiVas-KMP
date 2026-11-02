@@ -69,6 +69,21 @@ enum class ConsignaIconType {
     GENERAL
 }
 
+private val BASE_URL_REGEX = Regex("""^(https?://[^/]+)""")
+private val H3_REGEX = Regex("""(?s)<h3[^>]*>(.*?)</h3>""")
+private val NEXT_CARD_REGEX = Regex("""(?i)(<div[^>]*style=["'][^"']*(?:border-|background-color|display:\s*table)|<div[^>]*class=["'][^"']*card)""")
+private val HTML_TAG_REGEX = Regex("<[^>]*>")
+private val A_HREF_REGEX = Regex("""(?s)<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""")
+private val A_TAG_BODY_REGEX = Regex("""(?s)<a[^>]*>(.*?)</a>""")
+private val LI_REGEX = Regex("""(?s)<li[^>]*>(.*?)</li>""")
+private val UL_REGEX = Regex("""(?s)<ul[^>]*>.*?</ul>""")
+private val IMG_REGEX = Regex("""(?i)<img[^>]+src=["']([^"']+)["'][^>]*>""")
+private val WHITESPACE_REGEX = Regex("""\s+""")
+private val EMOJI_REGEX = Regex("""[\uD83C-\uDBFF\uDC00-\uDFFF]+""")
+
+private val CONSIGNA_SECTIONS_CACHE = mutableMapOf<String, List<ConsignaSection>>()
+
+
 data class ConsignaBullet(
     val label: String,
     val value: String,
@@ -97,11 +112,14 @@ fun AssignmentConsignaCard(
     val cookies = remember { AppModule.preferencesManager.getSessionCookies() }
     val baseUrl = remember(assignment.htmlUrl) {
         assignment.htmlUrl?.let { url ->
-            Regex("""^(https?://[^/]+)""").find(url)?.value
+            BASE_URL_REGEX.find(url)?.value
         } ?: AppModule.preferencesManager.getUniversityUrl()
     }
     val sections = remember(assignment.description, baseUrl) {
-        parseConsignaSections(assignment.description, baseUrl)
+        val key = "${assignment.id}_${assignment.description?.hashCode() ?: 0}_$baseUrl"
+        CONSIGNA_SECTIONS_CACHE.getOrPut(key) {
+            parseConsignaSections(assignment.description, baseUrl)
+        }
     }
 
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
@@ -668,7 +686,7 @@ private fun ConsignaImageItem(
 }
 
 private fun extractImageUrls(html: String, baseUrl: String?): List<String> {
-    val imgMatches = Regex("""(?i)<img[^>]+src=["']([^"']+)["'][^>]*>""").findAll(html)
+    val imgMatches = IMG_REGEX.findAll(html)
     return imgMatches.mapNotNull { match ->
         val rawSrc = match.groupValues[1].replace("&amp;", "&").trim()
         if (rawSrc.isBlank() || rawSrc.startsWith("data:")) return@mapNotNull null
@@ -685,12 +703,9 @@ private fun extractImageUrls(html: String, baseUrl: String?): List<String> {
 internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List<ConsignaSection> {
     if (html.isNullOrBlank()) return emptyList()
 
-    val h3Regex = Regex("""(?s)<h3[^>]*>(.*?)</h3>""")
-    val sectionMatches = h3Regex.findAll(html).toList()
+    val sectionMatches = H3_REGEX.findAll(html).toList()
 
     if (sectionMatches.isNotEmpty()) {
-        val nextCardRegex = Regex("""(?i)(<div[^>]*style=["'][^"']*(?:border-|background-color|display:\s*table)|<div[^>]*class=["'][^"']*card)""")
-
         return sectionMatches.mapIndexed { index, match ->
             val rawTitle = match.groupValues[1]
             val currH3Start = match.range.first
@@ -705,7 +720,7 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
 
             val rawBodyChunk = html.substring(currH3End, nextH3Start)
             val cardBoundaryMatch = if (index < sectionMatches.size - 1) {
-                nextCardRegex.find(rawBodyChunk)
+                NEXT_CARD_REGEX.find(rawBodyChunk)
             } else null
             val rawBody = if (cardBoundaryMatch != null) {
                 rawBodyChunk.substring(0, cardBoundaryMatch.range.first)
@@ -713,7 +728,7 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
                 rawBodyChunk
             }
 
-            val cleanTitle = rawTitle.replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
+            val cleanTitle = rawTitle.replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
             val iconType = when {
                 cleanTitle.contains("Capacidad", ignoreCase = true) -> ConsignaIconType.CAPACITY
                 cleanTitle.contains("Procedimiento", ignoreCase = true) -> ConsignaIconType.PROCEDURE
@@ -722,9 +737,9 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
                 else -> ConsignaIconType.GENERAL
             }
 
-            val allLinks = Regex("""(?s)<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""").findAll(rawBody).map {
+            val allLinks = A_HREF_REGEX.findAll(rawBody).map {
                 val url = it.groupValues[1]
-                val text = it.groupValues[2].replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
+                val text = it.groupValues[2].replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
                 text to url
             }.toList()
 
@@ -740,7 +755,7 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
 
             val otherLinks = allLinks.filter { it != downloadLink && !it.second.startsWith("\$CANVAS") }
 
-            val lis = Regex("""(?s)<li[^>]*>(.*?)</li>""").findAll(rawBody).map { liMatch ->
+            val lis = LI_REGEX.findAll(rawBody).map { liMatch ->
                 val liHtml = liMatch.groupValues[1]
                 val isHighlighted = liHtml.contains("feb2b2", ignoreCase = true) ||
                         liHtml.contains("c53030", ignoreCase = true) ||
@@ -752,29 +767,29 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
                 val label: String
                 val value: String
                 if (colonIndex != -1) {
-                    val rawLabel = liHtml.substring(0, colonIndex).replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
-                    val rawValue = liHtml.substring(colonIndex + 1).replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
+                    val rawLabel = liHtml.substring(0, colonIndex).replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
+                    val rawValue = liHtml.substring(colonIndex + 1).replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
                     label = rawLabel
                     value = rawValue
                 } else {
                     label = ""
-                    value = liHtml.replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
+                    value = liHtml.replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
                 }
                 ConsignaBullet(label = label, value = value, isHighlighted = isHighlighted)
             }.toList()
 
             var cleanText = rawBody
-                .replace(Regex("""(?s)<ul[^>]*>.*?</ul>"""), "")
-                .replace(Regex("""(?s)<a[^>]*>(.*?)</a>""")) { it.groupValues[1] }
-                .replace(Regex("<[^>]*>"), " ")
+                .replace(UL_REGEX, "")
+                .replace(A_TAG_BODY_REGEX) { it.groupValues[1] }
+                .replace(HTML_TAG_REGEX, " ")
                 .cleanEmoji()
                 .trim()
-            cleanText = cleanText.replace(Regex("""\s+"""), " ")
+            cleanText = cleanText.replace(WHITESPACE_REGEX, " ")
 
             if (downloadLink != null && downloadLink.first.isNotBlank()) {
                 val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
                 if (cleanDlLabel.isNotBlank()) {
-                    cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(Regex("""\s+"""), " ")
+                    cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(WHITESPACE_REGEX, " ")
                 }
             }
 
@@ -794,9 +809,9 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
         }
     }
 
-    val allLinks = Regex("""(?s)<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""").findAll(html).map {
+    val allLinks = A_HREF_REGEX.findAll(html).map {
         val url = it.groupValues[1]
-        val text = it.groupValues[2].replace(Regex("<[^>]*>"), "").cleanEmoji().trim()
+        val text = it.groupValues[2].replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
         text to url
     }.toList()
 
@@ -809,17 +824,17 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
 
     val imageUrls = extractImageUrls(html, baseUrl)
     var cleanText = html
-        .replace(Regex("""(?s)<ul[^>]*>.*?</ul>"""), "")
-        .replace(Regex("""(?s)<a[^>]*>(.*?)</a>""")) { it.groupValues[1] }
-        .replace(Regex("<[^>]*>"), " ")
+        .replace(UL_REGEX, "")
+        .replace(A_TAG_BODY_REGEX) { it.groupValues[1] }
+        .replace(HTML_TAG_REGEX, " ")
         .cleanEmoji()
         .trim()
-        .replace(Regex("""\s+"""), " ")
+        .replace(WHITESPACE_REGEX, " ")
 
     if (downloadLink != null && downloadLink.first.isNotBlank()) {
         val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
         if (cleanDlLabel.isNotBlank()) {
-            cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(Regex("""\s+"""), " ")
+            cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(WHITESPACE_REGEX, " ")
         }
     }
 
@@ -842,7 +857,7 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
 }
 
 private fun String.cleanEmoji(): String {
-    return this.replace(Regex("""[\uD83C-\uDBFF\uDC00-\uDFFF]+"""), "")
+    return this.replace(EMOJI_REGEX, "")
         .replace("📥", "")
         .replace("🔬", "")
         .replace("💡", "")
