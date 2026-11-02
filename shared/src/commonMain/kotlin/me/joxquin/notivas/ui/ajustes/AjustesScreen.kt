@@ -78,6 +78,16 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixAutoSettleScrollConnection
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Refresh
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import top.yukonga.miuix.kmp.window.WindowDialog
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
@@ -220,70 +230,61 @@ fun AjustesScreen(
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
-        val contentPadding = PaddingValues(
-            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-            bottom = if (isWideScreen) 24.dp else 100.dp
-        )
-        val autoSettleConnection = rememberMiuixAutoSettleScrollConnection(
-            listState = lazyListState,
-            thresholdDp = 72.dp
-        )
+        val backdrop = rememberMiuixBlurBackdrop()
+        val scrollBehavior = MiuixScrollBehavior()
 
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MiuixTheme.colorScheme.surface)
-        ) {
-            LazyColumn(
-                state = lazyListState,
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            topBar = {
+                MiuixBlurredBar(
+                    backdrop = backdrop,
+                    scrollBehavior = scrollBehavior
+                ) {
+                    MiuixPageTopAppBar(
+                        title = stringResource(Res.string.settings_title),
+                        subtitle = stringResource(Res.string.settings_subtitle),
+                        scrollBehavior = scrollBehavior,
+                        actions = {
+                            MiuixGlassyActionsContainer(
+                                backdrop = backdrop
+                            ) {
+                                top.yukonga.miuix.kmp.basic.IconButton(
+                                    onClick = { viewModel.verifyToken() }
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Refresh,
+                                        contentDescription = "Sincronizar",
+                                        tint = MiuixTheme.colorScheme.onBackground
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+            },
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            val contentPadding = miuixPageContentPadding(
+                innerPadding = innerPadding,
+                extraTop = 8.dp,
+                extraStart = 0.dp,
+                extraEnd = 0.dp,
+                extraBottom = if (isWideScreen) 24.dp else 100.dp
+            )
+
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .scrollEndHaptic()
-                    .overScrollVertical()
-                    .nestedScroll(autoSettleConnection),
-                contentPadding = contentPadding,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .background(MiuixTheme.colorScheme.surface)
+                    .miuixBackdropModifier(backdrop)
             ) {
-                // 0. Large Title Canónico HyperOS Miuix (32.sp)
-                item {
-                    val firstIndex = lazyListState.firstVisibleItemIndex
-                    val firstOffset = lazyListState.firstVisibleItemScrollOffset
-                    val isHeaderCollapsed = firstIndex > 0 || firstOffset >= 72
-
-                    val largeTitleAlpha by androidx.compose.animation.core.animateFloatAsState(
-                        targetValue = if (isHeaderCollapsed) 0f else 1f,
-                        animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
-                        label = "LargeTitleAlpha"
-                    )
-                    val largeTitleTranslationY by androidx.compose.animation.core.animateFloatAsState(
-                        targetValue = if (isHeaderCollapsed) -20f else 0f,
-                        animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
-                        label = "LargeTitleTranslationY"
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                            .graphicsLayer {
-                                alpha = largeTitleAlpha
-                                translationY = largeTitleTranslationY
-                            }
-                    ) {
-                        MiuixText(
-                            text = stringResource(Res.string.settings_title),
-                            fontSize = MiuixTheme.textStyles.title1.fontSize,
-                            fontWeight = FontWeight.Normal,
-                            color = MiuixTheme.colorScheme.onSurface
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        MiuixText(
-                            text = stringResource(Res.string.settings_subtitle),
-                            style = MiuixTheme.textStyles.body2,
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                        )
-                    }
-                }
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixPageScrollModifiers(scrollBehavior),
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
 
                 // 1. Identidad Estudiantil Canvas
                 item {
@@ -399,8 +400,9 @@ fun AjustesScreen(
                 trackPadding = contentPadding
             )
         }
-        return
     }
+    return
+}
 
     // ─── MODO MATERIAL DESIGN 3 ─────────────────────────────────────────────
     val isScrolled by remember {

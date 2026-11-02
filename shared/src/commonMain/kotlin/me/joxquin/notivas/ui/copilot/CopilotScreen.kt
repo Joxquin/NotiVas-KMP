@@ -72,6 +72,13 @@ import me.joxquin.notivas.ui.copilot.components.CopilotMessageList
 import me.joxquin.notivas.ui.copilot.components.CopilotQuickChipsRow
 import me.joxquin.notivas.ui.copilot.components.CopilotWarningBanner
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Recent
+import top.yukonga.miuix.kmp.icon.extended.Create
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
@@ -138,8 +145,6 @@ fun CopilotScreen(
             label = "copilotBottomPadding"
         )
 
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-
         val auraAlpha by animateFloatAsState(
             targetValue = if (uiState.isLoading) 1f else 0f,
             animationSpec = tween(
@@ -149,100 +154,154 @@ fun CopilotScreen(
             label = "copilotMiuixAuraAlpha"
         )
 
-        MonetAuraBackground(
-            alpha = auraAlpha,
-            surfaceColor = MiuixTheme.colorScheme.surface,
+        val backdrop = rememberMiuixBlurBackdrop(withSurfaceBackground = false)
+
+        Box(
             modifier = modifier.fillMaxSize()
         ) {
-            // Capa 1: Flujo de mensajes Edge-to-Edge que se desliza por detrás del TopBar y del InputBar
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                CopilotMessageList(
-                    messages = uiState.messages,
-                    isLoading = uiState.isLoading,
-                    listState = listState,
-                    coursesCount = uiState.courses.size,
-                    currentModel = uiState.currentModel,
-                    onSuggestionClick = { prompt ->
-                        viewModel.updateInputText(prompt)
-                        viewModel.sendMessage()
-                    },
-                    thinkingStatus = uiState.thinkingStatus,
-                    onRegenerate = { viewModel.regenerateLastResponse() },
-                    isMessageAnimated = { viewModel.isMessageAnimated(it) },
-                    onMessageAnimated = { viewModel.markMessageAnimated(it) },
-                    onOpenAssignmentDraft = onOpenAssignmentDraft,
-                    onOpenForoDetail = onOpenForoDetail,
-                    knownAssignments = allAssignments,
-                    courses = uiState.courses,
-                    themeStyle = AppThemeStyle.MIUIX,
-                    bottomPadding = animatedBottomPadding,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                top.yukonga.miuix.kmp.basic.VerticalScrollBar(
-                    adapter = top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter(listState),
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(
-                            top = statusBarTop + 68.dp,
-                            bottom = animatedBottomPadding + 60.dp
+            top.yukonga.miuix.kmp.basic.Scaffold(
+                containerColor = Color.Transparent,
+                topBar = {
+                    MiuixBlurredBar(
+                        backdrop = backdrop,
+                    ) {
+                        top.yukonga.miuix.kmp.basic.SmallTopAppBar(
+                            title = stringResource(Res.string.copilot_title),
+                            color = Color.Transparent,
+                            navigationIcon = {
+                                me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                    backdrop = backdrop
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.IconButton(
+                                        onClick = { isHistorySheetVisible = true }
+                                    ) {
+                                        top.yukonga.miuix.kmp.basic.Icon(
+                                            imageVector = MiuixIcons.Recent,
+                                            contentDescription = "Historial",
+                                            tint = MiuixTheme.colorScheme.onBackground
+                                        )
+                                    }
+                                }
+                            },
+                            actions = {
+                                me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                                    backdrop = backdrop
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.IconButton(
+                                        onClick = { viewModel.startNewSession() }
+                                    ) {
+                                        top.yukonga.miuix.kmp.basic.Icon(
+                                            imageVector = MiuixIcons.Create,
+                                            contentDescription = "Nuevo Chat",
+                                            tint = MiuixTheme.colorScheme.onBackground
+                                        )
+                                    }
+                                }
+                            }
                         )
-                )
-            }
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            ) { innerPadding ->
+                // Capa 1: Flujo de mensajes Edge-to-Edge que se desliza por detrás del TopBar y del InputBar
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .miuixBackdropModifier(backdrop)
+                ) {
+                    MonetAuraBackground(
+                        alpha = auraAlpha,
+                        surfaceColor = MiuixTheme.colorScheme.surface,
+                        modifier = Modifier.fillMaxSize()
+                    )
 
-            // Capa 2: Controles flotantes inferiores (Warning Banner si aplica, Popup de @ y Cápsula de entrada)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = animatedBottomPadding)
-            ) {
-                // Alerta de API Key o activación
-                CopilotWarningBanner(
-                    isCopilotDisabled = !uiState.isCopilotEnabled,
-                    hasApiKey = uiState.hasApiKey,
-                    onNavigateToSettings = onNavigateToSettings,
-                    themeStyle = AppThemeStyle.MIUIX
-                )
-
-                // Popup interactivo para @ menciones de cursos y recursos
-                CopilotMentionPopup(
-                    isVisible = uiState.isMentionPopupVisible,
-                    mentionStep = uiState.mentionStep,
-                    selectedCourse = uiState.selectedCourseForMention,
-                    courses = uiState.courses,
-                    resources = uiState.mentionResourceList,
-                    onSelectCourse = { viewModel.selectMentionCourse(it) },
-                    onSelectResource = { viewModel.selectMentionResource(it) },
-                    onBackToCourses = { viewModel.backToCourseSelection() },
-                    onDismiss = { viewModel.dismissMentionPopup() },
-                    themeStyle = AppThemeStyle.MIUIX
-                )
-
-                // Fila de sugerencias rápidas deslizable
-                if (uiState.hasApiKey && uiState.isCopilotEnabled && !uiState.isLoading && uiState.messages.isNotEmpty()) {
-                    CopilotQuickChipsRow(
-                        onChipClick = { prompt ->
+                    CopilotMessageList(
+                        messages = uiState.messages,
+                        isLoading = uiState.isLoading,
+                        listState = listState,
+                        coursesCount = uiState.courses.size,
+                        currentModel = uiState.currentModel,
+                        onSuggestionClick = { prompt ->
                             viewModel.updateInputText(prompt)
                             viewModel.sendMessage()
                         },
-                        themeStyle = AppThemeStyle.MIUIX
+                        thinkingStatus = uiState.thinkingStatus,
+                        onRegenerate = { viewModel.regenerateLastResponse() },
+                        isMessageAnimated = { viewModel.isMessageAnimated(it) },
+                        onMessageAnimated = { viewModel.markMessageAnimated(it) },
+                        onOpenAssignmentDraft = onOpenAssignmentDraft,
+                        onOpenForoDetail = onOpenForoDetail,
+                        knownAssignments = allAssignments,
+                        courses = uiState.courses,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        bottomPadding = animatedBottomPadding,
+                        modifier = Modifier.fillMaxSize()
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+
+                    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                    top.yukonga.miuix.kmp.basic.VerticalScrollBar(
+                        adapter = top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter(listState),
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(
+                                top = statusBarTop + 68.dp,
+                                bottom = animatedBottomPadding + 60.dp
+                            )
+                    )
                 }
 
-                // Cápsula de entrada flotante Miuix
-                CopilotInputBar(
-                    inputText = uiState.inputText,
-                    isLoading = uiState.isLoading,
-                    enabled = uiState.hasApiKey && uiState.isCopilotEnabled,
-                    onInputChange = { viewModel.updateInputText(it) },
-                    onSend = { viewModel.sendMessage() },
-                    onTriggerMention = { viewModel.triggerMention() },
-                    themeStyle = AppThemeStyle.MIUIX
-                )
+                // Capa 2: Controles flotantes inferiores (Warning Banner si aplica, Popup de @ y Cápsula de entrada)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = animatedBottomPadding)
+                ) {
+                    // Alerta de API Key o activación
+                    CopilotWarningBanner(
+                        isCopilotDisabled = !uiState.isCopilotEnabled,
+                        hasApiKey = uiState.hasApiKey,
+                        onNavigateToSettings = onNavigateToSettings,
+                        themeStyle = AppThemeStyle.MIUIX
+                    )
+
+                    // Popup interactivo para @ menciones de cursos y recursos
+                    CopilotMentionPopup(
+                        isVisible = uiState.isMentionPopupVisible,
+                        mentionStep = uiState.mentionStep,
+                        selectedCourse = uiState.selectedCourseForMention,
+                        courses = uiState.courses,
+                        resources = uiState.mentionResourceList,
+                        onSelectCourse = { viewModel.selectMentionCourse(it) },
+                        onSelectResource = { viewModel.selectMentionResource(it) },
+                        onBackToCourses = { viewModel.backToCourseSelection() },
+                        onDismiss = { viewModel.dismissMentionPopup() },
+                        themeStyle = AppThemeStyle.MIUIX
+                    )
+
+                    // Fila de sugerencias rápidas deslizable
+                    if (uiState.hasApiKey && uiState.isCopilotEnabled && !uiState.isLoading && uiState.messages.isNotEmpty()) {
+                        CopilotQuickChipsRow(
+                            onChipClick = { prompt ->
+                                viewModel.updateInputText(prompt)
+                                viewModel.sendMessage()
+                            },
+                            themeStyle = AppThemeStyle.MIUIX
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+
+                    // Cápsula de entrada flotante Miuix
+                    CopilotInputBar(
+                        inputText = uiState.inputText,
+                        isLoading = uiState.isLoading,
+                        enabled = uiState.hasApiKey && uiState.isCopilotEnabled,
+                        onInputChange = { viewModel.updateInputText(it) },
+                        onSend = { viewModel.sendMessage() },
+                        onTriggerMention = { viewModel.triggerMention() },
+                        themeStyle = AppThemeStyle.MIUIX
+                    )
+                }
             }
         }
         return

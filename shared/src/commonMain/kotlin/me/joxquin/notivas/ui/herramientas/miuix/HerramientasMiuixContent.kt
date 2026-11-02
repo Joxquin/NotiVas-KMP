@@ -3,49 +3,43 @@ package me.joxquin.notivas.ui.herramientas.miuix
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.VerticalScrollBar
-import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import org.jetbrains.compose.resources.stringResource
-import me.joxquin.notivas.shared.resources.Res
-import me.joxquin.notivas.shared.resources.herramientas_title
-import me.joxquin.notivas.shared.resources.herramientas_subtitle
-import me.joxquin.notivas.shared.resources.herramientas_modules_header
-
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import top.yukonga.miuix.kmp.basic.DropdownEntry
+import top.yukonga.miuix.kmp.basic.DropdownItem
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Tune
+import top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
+import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
+import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.foros.ForosViewModel
 import me.joxquin.notivas.ui.notas.NotasViewModel
-
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import me.joxquin.notivas.ui.components.miuix.rememberMiuixAutoSettleScrollConnection
 
 @Composable
 fun HerramientasMiuixContent(
@@ -56,129 +50,149 @@ fun HerramientasMiuixContent(
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenArchive: () -> Unit = {},
     onOpenTuneSettings: () -> Unit = {},
+    onOpenCatalogImport: () -> Unit = {},
+    onImportJsonClick: () -> Unit = {},
+    onExportJsonClick: () -> Unit = {},
+    onResetGroups: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
-    val uiState by (viewModel?.uiState?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(null) })
-    val forosUiState by (forosViewModel?.uiState?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(null) })
+    val uiState by (viewModel?.uiState?.collectAsState() ?: remember { androidx.compose.runtime.mutableStateOf(null) })
+    val forosUiState by (forosViewModel?.uiState?.collectAsState() ?: remember { androidx.compose.runtime.mutableStateOf(null) })
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MiuixTheme.colorScheme.surface)
-    ) {
+    val backdrop = rememberMiuixBlurBackdrop()
+    val scrollBehavior = MiuixScrollBehavior()
+
+    val importCatalogLabel = stringResource(Res.string.groups_menu_import_catalog)
+    val importJsonLabel = stringResource(Res.string.groups_menu_import_json)
+    val exportJsonLabel = stringResource(Res.string.groups_menu_export_json)
+    val resetGroupsLabel = stringResource(Res.string.groups_menu_reset_groups)
+
+    val herramientasDropdownEntries = remember(importCatalogLabel, importJsonLabel, exportJsonLabel, resetGroupsLabel) {
+        listOf(
+            DropdownEntry(
+                items = listOf(
+                    DropdownItem(
+                        text = importCatalogLabel,
+                        onClick = onOpenCatalogImport
+                    ),
+                    DropdownItem(
+                        text = importJsonLabel,
+                        onClick = onImportJsonClick
+                    ),
+                    DropdownItem(
+                        text = exportJsonLabel,
+                        onClick = onExportJsonClick
+                    ),
+                    DropdownItem(
+                        text = resetGroupsLabel,
+                        onClick = onResetGroups
+                    )
+                )
+            )
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            MiuixBlurredBar(
+                backdrop = backdrop,
+                scrollBehavior = scrollBehavior
+            ) {
+                MiuixPageTopAppBar(
+                    title = stringResource(Res.string.herramientas_title),
+                    subtitle = stringResource(Res.string.herramientas_subtitle),
+                    scrollBehavior = scrollBehavior,
+                    actions = {
+                        MiuixGlassyActionsContainer(
+                            backdrop = backdrop
+                        ) {
+                            WindowIconDropdownMenu(
+                                entries = herramientasDropdownEntries,
+                                collapseOnSelection = true
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Tune,
+                                    contentDescription = stringResource(Res.string.groups_menu_options_title),
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+        },
+        modifier = modifier.fillMaxSize()
+    ) { innerPadding ->
         val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
-        val contentPadding = PaddingValues(
-            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-            bottom = if (isWideScreen) 24.dp else 120.dp
+        val contentPadding = miuixPageContentPadding(
+            innerPadding = innerPadding,
+            extraTop = 8.dp,
+            extraStart = 0.dp,
+            extraEnd = 0.dp,
+            extraBottom = if (isWideScreen) 24.dp else 120.dp
         )
 
-        val autoSettleConnection = rememberMiuixAutoSettleScrollConnection(
-            listState = lazyListState,
-            thresholdDp = 72.dp
-        )
-
-        LazyColumn(
-            state = lazyListState,
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .scrollEndHaptic()
-                .overScrollVertical()
-                .nestedScroll(autoSettleConnection),
-            contentPadding = contentPadding,
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .background(MiuixTheme.colorScheme.surface)
+                .miuixBackdropModifier(backdrop)
         ) {
-            // ─── LARGE TITLE CANÓNICO HYPEROS MIUIX (32.sp) ─────────
-            item {
-                val firstIndex = lazyListState.firstVisibleItemIndex
-                val firstOffset = lazyListState.firstVisibleItemScrollOffset
-                val isHeaderCollapsed = firstIndex > 0 || firstOffset >= 72
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .miuixPageScrollModifiers(scrollBehavior),
+                contentPadding = contentPadding,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                item {
+                    SmallTitle(
+                        text = stringResource(Res.string.herramientas_modules_header),
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
 
-                val largeTitleAlpha by androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (isHeaderCollapsed) 0f else 1f,
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
-                    label = "LargeTitleAlpha"
-                )
-                val largeTitleTranslationY by androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (isHeaderCollapsed) -20f else 0f,
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200),
-                    label = "LargeTitleTranslationY"
-                )
+                // ─── CARD 1: Hero Bento Progreso & Notas ─────────────────
+                item {
+                    PlannerHeroBentoCard(
+                        uiState = uiState,
+                        onClick = onOpenProgreso
+                    )
+                }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .graphicsLayer {
-                            alpha = largeTitleAlpha
-                            translationY = largeTitleTranslationY
-                        },
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(Res.string.herramientas_title),
-                            fontSize = MiuixTheme.textStyles.title1.fontSize,
-                            fontWeight = FontWeight.Normal,
-                            color = MiuixTheme.colorScheme.onSurface
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = stringResource(Res.string.herramientas_subtitle),
-                            style = MiuixTheme.textStyles.body2,
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                        )
-                    }
+                // ─── CARD 2: Simulador What-If ──────────────────────────
+                item {
+                    WhatIfBentoCard(
+                        onClick = onOpenProgreso
+                    )
+                }
+
+                // ─── CARD 3: Foros de Discusión ─────────────────────────
+                item {
+                    ForosBentoCard(
+                        forosUiState = forosUiState,
+                        onClick = onOpenForos,
+                        onOpenTopic = onOpenForoDetail
+                    )
+                }
+
+                // ─── CARD 4: Historial & Archivo de Tareas ──────────────
+                item {
+                    ArchiveBentoCard(onClick = onOpenArchive)
+                }
+
+                item {
+                    Spacer(Modifier.height(16.dp))
                 }
             }
 
-            item {
-                SmallTitle(
-                    text = stringResource(Res.string.herramientas_modules_header),
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
-
-            // ─── CARD 1: Hero Bento Progreso & Notas ─────────────────
-            item {
-                PlannerHeroBentoCard(
-                    uiState = uiState,
-                    onClick = onOpenProgreso
-                )
-            }
-
-            // ─── CARD 2: Simulador What-If ──────────────────────────
-            item {
-                WhatIfBentoCard(
-                    onClick = onOpenProgreso
-                )
-            }
-
-            // ─── CARD 3: Foros de Discusión ─────────────────────────
-            item {
-                ForosBentoCard(
-                    forosUiState = forosUiState,
-                    onClick = onOpenForos,
-                    onOpenTopic = onOpenForoDetail
-                )
-            }
-
-
-            // ─── CARD 3: Historial & Archivo de Tareas ──────────────
-            item {
-                ArchiveBentoCard(onClick = onOpenArchive)
-            }
-
-            item {
-                Spacer(Modifier.height(16.dp))
-            }
+            VerticalScrollBar(
+                adapter = rememberScrollBarAdapter(lazyListState),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                trackPadding = contentPadding
+            )
         }
-
-        VerticalScrollBar(
-            adapter = rememberScrollBarAdapter(lazyListState),
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            trackPadding = contentPadding
-        )
     }
 }

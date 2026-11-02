@@ -341,7 +341,11 @@ fun MainAppShell(
         }
     }
 
-    val contentBackdrop = rememberLayerBackdrop()
+    val surfaceColor = MiuixTheme.colorScheme.surface
+    val contentBackdrop = rememberLayerBackdrop {
+        drawRect(surfaceColor)
+        drawContent()
+    }
     var showingNotasDetail by remember { mutableStateOf(false) }
     var showingForosDetail by remember { mutableStateOf(false) }
     var showingArchiveDetail by remember { mutableStateOf(false) }
@@ -605,190 +609,8 @@ fun MainAppShell(
                             }
                         }
 
-                        val copilotUiState by copilotViewModel.uiState.collectAsState()
                         val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
-                        val userProfile by dashboardViewModel.userProfile.collectAsState()
                         val isDashboardSearchExpandingOrExpanded = currentDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
-                        val topBarContentAlpha by androidx.compose.animation.core.animateFloatAsState(
-                            targetValue = if (isDashboardSearchExpandingOrExpanded) 0f else 1f,
-                            animationSpec = androidx.compose.animation.core.tween(200),
-                            label = "TopBarContentAlpha"
-                        )
-
-                        // Capa 2: Barra Superior Canonica Unificada (Top Overlay) para la ruta principal
-                        MiuixTopAppBar(
-                            title = when (currentDestination) {
-                                MainDestination.Inicio -> stringResource(Res.string.app_name)
-                                MainDestination.Herramientas -> stringResource(Res.string.herramientas_title)
-                                MainDestination.Copilot -> stringResource(Res.string.copilot_title)
-                                MainDestination.Ajustes -> stringResource(Res.string.settings_title)
-                                else -> stringResource(Res.string.app_name)
-                            },
-                            isScrolled = when {
-                                currentDestination == MainDestination.Inicio -> isInicioScrolled
-                                currentDestination == MainDestination.Herramientas -> herramientasScrollOffset > 0f
-                                currentDestination == MainDestination.Ajustes -> isAjustesScrolled
-                                currentDestination == MainDestination.Copilot -> true
-                                else -> false
-                            },
-                            scrollOffset = when {
-                                currentDestination == MainDestination.Inicio -> inicioScrollOffset
-                                currentDestination == MainDestination.Herramientas -> herramientasScrollOffset
-                                currentDestination == MainDestination.Ajustes -> ajustesScrollOffset
-                                currentDestination == MainDestination.Copilot -> if (isCopilotScrolled) copilotScrollOffset else 52f
-                                else -> 0f
-                            },
-                            backdrop = contentBackdrop,
-                            titleAlwaysVisible = false,
-                            navigationIcon = when (currentDestination) {
-                                MainDestination.Copilot -> {
-                                    {
-                                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                            backdrop = contentBackdrop
-                                        ) {
-                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                                onClick = { copilotViewModel.showHistorySheet() }
-                                            ) {
-                                                top.yukonga.miuix.kmp.basic.Icon(
-                                                    imageVector = MiuixIcons.Recent,
-                                                    contentDescription = "Historial",
-                                                    tint = MiuixTheme.colorScheme.onBackground
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                else -> null
-                            },
-                            actions = {
-                                when {
-                                    isDashboardSearchExpandingOrExpanded -> {}
-                                    currentDestination == MainDestination.Inicio -> {
-                                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                            backdrop = contentBackdrop
-                                        ) {
-                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                                onClick = { miuixNavigator.push(MiuixRoute.Schedule) }
-                                            ) {
-                                                top.yukonga.miuix.kmp.basic.Icon(
-                                                    imageVector = MiuixIcons.Weeks,
-                                                    contentDescription = stringResource(Res.string.schedule_screen_title),
-                                                    tint = MiuixTheme.colorScheme.onBackground
-                                                )
-                                            }
-                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                                onClick = { miuixNavigator.push(MiuixRoute.RecentActivity) }
-                                            ) {
-                                                top.yukonga.miuix.kmp.basic.Icon(
-                                                    imageVector = MiuixIcons.Alarm,
-                                                    contentDescription = stringResource(Res.string.recent_activity_title),
-                                                    tint = MiuixTheme.colorScheme.onBackground
-                                                )
-                                            }
-                                        }
-                                    }
-                                    currentDestination == MainDestination.Copilot -> {
-                                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                            backdrop = contentBackdrop
-                                        ) {
-                                            me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction(
-                                                onClick = { copilotViewModel.startNewSession() }
-                                            ) {
-                                                top.yukonga.miuix.kmp.basic.Icon(
-                                                    imageVector = MiuixIcons.Create,
-                                                    contentDescription = "Nuevo Chat",
-                                                    tint = MiuixTheme.colorScheme.onBackground
-                                                )
-                                            }
-                                        }
-                                    }
-                                    currentDestination == MainDestination.Ajustes -> {
-                                        // Sin botón circular de refresco fijo; el refresco se hace con Pull-to-Refresh
-                                    }
-                                    currentDestination == MainDestination.Herramientas -> {
-                                        val importCatalogLabel = stringResource(Res.string.groups_menu_import_catalog)
-                                        val importJsonLabel = stringResource(Res.string.groups_menu_import_json)
-                                        val exportJsonLabel = stringResource(Res.string.groups_menu_export_json)
-                                        val resetGroupsLabel = stringResource(Res.string.groups_menu_reset_groups)
-
-                                        val herramientasDropdownEntries = remember(importCatalogLabel, importJsonLabel, exportJsonLabel, resetGroupsLabel) {
-                                            listOf(
-                                                top.yukonga.miuix.kmp.basic.DropdownEntry(
-                                                    items = listOf(
-                                                        top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                            text = importCatalogLabel,
-                                                            onClick = { showCatalogImportDialog = true }
-                                                        ),
-                                                        top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                            text = importJsonLabel,
-                                                            onClick = { filePicker.launchFilePicker() }
-                                                        ),
-                                                        top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                            text = exportJsonLabel,
-                                                            onClick = { filePicker.launchFileCreator("notivas_ponderacion.json") }
-                                                        ),
-                                                        top.yukonga.miuix.kmp.basic.DropdownItem(
-                                                            text = resetGroupsLabel,
-                                                            onClick = { notasViewModel.resetAllSimulationGroups() }
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        }
-
-                                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                            backdrop = contentBackdrop
-                                        ) {
-                                            top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu(
-                                                entries = herramientasDropdownEntries,
-                                                collapseOnSelection = true
-                                            ) {
-                                                top.yukonga.miuix.kmp.basic.Icon(
-                                                    imageVector = MiuixIcons.Tune,
-                                                    contentDescription = stringResource(Res.string.groups_menu_options_title),
-                                                    tint = MiuixTheme.colorScheme.onBackground
-                                                )
-                                            }
-                                        }
-                                    }
-                                    else -> {}
-                                }
-                            },
-                            bottomContent = if (currentDestination == MainDestination.Inicio) {
-                                {
-                                    val largeTitleAlpha = (1f - (inicioScrollOffset / 56f)).coerceIn(0f, 1f)
-                                    val effectiveTitleAlpha = largeTitleAlpha * topBarContentAlpha
-                                    val largeTitleTranslationY = -inicioScrollOffset * 0.35f
-                                    val studentName = userProfile?.name ?: "Estudiante"
-
-                                    androidx.compose.foundation.layout.Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 20.dp, vertical = 2.dp)
-                                            .graphicsLayer {
-                                                alpha = effectiveTitleAlpha
-                                                translationY = largeTitleTranslationY
-                                            }
-                                    ) {
-                                        top.yukonga.miuix.kmp.basic.Text(
-                                            text = "Bienvenido, ${studentName.substringBefore(" ")}",
-                                            fontSize = MiuixTheme.textStyles.title1.fontSize,
-                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Normal,
-                                            color = MiuixTheme.colorScheme.onSurface
-                                        )
-                                        androidx.compose.foundation.layout.Spacer(Modifier.height(2.dp))
-                                        top.yukonga.miuix.kmp.basic.Text(
-                                            text = stringResource(Res.string.dashboard_academic_title),
-                                            style = MiuixTheme.textStyles.body2,
-                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                                        )
-                                    }
-                                }
-                            } else null,
-                            onNavigationClick = null,
-                            contentAlpha = topBarContentAlpha,
-                            modifier = Modifier.align(Alignment.TopCenter)
-                        )
 
                         // Capa 3: FloatingNavigationBar ("Liquid Glass")
                         if (!isWideScreen) {
