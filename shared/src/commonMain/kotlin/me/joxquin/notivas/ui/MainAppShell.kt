@@ -143,6 +143,10 @@ class MainPagerState(
         navJob = coroutineScope.launch {
             val myJob = coroutineContext.job
             try {
+                if (abs(targetIndex - pagerState.currentPage) > 1) {
+                    val snapPage = if (targetIndex > pagerState.currentPage) targetIndex - 1 else targetIndex + 1
+                    pagerState.scrollToPage(snapPage)
+                }
                 pagerState.scroll(MutatePriority.UserInput) {
                     val distance = abs(targetIndex - pagerState.currentPage).coerceAtLeast(1)
                     val duration = 80 * distance + 120
@@ -277,69 +281,10 @@ fun MainAppShell(
     }
 
     val inicioListState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val isInicioScrolled by remember {
-        derivedStateOf {
-            inicioListState.firstVisibleItemIndex > 0 || inicioListState.firstVisibleItemScrollOffset > 72
-        }
-    }
-    val inicioScrollOffset by remember {
-        derivedStateOf {
-            if (inicioListState.firstVisibleItemIndex > 0) 100f
-            else inicioListState.firstVisibleItemScrollOffset.toFloat()
-        }
-    }
-
     val activityListState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val isActivityScrolled by remember {
-        derivedStateOf {
-            activityListState.firstVisibleItemIndex > 0 || activityListState.firstVisibleItemScrollOffset > 40
-        }
-    }
-    val activityScrollOffset by remember {
-        derivedStateOf {
-            if (activityListState.firstVisibleItemIndex > 0) 100f
-            else activityListState.firstVisibleItemScrollOffset.toFloat()
-        }
-    }
-
     val herramientasListState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val isHerramientasScrolled by remember {
-        derivedStateOf {
-            herramientasListState.firstVisibleItemIndex > 0 || herramientasListState.firstVisibleItemScrollOffset > 40
-        }
-    }
-    val herramientasScrollOffset by remember {
-        derivedStateOf {
-            if (herramientasListState.firstVisibleItemIndex > 0) 100f
-            else herramientasListState.firstVisibleItemScrollOffset.toFloat()
-        }
-    }
-
     val ajustesListState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val isAjustesScrolled by remember {
-        derivedStateOf {
-            ajustesListState.firstVisibleItemIndex > 0 || ajustesListState.firstVisibleItemScrollOffset > 40
-        }
-    }
-    val ajustesScrollOffset by remember {
-        derivedStateOf {
-            if (ajustesListState.firstVisibleItemIndex > 0) 100f
-            else ajustesListState.firstVisibleItemScrollOffset.toFloat()
-        }
-    }
-
     val copilotListState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val isCopilotScrolled by remember {
-        derivedStateOf {
-            copilotListState.firstVisibleItemIndex > 0 || copilotListState.firstVisibleItemScrollOffset > 40
-        }
-    }
-    val copilotScrollOffset by remember {
-        derivedStateOf {
-            if (copilotListState.firstVisibleItemIndex > 0) 100f
-            else copilotListState.firstVisibleItemScrollOffset.toFloat()
-        }
-    }
 
     val surfaceColor = MiuixTheme.colorScheme.surface
     val contentBackdrop = rememberLayerBackdrop {
@@ -358,7 +303,6 @@ fun MainAppShell(
 
     val forosUiState by forosViewModel.uiState.collectAsState()
     val activityUiState by activityViewModel.uiState.collectAsState()
-    val selectedAssignmentForDraft by dashboardViewModel.selectedAssignmentForDraft.collectAsState()
 
     val filePicker = rememberFilePickerLauncher(
         onFileSelected = { content ->
@@ -384,10 +328,10 @@ fun MainAppShell(
 
         val navDisplayEffects = remember<NavDisplayEffects>(navCornerRadius, backdropColor, isDarkTheme, isWideScreen) {
             NavDisplayEffects(
-                enableCornerClip = !isWideScreen,
-                cornerClipRadius = if (navCornerRadius <= 0.dp) 32.dp else navCornerRadius,
+                enableCornerClip = !isWideScreen && navCornerRadius > 0.dp,
+                cornerClipRadius = if (navCornerRadius <= 0.dp) 0.dp else navCornerRadius,
                 cornerClipMode = NavCornerClipMode.Leading,
-                dimAmount = 0.5f,
+                dimAmount = 0.35f,
                 backdropColor = backdropColor,
             )
         }
@@ -723,6 +667,7 @@ fun MainAppShell(
                 }
 
                 entry<MiuixRoute.AssignmentDraft>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.AssignmentDraft ->
+                    val selectedAssignmentForDraft by dashboardViewModel.selectedAssignmentForDraft.collectAsState()
                     val currentDraft = selectedAssignmentForDraft ?: remember(route) {
                         dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == route.assignmentId }
                     }
@@ -1287,6 +1232,7 @@ fun MainAppShell(
                 }
 
                 entry<MiuixRoute.AssignmentDraft>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.AssignmentDraft ->
+                    val selectedAssignmentForDraft by dashboardViewModel.selectedAssignmentForDraft.collectAsState()
                     val currentDraft = selectedAssignmentForDraft ?: remember(route) {
                         dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == route.assignmentId }
                     }
