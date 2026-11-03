@@ -41,6 +41,9 @@ import me.joxquin.notivas.ui.animation.staggeredEntrance
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
 import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
+import androidx.compose.foundation.lazy.items
+import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseHeader
+import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseRowItem
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
 import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
@@ -325,19 +328,36 @@ fun InicioMiuixContent(
                             }
                         }
 
-                        // 3. Courses Summary List (Grid de 2 columnas de cursos estilo MIUIX)
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .staggeredEntrance(index = 3, trigger = isEntranceTriggered)
-                            ) {
-                                MiuixCourseSummaryList(
-                                    courses = filteredCourses,
-                                    courseStats = courseStats,
-                                    onCourseClick = handleCourseClick
-                                )
+                        // 3. Courses Summary List (Grid de 2 columnas de cursos estilo MIUIX virtualizado)
+                        if (filteredCourses.isNotEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp)
+                                        .staggeredEntrance(index = 3, trigger = isEntranceTriggered)
+                                ) {
+                                    MiuixCourseHeader(totalCourses = filteredCourses.size)
+                                }
+                            }
+
+                            val coursePairs = filteredCourses.chunked(2)
+                            items(
+                                items = coursePairs,
+                                key = { pair -> "miuix_course_pair_${pair.map { it.id }.joinToString("_")}" }
+                            ) { pair ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp)
+                                ) {
+                                    MiuixCourseRowItem(
+                                        firstCourse = pair[0],
+                                        secondCourse = pair.getOrNull(1),
+                                        courseStats = courseStats,
+                                        onCourseClick = handleCourseClick
+                                    )
+                                }
                             }
                         }
                     }

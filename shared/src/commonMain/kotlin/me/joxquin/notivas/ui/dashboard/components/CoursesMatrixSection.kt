@@ -50,6 +50,79 @@ import me.joxquin.notivas.ui.dashboard.CourseStat
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
+fun MaterialCourseHeader(
+    totalCourses: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(Res.string.courses_section_title),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest
+            ) {
+                Text(
+                    text = stringResource(Res.string.courses_enrolled_format, totalCourses),
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(Res.string.manage),
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clickable { }
+        )
+    }
+}
+
+@Composable
+fun MaterialCourseRowItem(
+    firstCourse: Course,
+    secondCourse: Course?,
+    courseStats: List<CourseStat>,
+    onCourseClick: (Course) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        MaterialCourseGridCard(
+            course = firstCourse,
+            stat = courseStats.find { it.course.id == firstCourse.id },
+            onClick = { onCourseClick(firstCourse) },
+            modifier = Modifier.weight(1f)
+        )
+
+        if (secondCourse != null) {
+            MaterialCourseGridCard(
+                course = secondCourse,
+                stat = courseStats.find { it.course.id == secondCourse.id },
+                onClick = { onCourseClick(secondCourse) },
+                modifier = Modifier.weight(1f)
+            )
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
 fun CoursesMatrixSection(
     courseStats: List<CourseStat>,
     courses: List<Course>,
@@ -70,72 +143,20 @@ fun CoursesMatrixSection(
             .padding(vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.courses_section_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest
-                ) {
-                    Text(
-                        text = stringResource(Res.string.courses_enrolled_format, displayCourses.size),
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
-            }
+        MaterialCourseHeader(totalCourses = displayCourses.size)
 
-            Text(
-                text = stringResource(Res.string.manage),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable { }
-            )
-        }
-
-        // Renderizado en Grid de 2 Columnas homogéneas
         val coursePairs = displayCourses.chunked(2)
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             coursePairs.forEach { pair ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    val firstCourse = pair[0]
-                    MaterialCourseGridCard(
-                        course = firstCourse,
-                        stat = courseStats.find { it.course.id == firstCourse.id },
-                        onClick = { onCourseClick(firstCourse) },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    if (pair.size > 1) {
-                        val secondCourse = pair[1]
-                        MaterialCourseGridCard(
-                            course = secondCourse,
-                            stat = courseStats.find { it.course.id == secondCourse.id },
-                            onClick = { onCourseClick(secondCourse) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
+                MaterialCourseRowItem(
+                    firstCourse = pair[0],
+                    secondCourse = pair.getOrNull(1),
+                    courseStats = courseStats,
+                    onCourseClick = onCourseClick
+                )
             }
         }
     }

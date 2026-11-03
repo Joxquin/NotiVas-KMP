@@ -24,7 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.animation.staggeredEntrance
+import androidx.compose.foundation.lazy.items
 import me.joxquin.notivas.ui.dashboard.components.CoursesMatrixSection
+import me.joxquin.notivas.ui.dashboard.components.MaterialCourseHeader
+import me.joxquin.notivas.ui.dashboard.components.MaterialCourseRowItem
 import me.joxquin.notivas.ui.dashboard.components.GreetingSection
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
 import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
@@ -297,16 +300,27 @@ fun InicioScreen(
                     }
                 }
 
-                // ─── 4. Cursos Activos: Grid Rediseñado de Cursos ───────────────
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .staggeredEntrance(index = 4, trigger = isEntranceTriggered)
-                    ) {
-                        CoursesMatrixSection(
+                // ─── 4. Cursos Activos: Grid Rediseñado de Cursos (Virtualizado) ───
+                if (filteredCourses.isNotEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .staggeredEntrance(index = 4, trigger = isEntranceTriggered)
+                        ) {
+                            MaterialCourseHeader(totalCourses = filteredCourses.size)
+                        }
+                    }
+
+                    val coursePairs = filteredCourses.chunked(2)
+                    items(
+                        items = coursePairs,
+                        key = { pair -> "material_course_pair_${pair.map { it.id }.joinToString("_")}" }
+                    ) { pair ->
+                        MaterialCourseRowItem(
+                            firstCourse = pair[0],
+                            secondCourse = pair.getOrNull(1),
                             courseStats = courseStats,
-                            courses = filteredCourses,
                             onCourseClick = handleCourseClick
                         )
                     }

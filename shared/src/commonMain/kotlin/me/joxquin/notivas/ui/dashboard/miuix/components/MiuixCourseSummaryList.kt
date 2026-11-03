@@ -49,6 +49,85 @@ import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
+@Composable
+fun MiuixCourseHeader(
+    totalCourses: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SmallTitle(
+            text = stringResource(Res.string.courses_section_title).uppercase(),
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .padding(0.dp)
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = stringResource(Res.string.courses_enrolled_format, totalCourses),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                modifier = Modifier
+                    .squircleSurface(
+                        color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                        cornerRadius = 10.dp
+                    )
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
+            )
+
+            Text(
+                text = stringResource(Res.string.manage),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = MiuixTheme.colorScheme.primary,
+                modifier = Modifier.clickable { }
+            )
+        }
+    }
+}
+
+@Composable
+fun MiuixCourseRowItem(
+    firstCourse: Course,
+    secondCourse: Course?,
+    courseStats: List<CourseStat>,
+    onCourseClick: (Course) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        MiuixCourseGridCard(
+            course = firstCourse,
+            stat = courseStats.find { it.course.id == firstCourse.id },
+            onClick = { onCourseClick(firstCourse) },
+            modifier = Modifier.weight(1f)
+        )
+
+        if (secondCourse != null) {
+            MiuixCourseGridCard(
+                course = secondCourse,
+                stat = courseStats.find { it.course.id == secondCourse.id },
+                onClick = { onCourseClick(secondCourse) },
+                modifier = Modifier.weight(1f)
+            )
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
 /**
  * MiuixCourseSummaryList: Grid de 2 columnas de Cursos Activos estilo HyperOS MIUIX.
  */
@@ -65,80 +144,22 @@ fun MiuixCourseSummaryList(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SmallTitle(
-                text = stringResource(Res.string.courses_section_title).uppercase(),
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .padding(0.dp)
-            )
+        MiuixCourseHeader(totalCourses = courses.size)
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.courses_enrolled_format, courses.size),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                    modifier = Modifier
-                        .squircleSurface(
-                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                            cornerRadius = 10.dp
-                        )
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                )
-
-                Text(
-                    text = stringResource(Res.string.manage),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MiuixTheme.colorScheme.primary,
-                    modifier = Modifier.clickable { }
-                )
-            }
-        }
-
-        // Renderizado en Grid de 2 Columnas
         val coursePairs = courses.chunked(2)
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             coursePairs.forEach { pair ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    val firstCourse = pair[0]
-                    MiuixCourseGridCard(
-                        course = firstCourse,
-                        stat = courseStats.find { it.course.id == firstCourse.id },
-                        onClick = { onCourseClick(firstCourse) },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    if (pair.size > 1) {
-                        val secondCourse = pair[1]
-                        MiuixCourseGridCard(
-                            course = secondCourse,
-                            stat = courseStats.find { it.course.id == secondCourse.id },
-                            onClick = { onCourseClick(secondCourse) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
+                MiuixCourseRowItem(
+                    firstCourse = pair[0],
+                    secondCourse = pair.getOrNull(1),
+                    courseStats = courseStats,
+                    onCourseClick = onCourseClick
+                )
             }
         }
     }
