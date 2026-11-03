@@ -13,8 +13,11 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.google.firebase.FirebaseApp
 import me.joxquin.notivas.background.BackgroundSyncScheduler
+import me.joxquin.notivas.cloud.FirebaseCloudBackend
 import me.joxquin.notivas.di.AppModule
+import me.joxquin.notivas.util.linkCloudBackupWithLastGoogleAccount
 
 import me.joxquin.notivas.ui.navigation.NotificationNavHandler
 import me.joxquin.notivas.ui.navigation.NotificationNavTarget
@@ -28,6 +31,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         me.joxquin.notivas.data.local.FileStorageProvider.init(this)
+
+        // FirebaseApp solo existe si el build incluyó google-services.json.
+        if (FirebaseApp.getApps(this).isNotEmpty()) {
+            AppModule.simulationCloudSync.start(FirebaseCloudBackend(applicationContext))
+            linkCloudBackupWithLastGoogleAccount(applicationContext)
+        }
 
         if (AppModule.preferencesManager.getIsOnboardingCompleted()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
