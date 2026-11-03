@@ -654,9 +654,6 @@ fun ConsignaSectionItem(
                         }
                     }
                 }
-            }
-        }
-    }
 }
 
 
