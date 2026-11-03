@@ -42,6 +42,7 @@ import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
 import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseHeader
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseRowItem
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
@@ -342,14 +343,15 @@ fun InicioMiuixContent(
                             }
 
                             val coursePairs = filteredCourses.chunked(2)
-                            items(
+                            itemsIndexed(
                                 items = coursePairs,
-                                key = { pair -> "miuix_course_pair_${pair.map { it.id }.joinToString("_")}" }
-                            ) { pair ->
+                                key = { _, pair -> "miuix_course_pair_${pair.map { it.id }.joinToString("_")}" }
+                            ) { pairIndex, pair ->
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp)
+                                        .staggeredEntrance(index = 4 + pairIndex, trigger = isEntranceTriggered)
                                 ) {
                                     MiuixCourseRowItem(
                                         firstCourse = pair[0],

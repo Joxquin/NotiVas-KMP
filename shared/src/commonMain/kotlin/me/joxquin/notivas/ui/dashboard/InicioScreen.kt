@@ -21,10 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.animation.staggeredEntrance
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import me.joxquin.notivas.ui.dashboard.components.CoursesMatrixSection
 import me.joxquin.notivas.ui.dashboard.components.MaterialCourseHeader
 import me.joxquin.notivas.ui.dashboard.components.MaterialCourseRowItem
@@ -313,16 +313,22 @@ fun InicioScreen(
                     }
 
                     val coursePairs = filteredCourses.chunked(2)
-                    items(
+                    itemsIndexed(
                         items = coursePairs,
-                        key = { pair -> "material_course_pair_${pair.map { it.id }.joinToString("_")}" }
-                    ) { pair ->
-                        MaterialCourseRowItem(
-                            firstCourse = pair[0],
-                            secondCourse = pair.getOrNull(1),
-                            courseStats = courseStats,
-                            onCourseClick = handleCourseClick
-                        )
+                        key = { _, pair -> "material_course_pair_${pair.map { it.id }.joinToString("_")}" }
+                    ) { pairIndex, pair ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .staggeredEntrance(index = 5 + pairIndex, trigger = isEntranceTriggered)
+                        ) {
+                            MaterialCourseRowItem(
+                                firstCourse = pair[0],
+                                secondCourse = pair.getOrNull(1),
+                                courseStats = courseStats,
+                                onCourseClick = handleCourseClick
+                            )
+                        }
                     }
                 }
             }
