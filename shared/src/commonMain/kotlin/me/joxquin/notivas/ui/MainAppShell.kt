@@ -120,6 +120,7 @@ import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.ui.course.CourseDetailScreen
 import me.joxquin.notivas.ui.course.CourseDetailViewModel
+import me.joxquin.notivas.ui.course.modules.CourseModulesScreen
 private val MiuixPagerSpringSpec: SpringSpec<Float> = spring(
     stiffness = 322.2f,
     dampingRatio = 32.31f / (2f * kotlin.math.sqrt(322.2f)),
