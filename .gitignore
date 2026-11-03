@@ -34,3 +34,6 @@ openspec
 !.env.example
 *.zip
 build-output/
+
+# Configuración de Firebase: se pide al dueño del proyecto, no se sube
+androidApp/google-services.json
