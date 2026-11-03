@@ -273,7 +273,9 @@ class DashboardViewModel(
     val isLoadingTemplates: StateFlow<Boolean> = _isLoadingTemplates.asStateFlow()
 
     fun loadTemplatesForCourse(courseId: Long, assignmentId: Long? = null, assignmentDescription: String? = null) {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            // Permitir que la transición de ventana de Compose termine sin contención en el hilo principal
+            kotlinx.coroutines.delay(350)
             _isLoadingTemplates.value = true
             try {
                 val candidates = repository.getCourseTemplateCandidates(courseId, assignmentId, assignmentDescription)

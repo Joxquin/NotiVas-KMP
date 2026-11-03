@@ -83,6 +83,17 @@ enum class SubmissionTab {
     TEXT
 }
 
+private val TEMPLATE_TITLE_DOCX_REGEX = Regex("""<a\s+[^>]*title=["']([^"']+\.docx)["']""", RegexOption.IGNORE_CASE)
+private val TEMPLATE_TAG_DOCX_REGEX = Regex("""<a\s+[^>]*>([^<]+\.docx)</a>""", RegexOption.IGNORE_CASE)
+private val TEMPLATE_WORD_DOCX_REGEX = Regex("""([\w\-_]+\.docx)""")
+private val FORMAT_SECTION_REGEX = Regex("""(?:formato|formatos|tipo(?:s)? de archivo|extension(?:es)?)[^:<]*:\s*([^\n<]+)""", RegexOption.IGNORE_CASE)
+private val EXTENSION_WORD_REGEXES = listOf("pdf", "docx", "doc", "zip", "rar", "xlsx", "xls", "pptx", "ppt", "txt").associateWith { ext ->
+    Regex("""\b$ext\b""")
+}
+private val EXTENSIONS_CACHE = mutableMapOf<Int, List<String>>()
+private val TEMPLATE_NAME_CACHE = mutableMapOf<Int, String?>()
+
+
 @Composable
 fun AssignmentSubmissionCard(
     assignment: Assignment,
@@ -148,11 +159,14 @@ fun AssignmentSubmissionCard(
             ?: courseTemplates.firstOrNull()?.title
         candidateMatch ?: run {
             val desc = assignment.description ?: ""
-            val linkMatch = Regex("""<a\s+[^>]*title=["']([^"']+\.docx)["']""", RegexOption.IGNORE_CASE).find(desc)?.groupValues?.get(1)
-                ?: Regex("""<a\s+[^>]*>([^<]+\.docx)</a>""", RegexOption.IGNORE_CASE).find(desc)?.groupValues?.get(1)
-            linkMatch
-                ?: Regex("""([\w\-_]+\.docx)""").find(desc)?.value
-                ?: if (desc.contains("docs.google.com")) "Plantilla_Docente_Enlace" else null
+            if (desc.isBlank()) return@run null
+            TEMPLATE_NAME_CACHE.getOrPut(desc.hashCode()) {
+                val linkMatch = TEMPLATE_TITLE_DOCX_REGEX.find(desc)?.groupValues?.get(1)
+                    ?: TEMPLATE_TAG_DOCX_REGEX.find(desc)?.groupValues?.get(1)
+                linkMatch
+                    ?: TEMPLATE_WORD_DOCX_REGEX.find(desc)?.value
+                    ?: if (desc.contains("docs.google.com")) "Plantilla_Docente_Enlace" else null
+            }
         }
     }
 
@@ -1640,23 +1654,25 @@ private fun formatFileSize(bytes: Long): String {
 
 internal fun detectExtensionsFromHtml(description: String?): List<String> {
     if (description.isNullOrBlank()) return emptyList()
-    val lower = description.lowercase()
-    val results = mutableSetOf<String>()
-    val knownExtensions = listOf("pdf", "docx", "doc", "zip", "rar", "xlsx", "xls", "pptx", "ppt", "txt")
+    val hash = description.hashCode()
+    return EXTENSIONS_CACHE.getOrPut(hash) {
+        val lower = description.lowercase()
+        val results = mutableSetOf<String>()
 
-    val formatMatch = Regex("""(?:formato|formatos|tipo(?:s)? de archivo|extension(?:es)?)[^:<]*:\s*([^\n<]+)""", RegexOption.IGNORE_CASE).find(lower)
-    if (formatMatch != null) {
-        val raw = formatMatch.groupValues[1]
-        for (ext in knownExtensions) {
-            if (Regex("""\b$ext\b""").containsMatchIn(raw)) {
-                results.add(ext)
+        val formatMatch = FORMAT_SECTION_REGEX.find(lower)
+        if (formatMatch != null) {
+            val raw = formatMatch.groupValues[1]
+            for ((ext, regex) in EXTENSION_WORD_REGEXES) {
+                if (regex.containsMatchIn(raw)) {
+                    results.add(ext)
+                }
             }
         }
-    }
-    if (results.isEmpty()) {
-        if (lower.contains("formato pdf") || lower.contains("archivo pdf") || lower.contains("documento en pdf") || lower.contains("documento en formato pdf")) {
-            results.add("pdf")
+        if (results.isEmpty()) {
+            if (lower.contains("formato pdf") || lower.contains("archivo pdf") || lower.contains("documento en pdf") || lower.contains("documento en formato pdf")) {
+                results.add("pdf")
+            }
         }
+        results.toList()
     }
-    return results.toList()
 }
