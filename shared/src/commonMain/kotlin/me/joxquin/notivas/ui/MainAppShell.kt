@@ -1,7 +1,9 @@
 package me.joxquin.notivas.ui
 
 import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.MutatePriority
