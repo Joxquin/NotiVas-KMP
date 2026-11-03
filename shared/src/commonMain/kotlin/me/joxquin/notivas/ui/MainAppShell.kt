@@ -118,7 +118,7 @@ import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.ui.course.CourseDetailScreen
 import me.joxquin.notivas.ui.course.CourseDetailViewModel
-import me.joxquin.notivas.ui.course.modules.CourseModulesScreen
+import top.yukonga.miuix.kmp.utils.springAnimateToPage
 
 @Stable
 class MainPagerState(
@@ -143,32 +143,7 @@ class MainPagerState(
         navJob = coroutineScope.launch {
             val myJob = coroutineContext.job
             try {
-                if (abs(targetIndex - pagerState.currentPage) > 1) {
-                    val snapPage = if (targetIndex > pagerState.currentPage) targetIndex - 1 else targetIndex + 1
-                    pagerState.scrollToPage(snapPage)
-                }
-                pagerState.scroll(MutatePriority.UserInput) {
-                    val distance = abs(targetIndex - pagerState.currentPage).coerceAtLeast(1)
-                    val duration = 80 * distance + 120
-                    val layoutInfo = pagerState.layoutInfo
-                    val pageSize = layoutInfo.pageSize + layoutInfo.pageSpacing
-                    val currentDistanceInPages =
-                        targetIndex - pagerState.currentPage - pagerState.currentPageOffsetFraction
-                    val scrollPixels = currentDistanceInPages * pageSize
-
-                    var previousValue = 0f
-                    animate(
-                        initialValue = 0f,
-                        targetValue = scrollPixels,
-                        animationSpec = tween(easing = EaseInOut, durationMillis = duration),
-                    ) { currentValue, _ ->
-                        previousValue += scrollBy(currentValue - previousValue)
-                    }
-                }
-
-                if (pagerState.currentPage != targetIndex) {
-                    pagerState.scrollToPage(targetIndex)
-                }
+                pagerState.springAnimateToPage(targetIndex)
             } finally {
                 if (navJob == myJob) {
                     isNavigating = false
@@ -220,6 +195,10 @@ fun MainAppShell(
     val coroutineScope = rememberCoroutineScope()
     val mainPagerState = remember(pagerState, coroutineScope) {
         MainPagerState(pagerState, coroutineScope)
+    }
+
+    LaunchedEffect(mainPagerState.pagerState.currentPage) {
+        mainPagerState.syncPage()
     }
 
     val currentDestination by remember {
