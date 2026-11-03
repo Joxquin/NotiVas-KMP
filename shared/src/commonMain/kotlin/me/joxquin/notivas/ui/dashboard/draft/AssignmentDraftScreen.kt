@@ -53,12 +53,17 @@ import me.joxquin.notivas.shared.resources.*
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
+import androidx.compose.foundation.lazy.items
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentBottomActionBar
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentConsignaCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentDetailHeroCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentRubricCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentSubmissionCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentQuizCard
+import me.joxquin.notivas.ui.dashboard.draft.components.ConsignaHeaderTitle
+import me.joxquin.notivas.ui.dashboard.draft.components.ConsignaSectionItem
+import me.joxquin.notivas.ui.dashboard.draft.components.parseConsignaSections
+
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusCard
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo
 import top.yukonga.miuix.kmp.basic.DropdownEntry
@@ -136,6 +141,17 @@ fun AssignmentDraftScreen(
 
     val handleCancelDraft: () -> Unit = {
         viewModel?.cancelDraft(assignment.id)
+    }
+
+    val token = remember { me.joxquin.notivas.di.AppModule.preferencesManager.getAccessToken() }
+    val cookies = remember { me.joxquin.notivas.di.AppModule.preferencesManager.getSessionCookies() }
+    val baseUrl = remember(assignment.htmlUrl) {
+        assignment.htmlUrl?.let { url ->
+            Regex("""^(https?://[^/]+)""").find(url)?.value
+        } ?: me.joxquin.notivas.di.AppModule.preferencesManager.getUniversityUrl()
+    }
+    val consignaSections = remember(assignment.description, baseUrl) {
+        parseConsignaSections(assignment.description, baseUrl)
     }
 
     val handleOpenDocs: (String) -> Unit = { url ->
@@ -313,12 +329,40 @@ fun AssignmentDraftScreen(
                         }
                     }
 
-                    // 3. Consigna de Canvas
-                    item(key = "task_consigna") {
-                        AssignmentConsignaCard(
-                            assignment = assignment,
-                            themeStyle = themeStyle
-                        )
+                    // 3. Consigna de Canvas (Lazy granular: cada sección se renderiza solo al ser visible)
+                    item(key = "task_consigna_header") {
+                        ConsignaHeaderTitle(themeStyle = themeStyle)
+                    }
+
+                    if (consignaSections.isEmpty()) {
+                        item(key = "task_consigna_empty") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .squircleSurface(MiuixTheme.colorScheme.surfaceContainer, 16.dp)
+                                    .squircleBorder(1.dp, MiuixTheme.colorScheme.outline.copy(alpha = 0.08f), 16.dp)
+                                    .padding(16.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.task_no_instructions),
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    } else {
+                        items(
+                            items = consignaSections,
+                            key = { section -> "consigna_miuix_${section.title.hashCode()}_${section.introText.take(15).hashCode()}" }
+                        ) { section ->
+                            ConsignaSectionItem(
+                                section = section,
+                                themeStyle = themeStyle,
+                                baseUrl = baseUrl,
+                                token = token,
+                                cookies = cookies
+                            )
+                        }
                     }
 
                     // Botones de Acción (Guardar para después)
@@ -499,12 +543,40 @@ fun AssignmentDraftScreen(
                     }
                 }
 
-                // 3. Consigna de Canvas
-                item(key = "task_consigna_material") {
-                    AssignmentConsignaCard(
-                        assignment = assignment,
-                        themeStyle = themeStyle
-                    )
+                // 3. Consigna de Canvas (Lazy granular: cada sección se renderiza solo al ser visible)
+                item(key = "task_consigna_header_material") {
+                    ConsignaHeaderTitle(themeStyle = themeStyle)
+                }
+
+                if (consignaSections.isEmpty()) {
+                    item(key = "task_consigna_empty_material") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.task_no_instructions),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                } else {
+                    items(
+                        items = consignaSections,
+                        key = { section -> "consigna_mat_${section.title.hashCode()}_${section.introText.take(15).hashCode()}" }
+                    ) { section ->
+                        ConsignaSectionItem(
+                            section = section,
+                            themeStyle = themeStyle,
+                            baseUrl = baseUrl,
+                            token = token,
+                            cookies = cookies
+                        )
+                    }
                 }
 
                 // Botones de Acción (Guardar para después)

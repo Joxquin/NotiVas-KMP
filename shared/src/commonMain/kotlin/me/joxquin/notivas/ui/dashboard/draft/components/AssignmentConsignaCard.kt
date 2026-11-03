@@ -134,32 +134,7 @@ fun AssignmentConsignaCard(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Título de la Sección de Consigna
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Description,
-                contentDescription = null,
-                tint = primaryColor,
-                modifier = Modifier.size(20.dp)
-            )
-            if (isMiuix) {
-                MiuixText(
-                    text = stringResource(Res.string.task_consigna_title),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = onSurfaceColor
-                )
-            } else {
-                Text(
-                    text = stringResource(Res.string.task_consigna_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold),
-                    color = onSurfaceColor
-                )
-            }
-        }
+        ConsignaHeaderTitle(themeStyle = themeStyle)
 
         if (sections.isEmpty()) {
             val emptyBoxModifier = if (isMiuix) {
@@ -183,15 +158,82 @@ fun AssignmentConsignaCard(
                 )
             }
         } else {
-            // Renderizar cada sección estructurada
             for (section in sections) {
-                val icon = when (section.iconType) {
-                    ConsignaIconType.CAPACITY -> Icons.Default.School
-                    ConsignaIconType.PROCEDURE -> Icons.Default.Build
-                    ConsignaIconType.PREREQUISITE -> Icons.Default.MenuBook
-                    ConsignaIconType.SPECIFICATION -> Icons.Default.Checklist
-                    ConsignaIconType.GENERAL -> Icons.Default.Description
-                }
+                ConsignaSectionItem(
+                    section = section,
+                    themeStyle = themeStyle,
+                    baseUrl = baseUrl,
+                    token = token,
+                    cookies = cookies
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ConsignaHeaderTitle(
+    themeStyle: AppThemeStyle,
+    modifier: Modifier = Modifier
+) {
+    val isMiuix = themeStyle == AppThemeStyle.MIUIX
+    val primaryColor = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+    val onSurfaceColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Description,
+            contentDescription = null,
+            tint = primaryColor,
+            modifier = Modifier.size(20.dp)
+        )
+        if (isMiuix) {
+            MiuixText(
+                text = stringResource(Res.string.task_consigna_title),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = onSurfaceColor
+            )
+        } else {
+            Text(
+                text = stringResource(Res.string.task_consigna_title),
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold),
+                color = onSurfaceColor
+            )
+        }
+    }
+}
+
+@Composable
+fun ConsignaSectionItem(
+    section: ConsignaSection,
+    themeStyle: AppThemeStyle,
+    baseUrl: String?,
+    token: String? = null,
+    cookies: String? = null,
+    modifier: Modifier = Modifier
+) {
+    val uriHandler = LocalUriHandler.current
+    val isMiuix = themeStyle == AppThemeStyle.MIUIX
+    val primaryColor = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+    val onPrimaryColor = if (isMiuix) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
+    val onSurfaceColor = if (isMiuix) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariantColor = if (isMiuix) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
+    val errorContainerColor = if (isMiuix) MiuixTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.errorContainer
+    val onErrorContainerColor = if (isMiuix) MiuixTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onErrorContainer
+
+    val icon = when (section.iconType) {
+        ConsignaIconType.CAPACITY -> Icons.Default.School
+        ConsignaIconType.PROCEDURE -> Icons.Default.Build
+        ConsignaIconType.PREREQUISITE -> Icons.Default.MenuBook
+        ConsignaIconType.SPECIFICATION -> Icons.Default.Checklist
+        ConsignaIconType.GENERAL -> Icons.Default.Description
+    }
+
 
                 if (isMiuix) {
                     Box(
@@ -616,6 +658,7 @@ fun AssignmentConsignaCard(
         }
     }
 }
+
 
 @Composable
 private fun rememberConsignaImageRequest(
