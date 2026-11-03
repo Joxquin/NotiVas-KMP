@@ -118,7 +118,11 @@ import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.ui.course.CourseDetailScreen
 import me.joxquin.notivas.ui.course.CourseDetailViewModel
-import top.yukonga.miuix.kmp.utils.springAnimateToPage
+private val MiuixPagerSpringSpec: SpringSpec<Float> = spring(
+    stiffness = 322.2f,
+    dampingRatio = 32.31f / (2f * kotlin.math.sqrt(322.2f)),
+    visibilityThreshold = 0.5f,
+)
 
 @Stable
 class MainPagerState(
@@ -143,7 +147,23 @@ class MainPagerState(
         navJob = coroutineScope.launch {
             val myJob = coroutineContext.job
             try {
-                pagerState.springAnimateToPage(targetIndex)
+                if (targetIndex in 0 until pagerState.pageCount) {
+                    pagerState.scroll(MutatePriority.UserInput) {
+                        val destination = targetIndex.coerceIn(0, pagerState.pageCount - 1)
+                        val pageSize = pagerState.layoutInfo.pageSize + pagerState.layoutInfo.pageSpacing
+                        if (pageSize > 0) {
+                            val distance = (destination - pagerState.currentPage - pagerState.currentPageOffsetFraction) * pageSize
+                            var previousValue = 0f
+                            animate(
+                                initialValue = 0f,
+                                targetValue = distance,
+                                animationSpec = MiuixPagerSpringSpec,
+                            ) { currentValue, _ ->
+                                previousValue += scrollBy(currentValue - previousValue)
+                            }
+                        }
+                    }
+                }
             } finally {
                 if (navJob == myJob) {
                     isNavigating = false
