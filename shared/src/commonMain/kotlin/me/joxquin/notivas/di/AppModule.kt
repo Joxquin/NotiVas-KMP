@@ -1,5 +1,6 @@
 package me.joxquin.notivas.di
 
+import me.joxquin.notivas.data.cloud.SimulationCloudSync
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.local.db.NotivasDatabase
@@ -42,6 +43,9 @@ object AppModule {
     val copilotChatRepository: CopilotChatRepository by lazy {
         CopilotChatRepository(localStore)
     }
+
+    // Respaldo en la nube del simulador; solo se activa si la plataforma instala un CloudBackend.
+    val simulationCloudSync: SimulationCloudSync by lazy { SimulationCloudSync(database) }
 
     val getUrgentAssignmentsUseCase: GetUrgentAssignmentsUseCase by lazy {
         GetUrgentAssignmentsUseCase()
