@@ -68,7 +68,7 @@ fun AssignmentDetailHeroCard(
                     val days = hours / 24
                     val timeStr = "${dueComp.hour.toString().padStart(2, '0')}:${dueComp.minute.toString().padStart(2, '0')}"
                     when {
-                        days > 1 -> "Vence en ${days}d • ${dueStr.take(10)}" to false
+                        days > 1 -> "Vence en ${days}d • ${dueComp.date.toIsoDateString()} $timeStr" to false
                         days == 1L -> "Vence mañana • $timeStr" to true
                         hours > 0 -> "Vence en ${hours}h ${minutes}m • Hoy $timeStr" to true
                         else -> "Vence en ${minutes}m • Hoy $timeStr" to true

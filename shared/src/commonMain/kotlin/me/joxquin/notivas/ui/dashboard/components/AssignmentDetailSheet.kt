@@ -347,7 +347,15 @@ private fun MiuixAssignmentDetailContent(
                 )
             }
 
-            val dueText = assignment.dueAt?.take(10) ?: "Sin fecha"
+            val dueText = remember(assignment.dueAt) {
+                assignment.dueAt?.let { iso ->
+                    val comp = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(iso)
+                    if (comp != null) {
+                        val timeStr = "${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
+                        "${comp.date.toIsoDateString()} $timeStr"
+                    } else iso.take(10)
+                } ?: "Sin fecha"
+            }
             Row(
                 modifier = Modifier
                     .squircleSurface(
@@ -732,7 +740,15 @@ private fun MaterialAssignmentDetailContent(
                 }
             }
 
-            val dueText = assignment.dueAt?.take(10) ?: "Sin fecha"
+            val dueText = remember(assignment.dueAt) {
+                assignment.dueAt?.let { iso ->
+                    val comp = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(iso)
+                    if (comp != null) {
+                        val timeStr = "${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
+                        "${comp.date.toIsoDateString()} $timeStr"
+                    } else iso.take(10)
+                } ?: "Sin fecha"
+            }
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant
