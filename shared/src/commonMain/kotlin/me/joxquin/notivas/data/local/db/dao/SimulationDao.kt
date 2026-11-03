@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import me.joxquin.notivas.data.local.db.entities.SimulationGroupEntity
 import me.joxquin.notivas.data.local.db.entities.SimulationGroupWithItemsRelation
 import me.joxquin.notivas.data.local.db.entities.SimulationItemEntity
+import me.joxquin.notivas.data.model.SimulationGroupWithItems
 
 @Dao
 interface SimulationDao {
@@ -76,4 +77,13 @@ interface SimulationDao {
 
     @Query("DELETE FROM simulation_items")
     suspend fun deleteAllItems()
+
+    /** Inserta grupos con sus items en una sola transacción (usado al restaurar desde la nube). */
+    @Transaction
+    suspend fun insertGroupsWithItems(groups: List<SimulationGroupWithItems>) {
+        groups.forEach { g ->
+            val groupId = insertGroup(SimulationGroupEntity.fromDomain(g.group.copy(id = 0L)))
+            insertItems(g.items.map { SimulationItemEntity.fromDomain(it.copy(id = 0L, groupId = groupId)) })
+        }
+    }
 }
