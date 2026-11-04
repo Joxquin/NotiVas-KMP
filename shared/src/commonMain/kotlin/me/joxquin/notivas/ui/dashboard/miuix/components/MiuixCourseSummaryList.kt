@@ -209,20 +209,20 @@ private fun MiuixCourseGridCard(
                     .clip(RoundedCornerShape(12.dp))
                     .background(MiuixTheme.colorScheme.surfaceContainerHigh)
             ) {
-                if (!course.imageUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = course.imageUrl,
-                        contentDescription = course.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    // Placeholder estilizado con degradado Monet y gráficos mini bento
-                    MiuixCourseCoverPlaceholder(
-                        courseId = course.id,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                // Portada optimizada con downsampling y placeholder instantáneo
+                me.joxquin.notivas.ui.components.CourseCoverImage(
+                    imageUrl = course.imageUrl,
+                    contentDescription = course.name,
+                    targetWidth = 240.dp,
+                    targetHeight = 96.dp,
+                    modifier = Modifier.fillMaxSize(),
+                    placeholder = {
+                        MiuixCourseCoverPlaceholder(
+                            courseId = course.id,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                )
 
                 // Badge de código de curso flotante sobre la portada
                 Box(

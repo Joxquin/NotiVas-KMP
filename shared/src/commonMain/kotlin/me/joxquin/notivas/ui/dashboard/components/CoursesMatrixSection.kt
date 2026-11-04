@@ -212,19 +212,20 @@ private fun MaterialCourseGridCard(
                     .clip(RoundedCornerShape(14.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             ) {
-                if (!course.imageUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = course.imageUrl,
-                        contentDescription = course.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    MaterialCourseCoverPlaceholder(
-                        courseId = course.id,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                // Portada optimizada con downsampling y placeholder instantáneo
+                me.joxquin.notivas.ui.components.CourseCoverImage(
+                    imageUrl = course.imageUrl,
+                    contentDescription = course.name,
+                    targetWidth = 240.dp,
+                    targetHeight = 96.dp,
+                    modifier = Modifier.fillMaxSize(),
+                    placeholder = {
+                        MaterialCourseCoverPlaceholder(
+                            courseId = course.id,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                )
 
                 // Badge de código de curso flotante sobre la portada
                 Surface(

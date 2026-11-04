@@ -74,20 +74,20 @@ fun CourseHeroBannerCard(
                 .fillMaxWidth()
                 .height(190.dp)
         ) {
-            // Capa 1: Imagen real de Canvas en cabecera
-            if (!course?.imageUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = course.imageUrl,
-                    contentDescription = course.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                MiuixCourseCoverPlaceholder(
-                    courseId = course?.id ?: 0L,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+            // Capa 1: Portada optimizada con downsampling y placeholder instantáneo
+            me.joxquin.notivas.ui.components.CourseCoverImage(
+                imageUrl = course?.imageUrl,
+                contentDescription = course?.name,
+                targetWidth = 480.dp,
+                targetHeight = 190.dp,
+                modifier = Modifier.fillMaxSize(),
+                placeholder = {
+                    MiuixCourseCoverPlaceholder(
+                        courseId = course?.id ?: 0L,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            )
 
             // Degradado que desvanece suavemente la imagen hacia el fondo de la tarjeta solo en la zona inferior
             Box(
