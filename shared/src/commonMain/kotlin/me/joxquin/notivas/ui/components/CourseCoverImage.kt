@@ -57,14 +57,21 @@ fun CourseCoverImage(
             .build()
     }
 
+    var isLoaded by androidx.compose.runtime.remember(imageUrl) {
+        androidx.compose.runtime.mutableStateOf(false)
+    }
+
     Box(modifier = modifier) {
-        // Placeholder visible inmediatamente como fondo hasta que termine de cargar
-        placeholder()
+        // Solo renderizar el placeholder si la imagen aún no ha terminado de cargar
+        if (!isLoaded) {
+            placeholder()
+        }
 
         AsyncImage(
             model = imageRequest,
             contentDescription = contentDescription,
             contentScale = contentScale,
+            onSuccess = { isLoaded = true },
             modifier = Modifier.fillMaxSize()
         )
     }
