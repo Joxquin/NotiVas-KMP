@@ -877,8 +877,13 @@ private fun MaterialTaskRowItem(
             }
 
             if (a.score != null) {
+                val scoreText = if (a.pointsPossible != null && a.pointsPossible > 0.0) {
+                    "${formatScoreMaterial(a.score)} / ${formatScoreMaterial(a.pointsPossible)}"
+                } else {
+                    formatScoreMaterial(a.score)
+                }
                 Text(
-                    text = stringResource(Res.string.performance_score_prefix, formatScoreMaterial(a.score)),
+                    text = stringResource(Res.string.performance_score_prefix, scoreText),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = if (a.score >= 13.0) completedColor else overdueColor
                 )

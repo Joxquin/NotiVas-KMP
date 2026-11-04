@@ -882,8 +882,13 @@ private fun MiuixTaskRowItem(
             }
 
             if (a.score != null) {
+                val scoreText = if (a.pointsPossible != null && a.pointsPossible > 0.0) {
+                    "${formatScoreMiuix(a.score)} / ${formatScoreMiuix(a.pointsPossible)}"
+                } else {
+                    formatScoreMiuix(a.score)
+                }
                 Text(
-                    text = stringResource(Res.string.performance_score_prefix, formatScoreMiuix(a.score)),
+                    text = stringResource(Res.string.performance_score_prefix, scoreText),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (a.score >= 13.0) completedColor else overdueColor

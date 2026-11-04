@@ -615,6 +615,19 @@ fun CopilotTableComposable(
         MaterialTheme.colorScheme.onSurface
     }
 
+    val colCount = maxOf(table.headers.size, table.rows.maxOfOrNull { it.size } ?: 0)
+    val colWidths = remember(table) {
+        (0 until colCount).map { colIndex ->
+            val headerLen = table.headers.getOrNull(colIndex)?.length ?: 0
+            val maxRowLen = table.rows.maxOfOrNull { it.getOrNull(colIndex)?.length ?: 0 } ?: 0
+            val maxChars = maxOf(headerLen, maxRowLen)
+            (maxChars * 8 + 36).coerceIn(110, 260).dp
+        }
+    }
+    val totalTableWidth = remember(colWidths) {
+        colWidths.fold(0.dp) { acc, dp -> acc + dp }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -622,21 +635,21 @@ fun CopilotTableComposable(
             .border(1.dp, borderColor, RoundedCornerShape(8.dp))
             .horizontalScroll(scrollState)
     ) {
-        Column {
+        Column(
+            modifier = Modifier.width(totalTableWidth)
+        ) {
             // Fila de encabezado
             Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .background(headerBg)
-                    .border(
-                        width = 0.5.dp,
-                        color = borderColor
-                    )
             ) {
-                table.headers.forEachIndexed { colIndex, header ->
+                for (colIndex in 0 until colCount) {
+                    val header = table.headers.getOrNull(colIndex) ?: ""
                     Box(
                         modifier = Modifier
-                            .widthIn(min = 100.dp, max = 220.dp)
-                            .padding(horizontal = 10.dp, vertical = 7.dp),
+                            .width(colWidths[colIndex])
+                            .padding(horizontal = 12.dp, vertical = 9.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
@@ -652,24 +665,26 @@ fun CopilotTableComposable(
                 }
             }
 
+            // Divisor bajo el encabezado
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = borderColor
+            )
+
             // Filas de datos
             table.rows.forEachIndexed { rowIndex, row ->
                 val rowBg = if (rowIndex % 2 == 1) alternateBg else Color.Transparent
                 Row(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .background(rowBg)
-                        .border(
-                            width = 0.5.dp,
-                            color = borderColor
-                        )
                 ) {
-                    val colCount = table.headers.size
                     for (colIndex in 0 until colCount) {
                         val cellContent = row.getOrNull(colIndex) ?: ""
                         Box(
                             modifier = Modifier
-                                .widthIn(min = 100.dp, max = 220.dp)
-                                .padding(horizontal = 10.dp, vertical = 7.dp),
+                                .width(colWidths[colIndex])
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
                             contentAlignment = Alignment.CenterStart
                         ) {
                             Text(
@@ -684,6 +699,13 @@ fun CopilotTableComposable(
                             )
                         }
                     }
+                }
+
+                if (rowIndex < table.rows.lastIndex) {
+                    HorizontalDivider(
+                        thickness = 0.5.dp,
+                        color = borderColor.copy(alpha = 0.4f)
+                    )
                 }
             }
         }

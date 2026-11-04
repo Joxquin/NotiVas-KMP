@@ -792,7 +792,7 @@
     <string name="performance_average_scale">/ 20</string>
     <string name="performance_heatmap_title">Calendario de Entregas</string>
     <string name="performance_day_deliverables">Entregables del día</string>
-    <string name="performance_score_prefix">Nota: %s</string>
+    <string name="performance_score_prefix">Nota: %1$s</string>
     <string name="performance_view_simulation">Ver simulación y grupos</string>
     <string name="performance_configure_formula">Configurar fórmulas</string>
 </resources>

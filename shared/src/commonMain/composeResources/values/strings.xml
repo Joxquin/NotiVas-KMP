@@ -792,7 +792,7 @@
     <string name="performance_average_scale">/ 20</string>
     <string name="performance_heatmap_title">Deliverables Calendar</string>
     <string name="performance_day_deliverables">Deliverables for this day</string>
-    <string name="performance_score_prefix">Grade: %s</string>
+    <string name="performance_score_prefix">Grade: %1$s</string>
     <string name="performance_view_simulation">View simulation &amp; groups</string>
     <string name="performance_configure_formula">Configure formulas</string>
 </resources>
