@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -42,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.mutableStateOf
@@ -113,9 +117,20 @@ fun ForoDetailScreen(
         }
     }
 
+    val density = LocalDensity.current
+    val isImeVisible = WindowInsets.ime.getBottom(density) > 0
+
+    // Auto-scroll suave hacia el editor de respuesta al abrir el teclado virtual
+    LaunchedEffect(isImeVisible) {
+        if (isImeVisible) {
+            lazyListState.animateScrollToItem(index = 3, scrollOffset = -20)
+        }
+    }
+
     if (themeStyle == AppThemeStyle.MIUIX) {
         val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
+        val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
 
         top.yukonga.miuix.kmp.basic.Scaffold(
             topBar = {
@@ -137,9 +152,14 @@ fun ForoDetailScreen(
                     )
                 }
             },
-            modifier = modifier.fillMaxSize()
+            modifier = modifier
+                .fillMaxSize()
+                .imePadding()
         ) { innerPadding ->
-            val contentPadding = miuixPageContentPadding(innerPadding)
+            val contentPadding = miuixPageContentPadding(
+                innerPadding = innerPadding,
+                extraBottom = if (imeBottom > 0.dp) 24.dp else 16.dp
+            )
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -309,14 +329,17 @@ fun ForoDetailScreen(
                 )
             },
             containerColor = MaterialTheme.colorScheme.surface,
-            modifier = modifier.fillMaxSize()
+            modifier = modifier
+                .fillMaxSize()
+                .imePadding()
         ) { paddingValues ->
+            val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     top = paddingValues.calculateTopPadding() + 8.dp,
-                    bottom = 120.dp,
+                    bottom = if (imeBottom > 0.dp) 24.dp else 120.dp,
                     start = 16.dp,
                     end = 16.dp
                 ),

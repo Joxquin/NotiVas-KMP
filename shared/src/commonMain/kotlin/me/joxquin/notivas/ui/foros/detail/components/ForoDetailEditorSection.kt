@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bookmark
@@ -259,6 +262,7 @@ fun ForoDetailEditorSection(
                 }
 
                 // Textarea
+                val bringIntoViewRequester = remember { BringIntoViewRequester() }
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = editorBg,
@@ -276,6 +280,15 @@ fun ForoDetailEditorSection(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp)
+                            .bringIntoViewRequester(bringIntoViewRequester)
+                            .onFocusEvent { focusState ->
+                                if (focusState.isFocused) {
+                                    coroutineScope.launch {
+                                        delay(150)
+                                        bringIntoViewRequester.bringIntoView()
+                                    }
+                                }
+                            }
                             .padding(12.dp),
                         decorationBox = { innerTextField ->
                             if (draftText.isEmpty()) {
