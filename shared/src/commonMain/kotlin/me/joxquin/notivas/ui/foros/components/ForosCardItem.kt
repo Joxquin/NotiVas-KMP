@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +48,9 @@ import me.joxquin.notivas.util.DateTimeUtil
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
+private val HTML_TAG_REGEX = Regex("<[^>]*>")
+private val HTML_NBSP_REGEX = Regex("&nbsp;")
+
 @Composable
 fun ForosCardItem(
     topic: CanvasDiscussionTopic,
@@ -54,14 +58,14 @@ fun ForosCardItem(
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
-    val nowMs = DateTimeUtil.nowEpochMillis()
+    val nowMs = remember { DateTimeUtil.nowEpochMillis() }
     val dueStr = topic.assignment?.dueAt ?: topic.lockAt ?: topic.assignment?.lockAt
     var isExpired = topic.locked == true
     var dueText = stringResource(Res.string.foro_due_none)
     var isUrgent = false
 
     if (dueStr != null) {
-        val dueComponents = DateTimeUtil.parseIsoToComponents(dueStr)
+        val dueComponents = remember(dueStr) { DateTimeUtil.parseIsoToComponents(dueStr) }
         if (dueComponents != null) {
             val diffMs = dueComponents.epochMillis - nowMs
             if (diffMs <= 0) {
@@ -97,13 +101,17 @@ fun ForosCardItem(
     val authorName = topic.author?.displayName ?: topic.userName ?: stringResource(Res.string.foros_author_default)
     val repliesCount = topic.discussionSubentryCount ?: 0
 
-    // Limpieza rápida de HTML en el preview del mensaje
-    val cleanMessage = topic.message
-        ?.replace(Regex("<[^>]*>"), " ")
-        ?.replace(Regex("&nbsp;"), " ")
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
-        ?: stringResource(Res.string.foros_default_message_prompt)
+    // Limpieza rápida y memoizada de HTML en el preview del mensaje
+    val defaultPrompt = stringResource(Res.string.foros_default_message_prompt)
+    val rawMessage = topic.message
+    val cleanMessage = remember(rawMessage, defaultPrompt) {
+        rawMessage
+            ?.replace(HTML_TAG_REGEX, " ")
+            ?.replace(HTML_NBSP_REGEX, " ")
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: defaultPrompt
+    }
 
     val cardContent = @Composable {
         Column(

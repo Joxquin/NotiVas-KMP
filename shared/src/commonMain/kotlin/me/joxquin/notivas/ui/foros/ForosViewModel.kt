@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import me.joxquin.notivas.ui.foros.model.ForosGroupHelper
+import me.joxquin.notivas.ui.foros.model.ForosWeekGroup
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.repository.CanvasRepository
@@ -75,7 +79,10 @@ data class ForosUiState(
     val copilotErrorMessage: String? = null,
     val activeCopilotModel: String = "google/gemini-2.5-flash",
     val userProfile: me.joxquin.notivas.data.model.UserProfile? = null,
-    val respondedForumIds: Set<Long> = emptySet()
+    val respondedForumIds: Set<Long> = emptySet(),
+    val weekGroups: List<ForosWeekGroup> = emptyList(),
+    val isWeeksReversed: Boolean = true,
+    val isCalculatingWeeks: Boolean = false
 )
 
 class ForosViewModel(
@@ -112,6 +119,16 @@ class ForosViewModel(
     )
 
     private val _respondedForumIds = MutableStateFlow<Set<Long>>(emptySet())
+    private val _isWeeksReversed = MutableStateFlow(true)
+    val isWeeksReversed: StateFlow<Boolean> = _isWeeksReversed.asStateFlow()
+
+    fun setWeeksReversed(reversed: Boolean) {
+        _isWeeksReversed.value = reversed
+    }
+
+    fun toggleWeeksOrder() {
+        _isWeeksReversed.value = !_isWeeksReversed.value
+    }
 
     // Almacenamiento local de borradores y estrategias por ID de foro en memoria del ViewModel
     private val _draftsMemory = mutableMapOf<Long, String>()
@@ -208,11 +225,12 @@ class ForosViewModel(
         },
         combine(
             canvasRepository.userProfile,
-            _respondedForumIds
-        ) { profile, respondedIds ->
-            profile to respondedIds
+            _respondedForumIds,
+            _isWeeksReversed
+        ) { profile, respondedIds, reversed ->
+            Tuple3(profile, respondedIds, reversed)
         }
-    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, publishing, pubSuccess, pubError), (generating, strategy, errorMsg, activeModel), (userProfile, respondedIds) ->
+    ) { (raw, courses, courseId, tab, sort), (query, loading, selDiscussion, replies, loadingReplies), (draft, savedMsg, publishing, pubSuccess, pubError), (generating, strategy, errorMsg, activeModel), (userProfile, respondedIds, reversed) ->
 
         val nowMs = DateTimeUtil.nowEpochMillis()
 
@@ -273,6 +291,15 @@ class ForosViewModel(
             DiscussionSortOption.TITLE_ASC -> list.sortedBy { it.title.lowercase() }
         }
 
+        // 6. Agrupación asíncrona de semanas (por defecto descendente / más recientes primero)
+        val groups = ForosGroupHelper.groupDiscussions(
+            discussions = list,
+            nowMs = nowMs,
+            generalGroupTitle = "Foros Generales",
+            weekFormat = { week -> "SEMANA $week" },
+            reverseOrder = reversed
+        )
+
         ForosUiState(
             discussions = raw,
             filteredDiscussions = list,
@@ -300,9 +327,12 @@ class ForosViewModel(
             copilotErrorMessage = errorMsg,
             activeCopilotModel = activeModel,
             userProfile = userProfile,
-            respondedForumIds = respondedIds
+            respondedForumIds = respondedIds,
+            weekGroups = groups,
+            isWeeksReversed = reversed,
+            isCalculatingWeeks = false
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ForosUiState())
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ForosUiState(isLoading = true, isCalculatingWeeks = true))
 
     init {
         loadDiscussions()
@@ -717,4 +747,10 @@ private data class Tuple5<A, B, C, D, E>(
     val c: C,
     val d: D,
     val e: E
+)
+
+private data class Tuple3<A, B, C>(
+    val a: A,
+    val b: B,
+    val c: C
 )

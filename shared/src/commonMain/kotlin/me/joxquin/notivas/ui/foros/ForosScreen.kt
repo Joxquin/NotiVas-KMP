@@ -91,10 +91,12 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
+import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import top.yukonga.miuix.kmp.icon.extended.GridView
 import top.yukonga.miuix.kmp.icon.extended.ListView
+import top.yukonga.miuix.kmp.icon.extended.Sort
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,27 +115,7 @@ fun ForosScreen(
 
     var isGroupedByWeek by rememberSaveable { mutableStateOf(true) }
     var expandedGroupIds by rememberSaveable { mutableStateOf(setOf<String>()) }
-
-    val generalGroupTitle = stringResource(Res.string.foros_group_general)
-
-    val nowMs = remember { DateTimeUtil.nowEpochMillis() }
-
-    val weekGroups = remember(uiState.filteredDiscussions, generalGroupTitle) {
-        ForosGroupHelper.groupDiscussions(
-            discussions = uiState.filteredDiscussions,
-            nowMs = nowMs,
-            generalGroupTitle = generalGroupTitle,
-            weekFormat = { week -> "SEMANA $week" }
-        )
-    }
-
-    // Por defecto, si expandedGroupIds está vacío y hay grupos, expandir todos o los que tengan pendientes
-    LaunchedEffect(weekGroups) {
-        if (expandedGroupIds.isEmpty() && weekGroups.isNotEmpty()) {
-            val pendingOrAll = weekGroups.filter { it.hasPending }.map { it.id }.toSet()
-            expandedGroupIds = if (pendingOrAll.isNotEmpty()) pendingOrAll else weekGroups.map { it.id }.toSet()
-        }
-    }
+    val weekGroups = uiState.weekGroups
 
     val isScrolled by remember {
         derivedStateOf {
@@ -153,7 +135,11 @@ fun ForosScreen(
                 ) {
                     MiuixPageTopAppBar(
                         title = stringResource(Res.string.foros_hub_title),
-                        subtitle = if (uiState.isLoading) stringResource(Res.string.foros_syncing) else stringResource(Res.string.foros_subtitle_format, uiState.pendingCount),
+                        subtitle = if (uiState.isLoading || uiState.isCalculatingWeeks) {
+                            stringResource(Res.string.foros_loading_groups)
+                        } else {
+                            stringResource(Res.string.foros_subtitle_format, uiState.pendingCount)
+                        },
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
                             me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
@@ -174,6 +160,17 @@ fun ForosScreen(
                                         contentDescription = if (isGroupedByWeek) stringResource(Res.string.foros_view_mode_flat) else stringResource(Res.string.foros_view_mode_grouped),
                                         tint = if (isGroupedByWeek) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
                                     )
+                                }
+                                if (isGroupedByWeek) {
+                                    top.yukonga.miuix.kmp.basic.IconButton(
+                                        onClick = { viewModel.toggleWeeksOrder() }
+                                    ) {
+                                        top.yukonga.miuix.kmp.basic.Icon(
+                                            imageVector = MiuixIcons.Sort,
+                                            contentDescription = stringResource(Res.string.foros_action_invert_weeks),
+                                            tint = if (!uiState.isWeeksReversed) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
+                                        )
+                                    }
                                 }
                                 top.yukonga.miuix.kmp.basic.IconButton(
                                     onClick = { viewModel.setShowFilterBottomSheet(true) }
@@ -223,26 +220,26 @@ fun ForosScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                         // Estado de Carga
-                        if (uiState.isLoading && uiState.discussions.isEmpty()) {
+                        if ((uiState.isLoading || uiState.isCalculatingWeeks) && uiState.discussions.isEmpty()) {
                             item(key = "foros_loading") {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 40.dp),
+                                        .padding(vertical = 48.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
                                     ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(32.dp),
+                                        InfiniteProgressIndicator(
                                             color = MiuixTheme.colorScheme.primary
                                         )
                                         Text(
                                             text = stringResource(Res.string.foros_loading),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                            textAlign = TextAlign.Center
                                         )
                                     }
                                 }
@@ -403,7 +400,7 @@ fun ForosScreen(
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = if (uiState.isLoading) stringResource(Res.string.foros_syncing) else stringResource(Res.string.foros_subtitle_format, uiState.pendingCount),
+                                            text = if (uiState.isLoading || uiState.isCalculatingWeeks) stringResource(Res.string.foros_loading_groups) else stringResource(Res.string.foros_subtitle_format, uiState.pendingCount),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1
@@ -427,6 +424,15 @@ fun ForosScreen(
                                         contentDescription = if (isGroupedByWeek) stringResource(Res.string.foros_view_mode_flat) else stringResource(Res.string.foros_view_mode_grouped),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
+                                }
+                                if (isGroupedByWeek) {
+                                    IconButton(onClick = { viewModel.toggleWeeksOrder() }) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.Sort,
+                                            contentDescription = stringResource(Res.string.foros_action_invert_weeks),
+                                            tint = if (!uiState.isWeeksReversed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                                 IconButton(onClick = { viewModel.setShowFilterBottomSheet(true) }) {
                                     Icon(
@@ -467,28 +473,56 @@ fun ForosScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Estado de Carga
-                if (uiState.isLoading && uiState.discussions.isEmpty()) {
+                // Estado de Carga M3 Expressive
+                if ((uiState.isLoading || uiState.isCalculatingWeeks) && uiState.discussions.isEmpty()) {
                     item(key = "foros_loading") {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 40.dp),
+                                .padding(horizontal = 24.dp, vertical = 36.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            Surface(
+                                shape = RoundedCornerShape(24.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp)
                             ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(32.dp),
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = stringResource(Res.string.foros_loading),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp, vertical = 28.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(52.dp)
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(28.dp),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            strokeWidth = 3.dp,
+                                            trackColor = MaterialTheme.colorScheme.primaryContainer
+                                        )
+                                    }
+                                    Text(
+                                        text = stringResource(Res.string.foros_loading_groups),
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.foros_loading),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
                         }
                     }
@@ -608,6 +642,8 @@ fun ForosScreen(
         onCourseSelected = { courseId -> viewModel.onCourseSelected(courseId) },
         sortOption = uiState.sortOption,
         onSortOptionSelected = { option -> viewModel.onSortOptionSelected(option) },
-        themeStyle = themeStyle
+        themeStyle = themeStyle,
+        isWeeksReversed = uiState.isWeeksReversed,
+        onWeeksReversedChange = { reversed -> viewModel.setWeeksReversed(reversed) }
     )
 }

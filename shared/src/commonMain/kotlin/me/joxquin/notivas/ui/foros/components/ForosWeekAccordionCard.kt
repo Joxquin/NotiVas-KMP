@@ -40,6 +40,8 @@ import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun ForosWeekAccordionCard(
@@ -94,9 +96,15 @@ fun ForosWeekAccordionCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
+                val groupTitle = if (group.weekNumber != null) {
+                    stringResource(Res.string.foros_group_week_format, group.weekNumber)
+                } else {
+                    stringResource(Res.string.foros_group_general)
+                }
+
                 // Título de la Semana o Grupo
                 Text(
-                    text = group.title,
+                    text = groupTitle,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = onSurfaceColor,

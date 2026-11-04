@@ -522,6 +522,11 @@
     <string name="foros_view_mode_flat">List view</string>
     <string name="foros_group_general">General Forums</string>
     <string name="foros_group_week_format">WEEK %1$d</string>
+    <string name="foros_filter_section_weeks_order">Weeks display order</string>
+    <string name="foros_weeks_order_desc">Latest weeks first (Default)</string>
+    <string name="foros_weeks_order_asc">Earliest weeks first</string>
+    <string name="foros_action_invert_weeks">Invert weeks order</string>
+    <string name="foros_loading_groups">Organizing academic forums...</string>
     <string name="task_submenu_share">Share assignment link</string>
     <string name="task_due_label">Due:</string>
     <string name="task_points_label">Points:</string>

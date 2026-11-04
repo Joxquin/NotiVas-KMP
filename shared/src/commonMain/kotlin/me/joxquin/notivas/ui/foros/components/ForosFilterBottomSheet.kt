@@ -76,7 +76,9 @@ fun ForosFilterBottomSheet(
     onCourseSelected: (Long?) -> Unit,
     sortOption: DiscussionSortOption,
     onSortOptionSelected: (DiscussionSortOption) -> Unit,
-    themeStyle: AppThemeStyle
+    themeStyle: AppThemeStyle,
+    isWeeksReversed: Boolean = true,
+    onWeeksReversedChange: (Boolean) -> Unit = {}
 ) {
     if (themeStyle == AppThemeStyle.MIUIX) {
         WindowBottomSheet(
@@ -257,6 +259,33 @@ fun ForosFilterBottomSheet(
                             onSelectedIndexChange = { index ->
                                 val selected = DiscussionSortOption.entries.getOrNull(index) ?: DiscussionSortOption.DUE_DATE_ASC
                                 onSortOptionSelected(selected)
+                            }
+                        )
+                    }
+
+                    // Sección 4: Orden de semanas
+                    val weeksOrderOptions = listOf(
+                        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_weeks_order_desc),
+                        org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_weeks_order_asc)
+                    )
+                    val selectedWeeksOrderIndex = if (isWeeksReversed) 0 else 1
+
+                    SmallTitle(
+                        text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_weeks_order),
+                        insideMargin = PaddingValues(16.dp, 8.dp)
+                    )
+                    Card(
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        colors = CardDefaults.defaultColors(
+                            color = MiuixTheme.colorScheme.secondaryContainer
+                        )
+                    ) {
+                        WindowDropdownPreference(
+                            title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_weeks_order),
+                            items = weeksOrderOptions,
+                            selectedIndex = selectedWeeksOrderIndex,
+                            onSelectedIndexChange = { index ->
+                                onWeeksReversedChange(index == 0)
                             }
                         )
                     }
@@ -517,6 +546,57 @@ fun ForosFilterBottomSheet(
                                     ) {
                                         Text(
                                             text = optionDisplayName,
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                            ),
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (isSelected) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Orden de semanas
+                    item {
+                        Text(
+                            text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_weeks_order),
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            val options = listOf(
+                                true to org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_weeks_order_desc),
+                                false to org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_weeks_order_asc)
+                            )
+                            options.forEach { (reversed, label) ->
+                                val isSelected = isWeeksReversed == reversed
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable { onWeeksReversedChange(reversed) }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = label,
                                             style = MaterialTheme.typography.bodyMedium.copy(
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                             ),

@@ -20,7 +20,8 @@ object ForosGroupHelper {
         discussions: List<CanvasDiscussionTopic>,
         nowMs: Long,
         generalGroupTitle: String,
-        weekFormat: (Int) -> String
+        weekFormat: (Int) -> String,
+        reverseOrder: Boolean = true
     ): List<ForosWeekGroup> {
         if (discussions.isEmpty()) return emptyList()
 
@@ -38,11 +39,21 @@ object ForosGroupHelper {
 
         val result = mutableListOf<ForosWeekGroup>()
 
-        // 1. Grupos ordenados por número de semana ascendente
-        grouped.keys.sorted().forEach { week ->
+        // 1. Grupos de semanas ordenados (por defecto descendente / al revés)
+        val sortedWeeks = if (reverseOrder) grouped.keys.sortedDescending() else grouped.keys.sorted()
+        for (week in sortedWeeks) {
             val topicsInWeek = grouped[week] ?: emptyList()
-            val allCompleted = topicsInWeek.all { isTopicDoneOrExpired(it, nowMs) }
-            val hasPending = topicsInWeek.any { !isTopicDoneOrExpired(it, nowMs) }
+            var anyPending = false
+            var allDone = true
+            for (topic in topicsInWeek) {
+                val done = isTopicDoneOrExpired(topic, nowMs)
+                if (!done) {
+                    anyPending = true
+                    allDone = false
+                }
+            }
+            val allCompleted = topicsInWeek.isNotEmpty() && allDone
+            val hasPending = anyPending
 
             result.add(
                 ForosWeekGroup(
@@ -58,8 +69,17 @@ object ForosGroupHelper {
 
         // 2. Grupo General (para los foros que no tienen etiqueta de semana en el título)
         if (general.isNotEmpty()) {
-            val allCompleted = general.all { isTopicDoneOrExpired(it, nowMs) }
-            val hasPending = general.any { !isTopicDoneOrExpired(it, nowMs) }
+            var anyPending = false
+            var allDone = true
+            for (topic in general) {
+                val done = isTopicDoneOrExpired(topic, nowMs)
+                if (!done) {
+                    anyPending = true
+                    allDone = false
+                }
+            }
+            val allCompleted = general.isNotEmpty() && allDone
+            val hasPending = anyPending
 
             result.add(
                 ForosWeekGroup(
