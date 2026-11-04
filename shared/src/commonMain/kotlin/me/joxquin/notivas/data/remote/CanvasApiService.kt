@@ -101,10 +101,23 @@ class CanvasApiService(
         return try {
             val cleanCookies = cookies.removePrefix("Cookie: ").trim()
             val url = formatUrl(baseUrl, "api/v1/users/self/tokens")
+            val expirationDate = try {
+                val now = me.joxquin.notivas.util.DateTimeUtil.nowLocalDate()
+                val targetDate = me.joxquin.notivas.util.DateTimeUtil.addDays(now, 28)
+                val m = if (targetDate.month < 10) "0${targetDate.month}" else "${targetDate.month}"
+                val d = if (targetDate.day < 10) "0${targetDate.day}" else "${targetDate.day}"
+                "${targetDate.year}-${m}-${d}T23:59:59Z"
+            } catch (_: Throwable) {
+                val nowMillis = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+                val targetMillis = nowMillis + (28L * 24 * 60 * 60 * 1000)
+                // Fallback aproximado
+                "2026-12-01T23:59:59Z"
+            }
             val response = client.submitForm(
                 url = url,
                 formParameters = parameters {
                     append("token[purpose]", purpose)
+                    append("token[expires_at]", expirationDate)
                 }
             ) {
                 header("User-Agent", "CanvasFastClient/1.0")
