@@ -372,6 +372,8 @@ class PreferencesManager(
 
     suspend fun saveAccessToken(token: String) {
         _accessToken.value = token
+        _sessionCookies.value = null
+        _csrfToken.value = null
         _authMode.value = me.joxquin.notivas.data.model.AuthMode.TOKEN
         _isSessionExpired.value = false
         schedulePersist()

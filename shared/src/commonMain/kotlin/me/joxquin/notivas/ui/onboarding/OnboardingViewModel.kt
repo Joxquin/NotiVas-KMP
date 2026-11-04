@@ -86,7 +86,19 @@ class OnboardingViewModel(
             _isVerifying.value = true
             _verificationSuccess.value = null
             try {
-                val success = repository.verifyAndSaveSession(_universityUrl.value, cookies, csrfToken)
+                var targetUrl = _universityUrl.value
+                if (cookies.contains("university_url=")) {
+                    val parts = cookies.split(Regex("[&;]\\s*university_url="))
+                    if (parts.size > 1 && parts[1].isNotBlank()) {
+                        targetUrl = parts[1].trim()
+                        _universityUrl.value = targetUrl
+                    }
+                }
+                if (cookies.startsWith("access_token=") || cookies.startsWith("Bearer ")) {
+                    val token = cookies.removePrefix("access_token=").removePrefix("Bearer ").split(Regex("[&;]"))[0].trim()
+                    _accessToken.value = token
+                }
+                val success = repository.verifyAndSaveSession(targetUrl, cookies, csrfToken)
                 if (success) {
                     try {
                         val profile = repository.getProfile()

@@ -317,12 +317,13 @@ class ProfileViewModel(
         }
 
         val resolveData = resolveRes.getOrThrow()
+        val authMode = preferencesManager.getAuthMode()
         val payload = me.joxquin.notivas.data.model.SessionPairingPayload(
             universityUrl = preferencesManager.getUniversityUrl() ?: "https://canvas.utp.edu.pe",
-            authMode = preferencesManager.getAuthMode(),
+            authMode = authMode,
             accessToken = preferencesManager.getAccessToken(),
-            sessionCookies = preferencesManager.getSessionCookies(),
-            csrfToken = preferencesManager.getCsrfToken()
+            sessionCookies = if (authMode == me.joxquin.notivas.data.model.AuthMode.TOKEN) null else preferencesManager.getSessionCookies(),
+            csrfToken = if (authMode == me.joxquin.notivas.data.model.AuthMode.TOKEN) null else preferencesManager.getCsrfToken()
         )
 
         val jsonStr = kotlinx.serialization.json.Json.encodeToString(

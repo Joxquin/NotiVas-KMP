@@ -900,13 +900,33 @@ class CanvasRepository(
 
     suspend fun verifyAndSaveSession(url: String, cookies: String, csrfToken: String? = null): Boolean = withContext(AppDispatchers.IO) {
         try {
-            apiService.verifyToken(url, "Cookie: $cookies")
-            preferencesManager.saveUniversityUrl(url)
+            var targetUrl = url
+            var credentialString = cookies.trim()
+
+            // 1. Extraer university_url si viene incluido en el string
+            if (credentialString.contains("university_url=")) {
+                val parts = credentialString.split(Regex("[&;]\\s*university_url="))
+                credentialString = parts[0].trim()
+                if (parts.size > 1 && parts[1].isNotBlank()) {
+                    targetUrl = parts[1].trim()
+                }
+            }
+
+            // 2. Si es un access_token o Bearer (ej. sincronizado desde móvil vía Web Pairing)
+            if (credentialString.startsWith("access_token=") || credentialString.startsWith("Bearer ") || (!credentialString.contains("=") && credentialString.isNotBlank())) {
+                val token = credentialString.removePrefix("access_token=").removePrefix("Bearer ").trim()
+                if (token.isNotBlank()) {
+                    return@withContext verifyAndSave(targetUrl, token)
+                }
+            }
+
+            apiService.verifyToken(targetUrl, "Cookie: $credentialString")
+            preferencesManager.saveUniversityUrl(targetUrl)
 
             // Primera opción: Intentar obtener el token de estudiante permanente vía Canvas API
             val studentToken = apiService.generateStudentAccessToken(
-                baseUrl = url,
-                cookies = cookies,
+                baseUrl = targetUrl,
+                cookies = credentialString,
                 csrfToken = csrfToken,
                 purpose = "NotiVas App"
             )
@@ -916,7 +936,7 @@ class CanvasRepository(
                 preferencesManager.saveAccessToken(studentToken)
             } else {
                 println("[CanvasRepository] Creación de token no disponible en la institución. Guardando SessionCookies como fallback.")
-                preferencesManager.saveSessionCookies(cookies, csrfToken)
+                preferencesManager.saveSessionCookies(credentialString, csrfToken)
             }
             preferencesManager.setSessionExpired(false)
             true

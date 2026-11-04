@@ -143,11 +143,32 @@ actual fun CanvasLoginWebView(
                             me.joxquin.notivas.data.model.SessionPairingPayload.serializer(),
                             payloadJson
                         )
-                        if (!payload.sessionCookies.isNullOrBlank()) {
-                            onLoginSuccess(payload.sessionCookies, payload.csrfToken)
+                        val isTokenAuth = payload.authMode == me.joxquin.notivas.data.model.AuthMode.TOKEN ||
+                                (!payload.accessToken.isNullOrBlank() && payload.sessionCookies.isNullOrBlank())
+
+                        if (isTokenAuth && !payload.accessToken.isNullOrBlank()) {
+                            val tokenWithUrl = if (payload.universityUrl.isNotBlank()) {
+                                "access_token=${payload.accessToken}&university_url=${payload.universityUrl}"
+                            } else {
+                                "access_token=${payload.accessToken}"
+                            }
+                            onLoginSuccess(tokenWithUrl, null)
+                            break
+                        } else if (!payload.sessionCookies.isNullOrBlank()) {
+                            val cookiesWithUrl = if (payload.universityUrl.isNotBlank()) {
+                                "${payload.sessionCookies}&university_url=${payload.universityUrl}"
+                            } else {
+                                payload.sessionCookies
+                            }
+                            onLoginSuccess(cookiesWithUrl, payload.csrfToken)
                             break
                         } else if (!payload.accessToken.isNullOrBlank()) {
-                            onLoginSuccess("access_token=${payload.accessToken}", null)
+                            val tokenWithUrl = if (payload.universityUrl.isNotBlank()) {
+                                "access_token=${payload.accessToken}&university_url=${payload.universityUrl}"
+                            } else {
+                                "access_token=${payload.accessToken}"
+                            }
+                            onLoginSuccess(tokenWithUrl, null)
                             break
                         }
                     } catch (e: Exception) {
