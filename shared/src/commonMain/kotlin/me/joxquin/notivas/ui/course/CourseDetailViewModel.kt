@@ -30,6 +30,7 @@ data class CourseModuleItemUi(
     val assignmentId: Long? = null,
     val contentId: Long? = null,
     val actionUrl: String? = null,
+    val htmlUrl: String? = null,
     val fileExtension: String? = null
 )
 
@@ -268,6 +269,11 @@ class CourseDetailViewModel(
                         "${it.roundToInt()} pts"
                     }
 
+                    val actionUrl = when {
+                        item.type.equals("ExternalUrl", ignoreCase = true) -> item.externalUrl ?: item.htmlUrl ?: item.url
+                        else -> item.htmlUrl ?: item.externalUrl ?: item.url
+                    }
+
                     val itemUi = CourseModuleItemUi(
                         id = item.id,
                         title = item.title,
@@ -279,7 +285,8 @@ class CourseDetailViewModel(
                         pointsText = points,
                         assignmentId = matchingAssignment?.id,
                         contentId = item.contentId,
-                        actionUrl = item.htmlUrl ?: item.url ?: item.externalUrl,
+                        actionUrl = actionUrl,
+                        htmlUrl = item.htmlUrl,
                         fileExtension = ext
                     )
                     currentSectionItems.add(itemUi)
@@ -369,6 +376,85 @@ class CourseDetailViewModel(
             }
             else -> {
                 "Tu cobertura de pruebas y comprensión técnica avanzan favorablemente. Revisa el patrón AAA y las guías de laboratorio."
+            }
+        }
+    }
+
+    fun openItem(
+        item: CourseModuleItemUi,
+        uriHandler: androidx.compose.ui.platform.UriHandler,
+        onNavigateToAssignmentDraft: (Long, String) -> Unit,
+        onNavigateToForoDetail: (Long) -> Unit
+    ) {
+        if (item.type.equals("Assignment", ignoreCase = true) || item.assignmentId != null) {
+            val courseName = uiState.value.course?.name ?: "Curso"
+            onNavigateToAssignmentDraft(item.assignmentId ?: item.id, courseName)
+            return
+        }
+
+        if (item.type.equals("Discussion", ignoreCase = true)) {
+            val topicId = item.contentId ?: item.id
+            onNavigateToForoDetail(topicId)
+            return
+        }
+
+        viewModelScope.launch {
+            // 1. Materiales / Recursos descargables (PDF, DOCS, PPTX, XLSX, etc.)
+            if (item.type.equals("File", ignoreCase = true) || item.fileExtension != null) {
+                val fileId = item.contentId
+                val downloadUrl = if (fileId != null) {
+                    repository.getCanvasFileDownloadUrl(courseId, fileId)
+                } else null
+
+                if (!downloadUrl.isNullOrBlank()) {
+                    val name = item.title.lowercase()
+                    val isDoc = name.endsWith(".pdf") || name.endsWith(".docx") || name.endsWith(".doc") ||
+                            name.endsWith(".pptx") || name.endsWith(".ppt") || name.endsWith(".xlsx") ||
+                            name.endsWith(".xls") || item.fileExtension != null
+                    if (isDoc) {
+                        val viewerUrl = "https://docs.google.com/viewer?url=" + me.joxquin.notivas.util.encodeUrlComponent(downloadUrl)
+                        try {
+                            uriHandler.openUri(viewerUrl)
+                        } catch (_: Exception) {
+                            me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(downloadUrl)
+                        }
+                    } else {
+                        try {
+                            uriHandler.openUri(downloadUrl)
+                        } catch (_: Exception) {
+                            me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(downloadUrl)
+                        }
+                    }
+                    return@launch
+                }
+            }
+
+            // 2. Enlaces externos (Canva, YouTube, Drive, WhatsApp, etc.)
+            if (item.type.equals("ExternalUrl", ignoreCase = true)) {
+                val targetUrl = item.actionUrl
+                if (!targetUrl.isNullOrBlank()) {
+                    if (targetUrl.contains("/module_item_redirect/")) {
+                        val resolved = repository.resolveRedirectUrl(targetUrl) ?: targetUrl
+                        try {
+                            uriHandler.openUri(resolved)
+                        } catch (_: Exception) {
+                            me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(resolved)
+                        }
+                    } else {
+                        try {
+                            uriHandler.openUri(targetUrl)
+                        } catch (_: Exception) {
+                            me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(targetUrl)
+                        }
+                    }
+                    return@launch
+                }
+            }
+
+            // 3. Fallback: Recursos nativos de Canvas (Páginas, Quizzes, etc.) -> Abrir en Canvas App en Android
+            val canvasUrl = item.htmlUrl ?: item.actionUrl
+            if (!canvasUrl.isNullOrBlank()) {
+                me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(canvasUrl)
             }
         }
     }

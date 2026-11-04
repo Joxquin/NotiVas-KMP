@@ -7,6 +7,7 @@ import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
+import io.ktor.client.statement.request
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -397,6 +398,26 @@ class CanvasApiService(
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/files/$fileId")) {
             applyAuth(token)
         }.body()
+    }
+
+    suspend fun resolveRedirectUrl(
+        baseUrl: String,
+        token: String,
+        targetUrl: String
+    ): String? {
+        val fullUrl = if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+            targetUrl
+        } else {
+            formatUrl(baseUrl, targetUrl)
+        }
+        return try {
+            val response = client.get(fullUrl) {
+                applyAuth(token)
+            }
+            response.headers[io.ktor.http.HttpHeaders.Location] ?: response.request.url.toString()
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     suspend fun getDiscussionTopics(

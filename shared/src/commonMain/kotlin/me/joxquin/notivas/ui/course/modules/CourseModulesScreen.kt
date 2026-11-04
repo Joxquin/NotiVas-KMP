@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -91,6 +92,7 @@ fun CourseModulesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val courseName = uiState.course?.name ?: "Curso"
+    val uriHandler = LocalUriHandler.current
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val scrollBehavior = MiuixScrollBehavior()
@@ -166,10 +168,10 @@ fun CourseModulesScreen(
                                 onItemClick = { item ->
                                     handleItemClick(
                                         item = item,
-                                        courseName = courseName,
+                                        viewModel = viewModel,
+                                        uriHandler = uriHandler,
                                         onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
-                                        onNavigateToForoDetail = onNavigateToForoDetail,
-                                        onOpenUrl = onOpenUrl
+                                        onNavigateToForoDetail = onNavigateToForoDetail
                                     )
                                 }
                             )
@@ -265,10 +267,10 @@ fun CourseModulesScreen(
                                 onItemClick = { item ->
                                     handleItemClick(
                                         item = item,
-                                        courseName = courseName,
+                                        viewModel = viewModel,
+                                        uriHandler = uriHandler,
                                         onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
-                                        onNavigateToForoDetail = onNavigateToForoDetail,
-                                        onOpenUrl = onOpenUrl
+                                        onNavigateToForoDetail = onNavigateToForoDetail
                                     )
                                 }
                             )
@@ -282,18 +284,17 @@ fun CourseModulesScreen(
 
 private fun handleItemClick(
     item: CourseModuleItemUi,
-    courseName: String,
+    viewModel: CourseDetailViewModel,
+    uriHandler: androidx.compose.ui.platform.UriHandler,
     onNavigateToAssignmentDraft: (Long, String) -> Unit,
-    onNavigateToForoDetail: (Long) -> Unit,
-    onOpenUrl: (String) -> Unit
+    onNavigateToForoDetail: (Long) -> Unit
 ) {
-    if (item.type.equals("Assignment", ignoreCase = true)) {
-        onNavigateToAssignmentDraft(item.assignmentId ?: item.id, courseName)
-    } else if (item.type.equals("Discussion", ignoreCase = true)) {
-        onNavigateToForoDetail(item.contentId ?: item.id)
-    } else if (!item.actionUrl.isNullOrBlank()) {
-        onOpenUrl(item.actionUrl)
-    }
+    viewModel.openItem(
+        item = item,
+        uriHandler = uriHandler,
+        onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
+        onNavigateToForoDetail = onNavigateToForoDetail
+    )
 }
 
 @Composable

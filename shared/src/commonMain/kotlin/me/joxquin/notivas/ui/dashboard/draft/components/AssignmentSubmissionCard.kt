@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.ui.platform.LocalUriHandler
+import me.joxquin.notivas.util.encodeUrlComponent
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -2478,22 +2479,6 @@ private fun resolveViewableUrl(
     return assignmentHtmlUrl
 }
 
-private fun encodeUrlComponent(url: String): String {
-    return buildString {
-        for (c in url) {
-            when (c) {
-                in 'a'..'z', in 'A'..'Z', in '0'..'9', '-', '_', '.', '~' -> append(c)
-                else -> {
-                    val bytes = c.toString().encodeToByteArray()
-                    for (b in bytes) {
-                        append('%')
-                        append(b.toUByte().toString(16).uppercase().padStart(2, '0'))
-                    }
-                }
-            }
-        }
-    }
-}
 
 private fun openUrlSafely(url: String, uriHandler: androidx.compose.ui.platform.UriHandler) {
     try {

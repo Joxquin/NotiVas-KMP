@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,6 +71,7 @@ fun CourseDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val uriHandler = LocalUriHandler.current
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val scrollBehavior = MiuixScrollBehavior()
@@ -160,15 +162,12 @@ fun CourseDetailScreen(
                                 themeStyle = AppThemeStyle.MIUIX,
                                 onClick = onNavigateToAllModules,
                                 onItemClick = { item ->
-                                    if (item.assignmentId != null) {
-                                        val courseName = uiState.course?.name ?: "Curso"
-                                        onNavigateToAssignmentDraft(item.assignmentId, courseName)
-                                    } else if (item.type.equals("Discussion", ignoreCase = true)) {
-                                        val topicId = item.contentId ?: item.id
-                                        onNavigateToForoDetail(topicId)
-                                    } else if (!item.actionUrl.isNullOrBlank()) {
-                                        onOpenUrl(item.actionUrl)
-                                    }
+                                    viewModel.openItem(
+                                        item = item,
+                                        uriHandler = uriHandler,
+                                        onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
+                                        onNavigateToForoDetail = onNavigateToForoDetail
+                                    )
                                 }
                             )
                         }
@@ -262,15 +261,12 @@ fun CourseDetailScreen(
                             themeStyle = AppThemeStyle.MATERIAL,
                             onClick = onNavigateToAllModules,
                             onItemClick = { item ->
-                                if (item.assignmentId != null) {
-                                    val courseName = uiState.course?.name ?: "Curso"
-                                    onNavigateToAssignmentDraft(item.assignmentId, courseName)
-                                } else if (item.type.equals("Discussion", ignoreCase = true)) {
-                                    val topicId = item.contentId ?: item.id
-                                    onNavigateToForoDetail(topicId)
-                                } else if (!item.actionUrl.isNullOrBlank()) {
-                                    onOpenUrl(item.actionUrl)
-                                }
+                                viewModel.openItem(
+                                    item = item,
+                                    uriHandler = uriHandler,
+                                    onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
+                                    onNavigateToForoDetail = onNavigateToForoDetail
+                                )
                             }
                         )
                     }

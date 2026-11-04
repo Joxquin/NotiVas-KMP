@@ -26,6 +26,9 @@ actual object CanvasDeepLinkHandler {
         val trimmed = url.trim()
         val match = Regex("""^https://([^/?#]+)(.*)$""").find(trimmed) ?: return null
         val (host, rest) = match.destructured
+        val isCanvasHost = host.contains("instructure.com", ignoreCase = true) ||
+                host.contains("canvas", ignoreCase = true)
+        if (!isCanvasHost) return null
         return "canvas-courses://$host$rest"
     }
 

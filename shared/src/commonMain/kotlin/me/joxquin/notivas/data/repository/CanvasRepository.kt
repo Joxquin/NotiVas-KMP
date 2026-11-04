@@ -1401,6 +1401,12 @@ class CanvasRepository(
         }
     }
 
+    suspend fun resolveRedirectUrl(url: String): String? = withContext(AppDispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext null
+        val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext null
+        apiService.resolveRedirectUrl(baseUrl, token, url)
+    }
+
     suspend fun logout() {
         preferencesManager.clear()
         localStore.deleteCourses()
