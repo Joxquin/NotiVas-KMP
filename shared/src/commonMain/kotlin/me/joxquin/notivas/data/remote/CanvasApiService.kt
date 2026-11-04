@@ -207,6 +207,8 @@ class CanvasApiService(
     ): SubmissionDetails {
         return client.get(formatUrl(baseUrl, "api/v1/courses/$courseId/assignments/$assignmentId/submissions/self")) {
             applyAuth(token)
+            parameter("include[]", "submission_history")
+            parameter("include[]", "submission_comments")
         }.body()
     }
 

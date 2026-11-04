@@ -11,6 +11,7 @@ data class CanvasAssignmentDetailResponse(
     @SerialName("due_at") val dueAt: String? = null,
     @SerialName("points_possible") val pointsPossible: Double? = null,
     @SerialName("submission_types") val submissionTypes: List<String>? = null,
+    @SerialName("allowed_attempts") val allowedAttempts: Int? = null,
     @SerialName("rubric") val rubric: List<CanvasRubricCriterion>? = null,
     @SerialName("submission") val submission: CanvasSubmissionDetail? = null
 )
@@ -19,6 +20,11 @@ data class CanvasAssignmentDetailResponse(
 data class CanvasSubmissionDetail(
     @SerialName("id") val id: Long? = null,
     @SerialName("workflow_state") val workflowState: String? = null,
+    @SerialName("submission_type") val submissionType: String? = null,
+    @SerialName("body") val body: String? = null,
+    @SerialName("url") val url: String? = null,
+    @SerialName("attempt") val attempt: Int? = null,
+    @SerialName("attachments") val attachments: List<CanvasAttachment>? = null,
     @SerialName("submitted_at") val submittedAt: String? = null,
     @SerialName("graded_at") val gradedAt: String? = null,
     @SerialName("score") val score: Double? = null,

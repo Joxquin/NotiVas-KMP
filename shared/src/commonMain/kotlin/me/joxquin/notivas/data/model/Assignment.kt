@@ -18,6 +18,7 @@ data class Assignment(
     @SerialName("has_submitted_submissions") val isCompleted: Boolean = false,
     @SerialName("locked_for_user") val isLocked: Boolean = false,
     @SerialName("submission") val submission: SubmissionDetails? = null,
+    @SerialName("allowed_attempts") val allowedAttempts: Int? = null,
     val status: String = "upcoming", // "upcoming", "completed", "missing"
     val submittedAt: String? = null,
     val gradedAt: String? = null,
@@ -39,6 +40,11 @@ data class Assignment(
 data class SubmissionDetails(
     @SerialName("id") val id: Long? = null,
     @SerialName("workflow_state") val workflowState: String? = null,
+    @SerialName("submission_type") val submissionType: String? = null,
+    @SerialName("body") val body: String? = null,
+    @SerialName("url") val url: String? = null,
+    @SerialName("attempt") val attempt: Int? = null,
+    @SerialName("attachments") val attachments: List<CanvasAttachment>? = null,
     @SerialName("submitted_at") val submittedAt: String? = null,
     @SerialName("graded_at") val gradedAt: String? = null,
     @SerialName("score") val score: Double? = null,
@@ -46,3 +52,15 @@ data class SubmissionDetails(
     @SerialName("late") val late: Boolean? = null,
     @SerialName("missing") val missing: Boolean? = null
 )
+
+@Serializable
+data class CanvasAttachment(
+    @SerialName("id") val id: Long? = null,
+    @SerialName("display_name") val displayName: String? = null,
+    @SerialName("filename") val filename: String? = null,
+    @SerialName("url") val url: String? = null,
+    @SerialName("size") val size: Long? = null,
+    @SerialName("content-type") val contentType: String? = null,
+    @SerialName("preview_url") val previewUrl: String? = null
+)
+

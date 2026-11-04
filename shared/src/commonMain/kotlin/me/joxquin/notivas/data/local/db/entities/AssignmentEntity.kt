@@ -6,6 +6,7 @@ import androidx.room3.ForeignKey
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
 import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.CanvasAttachment
 import me.joxquin.notivas.data.model.SubmissionDetails
 
 @Entity(
@@ -60,6 +61,18 @@ data class AssignmentEntity(
     val submissionLate: Boolean? = null,
     @ColumnInfo(name = "submission_missing")
     val submissionMissing: Boolean? = null,
+    @ColumnInfo(name = "allowed_attempts")
+    val allowedAttempts: Int? = null,
+    @ColumnInfo(name = "submission_type")
+    val submissionType: String? = null,
+    @ColumnInfo(name = "submission_body")
+    val submissionBody: String? = null,
+    @ColumnInfo(name = "submission_url")
+    val submissionUrl: String? = null,
+    @ColumnInfo(name = "submission_attempt")
+    val submissionAttempt: Int? = null,
+    @ColumnInfo(name = "submission_attachments")
+    val submissionAttachments: List<CanvasAttachment>? = null,
     @ColumnInfo(name = "notification_sent")
     val notificationSent: Boolean = false,
     @ColumnInfo(name = "notified_24h")
@@ -82,10 +95,15 @@ data class AssignmentEntity(
         allowedExtensions = allowedExtensions,
         isCompleted = isCompleted,
         isLocked = isLocked,
-        submission = if (submissionId != null || submissionWorkflowState != null || score != null || grade != null) {
+        submission = if (submissionId != null || submissionWorkflowState != null || score != null || grade != null || submissionAttachments != null || submissionBody != null || submissionUrl != null) {
             SubmissionDetails(
                 id = submissionId,
                 workflowState = submissionWorkflowState,
+                submissionType = submissionType,
+                body = submissionBody,
+                url = submissionUrl,
+                attempt = submissionAttempt,
+                attachments = submissionAttachments,
                 submittedAt = submittedAt,
                 gradedAt = gradedAt,
                 score = score,
@@ -94,6 +112,7 @@ data class AssignmentEntity(
                 missing = submissionMissing
             )
         } else null,
+        allowedAttempts = allowedAttempts,
         status = status,
         submittedAt = submittedAt,
         gradedAt = gradedAt,
@@ -128,6 +147,12 @@ data class AssignmentEntity(
             submissionWorkflowState = a.submission?.workflowState,
             submissionLate = a.submission?.late,
             submissionMissing = a.submission?.missing,
+            allowedAttempts = a.allowedAttempts,
+            submissionType = a.submission?.submissionType,
+            submissionBody = a.submission?.body,
+            submissionUrl = a.submission?.url,
+            submissionAttempt = a.submission?.attempt,
+            submissionAttachments = a.submission?.attachments,
             notificationSent = a.notificationSent,
             notified24h = a.notified24h,
             notified3h = a.notified3h,

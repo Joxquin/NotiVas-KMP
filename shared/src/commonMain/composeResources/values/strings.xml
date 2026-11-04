@@ -736,6 +736,20 @@
     <string name="assignment_submission_allowed_formats_label">Allowed formats: %1$s</string>
     <string name="assignment_submission_required_format">Required format: %1$s</string>
     <string name="assignment_submission_invalid_format_error">Invalid file format. Only %1$s files are accepted</string>
+    <string name="assignment_submission_view_file">View</string>
+    <string name="assignment_submission_download_file">Download</string>
+    <string name="assignment_submission_submitted_file_title">Submitted file</string>
+    <string name="assignment_submission_submitted_text_title">Online text submitted</string>
+    <string name="assignment_submission_submitted_url_title">Submitted link</string>
+    <string name="assignment_submission_attempt_indicator">Attempt %1$d of %2$d</string>
+    <string name="assignment_submission_attempt_unlimited">Attempt %1$d (Unlimited attempts)</string>
+    <string name="assignment_submission_no_more_attempts">Submission recorded. No more attempts allowed.</string>
+    <string name="assignment_submission_toggle_show_options">Resubmit assignment</string>
+    <string name="assignment_submission_toggle_hide_options">Hide submission options</string>
+    <string name="assignment_submission_pending_grade">Grading pending</string>
+    <string name="assignment_submission_submitted_at_prefix">Submitted on %1$s</string>
+    <string name="assignment_submission_score_label">Score achieved:</string>
+
 
     <!-- Canvas Quiz / Online Assessment -->
     <string name="assignment_quiz_card_title">Canvas Online Quiz</string>

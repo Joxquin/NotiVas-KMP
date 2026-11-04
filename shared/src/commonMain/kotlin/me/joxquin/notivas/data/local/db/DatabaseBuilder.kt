@@ -78,12 +78,25 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        try {
+            connection.execSQL("ALTER TABLE `assignments` ADD COLUMN `allowed_attempts` INTEGER")
+            connection.execSQL("ALTER TABLE `assignments` ADD COLUMN `submission_type` TEXT")
+            connection.execSQL("ALTER TABLE `assignments` ADD COLUMN `submission_body` TEXT")
+            connection.execSQL("ALTER TABLE `assignments` ADD COLUMN `submission_url` TEXT")
+            connection.execSQL("ALTER TABLE `assignments` ADD COLUMN `submission_attempt` INTEGER")
+            connection.execSQL("ALTER TABLE `assignments` ADD COLUMN `submission_attachments` TEXT")
+        } catch (_: Throwable) {}
+    }
+}
+
 fun createRoomDatabase(
     builder: RoomDatabase.Builder<NotivasDatabase> = getDatabaseBuilder()
 ): NotivasDatabase {
     return builder
         .setQueryCoroutineContext(AppDispatchers.IO)
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
         .fallbackToDestructiveMigration(dropAllTables = true)
         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()

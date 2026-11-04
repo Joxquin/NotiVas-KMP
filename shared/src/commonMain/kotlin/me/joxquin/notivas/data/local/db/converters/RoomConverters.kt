@@ -22,4 +22,20 @@ class RoomConverters {
             }
         }
     }
+
+    @ColumnTypeConverter
+    fun fromAttachmentList(value: List<me.joxquin.notivas.data.model.CanvasAttachment>?): String? {
+        return value?.let { json.encodeToString(it) }
+    }
+
+    @ColumnTypeConverter
+    fun toAttachmentList(value: String?): List<me.joxquin.notivas.data.model.CanvasAttachment>? {
+        return value?.let {
+            try {
+                json.decodeFromString<List<me.joxquin.notivas.data.model.CanvasAttachment>>(it)
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+    }
 }

@@ -1,8 +1,10 @@
 package me.joxquin.notivas.ui.dashboard.draft.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,12 +29,19 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -176,11 +185,64 @@ fun AssignmentSubmissionCard(
             ?: "${assignment.name.take(24)} - Borrador.docx"
     }
 
+    val uriHandler = LocalUriHandler.current
+
     val isAlreadySubmitted = assignment.isCompleted ||
             assignment.status == "completed" ||
             assignment.submission?.workflowState in listOf("submitted", "graded") ||
             !assignment.submittedAt.isNullOrBlank() ||
             !assignment.submission?.submittedAt.isNullOrBlank()
+
+    val scorePair = remember(assignment) {
+        val score = assignment.score ?: assignment.submission?.score
+        val points = assignment.pointsPossible
+        if (score != null) {
+            val s = if (score % 1.0 == 0.0) score.toInt().toString() else score.toString()
+            val p = if (points != null && points > 0) {
+                if (points % 1.0 == 0.0) points.toInt().toString() else points.toString()
+            } else "-"
+            s to p
+        } else null
+    }
+
+    val hasMoreAttempts = remember(assignment) {
+        if (assignment.isLocked) return@remember false
+        val lockStr = assignment.lockAt
+        if (lockStr != null) {
+            val comp = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(lockStr)
+            if (comp != null && comp.epochMillis <= me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()) {
+                return@remember false
+            }
+        }
+        val allowed = assignment.allowedAttempts
+        if (allowed == null || allowed <= 0 || allowed == -1) {
+            true
+        } else {
+            val currentAttempt = assignment.submission?.attempt ?: 1
+            currentAttempt < allowed
+        }
+    }
+
+    var showDeliveryOptions by remember(isAlreadySubmitted) {
+        mutableStateOf(!isAlreadySubmitted)
+    }
+
+    val formattedSubmittedAt = remember(assignment.submittedAt, assignment.submission?.submittedAt) {
+        val dateStr = assignment.submittedAt ?: assignment.submission?.submittedAt
+        if (dateStr.isNullOrBlank()) null
+        else {
+            val comp = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dateStr)
+            if (comp != null) {
+                "${comp.date.day.toString().padStart(2, '0')}/${comp.date.month.toString().padStart(2, '0')}/${comp.date.year} ${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
+            } else dateStr.take(16)
+        }
+    }
+
+    val submittedAttachments = assignment.submission?.attachments.orEmpty()
+    val submittedTextBody = assignment.submission?.body
+    val submittedUrl = assignment.submission?.url
+    val currentAttempt = assignment.submission?.attempt ?: 1
+    val allowedAttempts = assignment.allowedAttempts
 
     fun handleSubmitDirect() {
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -304,14 +366,419 @@ fun AssignmentSubmissionCard(
                     }
                 }
 
-                // Selector de pestañas unificado: [ Archivo local ] [ Borrador Drive ] [ Texto ]
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .squircleSurface(
-                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                            cornerRadius = 12.dp
+                if (isAlreadySubmitted) {
+                    if (scorePair != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .squircleSurface(
+                                    color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                    cornerRadius = 14.dp
+                                )
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            MiuixText(
+                                text = stringResource(Res.string.assignment_submission_score_label),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                            )
+                            MiuixText(
+                                text = stringResource(
+                                    Res.string.assignment_quiz_score_format,
+                                    scorePair.first,
+                                    scorePair.second
+                                ),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MiuixTheme.colorScheme.primary
+                            )
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .squircleSurface(
+                                    color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                    cornerRadius = 14.dp
+                                )
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            MiuixText(
+                                text = stringResource(Res.string.assignment_submission_pending_grade),
+                                fontSize = 12.sp,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                            )
+                        }
+                    }
+
+                    if (submittedAttachments.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            submittedAttachments.forEach { attachment ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .squircleSurface(
+                                            color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                            cornerRadius = 14.dp
+                                        )
+                                        .squircleBorder(
+                                            width = 1.dp,
+                                            color = MiuixTheme.colorScheme.outline.copy(alpha = 0.1f),
+                                            cornerRadius = 14.dp
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(38.dp)
+                                                    .squircleSurface(
+                                                        color = MiuixTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                                        cornerRadius = 10.dp
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.InsertDriveFile,
+                                                    contentDescription = null,
+                                                    tint = MiuixTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                MiuixText(
+                                                    text = attachment.displayName ?: attachment.filename ?: stringResource(Res.string.assignment_submission_submitted_file_title),
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MiuixTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    if (attachment.size != null && attachment.size > 0L) {
+                                                        MiuixText(
+                                                            text = formatFileSize(attachment.size),
+                                                            fontSize = 11.sp,
+                                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                                        )
+                                                    }
+                                                    if (formattedSubmittedAt != null) {
+                                                        MiuixText(
+                                                            text = "• " + stringResource(Res.string.assignment_submission_submitted_at_prefix, formattedSubmittedAt),
+                                                            fontSize = 11.sp,
+                                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .squircleSurface(
+                                                        color = MiuixTheme.colorScheme.surfaceContainer,
+                                                        cornerRadius = 10.dp
+                                                    )
+                                                    .clickable {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                        val targetUrl = resolveViewableUrl(attachment, assignment.htmlUrl)
+                                                        targetUrl?.let { openUrlSafely(it, uriHandler) }
+                                                    }
+                                                    .padding(vertical = 8.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Visibility,
+                                                        contentDescription = null,
+                                                        tint = MiuixTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(15.dp)
+                                                    )
+                                                    MiuixText(
+                                                        text = stringResource(Res.string.assignment_submission_view_file),
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MiuixTheme.colorScheme.primary
+                                                    )
+                                                }
+                                            }
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .squircleSurface(
+                                                        color = MiuixTheme.colorScheme.surfaceContainer,
+                                                        cornerRadius = 10.dp
+                                                    )
+                                                    .clickable {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                        attachment.url?.let { openUrlSafely(it, uriHandler) }
+                                                    }
+                                                    .padding(vertical = 8.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Download,
+                                                        contentDescription = null,
+                                                        tint = MiuixTheme.colorScheme.onSurface,
+                                                        modifier = Modifier.size(15.dp)
+                                                    )
+                                                    MiuixText(
+                                                        text = stringResource(Res.string.assignment_submission_download_file),
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MiuixTheme.colorScheme.onSurface
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (!submittedTextBody.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .squircleSurface(
+                                    color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                    cornerRadius = 14.dp
+                                )
+                                .squircleBorder(
+                                    width = 1.dp,
+                                    color = MiuixTheme.colorScheme.outline.copy(alpha = 0.1f),
+                                    cornerRadius = 14.dp
+                                )
+                                .padding(12.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.EditNote,
+                                        contentDescription = null,
+                                        tint = MiuixTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    MiuixText(
+                                        text = stringResource(Res.string.assignment_submission_submitted_text_title),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MiuixTheme.colorScheme.onSurface
+                                    )
+                                }
+                                MiuixText(
+                                    text = stripHtmlTags(submittedTextBody),
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                )
+                                if (formattedSubmittedAt != null) {
+                                    MiuixText(
+                                        text = stringResource(Res.string.assignment_submission_submitted_at_prefix, formattedSubmittedAt),
+                                        fontSize = 11.sp,
+                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                    )
+                                }
+                            }
+                        }
+                    } else if (!submittedUrl.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .squircleSurface(
+                                    color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                    cornerRadius = 14.dp
+                                )
+                                .squircleBorder(
+                                    width = 1.dp,
+                                    color = MiuixTheme.colorScheme.outline.copy(alpha = 0.1f),
+                                    cornerRadius = 14.dp
+                                )
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Link,
+                                        contentDescription = null,
+                                        tint = MiuixTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Column {
+                                        MiuixText(
+                                            text = stringResource(Res.string.assignment_submission_submitted_url_title),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MiuixTheme.colorScheme.onSurface
+                                        )
+                                        MiuixText(
+                                            text = submittedUrl,
+                                            fontSize = 11.sp,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .squircleSurface(
+                                            color = MiuixTheme.colorScheme.primary,
+                                            cornerRadius = 10.dp
+                                        )
+                                        .clickable {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            openUrlSafely(submittedUrl, uriHandler)
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    MiuixText(
+                                        text = stringResource(Res.string.assignment_submission_view_file),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MiuixTheme.colorScheme.onPrimary
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MiuixText(
+                            text = if (allowedAttempts != null && allowedAttempts > 0) {
+                                stringResource(Res.string.assignment_submission_attempt_indicator, currentAttempt, allowedAttempts)
+                            } else {
+                                stringResource(Res.string.assignment_submission_attempt_unlimited, currentAttempt)
+                            },
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                         )
+                    }
+
+                    if (hasMoreAttempts) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .squircleSurface(
+                                    color = if (showDeliveryOptions) MiuixTheme.colorScheme.surfaceContainerHigh else MiuixTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    cornerRadius = 12.dp
+                                )
+                                .clickable {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    showDeliveryOptions = !showDeliveryOptions
+                                }
+                                .padding(vertical = 11.dp, horizontal = 14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (showDeliveryOptions) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = null,
+                                    tint = if (showDeliveryOptions) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                MiuixText(
+                                    text = stringResource(
+                                        if (showDeliveryOptions) Res.string.assignment_submission_toggle_hide_options
+                                        else Res.string.assignment_submission_toggle_show_options
+                                    ),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (showDeliveryOptions) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .squircleSurface(
+                                    color = MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+                                    cornerRadius = 12.dp
+                                )
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = MiuixTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            MiuixText(
+                                text = stringResource(Res.string.assignment_submission_no_more_attempts),
+                                fontSize = 12.sp,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                            )
+                        }
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = showDeliveryOptions && (hasMoreAttempts || !isAlreadySubmitted),
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        // Selector de pestañas unificado: [ Archivo local ] [ Borrador Drive ] [ Texto ]
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .squircleSurface(
+                                    color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                    cornerRadius = 12.dp
+                                )
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -1035,6 +1502,8 @@ fun AssignmentSubmissionCard(
                         }
                     }
                 }
+                    }
+                }
             }
         }
     } else {
@@ -1099,12 +1568,346 @@ fun AssignmentSubmissionCard(
                     }
                 }
 
-                // Selector de pestañas Material: [ Archivo local ] [ Borrador Drive ] [ Texto ]
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.fillMaxWidth()
+                if (isAlreadySubmitted) {
+                    if (scorePair != null) {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.assignment_submission_score_label),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = stringResource(
+                                        Res.string.assignment_quiz_score_format,
+                                        scorePair.first,
+                                        scorePair.second
+                                    ),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    } else {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = stringResource(Res.string.assignment_submission_pending_grade),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    if (submittedAttachments.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            submittedAttachments.forEach { attachment ->
+                                Surface(
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(10.dp),
+                                                color = MaterialTheme.colorScheme.primaryContainer,
+                                                modifier = Modifier.size(38.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.InsertDriveFile,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            }
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = attachment.displayName ?: attachment.filename ?: stringResource(Res.string.assignment_submission_submitted_file_title),
+                                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    if (attachment.size != null && attachment.size > 0L) {
+                                                        Text(
+                                                            text = formatFileSize(attachment.size),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                    if (formattedSubmittedAt != null) {
+                                                        Text(
+                                                            text = "• " + stringResource(Res.string.assignment_submission_submitted_at_prefix, formattedSubmittedAt),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            OutlinedButton(
+                                                onClick = {
+                                                    val targetUrl = resolveViewableUrl(attachment, assignment.htmlUrl)
+                                                    targetUrl?.let { openUrlSafely(it, uriHandler) }
+                                                },
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(10.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Visibility,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Spacer(Modifier.width(6.dp))
+                                                Text(
+                                                    text = stringResource(Res.string.assignment_submission_view_file),
+                                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                                                )
+                                            }
+
+                                            Button(
+                                                onClick = {
+                                                    attachment.url?.let { openUrlSafely(it, uriHandler) }
+                                                },
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(10.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Download,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Spacer(Modifier.width(6.dp))
+                                                Text(
+                                                    text = stringResource(Res.string.assignment_submission_download_file),
+                                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (!submittedTextBody.isNullOrBlank()) {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.EditNote,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.assignment_submission_submitted_text_title),
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Text(
+                                    text = stripHtmlTags(submittedTextBody),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (formattedSubmittedAt != null) {
+                                    Text(
+                                        text = stringResource(Res.string.assignment_submission_submitted_at_prefix, formattedSubmittedAt),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    } else if (!submittedUrl.isNullOrBlank()) {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Link,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = stringResource(Res.string.assignment_submission_submitted_url_title),
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = submittedUrl,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                                Button(
+                                    onClick = { openUrlSafely(submittedUrl, uriHandler) },
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.assignment_submission_view_file),
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (allowedAttempts != null && allowedAttempts > 0) {
+                                stringResource(Res.string.assignment_submission_attempt_indicator, currentAttempt, allowedAttempts)
+                            } else {
+                                stringResource(Res.string.assignment_submission_attempt_unlimited, currentAttempt)
+                            },
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (hasMoreAttempts) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (showDeliveryOptions) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showDeliveryOptions = !showDeliveryOptions }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 11.dp, horizontal = 14.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (showDeliveryOptions) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = null,
+                                    tint = if (showDeliveryOptions) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = stringResource(
+                                        if (showDeliveryOptions) Res.string.assignment_submission_toggle_hide_options
+                                        else Res.string.assignment_submission_toggle_show_options
+                                    ),
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = if (showDeliveryOptions) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    } else {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = stringResource(Res.string.assignment_submission_no_more_attempts),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = showDeliveryOptions && (hasMoreAttempts || !isAlreadySubmitted),
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
                 ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        // Selector de pestañas Material: [ Archivo local ] [ Borrador Drive ] [ Texto ]
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                     Row(
                         modifier = Modifier.padding(4.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -1639,6 +2442,63 @@ fun AssignmentSubmissionCard(
             }
         }
     }
+}
+    }
+}
+
+
+private fun resolveViewableUrl(
+    attachment: me.joxquin.notivas.data.model.CanvasAttachment,
+    assignmentHtmlUrl: String?
+): String? {
+    val downloadUrl = attachment.url
+    if (!downloadUrl.isNullOrBlank()) {
+        val name = (attachment.displayName ?: attachment.filename ?: "").lowercase()
+        val mime = (attachment.contentType ?: "").lowercase()
+        val isDoc = name.endsWith(".pdf") || name.endsWith(".docx") || name.endsWith(".doc") ||
+                name.endsWith(".pptx") || name.endsWith(".ppt") || name.endsWith(".xlsx") ||
+                name.endsWith(".xls") || mime.contains("pdf") || mime.contains("officedocument") ||
+                mime.contains("msword") || mime.contains("powerpoint") || mime.contains("excel")
+        return if (isDoc) {
+            try {
+                "https://docs.google.com/viewer?url=" + io.ktor.http.encodeURLQueryComponent(downloadUrl)
+            } catch (_: Throwable) {
+                downloadUrl
+            }
+        } else {
+            downloadUrl
+        }
+    }
+
+    val preview = attachment.previewUrl
+    if (!preview.isNullOrBlank() && !preview.startsWith("/api/")) {
+        if (preview.startsWith("http://") || preview.startsWith("https://")) {
+            return preview
+        }
+        val base = assignmentHtmlUrl?.let { Regex("""^(https?://[^/]+)""").find(it)?.value } ?: ""
+        return "$base${if (preview.startsWith("/")) "" else "/"}$preview"
+    }
+
+    return assignmentHtmlUrl
+}
+
+private fun openUrlSafely(url: String, uriHandler: androidx.compose.ui.platform.UriHandler) {
+    try {
+        uriHandler.openUri(url)
+    } catch (_: Exception) {
+        me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(url)
+    }
+}
+
+private fun stripHtmlTags(html: String): String {
+    return html.replace(Regex("<[^>]*>"), " ")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace(Regex("\\s+"), " ")
+        .trim()
 }
 
 private fun formatFileSize(bytes: Long): String {

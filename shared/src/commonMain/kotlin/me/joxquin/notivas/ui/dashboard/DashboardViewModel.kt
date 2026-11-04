@@ -233,6 +233,32 @@ class DashboardViewModel(
             assignmentId = assignmentUi.assignment.id,
             assignmentDescription = assignmentUi.assignment.description
         )
+        refreshSubmissionDetails(assignmentUi.assignment.courseId, assignmentUi.assignment.id)
+    }
+
+    fun refreshSubmissionDetails(courseId: Long, assignmentId: Long) {
+        viewModelScope.launch {
+            val result = repository.getSubmissionForAssignment(courseId, assignmentId)
+            result.onSuccess { sub ->
+                _selectedAssignmentForDraft.value?.let { current ->
+                    if (current.assignment.id == assignmentId) {
+                        val isCompleted = sub.workflowState in listOf("submitted", "graded") ||
+                                !sub.submittedAt.isNullOrBlank() || current.assignment.isCompleted
+                        _selectedAssignmentForDraft.value = current.copy(
+                            assignment = current.assignment.copy(
+                                isCompleted = isCompleted,
+                                status = if (isCompleted) "completed" else current.assignment.status,
+                                submittedAt = sub.submittedAt ?: current.assignment.submittedAt,
+                                gradedAt = sub.gradedAt ?: current.assignment.gradedAt,
+                                score = sub.score ?: current.assignment.score,
+                                grade = sub.grade ?: current.assignment.grade,
+                                submission = sub
+                            )
+                        )
+                    }
+                }
+            }
+        }
     }
 
     fun closeDraft() {

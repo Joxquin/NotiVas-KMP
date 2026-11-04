@@ -736,6 +736,20 @@
     <string name="assignment_submission_allowed_formats_label">Formatos permitidos: %1$s</string>
     <string name="assignment_submission_required_format">Formato requerido: %1$s</string>
     <string name="assignment_submission_invalid_format_error">Formato no válido. Solo se admiten archivos %1$s</string>
+    <string name="assignment_submission_view_file">Ver</string>
+    <string name="assignment_submission_download_file">Descargar</string>
+    <string name="assignment_submission_submitted_file_title">Archivo entregado</string>
+    <string name="assignment_submission_submitted_text_title">Texto en línea entregado</string>
+    <string name="assignment_submission_submitted_url_title">Enlace entregado</string>
+    <string name="assignment_submission_attempt_indicator">Intento %1$d de %2$d</string>
+    <string name="assignment_submission_attempt_unlimited">Intento %1$d (Intentos ilimitados)</string>
+    <string name="assignment_submission_no_more_attempts">Entrega registrada. No se admiten más intentos.</string>
+    <string name="assignment_submission_toggle_show_options">Volver a entregar tarea</string>
+    <string name="assignment_submission_toggle_hide_options">Ocultar opciones de entrega</string>
+    <string name="assignment_submission_pending_grade">Pendiente de calificación</string>
+    <string name="assignment_submission_submitted_at_prefix">Entregado el %1$s</string>
+    <string name="assignment_submission_score_label">Calificación obtenida:</string>
+
 
     <!-- Canvas Quiz / Evaluación en Línea -->
     <string name="assignment_quiz_card_title">Evaluación en Línea Canvas</string>

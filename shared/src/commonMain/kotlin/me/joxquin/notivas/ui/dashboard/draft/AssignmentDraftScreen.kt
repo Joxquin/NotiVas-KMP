@@ -110,8 +110,10 @@ fun AssignmentDraftScreen(
     BackHandler(enabled = false, onBack = onBack)
 
     val uriHandler = LocalUriHandler.current
-    val assignment = assignmentUi.assignment
-    val courseName = assignmentUi.courseName
+    val liveAssignmentUi by (viewModel?.selectedAssignmentForDraft?.collectAsState() ?: remember { mutableStateOf(null) })
+    val currentUi = liveAssignmentUi?.takeIf { it.assignment.id == assignmentUi.assignment.id } ?: assignmentUi
+    val assignment = currentUi.assignment
+    val courseName = currentUi.courseName
 
 
     val onOpenCanvas: () -> Unit = {

@@ -1266,6 +1266,46 @@ class CanvasRepository(
     suspend fun getAssignment(id: Long): Assignment? =
         localStore.getAssignmentById(id)
 
+    suspend fun getSubmissionForAssignment(courseId: Long, assignmentId: Long): Result<SubmissionDetails> = withContext(AppDispatchers.IO) {
+        val credential = preferencesManager.getAuthCredential()
+            ?: return@withContext Result.failure(Exception("No autenticado en Canvas"))
+        val baseUrl = preferencesManager.universityUrl.first()
+            ?: return@withContext Result.failure(Exception("URL institucional no configurada"))
+
+        val token = when (credential) {
+            is CanvasAuthCredential.BearerToken -> "Bearer ${credential.token}"
+            is CanvasAuthCredential.SessionCookies -> "Cookie: ${credential.cookies}"
+        }
+
+        try {
+            val submission = apiService.getSubmissionForAssignment(
+                baseUrl = baseUrl,
+                token = token,
+                courseId = courseId,
+                assignmentId = assignmentId
+            )
+            val assignments = localStore.getAssignmentsByCourse(courseId).firstOrNull().orEmpty()
+            val existing = assignments.find { it.id == assignmentId } ?: localStore.getAssignmentById(assignmentId)
+            if (existing != null) {
+                val isCompleted = submission.workflowState in listOf("submitted", "graded") ||
+                        !submission.submittedAt.isNullOrBlank() || existing.isCompleted
+                val updated = existing.copy(
+                    isCompleted = isCompleted,
+                    status = if (isCompleted) "completed" else existing.status,
+                    submittedAt = submission.submittedAt ?: existing.submittedAt,
+                    gradedAt = submission.gradedAt ?: existing.gradedAt,
+                    score = submission.score ?: existing.score,
+                    grade = submission.grade ?: existing.grade,
+                    submission = submission
+                )
+                localStore.insertAssignments(listOf(updated))
+            }
+            Result.success(submission)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getCourse(id: Long): Course? =
         localStore.getCourseList().firstOrNull { it.id == id }
 
