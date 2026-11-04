@@ -2460,11 +2460,7 @@ private fun resolveViewableUrl(
                 name.endsWith(".xls") || mime.contains("pdf") || mime.contains("officedocument") ||
                 mime.contains("msword") || mime.contains("powerpoint") || mime.contains("excel")
         return if (isDoc) {
-            try {
-                "https://docs.google.com/viewer?url=" + io.ktor.http.encodeURLQueryComponent(downloadUrl)
-            } catch (_: Throwable) {
-                downloadUrl
-            }
+            "https://docs.google.com/viewer?url=" + encodeUrlComponent(downloadUrl)
         } else {
             downloadUrl
         }
@@ -2480,6 +2476,23 @@ private fun resolveViewableUrl(
     }
 
     return assignmentHtmlUrl
+}
+
+private fun encodeUrlComponent(url: String): String {
+    return buildString {
+        for (c in url) {
+            when (c) {
+                in 'a'..'z', in 'A'..'Z', in '0'..'9', '-', '_', '.', '~' -> append(c)
+                else -> {
+                    val bytes = c.toString().encodeToByteArray()
+                    for (b in bytes) {
+                        append('%')
+                        append(b.toUByte().toString(16).uppercase().padStart(2, '0'))
+                    }
+                }
+            }
+        }
+    }
 }
 
 private fun openUrlSafely(url: String, uriHandler: androidx.compose.ui.platform.UriHandler) {
