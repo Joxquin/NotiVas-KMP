@@ -154,4 +154,54 @@ class AssignmentConsignaAndFormatTest {
         // Link text is preserved
         assertTrue(sections[1].introText.contains("Foro de Consulta del Curso"), "Link text must be preserved")
     }
+
+    @Test
+    fun testParseConsignaSections_canvasAssignmentWithOrderedListAndInlineLinks() {
+        val pc03Html = """
+            <link rel="stylesheet" href="https://canvas.test/theme.css">
+            <p><span>La </span><strong><span>PC-03</span></strong><span> debe desarrollarse tomando como base el proyecto trabajado en el laboratorio.</span></p>
+            <ol start="1">
+                <li>
+                    <p><strong><span>Desarrollo del proyecto:</span></strong><span> presenten las cuatro primeras etapas de Design Thinking: </span><strong><span>empatización, definir, ideación y prototipado</span></strong><span>.</span></p>
+                </li>
+                <li>
+                    <p><strong><span>Material de apoyo:</span></strong><span> revisen la </span><a href="https://external.test/guia"><span>Guía de Investigación e Innovación Tecnológica</span></a><span>. </span><strong><span>Lean y apliquen la teoría</span></strong><span> a su proyecto.</span></p>
+                </li>
+                <li>
+                    <p><strong><span>Formato del Perfil de Proyecto:</span></strong><span> utilicen el documento disponible en este enlace: </span><a href="https://docs.google.com/document/d/sample123/edit"><span><strong>Acceder al formato del Perfil de Proyecto</strong></span></a><span>.</span></p>
+                </li>
+            </ol>
+            <p><span>📅 </span><strong><span>Fecha límite: 8 de noviembre de 2026, a las 21:00 horas.</span></strong></p>
+            <p><strong><span>Docente:</span></strong><span> Harry Elvis Ccoaquira Enríquez</span><br><strong><span>Curso:</span></strong><span> Investigación e Innovación Tecnológica – TEORÍA</span></p>
+            <script src="https://canvas.test/logo.js"></script>
+        """.trimIndent()
+
+        val sections = parseConsignaSections(pc03Html)
+        assertEquals(1, sections.size)
+        val section = sections[0]
+        assertEquals("Instrucciones de la Actividad", section.title)
+        assertTrue(section.introText.contains("La **PC-03** debe desarrollarse"))
+        assertEquals(3, section.bullets.size)
+
+        // Bullet 1
+        assertEquals("1.", section.bullets[0].index)
+        assertEquals("Desarrollo del proyecto", section.bullets[0].label)
+        assertTrue(section.bullets[0].value.contains("empatización, definir, ideación y prototipado"))
+
+        // Bullet 2 (Inline Link preserved)
+        assertEquals("2.", section.bullets[1].index)
+        assertEquals("Material de apoyo", section.bullets[1].label)
+        assertTrue(section.bullets[1].value.contains("[Guía de Investigación e Innovación Tecnológica](https://external.test/guia)"))
+
+        // Bullet 3 (Download Link & Inline Link)
+        assertEquals("3.", section.bullets[2].index)
+        assertEquals("Formato del Perfil de Proyecto", section.bullets[2].label)
+        assertNotNull(section.downloadLink)
+        assertEquals("https://docs.google.com/document/d/sample123/edit", section.downloadLink?.second)
+
+        // Footer notes (Deadline and Teacher/Course)
+        assertTrue(section.footerNotes.isNotEmpty())
+        assertTrue(section.footerNotes.any { it.contains("Fecha límite") })
+        assertTrue(section.footerNotes.any { it.contains("Docente:") })
+    }
 }

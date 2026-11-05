@@ -40,9 +40,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -76,7 +87,16 @@ private val HTML_TAG_REGEX = Regex("<[^>]*>")
 private val A_HREF_REGEX = Regex("""(?s)<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""")
 private val A_TAG_BODY_REGEX = Regex("""(?s)<a[^>]*>(.*?)</a>""")
 private val LI_REGEX = Regex("""(?s)<li[^>]*>(.*?)</li>""")
-private val UL_REGEX = Regex("""(?s)<ul[^>]*>.*?</ul>""")
+private val LIST_CONTAINER_REGEX = Regex("""(?is)<(ol|ul)[^>]*>(.*?)</\1>""")
+private val SCRIPT_STYLE_LINK_REGEX = Regex("""(?is)<script[^>]*>.*?</script>|<style[^>]*>.*?</style>|<link[^>]*>""")
+private val SPAN_FONT_REGEX = Regex("""(?is)</?(?:span|font)[^>]*>""")
+private val BR_REGEX = Regex("""(?is)<br\s*/?>""")
+private val P_CLOSE_REGEX = Regex("""(?is)</p>""")
+private val P_OPEN_REGEX = Regex("""(?is)<p[^>]*>""")
+private val BOLD_TAG_REGEX = Regex("""(?is)<(?:strong|b)[^>]*>(.*?)</(?:strong|b)>""")
+private val ITALIC_TAG_REGEX = Regex("""(?is)<(?:em|i)[^>]*>(.*?)</(?:em|i)>""")
+private val BULLET_LABEL_SPLIT_REGEX = Regex("""^(?:\*\*(.*?)(?::\*\*|\*\*:)|(.*?):)\s*(.*)$""", RegexOption.DOT_MATCHES_ALL)
+private val INLINE_MARKDOWN_LINK_REGEX = Regex("""(\*\*([^*]+)\*\*)|(\[([^\]]+)\]\(([^)]+)\))|(`([^`]+)`)|(\*([^*]+)\*)""")
 private val IMG_REGEX = Regex("""(?i)<img[^>]+src=["']([^"']+)["'][^>]*>""")
 private val WHITESPACE_REGEX = Regex("""\s+""")
 private val EMOJI_REGEX = Regex("""[\uD83C-\uDBFF\uDC00-\uDFFF]+""")
@@ -87,7 +107,9 @@ private val CONSIGNA_SECTIONS_CACHE = mutableMapOf<String, List<ConsignaSection>
 data class ConsignaBullet(
     val label: String,
     val value: String,
-    val isHighlighted: Boolean = false
+    val isHighlighted: Boolean = false,
+    val index: String? = null,
+    val rawHtml: String? = null
 )
 
 data class ConsignaSection(
@@ -98,7 +120,9 @@ data class ConsignaSection(
     val bullets: List<ConsignaBullet> = emptyList(),
     val otherLinks: List<Pair<String, String>> = emptyList(),
     val imageUrls: List<String> = emptyList(),
-    val iconUrl: String? = null
+    val iconUrl: String? = null,
+    val footerNotes: List<String> = emptyList(),
+    val rawIntroHtml: String? = null
 )
 
 @Composable
@@ -312,11 +336,12 @@ fun ConsignaSectionItem(
 
                                 // Texto introductorio / cuerpo
                                 if (section.introText.isNotBlank()) {
-                                    MiuixText(
-                                        text = section.introText,
-                                        fontSize = 13.sp,
-                                        lineHeight = 19.sp,
-                                        color = onSurfaceVariantColor
+                                    RichConsignaText(
+                                        markdown = section.introText,
+                                        onSurfaceColor = onSurfaceColor,
+                                        onSurfaceVariantColor = onSurfaceVariantColor,
+                                        primaryColor = primaryColor,
+                                        uriHandler = uriHandler
                                     )
                                 }
 
@@ -373,30 +398,40 @@ fun ConsignaSectionItem(
 
                                 // Lista de viñetas estructuradas
                                 if (section.bullets.isNotEmpty()) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                         for (bullet in section.bullets) {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 verticalAlignment = Alignment.Top,
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .padding(top = 6.dp)
-                                                        .size(5.dp)
-                                                        .clip(CircleShape)
-                                                        .background(if (bullet.isHighlighted) errorContainerColor else primaryColor)
-                                                )
+                                                if (!bullet.index.isNullOrBlank()) {
+                                                    MiuixText(
+                                                        text = bullet.index,
+                                                        fontSize = 13.5.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (bullet.isHighlighted) errorContainerColor else primaryColor,
+                                                        modifier = Modifier.widthIn(min = 22.dp)
+                                                    )
+                                                } else {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .padding(top = 7.dp)
+                                                            .size(5.dp)
+                                                            .clip(CircleShape)
+                                                            .background(if (bullet.isHighlighted) errorContainerColor else primaryColor)
+                                                    )
+                                                }
                                                 Column(modifier = Modifier.weight(1f)) {
-                                                    if (bullet.label.isNotBlank()) {
-                                                        MiuixText(
-                                                            text = bullet.label + ":",
-                                                            fontSize = 13.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = onSurfaceColor
-                                                        )
-                                                    }
                                                     if (bullet.isHighlighted) {
+                                                        if (bullet.label.isNotBlank()) {
+                                                            MiuixText(
+                                                                text = bullet.label + ":",
+                                                                fontSize = 13.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = onSurfaceColor
+                                                            )
+                                                        }
                                                         Spacer(Modifier.height(2.dp))
                                                         Surface(
                                                             shape = RoundedCornerShape(6.dp),
@@ -411,15 +446,39 @@ fun ConsignaSectionItem(
                                                             )
                                                         }
                                                     } else {
-                                                        MiuixText(
-                                                            text = bullet.value,
-                                                            fontSize = 13.sp,
-                                                            lineHeight = 18.sp,
-                                                            color = onSurfaceVariantColor
+                                                        val fullBulletMarkdown = if (bullet.label.isNotBlank()) {
+                                                            "**${bullet.label}:** ${bullet.value}"
+                                                        } else {
+                                                            bullet.value
+                                                        }
+                                                        RichConsignaText(
+                                                            markdown = fullBulletMarkdown,
+                                                            onSurfaceColor = onSurfaceColor,
+                                                            onSurfaceVariantColor = onSurfaceVariantColor,
+                                                            primaryColor = primaryColor,
+                                                            uriHandler = uriHandler
                                                         )
                                                     }
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+
+                                // Notas de pie / Párrafos de cierre (Fecha límite, Docente, etc.)
+                                if (section.footerNotes.isNotEmpty()) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                                    ) {
+                                        for (note in section.footerNotes) {
+                                            RichConsignaText(
+                                                markdown = note,
+                                                onSurfaceColor = onSurfaceColor,
+                                                onSurfaceVariantColor = onSurfaceVariantColor,
+                                                primaryColor = primaryColor,
+                                                uriHandler = uriHandler
+                                            )
                                         }
                                     }
                                 }
@@ -521,10 +580,12 @@ fun ConsignaSectionItem(
                                 }
 
                                 if (section.introText.isNotBlank()) {
-                                    Text(
-                                        text = section.introText,
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 19.sp),
-                                        color = onSurfaceVariantColor
+                                    RichConsignaText(
+                                        markdown = section.introText,
+                                        onSurfaceColor = onSurfaceColor,
+                                        onSurfaceVariantColor = onSurfaceVariantColor,
+                                        primaryColor = primaryColor,
+                                        uriHandler = uriHandler
                                     )
                                 }
 
@@ -577,29 +638,41 @@ fun ConsignaSectionItem(
                                 }
 
                                 if (section.bullets.isNotEmpty()) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                         for (bullet in section.bullets) {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 verticalAlignment = Alignment.Top,
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .padding(top = 6.dp)
-                                                        .size(5.dp)
-                                                        .clip(CircleShape)
-                                                        .background(if (bullet.isHighlighted) errorContainerColor else primaryColor)
-                                                )
+                                                if (!bullet.index.isNullOrBlank()) {
+                                                    Text(
+                                                        text = bullet.index,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontSize = 13.5.sp,
+                                                            fontWeight = FontWeight.Bold
+                                                        ),
+                                                        color = if (bullet.isHighlighted) errorContainerColor else primaryColor,
+                                                        modifier = Modifier.widthIn(min = 22.dp)
+                                                    )
+                                                } else {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .padding(top = 7.dp)
+                                                            .size(5.dp)
+                                                            .clip(CircleShape)
+                                                            .background(if (bullet.isHighlighted) errorContainerColor else primaryColor)
+                                                    )
+                                                }
                                                 Column(modifier = Modifier.weight(1f)) {
-                                                    if (bullet.label.isNotBlank()) {
-                                                        Text(
-                                                            text = bullet.label + ":",
-                                                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold),
-                                                            color = onSurfaceColor
-                                                        )
-                                                    }
                                                     if (bullet.isHighlighted) {
+                                                        if (bullet.label.isNotBlank()) {
+                                                            Text(
+                                                                text = bullet.label + ":",
+                                                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold),
+                                                                color = onSurfaceColor
+                                                            )
+                                                        }
                                                         Spacer(Modifier.height(2.dp))
                                                         Surface(
                                                             shape = RoundedCornerShape(6.dp),
@@ -613,14 +686,38 @@ fun ConsignaSectionItem(
                                                             )
                                                         }
                                                     } else {
-                                                        Text(
-                                                            text = bullet.value,
-                                                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp),
-                                                            color = onSurfaceVariantColor
+                                                        val fullBulletMarkdown = if (bullet.label.isNotBlank()) {
+                                                            "**${bullet.label}:** ${bullet.value}"
+                                                        } else {
+                                                            bullet.value
+                                                        }
+                                                        RichConsignaText(
+                                                            markdown = fullBulletMarkdown,
+                                                            onSurfaceColor = onSurfaceColor,
+                                                            onSurfaceVariantColor = onSurfaceVariantColor,
+                                                            primaryColor = primaryColor,
+                                                            uriHandler = uriHandler
                                                         )
                                                     }
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+
+                                if (section.footerNotes.isNotEmpty()) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                                    ) {
+                                        for (note in section.footerNotes) {
+                                            RichConsignaText(
+                                                markdown = note,
+                                                onSurfaceColor = onSurfaceColor,
+                                                onSurfaceVariantColor = onSurfaceVariantColor,
+                                                primaryColor = primaryColor,
+                                                uriHandler = uriHandler
+                                            )
                                         }
                                     }
                                 }
@@ -740,6 +837,169 @@ private fun extractImageUrls(html: String, baseUrl: String?): List<String> {
     }.toList()
 }
 
+@Composable
+fun RichConsignaText(
+    markdown: String,
+    onSurfaceColor: Color,
+    onSurfaceVariantColor: Color,
+    primaryColor: Color,
+    uriHandler: UriHandler,
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = 13.sp,
+    lineHeight: TextUnit = 19.sp
+) {
+    val annotatedString = remember(markdown, onSurfaceColor, onSurfaceVariantColor, primaryColor) {
+        buildConsignaAnnotatedString(markdown, onSurfaceColor, onSurfaceVariantColor, primaryColor)
+    }
+
+    ClickableText(
+        text = annotatedString,
+        modifier = modifier,
+        style = TextStyle(
+            fontSize = fontSize,
+            lineHeight = lineHeight,
+            color = onSurfaceVariantColor
+        ),
+        onClick = { offset ->
+            annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                .firstOrNull()?.let { annotation ->
+                    try {
+                        uriHandler.openUri(annotation.item)
+                    } catch (_: Exception) {}
+                }
+        }
+    )
+}
+
+internal fun buildConsignaAnnotatedString(
+    markdown: String,
+    onSurfaceColor: Color,
+    onSurfaceVariantColor: Color,
+    primaryColor: Color
+): AnnotatedString {
+    return buildAnnotatedString {
+        var lastIndex = 0
+        for (match in INLINE_MARKDOWN_LINK_REGEX.findAll(markdown)) {
+            if (match.range.first > lastIndex) {
+                withStyle(SpanStyle(color = onSurfaceVariantColor)) {
+                    append(markdown.substring(lastIndex, match.range.first))
+                }
+            }
+            when {
+                // Bold: **text**
+                match.groups[2] != null -> {
+                    val text = match.groups[2]!!.value
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = onSurfaceColor)) {
+                        append(text)
+                    }
+                }
+                // Link: [text](url)
+                match.groups[4] != null && match.groups[5] != null -> {
+                    val text = match.groups[4]!!.value
+                    val url = match.groups[5]!!.value
+                    pushStringAnnotation(tag = "URL", annotation = url)
+                    withStyle(
+                        SpanStyle(
+                            color = primaryColor,
+                            fontWeight = FontWeight.SemiBold,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    ) {
+                        append(text)
+                    }
+                    pop()
+                }
+                // Code: `code`
+                match.groups[7] != null -> {
+                    val code = match.groups[7]!!.value
+                    withStyle(
+                        SpanStyle(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp,
+                            background = primaryColor.copy(alpha = 0.08f),
+                            color = onSurfaceColor
+                        )
+                    ) {
+                        append(" $code ")
+                    }
+                }
+                // Italic: *text*
+                match.groups[9] != null -> {
+                    val text = match.groups[9]!!.value
+                    withStyle(SpanStyle(fontStyle = FontStyle.Italic, color = onSurfaceVariantColor)) {
+                        append(text)
+                    }
+                }
+            }
+            lastIndex = match.range.last + 1
+        }
+        if (lastIndex < markdown.length) {
+            withStyle(SpanStyle(color = onSurfaceVariantColor)) {
+                append(markdown.substring(lastIndex))
+            }
+        }
+    }
+}
+
+internal fun cleanHtmlToMarkdown(html: String?, baseUrl: String? = null): String {
+    if (html.isNullOrBlank()) return ""
+    var s = html.replace(SCRIPT_STYLE_LINK_REGEX, "")
+    s = s.replace(SPAN_FONT_REGEX, "")
+    s = A_HREF_REGEX.replace(s) { match ->
+        var url = match.groupValues[1].replace("&amp;", "&").trim()
+        val text = match.groupValues[2].replace(HTML_TAG_REGEX, " ").trim()
+        if (url.startsWith("/") && !baseUrl.isNullOrBlank()) {
+            url = "${baseUrl.trimEnd('/')}$url"
+        }
+        "[$text]($url)"
+    }
+    s = s.replace(BOLD_TAG_REGEX) { "**${it.groupValues[1].trim()}**" }
+    s = s.replace(ITALIC_TAG_REGEX) { "*${it.groupValues[1].trim()}*" }
+    s = s.replace(BR_REGEX, "\n")
+    s = s.replace(P_CLOSE_REGEX, "\n\n")
+    s = s.replace(P_OPEN_REGEX, "")
+    s = s.replace(HTML_TAG_REGEX, " ")
+    s = s.replace("&amp;", "&")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&#x27;", "'")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&nbsp;", " ")
+    val lines = s.split("\n").map { it.replace(Regex("""[ \t]+"""), " ").trim() }
+    val res = lines.joinToString("\n").replace(Regex("""\n{3,}"""), "\n\n")
+    return res.trim()
+}
+
+internal fun parseConsignaBulletItem(liHtml: String, indexStr: String?, baseUrl: String? = null): ConsignaBullet {
+    val isHighlighted = liHtml.contains("feb2b2", ignoreCase = true) ||
+            liHtml.contains("c53030", ignoreCase = true) ||
+            liHtml.contains("Hasta el domingo", ignoreCase = true) ||
+            liHtml.contains("Fecha limite", ignoreCase = true) ||
+            liHtml.contains("Fecha límite", ignoreCase = true)
+
+    val cleaned = cleanHtmlToMarkdown(liHtml, baseUrl)
+    val match = BULLET_LABEL_SPLIT_REGEX.find(cleaned)
+    val label: String
+    val value: String
+    if (match != null) {
+        val rawLabel = (match.groups[1]?.value ?: match.groups[2]?.value ?: "").replace("**", "").replace("*", "").trim()
+        val rawValue = match.groups[3]?.value?.trim() ?: ""
+        label = rawLabel
+        value = rawValue
+    } else {
+        label = ""
+        value = cleaned
+    }
+    return ConsignaBullet(
+        label = label,
+        value = value,
+        isHighlighted = isHighlighted,
+        index = indexStr,
+        rawHtml = liHtml
+    )
+}
+
 internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List<ConsignaSection> {
     if (html.isNullOrBlank()) return emptyList()
 
@@ -778,53 +1038,37 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
             }
 
             val allLinks = A_HREF_REGEX.findAll(rawBody).map {
-                val url = it.groupValues[1]
+                val rawUrl = it.groupValues[1]
+                val url = if (rawUrl.startsWith("/") && !baseUrl.isNullOrBlank()) "${baseUrl.trimEnd('/')}$rawUrl" else rawUrl
                 val text = it.groupValues[2].replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
                 text to url
             }.toList()
 
             val downloadLink = allLinks.firstOrNull { (text, url) ->
                 text.contains("Descargar", ignoreCase = true) ||
-                text.contains("Guia", ignoreCase = true) ||
-                text.contains("Guía", ignoreCase = true) ||
                 text.endsWith(".docx", ignoreCase = true) ||
                 text.endsWith(".pdf", ignoreCase = true) ||
-                url.contains("docs.google.com") ||
-                url.contains("/files/")
+                text.endsWith(".xlsx", ignoreCase = true) ||
+                text.endsWith(".pptx", ignoreCase = true) ||
+                text.endsWith(".zip", ignoreCase = true) ||
+                url.contains("/files/") ||
+                (text.contains("Guía", ignoreCase = true) && (url.contains("docs.google.com") || url.contains("/files/")))
             }
 
             val otherLinks = allLinks.filter { it != downloadLink && !it.second.startsWith("\$CANVAS") }
 
-            val lis = LI_REGEX.findAll(rawBody).map { liMatch ->
-                val liHtml = liMatch.groupValues[1]
-                val isHighlighted = liHtml.contains("feb2b2", ignoreCase = true) ||
-                        liHtml.contains("c53030", ignoreCase = true) ||
-                        liHtml.contains("Hasta el domingo", ignoreCase = true) ||
-                        liHtml.contains("Fecha limite", ignoreCase = true) ||
-                        liHtml.contains("Fecha límite", ignoreCase = true)
-
-                val colonIndex = liHtml.indexOf(':')
-                val label: String
-                val value: String
-                if (colonIndex != -1) {
-                    val rawLabel = liHtml.substring(0, colonIndex).replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
-                    val rawValue = liHtml.substring(colonIndex + 1).replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
-                    label = rawLabel
-                    value = rawValue
-                } else {
-                    label = ""
-                    value = liHtml.replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
+            val lis = mutableListOf<ConsignaBullet>()
+            var listIndex = 1
+            for (listMatch in LIST_CONTAINER_REGEX.findAll(rawBody)) {
+                val isOrdered = listMatch.groupValues[1].equals("ol", ignoreCase = true)
+                for (liMatch in LI_REGEX.findAll(listMatch.groupValues[2])) {
+                    val idxStr = if (isOrdered) "${listIndex++}." else null
+                    lis.add(parseConsignaBulletItem(liMatch.groupValues[1], idxStr, baseUrl))
                 }
-                ConsignaBullet(label = label, value = value, isHighlighted = isHighlighted)
-            }.toList()
+            }
 
-            var cleanText = rawBody
-                .replace(UL_REGEX, "")
-                .replace(A_TAG_BODY_REGEX) { it.groupValues[1] }
-                .replace(HTML_TAG_REGEX, " ")
-                .cleanEmoji()
-                .trim()
-            cleanText = cleanText.replace(WHITESPACE_REGEX, " ")
+            val bodyWithoutLists = rawBody.replace(LIST_CONTAINER_REGEX, "")
+            var cleanText = cleanHtmlToMarkdown(bodyWithoutLists, baseUrl)
 
             if (downloadLink != null && downloadLink.first.isNotBlank()) {
                 val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
@@ -849,8 +1093,10 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
         }
     }
 
+    // Fallback: Generic assignment without <h3>
     val allLinks = A_HREF_REGEX.findAll(html).map {
-        val url = it.groupValues[1]
+        val rawUrl = it.groupValues[1]
+        val url = if (rawUrl.startsWith("/") && !baseUrl.isNullOrBlank()) "${baseUrl.trimEnd('/')}$rawUrl" else rawUrl
         val text = it.groupValues[2].replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
         text to url
     }.toList()
@@ -859,26 +1105,51 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
         text.contains("Descargar", ignoreCase = true) ||
         text.endsWith(".docx", ignoreCase = true) ||
         text.endsWith(".pdf", ignoreCase = true) ||
-        url.contains("/files/")
+        text.endsWith(".xlsx", ignoreCase = true) ||
+        text.endsWith(".pptx", ignoreCase = true) ||
+        text.endsWith(".zip", ignoreCase = true) ||
+        url.contains("/files/") ||
+        (text.contains("Guía", ignoreCase = true) && (url.contains("docs.google.com") || url.contains("/files/")))
     }
 
     val imageUrls = extractImageUrls(html, baseUrl)
-    var cleanText = html
-        .replace(UL_REGEX, "")
-        .replace(A_TAG_BODY_REGEX) { it.groupValues[1] }
-        .replace(HTML_TAG_REGEX, " ")
-        .cleanEmoji()
-        .trim()
-        .replace(WHITESPACE_REGEX, " ")
 
-    if (downloadLink != null && downloadLink.first.isNotBlank()) {
-        val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
-        if (cleanDlLabel.isNotBlank()) {
-            cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(WHITESPACE_REGEX, " ")
+    val listMatches = LIST_CONTAINER_REGEX.findAll(html).toList()
+    val bullets = mutableListOf<ConsignaBullet>()
+    val introText: String
+    val footerNotes = mutableListOf<String>()
+
+    if (listMatches.isNotEmpty()) {
+        val firstStart = listMatches.first().range.first
+        val lastEnd = listMatches.last().range.last + 1
+
+        val leadInHtml = html.substring(0, firstStart)
+        introText = cleanHtmlToMarkdown(leadInHtml, baseUrl)
+
+        var orderIndex = 1
+        for (lMatch in listMatches) {
+            val isOrdered = lMatch.groupValues[1].equals("ol", ignoreCase = true)
+            for (liMatch in LI_REGEX.findAll(lMatch.groupValues[2])) {
+                val idxStr = if (isOrdered) "${orderIndex++}." else null
+                bullets.add(parseConsignaBulletItem(liMatch.groupValues[1], idxStr, baseUrl))
+            }
         }
+
+        val footerHtml = html.substring(lastEnd)
+        val cleanFooter = cleanHtmlToMarkdown(footerHtml, baseUrl)
+        if (cleanFooter.isNotBlank()) {
+            cleanFooter.split("\n\n").forEach { paragraph ->
+                val p = paragraph.trim()
+                if (p.isNotBlank()) {
+                    footerNotes.add(p)
+                }
+            }
+        }
+    } else {
+        introText = cleanHtmlToMarkdown(html, baseUrl)
     }
 
-    if (cleanText.isBlank() && allLinks.isEmpty() && imageUrls.isEmpty()) {
+    if (introText.isBlank() && bullets.isEmpty() && allLinks.isEmpty() && imageUrls.isEmpty()) {
         return emptyList()
     }
 
@@ -886,12 +1157,13 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
         ConsignaSection(
             title = "Instrucciones de la Actividad",
             iconType = ConsignaIconType.GENERAL,
-            introText = cleanText,
+            introText = introText,
             downloadLink = downloadLink,
-            bullets = emptyList(),
-            otherLinks = allLinks.filter { it != downloadLink },
+            bullets = bullets,
+            otherLinks = allLinks.filter { it != downloadLink && !it.second.startsWith("\$CANVAS") },
             imageUrls = imageUrls,
-            iconUrl = null
+            iconUrl = null,
+            footerNotes = footerNotes
         )
     )
 }
