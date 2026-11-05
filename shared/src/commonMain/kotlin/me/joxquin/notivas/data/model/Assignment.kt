@@ -2,6 +2,7 @@ package me.joxquin.notivas.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import me.joxquin.notivas.util.DateTimeUtil
 
 @Serializable
 data class Assignment(
@@ -34,6 +35,32 @@ data class Assignment(
 
     val supportsDirectSubmission: Boolean
         get() = submissionTypes?.any { it in listOf("online_upload", "online_text_entry", "online_url", "media_recording") } == true
+
+    fun isHardLocked(nowEpochMillis: Long = DateTimeUtil.nowEpochMillis()): Boolean {
+        if (isLocked) return true
+        val lockStr = lockAt ?: return false
+        val comp = DateTimeUtil.parseIsoToComponents(lockStr) ?: return false
+        return comp.epochMillis <= nowEpochMillis
+    }
+
+    fun isPastDue(nowEpochMillis: Long = DateTimeUtil.nowEpochMillis()): Boolean {
+        val dueStr = dueAt ?: return false
+        val comp = DateTimeUtil.parseIsoToComponents(dueStr) ?: return false
+        return comp.epochMillis <= nowEpochMillis
+    }
+
+    fun hasRemainingAttempts(isSubmitted: Boolean = isCompleted): Boolean {
+        val allowed = allowedAttempts
+        if (allowed == null || allowed <= 0 || allowed == -1) return true
+        val attemptsUsed = if (isSubmitted) (submission?.attempt ?: 1) else 0
+        return attemptsUsed < allowed
+    }
+
+    fun canSubmit(nowEpochMillis: Long = DateTimeUtil.nowEpochMillis(), isSubmitted: Boolean = isCompleted): Boolean {
+        if (!supportsDirectSubmission) return false
+        if (isHardLocked(nowEpochMillis)) return false
+        return hasRemainingAttempts(isSubmitted)
+    }
 }
 
 @Serializable

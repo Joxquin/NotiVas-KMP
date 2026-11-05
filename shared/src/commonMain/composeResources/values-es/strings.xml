@@ -751,6 +751,11 @@
     <string name="assignment_submission_pending_grade">Pendiente de calificación</string>
     <string name="assignment_submission_submitted_at_prefix">Entregado el %1$s</string>
     <string name="assignment_submission_score_label">Calificación obtenida:</string>
+    <string name="assignment_submission_locked_title">Bloqueado</string>
+    <string name="assignment_submission_locked_by_date">Esta tarea se bloqueó el %1$s.</string>
+    <string name="assignment_submission_locked_generic">Esta tarea se encuentra bloqueada para nuevas entregas.</string>
+    <string name="assignment_submission_late_allowed_badge">Entrega con retraso</string>
+    <string name="assignment_submission_no_online_submissions">Esta tarea no admite entregas en línea.</string>
 
 
     <!-- Canvas Quiz / Evaluación en Línea -->

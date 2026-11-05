@@ -751,6 +751,11 @@
     <string name="assignment_submission_pending_grade">Grading pending</string>
     <string name="assignment_submission_submitted_at_prefix">Submitted on %1$s</string>
     <string name="assignment_submission_score_label">Score achieved:</string>
+    <string name="assignment_submission_locked_title">Locked</string>
+    <string name="assignment_submission_locked_by_date">This assignment was locked on %1$s.</string>
+    <string name="assignment_submission_locked_generic">This assignment is locked for new submissions.</string>
+    <string name="assignment_submission_late_allowed_badge">Late submission</string>
+    <string name="assignment_submission_no_online_submissions">This assignment does not accept online submissions.</string>
 
 
     <!-- Canvas Quiz / Online Assessment -->
