@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 package me.joxquin.notivas.util
 
 import androidx.compose.runtime.Composable
@@ -8,52 +10,119 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import kotlinx.browser.window
-import org.w3c.dom.DragEvent
-import org.w3c.dom.events.Event
-import org.w3c.dom.events.EventListener
-import org.w3c.files.File
-import org.w3c.files.FileReader
-import org.khronos.webgl.Int8Array
-import org.khronos.webgl.ArrayBuffer
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
-internal fun convertInt8ArrayToByteArray(int8Array: Int8Array): ByteArray {
-    val len = int8Array.length
-    val bytes = ByteArray(len)
-    for (i in 0 until len) {
-        bytes[i] = int8Array[i]
-    }
-    return bytes
-}
+@JsFun("""
+(onDragOverChange, onFileDropped) => {
+    let isCurrentlyInside = false;
 
-internal fun readFileAsSelectedDocument(file: File, onLoaded: (SelectedDocument) -> Unit) {
-    val name = file.name
-    val size = file.size.toLong()
-    val mimeType = file.type.ifBlank { "application/octet-stream" }
-    val reader = FileReader()
-    reader.onload = {
-        try {
-            val result = reader.result
-            if (result != null) {
-                val arrayBuffer = result.unsafeCast<ArrayBuffer>()
-                val int8Array = Int8Array(arrayBuffer, 0, arrayBuffer.byteLength)
-                val bytes = convertInt8ArrayToByteArray(int8Array)
-                onLoaded(
-                    SelectedDocument(
-                        name = name,
-                        sizeBytes = if (size > 0L) size else bytes.size.toLong(),
-                        mimeType = mimeType,
-                        bytes = bytes
-                    )
-                )
+    const onDragOver = (e) => {
+        if (!window.__notivasDropEnabled) return;
+        const types = e.dataTransfer ? e.dataTransfer.types : null;
+        let hasFiles = false;
+        if (types) {
+            for (let i = 0; i < types.length; i++) {
+                if (types[i] === 'Files') {
+                    hasFiles = true;
+                    break;
+                }
             }
-        } catch (e: Throwable) {
-            e.printStackTrace()
         }
-    }
-    reader.readAsArrayBuffer(file)
-}
+        if (!hasFiles) return;
 
+        const bounds = window.__notivasDropBounds;
+        if (!bounds) return;
+
+        const x = e.clientX;
+        const y = e.clientY;
+        const inside = x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
+
+        if (inside) {
+            e.preventDefault();
+            if (!isCurrentlyInside) {
+                isCurrentlyInside = true;
+                onDragOverChange(true);
+            }
+        } else if (isCurrentlyInside) {
+            isCurrentlyInside = false;
+            onDragOverChange(false);
+        }
+    };
+
+    const onDragLeave = () => {
+        if (isCurrentlyInside) {
+            isCurrentlyInside = false;
+            onDragOverChange(false);
+        }
+    };
+
+    const onDrop = (e) => {
+        if (isCurrentlyInside) {
+            isCurrentlyInside = false;
+            onDragOverChange(false);
+        }
+        if (!window.__notivasDropEnabled) return;
+
+        const bounds = window.__notivasDropBounds;
+        if (!bounds) return;
+
+        const x = e.clientX;
+        const y = e.clientY;
+        const inside = x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
+        if (!inside) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const files = e.dataTransfer ? e.dataTransfer.files : null;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result;
+                const base64Str = result.split(',')[1] || '';
+                onFileDropped(file.name, base64Str, file.type || 'application/octet-stream', file.size);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    window.addEventListener('dragover', onDragOver);
+    window.addEventListener('dragleave', onDragLeave);
+    window.addEventListener('drop', onDrop);
+
+    return () => {
+        if (isCurrentlyInside) {
+            isCurrentlyInside = false;
+            onDragOverChange(false);
+        }
+        window.removeEventListener('dragover', onDragOver);
+        window.removeEventListener('dragleave', onDragLeave);
+        window.removeEventListener('drop', onDrop);
+    };
+}
+""")
+private external fun jsSetupDropListeners(
+    onDragOverChange: (isInside: Boolean) -> Unit,
+    onFileDropped: (fileName: String, base64Data: String, mimeType: String, sizeBytes: Double) -> Unit
+): () -> Unit
+
+@JsFun("""
+(enabled, left, top, right, bottom) => {
+    window.__notivasDropEnabled = enabled;
+    window.__notivasDropBounds = { left, top, right, bottom };
+}
+""")
+private external fun jsUpdateDropBounds(
+    enabled: Boolean,
+    left: Double,
+    top: Double,
+    right: Double,
+    bottom: Double
+)
+
+@OptIn(ExperimentalEncodingApi::class)
 @Composable
 actual fun Modifier.fileDropTarget(
     enabled: Boolean,
@@ -66,114 +135,46 @@ actual fun Modifier.fileDropTarget(
     val currentOnDragStateChange = rememberUpdatedState(onDragStateChange)
     val currentOnDocumentDropped = rememberUpdatedState(onDocumentDropped)
 
-    val boundsRef = remember {
-        object {
-            var left: Float = 0f
-            var top: Float = 0f
-            var right: Float = 0f
-            var bottom: Float = 0f
-            var isInside: Boolean = false
-        }
-    }
-
     DisposableEffect(Unit) {
-        val onDragOverListener = object : EventListener {
-            override fun handleEvent(event: Event) {
-                if (!currentEnabled.value) return
-                val dragEvent = event as? DragEvent ?: return
-                val types = dragEvent.dataTransfer?.types
-                val hasFiles = types != null && run {
-                    var found = false
-                    val len = types.length
-                    for (i in 0 until len) {
-                        if (types[i] == "Files") {
-                            found = true
-                            break
-                        }
-                    }
-                    found
-                }
-                if (!hasFiles) return
-
-                val clientX = dragEvent.clientX.toFloat()
-                val clientY = dragEvent.clientY.toFloat()
-                val inside = clientX in boundsRef.left..boundsRef.right &&
-                        clientY in boundsRef.top..boundsRef.bottom
-
-                if (inside) {
-                    dragEvent.preventDefault()
-                    if (!boundsRef.isInside) {
-                        boundsRef.isInside = true
-                        currentOnDragStateChange.value(true)
-                    }
-                } else if (boundsRef.isInside) {
-                    boundsRef.isInside = false
-                    currentOnDragStateChange.value(false)
-                }
-            }
-        }
-
-        val onDragLeaveListener = object : EventListener {
-            override fun handleEvent(event: Event) {
-                if (boundsRef.isInside) {
-                    boundsRef.isInside = false
-                    currentOnDragStateChange.value(false)
-                }
-            }
-        }
-
-        val onDropListener = object : EventListener {
-            override fun handleEvent(event: Event) {
-                val dragEvent = event as? DragEvent ?: return
-                val clientX = dragEvent.clientX.toFloat()
-                val clientY = dragEvent.clientY.toFloat()
-                val inside = clientX in boundsRef.left..boundsRef.right &&
-                        clientY in boundsRef.top..boundsRef.bottom
-
-                if (boundsRef.isInside) {
-                    boundsRef.isInside = false
-                    currentOnDragStateChange.value(false)
-                }
-
-                if (!currentEnabled.value || !inside) return
-
-                dragEvent.preventDefault()
-                dragEvent.stopPropagation()
-
-                val files = dragEvent.dataTransfer?.files ?: return
-                if (files.length > 0) {
-                    val file = files[0] ?: return
-                    val ext = file.name.substringAfterLast('.', "").lowercase()
+        val cleanup = jsSetupDropListeners(
+            onDragOverChange = { isInside ->
+                currentOnDragStateChange.value(isInside)
+            },
+            onFileDropped = { fileName, base64Data, mimeType, sizeBytes ->
+                try {
+                    val ext = fileName.substringAfterLast('.', "").lowercase()
                     val allowed = currentAllowedExtensions.value
                     if (allowed.isNullOrEmpty() || ext in allowed) {
-                        readFileAsSelectedDocument(file) { doc ->
-                            currentOnDocumentDropped.value(doc)
-                        }
+                        val bytes = Base64.decode(base64Data)
+                        currentOnDocumentDropped.value(
+                            SelectedDocument(
+                                name = fileName,
+                                sizeBytes = if (sizeBytes > 0) sizeBytes.toLong() else bytes.size.toLong(),
+                                mimeType = mimeType,
+                                bytes = bytes
+                            )
+                        )
                     }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
                 }
             }
-        }
-
-        window.addEventListener("dragover", onDragOverListener)
-        window.addEventListener("dragleave", onDragLeaveListener)
-        window.addEventListener("drop", onDropListener)
+        )
 
         onDispose {
-            if (boundsRef.isInside) {
-                boundsRef.isInside = false
-                currentOnDragStateChange.value(false)
-            }
-            window.removeEventListener("dragover", onDragOverListener)
-            window.removeEventListener("dragleave", onDragLeaveListener)
-            window.removeEventListener("drop", onDropListener)
+            cleanup()
+            jsUpdateDropBounds(false, 0.0, 0.0, 0.0, 0.0)
         }
     }
 
     return this.onGloballyPositioned { coordinates: LayoutCoordinates ->
         val bounds = coordinates.boundsInWindow()
-        boundsRef.left = bounds.left
-        boundsRef.top = bounds.top
-        boundsRef.right = bounds.right
-        boundsRef.bottom = bounds.bottom
+        jsUpdateDropBounds(
+            enabled = currentEnabled.value,
+            left = bounds.left.toDouble(),
+            top = bounds.top.toDouble(),
+            right = bounds.right.toDouble(),
+            bottom = bounds.bottom.toDouble()
+        )
     }
 }
