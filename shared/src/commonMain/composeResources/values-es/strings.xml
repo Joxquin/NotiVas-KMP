@@ -718,6 +718,8 @@
     <string name="assignment_submission_tab_drive">Borrador Drive</string>
     <string name="assignment_submission_tab_text">Entrada de texto</string>
     <string name="assignment_submission_pick_file">Seleccionar archivo del dispositivo</string>
+    <string name="assignment_submission_drag_drop_hint">o arrastra y suelta tu archivo aquí</string>
+    <string name="assignment_submission_drop_here">Suelta tu archivo aquí</string>
     <string name="assignment_submission_change_file">Cambiar archivo</string>
     <string name="assignment_submission_remove_file">Quitar</string>
     <string name="assignment_submission_text_hint">Escribe o pega tu entrega aquí...</string>

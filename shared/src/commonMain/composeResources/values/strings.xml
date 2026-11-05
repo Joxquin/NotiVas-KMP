@@ -718,6 +718,8 @@
     <string name="assignment_submission_tab_drive">Drive draft</string>
     <string name="assignment_submission_tab_text">Text entry</string>
     <string name="assignment_submission_pick_file">Select file from device</string>
+    <string name="assignment_submission_drag_drop_hint">or drag and drop your file here</string>
+    <string name="assignment_submission_drop_here">Drop your file here</string>
     <string name="assignment_submission_change_file">Change file</string>
     <string name="assignment_submission_remove_file">Remove</string>
     <string name="assignment_submission_text_hint">Write or paste your submission here...</string>

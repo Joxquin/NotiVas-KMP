@@ -80,6 +80,7 @@ import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusEnum
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo
 import me.joxquin.notivas.util.SelectedDocument
+import me.joxquin.notivas.util.fileDropTarget
 import me.joxquin.notivas.util.rememberDocumentPicker
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
@@ -146,7 +147,7 @@ fun AssignmentSubmissionCard(
         }
     }
 
-    val documentPicker = rememberDocumentPicker { doc ->
+    val onDocumentLoaded: (SelectedDocument) -> Unit = { doc ->
         val ext = doc.name.substringAfterLast('.', "").lowercase()
         if (effectiveAllowedExtensions.isNotEmpty() && ext.isNotBlank() && ext !in effectiveAllowedExtensions) {
             val allowedUpper = effectiveAllowedExtensions.joinToString(", ") { it.uppercase() }
@@ -156,6 +157,12 @@ fun AssignmentSubmissionCard(
             selectedDocument = doc
             errorMessage = null
         }
+    }
+
+    var isDraggingOver by remember { mutableStateOf(false) }
+
+    val documentPicker = rememberDocumentPicker { doc ->
+        onDocumentLoaded(doc)
     }
 
     val isDraftSyncing by (viewModel?.isDraftSyncing?.collectAsState() ?: remember { mutableStateOf(false) })
@@ -899,16 +906,33 @@ fun AssignmentSubmissionCard(
                     SubmissionTab.UPLOAD -> {
                         if (selectedDocument == null) {
                             // Dropzone para seleccionar archivo del dispositivo
+                            val miuixDropBorderColor = if (isDraggingOver) {
+                                MiuixTheme.colorScheme.primary
+                            } else {
+                                MiuixTheme.colorScheme.outline.copy(alpha = 0.15f)
+                            }
+                            val miuixDropContainerColor = if (isDraggingOver) {
+                                MiuixTheme.colorScheme.primary.copy(alpha = 0.08f)
+                            } else {
+                                MiuixTheme.colorScheme.surfaceContainerHigh
+                            }
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .fileDropTarget(
+                                        enabled = true,
+                                        allowedExtensions = effectiveAllowedExtensions.ifEmpty { null },
+                                        onDragStateChange = { isDraggingOver = it },
+                                        onDocumentDropped = { onDocumentLoaded(it) }
+                                    )
                                     .squircleSurface(
-                                        color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                        color = miuixDropContainerColor,
                                         cornerRadius = 14.dp
                                     )
                                     .squircleBorder(
-                                        width = 1.dp,
-                                        color = MiuixTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                        width = if (isDraggingOver) 2.dp else 1.dp,
+                                        color = miuixDropBorderColor,
                                         cornerRadius = 14.dp
                                     )
                                     .clickable {
@@ -929,11 +953,22 @@ fun AssignmentSubmissionCard(
                                         modifier = Modifier.size(36.dp)
                                     )
                                     MiuixText(
-                                        text = stringResource(Res.string.assignment_submission_pick_file),
+                                        text = if (isDraggingOver) {
+                                            stringResource(Res.string.assignment_submission_drop_here)
+                                        } else {
+                                            stringResource(Res.string.assignment_submission_pick_file)
+                                        },
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = MiuixTheme.colorScheme.onSurface
+                                        color = if (isDraggingOver) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface
                                     )
+                                    if (!isDraggingOver) {
+                                        MiuixText(
+                                            text = stringResource(Res.string.assignment_submission_drag_drop_hint),
+                                            fontSize = 12.sp,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                        )
+                                    }
                                     if (effectiveAllowedExtensions.isNotEmpty()) {
                                         Surface(
                                             shape = RoundedCornerShape(9999.dp),
@@ -2011,12 +2046,32 @@ fun AssignmentSubmissionCard(
                 when (selectedTab) {
                     SubmissionTab.UPLOAD -> {
                         if (selectedDocument == null) {
+                            val materialDropBorderColor = if (isDraggingOver) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            }
+                            val materialDropContainerColor = if (isDraggingOver) {
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerLow
+                            }
+
                             Surface(
                                 shape = RoundedCornerShape(14.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                                color = materialDropContainerColor,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (isDraggingOver) 2.dp else 1.dp,
+                                    color = materialDropBorderColor
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .fileDropTarget(
+                                        enabled = true,
+                                        allowedExtensions = effectiveAllowedExtensions.ifEmpty { null },
+                                        onDragStateChange = { isDraggingOver = it },
+                                        onDocumentDropped = { onDocumentLoaded(it) }
+                                    )
                                     .clickable { documentPicker.launchDocumentPicker(effectiveAllowedExtensions.ifEmpty { null }) }
                             ) {
                                 Column(
@@ -2031,10 +2086,24 @@ fun AssignmentSubmissionCard(
                                         modifier = Modifier.size(36.dp)
                                     )
                                     Text(
-                                        text = stringResource(Res.string.assignment_submission_pick_file),
-                                        style = MaterialTheme.typography.titleSmall.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        text = if (isDraggingOver) {
+                                            stringResource(Res.string.assignment_submission_drop_here)
+                                        } else {
+                                            stringResource(Res.string.assignment_submission_pick_file)
+                                        },
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = if (isDraggingOver) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                     )
+                                    if (!isDraggingOver) {
+                                        Text(
+                                            text = stringResource(Res.string.assignment_submission_drag_drop_hint),
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                     if (effectiveAllowedExtensions.isNotEmpty()) {
                                         Surface(
                                             shape = RoundedCornerShape(9999.dp),
