@@ -2,7 +2,9 @@ package me.joxquin.notivas.ui.dashboard.draft
 
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.SubmissionDetails
+import me.joxquin.notivas.ui.dashboard.draft.components.SubmissionTab
 import me.joxquin.notivas.ui.dashboard.draft.components.formatCanvasLockDate
+import me.joxquin.notivas.ui.dashboard.draft.components.resolveAvailableSubmissionTabs
 import me.joxquin.notivas.util.DateTimeUtil
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -166,5 +168,48 @@ class AssignmentSubmissionEligibilityTest {
     fun testFormatCanvasLockDate_nullOrBlank() {
         assertEquals(null, formatCanvasLockDate(null))
         assertEquals(null, formatCanvasLockDate(""))
+    }
+
+    @Test
+    fun testResolveAvailableSubmissionTabs_driveConnected() {
+        val tabs = resolveAvailableSubmissionTabs(
+            supportsUpload = true,
+            supportsText = true,
+            isDriveConnected = true
+        )
+        assertEquals(listOf(SubmissionTab.UPLOAD, SubmissionTab.DRIVE, SubmissionTab.TEXT), tabs)
+    }
+
+    @Test
+    fun testResolveAvailableSubmissionTabs_driveDisconnected() {
+        val tabs = resolveAvailableSubmissionTabs(
+            supportsUpload = true,
+            supportsText = true,
+            isDriveConnected = false
+        )
+        assertEquals(listOf(SubmissionTab.UPLOAD, SubmissionTab.TEXT), tabs)
+        assertFalse(tabs.contains(SubmissionTab.DRIVE))
+    }
+
+    @Test
+    fun testResolveAvailableSubmissionTabs_onlyUpload_driveDisconnected() {
+        val tabs = resolveAvailableSubmissionTabs(
+            supportsUpload = true,
+            supportsText = false,
+            isDriveConnected = false
+        )
+        assertEquals(listOf(SubmissionTab.UPLOAD), tabs)
+        assertFalse(tabs.size > 1)
+    }
+
+    @Test
+    fun testResolveAvailableSubmissionTabs_onlyUpload_driveConnected() {
+        val tabs = resolveAvailableSubmissionTabs(
+            supportsUpload = true,
+            supportsText = false,
+            isDriveConnected = true
+        )
+        assertEquals(listOf(SubmissionTab.UPLOAD, SubmissionTab.DRIVE), tabs)
+        assertTrue(tabs.size > 1)
     }
 }

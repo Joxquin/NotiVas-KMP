@@ -56,6 +56,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -118,6 +119,16 @@ internal fun formatCanvasLockDate(isoDate: String?): String? {
     return "${comp.date.day} de $monthName de ${comp.date.year} a las $hourStr:$minuteStr"
 }
 
+internal fun resolveAvailableSubmissionTabs(
+    supportsUpload: Boolean,
+    supportsText: Boolean,
+    isDriveConnected: Boolean
+): List<SubmissionTab> = buildList {
+    if (supportsUpload) add(SubmissionTab.UPLOAD)
+    if (isDriveConnected) add(SubmissionTab.DRIVE)
+    if (supportsText) add(SubmissionTab.TEXT)
+}
+
 
 @Composable
 fun AssignmentSubmissionCard(
@@ -137,12 +148,25 @@ fun AssignmentSubmissionCard(
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
+    val isDriveConnected by (viewModel?.isGoogleDriveConnected?.collectAsState()
+        ?: remember { mutableStateOf(me.joxquin.notivas.di.AppModule.preferencesManager.isGoogleDriveConnected()) })
+
     val types = assignment.submissionTypes ?: emptyList()
     val supportsUpload = types.contains("online_upload")
     val supportsText = types.contains("online_text_entry")
 
-    var selectedTab by remember(supportsUpload, supportsText) {
-        mutableStateOf(SubmissionTab.UPLOAD)
+    val availableTabs = remember(supportsUpload, supportsText, isDriveConnected) {
+        resolveAvailableSubmissionTabs(supportsUpload, supportsText, isDriveConnected)
+    }
+
+    var selectedTab by remember(availableTabs) {
+        mutableStateOf(availableTabs.firstOrNull() ?: SubmissionTab.UPLOAD)
+    }
+
+    LaunchedEffect(isDriveConnected) {
+        if (!isDriveConnected && selectedTab == SubmissionTab.DRIVE) {
+            selectedTab = availableTabs.firstOrNull() ?: SubmissionTab.UPLOAD
+        }
     }
 
     var selectedDocument by remember { mutableStateOf<SelectedDocument?>(null) }
@@ -873,126 +897,132 @@ fun AssignmentSubmissionCard(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         // Selector de pestañas unificado: [ Archivo local ] [ Borrador Drive ] [ Texto ]
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .squircleSurface(
-                                    color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                                    cornerRadius = 12.dp
-                                )
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    // Pestaña 1: Archivo local
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .squircleSurface(
-                                color = if (selectedTab == SubmissionTab.UPLOAD) MiuixTheme.colorScheme.surfaceContainer else MiuixTheme.colorScheme.surfaceContainerHigh,
-                                cornerRadius = 10.dp
-                            )
-                            .clickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                selectedTab = SubmissionTab.UPLOAD
-                            }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AttachFile,
-                                contentDescription = null,
-                                tint = if (selectedTab == SubmissionTab.UPLOAD) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            MiuixText(
-                                text = stringResource(Res.string.assignment_submission_tab_upload),
-                                fontSize = 12.sp,
-                                fontWeight = if (selectedTab == SubmissionTab.UPLOAD) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selectedTab == SubmissionTab.UPLOAD) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    // Pestaña 2: Borrador Drive
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .squircleSurface(
-                                color = if (selectedTab == SubmissionTab.DRIVE) MiuixTheme.colorScheme.surfaceContainer else MiuixTheme.colorScheme.surfaceContainerHigh,
-                                cornerRadius = 10.dp
-                            )
-                            .clickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                selectedTab = SubmissionTab.DRIVE
-                            }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudSync,
-                                contentDescription = null,
-                                tint = if (selectedTab == SubmissionTab.DRIVE) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            MiuixText(
-                                text = stringResource(Res.string.assignment_submission_tab_drive),
-                                fontSize = 12.sp,
-                                fontWeight = if (selectedTab == SubmissionTab.DRIVE) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selectedTab == SubmissionTab.DRIVE) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    // Pestaña 3: Texto (si aplica)
-                    if (supportsText) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .squircleSurface(
-                                    color = if (selectedTab == SubmissionTab.TEXT) MiuixTheme.colorScheme.surfaceContainer else MiuixTheme.colorScheme.surfaceContainerHigh,
-                                    cornerRadius = 10.dp
-                                )
-                                .clickable {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    selectedTab = SubmissionTab.TEXT
-                                }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        if (availableTabs.size > 1) {
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .squircleSurface(
+                                        color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                        cornerRadius = 12.dp
+                                    )
+                                    .padding(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.EditNote,
-                                    contentDescription = null,
-                                    tint = if (selectedTab == SubmissionTab.TEXT) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                MiuixText(
-                                    text = stringResource(Res.string.assignment_submission_tab_text),
-                                    fontSize = 12.sp,
-                                    fontWeight = if (selectedTab == SubmissionTab.TEXT) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (selectedTab == SubmissionTab.TEXT) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                if (supportsUpload) {
+                                    // Pestaña 1: Archivo local
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .squircleSurface(
+                                                color = if (selectedTab == SubmissionTab.UPLOAD) MiuixTheme.colorScheme.surfaceContainer else MiuixTheme.colorScheme.surfaceContainerHigh,
+                                                cornerRadius = 10.dp
+                                            )
+                                            .clickable {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                selectedTab = SubmissionTab.UPLOAD
+                                            }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.AttachFile,
+                                                contentDescription = null,
+                                                tint = if (selectedTab == SubmissionTab.UPLOAD) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            MiuixText(
+                                                text = stringResource(Res.string.assignment_submission_tab_upload),
+                                                fontSize = 12.sp,
+                                                fontWeight = if (selectedTab == SubmissionTab.UPLOAD) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (selectedTab == SubmissionTab.UPLOAD) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (isDriveConnected) {
+                                    // Pestaña 2: Borrador Drive
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .squircleSurface(
+                                                color = if (selectedTab == SubmissionTab.DRIVE) MiuixTheme.colorScheme.surfaceContainer else MiuixTheme.colorScheme.surfaceContainerHigh,
+                                                cornerRadius = 10.dp
+                                            )
+                                            .clickable {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                selectedTab = SubmissionTab.DRIVE
+                                            }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CloudSync,
+                                                contentDescription = null,
+                                                tint = if (selectedTab == SubmissionTab.DRIVE) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            MiuixText(
+                                                text = stringResource(Res.string.assignment_submission_tab_drive),
+                                                fontSize = 12.sp,
+                                                fontWeight = if (selectedTab == SubmissionTab.DRIVE) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (selectedTab == SubmissionTab.DRIVE) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (supportsText) {
+                                    // Pestaña 3: Texto (si aplica)
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .squircleSurface(
+                                                color = if (selectedTab == SubmissionTab.TEXT) MiuixTheme.colorScheme.surfaceContainer else MiuixTheme.colorScheme.surfaceContainerHigh,
+                                                cornerRadius = 10.dp
+                                            )
+                                            .clickable {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                selectedTab = SubmissionTab.TEXT
+                                            }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.EditNote,
+                                                contentDescription = null,
+                                                tint = if (selectedTab == SubmissionTab.TEXT) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            MiuixText(
+                                                text = stringResource(Res.string.assignment_submission_tab_text),
+                                                fontSize = 12.sp,
+                                                fontWeight = if (selectedTab == SubmissionTab.TEXT) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (selectedTab == SubmissionTab.TEXT) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                }
 
                 // CONTENIDO SEGÚN LA PESTAÑA ACTIVA
                 when (selectedTab) {
@@ -1160,8 +1190,9 @@ fun AssignmentSubmissionCard(
                     }
 
                     SubmissionTab.DRIVE -> {
-                        // Sección integrada de Google Drive
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        if (isDriveConnected) {
+                            // Sección integrada de Google Drive
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             // Visualización de documento / plantilla de Drive
                             Box(
                                 modifier = Modifier
@@ -1428,6 +1459,7 @@ fun AssignmentSubmissionCard(
                             }
                         }
                     }
+                    }
 
                     SubmissionTab.TEXT -> {
                         // Editor de texto
@@ -1568,7 +1600,7 @@ fun AssignmentSubmissionCard(
                 // Botón principal de Entrega
                 val canSubmit = when (selectedTab) {
                     SubmissionTab.UPLOAD -> selectedDocument != null
-                    SubmissionTab.DRIVE -> isDraftActive
+                    SubmissionTab.DRIVE -> isDriveConnected && isDraftActive
                     SubmissionTab.TEXT -> textBody.isNotBlank()
                 }
 
@@ -1580,7 +1612,7 @@ fun AssignmentSubmissionCard(
                             cornerRadius = 14.dp
                         )
                         .clickable(enabled = canSubmit && !isSubmitting) {
-                            if (selectedTab == SubmissionTab.DRIVE) {
+                            if (selectedTab == SubmissionTab.DRIVE && isDriveConnected) {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onSubmitDraftToCanvas()
                             } else {
@@ -1619,7 +1651,7 @@ fun AssignmentSubmissionCard(
                                 modifier = Modifier.size(16.dp)
                             )
                             MiuixText(
-                                text = if (selectedTab == SubmissionTab.DRIVE) {
+                                text = if (selectedTab == SubmissionTab.DRIVE && isDriveConnected) {
                                     if (isDraftActive) "Entregar borrador a Canvas" else "Crear borrador primero"
                                 } else {
                                     if (isAlreadySubmitted) stringResource(Res.string.assignment_submission_resubmit_action) else stringResource(Res.string.assignment_submission_submit_action)
@@ -2109,108 +2141,114 @@ fun AssignmentSubmissionCard(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         // Selector de pestañas Material: [ Archivo local ] [ Borrador Drive ] [ Texto ]
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                    Row(
-                        modifier = Modifier.padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        // Tab 1: Archivo
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (selectedTab == SubmissionTab.UPLOAD) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedTab = SubmissionTab.UPLOAD }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AttachFile,
-                                    contentDescription = null,
-                                    tint = if (selectedTab == SubmissionTab.UPLOAD) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                Text(
-                                    text = stringResource(Res.string.assignment_submission_tab_upload),
-                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, fontWeight = if (selectedTab == SubmissionTab.UPLOAD) FontWeight.Bold else FontWeight.Medium),
-                                    color = if (selectedTab == SubmissionTab.UPLOAD) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-
-                        // Tab 2: Borrador Drive
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (selectedTab == SubmissionTab.DRIVE) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedTab = SubmissionTab.DRIVE }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CloudSync,
-                                    contentDescription = null,
-                                    tint = if (selectedTab == SubmissionTab.DRIVE) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                Text(
-                                    text = stringResource(Res.string.assignment_submission_tab_drive),
-                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, fontWeight = if (selectedTab == SubmissionTab.DRIVE) FontWeight.Bold else FontWeight.Medium),
-                                    color = if (selectedTab == SubmissionTab.DRIVE) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-
-                        // Tab 3: Texto (si aplica)
-                        if (supportsText) {
+                        if (availableTabs.size > 1) {
                             Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = if (selectedTab == SubmissionTab.TEXT) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { selectedTab = SubmissionTab.TEXT }
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    modifier = Modifier.padding(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.EditNote,
-                                        contentDescription = null,
-                                        tint = if (selectedTab == SubmissionTab.TEXT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Spacer(Modifier.width(4.dp))
-                                    Text(
-                                        text = stringResource(Res.string.assignment_submission_tab_text),
-                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, fontWeight = if (selectedTab == SubmissionTab.TEXT) FontWeight.Bold else FontWeight.Medium),
-                                        color = if (selectedTab == SubmissionTab.TEXT) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                                    if (supportsUpload) {
+                                        // Tab 1: Archivo
+                                        Surface(
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = if (selectedTab == SubmissionTab.UPLOAD) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { selectedTab = SubmissionTab.UPLOAD }
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(vertical = 8.dp),
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.AttachFile,
+                                                    contentDescription = null,
+                                                    tint = if (selectedTab == SubmissionTab.UPLOAD) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(
+                                                    text = stringResource(Res.string.assignment_submission_tab_upload),
+                                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, fontWeight = if (selectedTab == SubmissionTab.UPLOAD) FontWeight.Bold else FontWeight.Medium),
+                                                    color = if (selectedTab == SubmissionTab.UPLOAD) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    if (isDriveConnected) {
+                                        // Tab 2: Borrador Drive
+                                        Surface(
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = if (selectedTab == SubmissionTab.DRIVE) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { selectedTab = SubmissionTab.DRIVE }
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(vertical = 8.dp),
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.CloudSync,
+                                                    contentDescription = null,
+                                                    tint = if (selectedTab == SubmissionTab.DRIVE) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(
+                                                    text = stringResource(Res.string.assignment_submission_tab_drive),
+                                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, fontWeight = if (selectedTab == SubmissionTab.DRIVE) FontWeight.Bold else FontWeight.Medium),
+                                                    color = if (selectedTab == SubmissionTab.DRIVE) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Tab 3: Texto (si aplica)
+                                    if (supportsText) {
+                                        Surface(
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = if (selectedTab == SubmissionTab.TEXT) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable { selectedTab = SubmissionTab.TEXT }
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(vertical = 8.dp),
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.EditNote,
+                                                    contentDescription = null,
+                                                    tint = if (selectedTab == SubmissionTab.TEXT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(
+                                                    text = stringResource(Res.string.assignment_submission_tab_text),
+                                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, fontWeight = if (selectedTab == SubmissionTab.TEXT) FontWeight.Bold else FontWeight.Medium),
+                                                    color = if (selectedTab == SubmissionTab.TEXT) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
 
                 // CONTENIDO MATERIAL SEGÚN PESTAÑA
                 when (selectedTab) {
@@ -2362,8 +2400,9 @@ fun AssignmentSubmissionCard(
                     }
 
                     SubmissionTab.DRIVE -> {
-                        // Sección integrada de Google Drive en Material
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        if (isDriveConnected) {
+                            // Sección integrada de Google Drive en Material
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Surface(
                                 shape = RoundedCornerShape(14.dp),
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -2516,6 +2555,7 @@ fun AssignmentSubmissionCard(
                             }
                         }
                     }
+                    }
 
                     SubmissionTab.TEXT -> {
                         Surface(
@@ -2634,13 +2674,13 @@ fun AssignmentSubmissionCard(
                 // Botón principal de Entrega
                 val canSubmit = when (selectedTab) {
                     SubmissionTab.UPLOAD -> selectedDocument != null
-                    SubmissionTab.DRIVE -> isDraftActive
+                    SubmissionTab.DRIVE -> isDriveConnected && isDraftActive
                     SubmissionTab.TEXT -> textBody.isNotBlank()
                 }
 
                 Button(
                     onClick = {
-                        if (selectedTab == SubmissionTab.DRIVE) {
+                        if (selectedTab == SubmissionTab.DRIVE && isDriveConnected) {
                             onSubmitDraftToCanvas()
                         } else {
                             handleSubmitDirect()
@@ -2670,7 +2710,7 @@ fun AssignmentSubmissionCard(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = if (selectedTab == SubmissionTab.DRIVE) {
+                            text = if (selectedTab == SubmissionTab.DRIVE && isDriveConnected) {
                                 if (isDraftActive) "Entregar borrador a Canvas" else "Crear borrador primero"
                             } else {
                                 if (isAlreadySubmitted) stringResource(Res.string.assignment_submission_resubmit_action) else stringResource(Res.string.assignment_submission_submit_action)

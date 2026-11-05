@@ -139,6 +139,12 @@ class DashboardViewModel(
         emptyList()
     )
 
+    val isGoogleDriveConnected: StateFlow<Boolean> = preferencesManager.googleDriveConnected.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        preferencesManager.isGoogleDriveConnected()
+    )
+
     private val _isSearchExpanded = MutableStateFlow(false)
     val isSearchExpanded: StateFlow<Boolean> = _isSearchExpanded.asStateFlow()
 
