@@ -50,6 +50,9 @@ interface AssignmentDao {
     @Query("DELETE FROM assignments WHERE course_id = :courseId")
     suspend fun deleteByCourse(courseId: Long)
 
+    @Query("DELETE FROM assignments WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     @Query("DELETE FROM assignments")
     suspend fun deleteAll()
 }

@@ -6,6 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -34,8 +37,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val syncInterval = AppModule.preferencesManager.syncIntervalMinutes
-        BackgroundSyncScheduler.schedulePeriodicSync(15L)
+        lifecycleScope.launch {
+            val syncInterval = AppModule.preferencesManager.syncIntervalMinutes.first()
+            BackgroundSyncScheduler.schedulePeriodicSync(syncInterval)
+        }
 
         if (intent?.getStringExtra("action") == "relogin") {
             AppModule.preferencesManager.setSessionExpired(true)

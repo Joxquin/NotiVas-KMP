@@ -1429,10 +1429,6 @@ class CanvasRepository(
 
     suspend fun logout() {
         preferencesManager.clear()
-        localStore.deleteCourses()
-        localStore.deleteAssignments()
-        localStore.deletePlannerItems()
-        localStore.deleteAllSessions()
         localStore.clearDiskStorage()
     }
 }

@@ -305,6 +305,8 @@
     <string name="permission_status_action">Allow</string>
     <string name="permission_status_granted_label">Granted</string>
     <string name="permission_status_configure_label">Configure</string>
+    <string name="settings_notifications_allowed">Allowed by Android</string>
+    <string name="settings_notifications_blocked">Blocked by Android. Tap to enable.</string>
     <string name="onboarding_finish_btn">Start using NotiVas</string>
 
     <!-- Bento Cards & Herramientas extras -->

@@ -3,7 +3,11 @@
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
 browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "GET_CANVAS_COOKIES") {
+  if (request?.action === "GET_CANVAS_COOKIES") {
+    if (!isTrustedSender(sender)) {
+      sendResponse({ success: false, error: "Origen no autorizado para vincular Canvas." });
+      return false;
+    }
     handleFetchCookies(request.domain)
       .then(result => sendResponse(result))
       .catch(err => sendResponse({ success: false, error: err.toString() }));
@@ -11,22 +15,38 @@ browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+function isTrustedSender(sender) {
+  if (sender?.id !== browserAPI.runtime.id || sender.frameId !== 0) return false;
+  try {
+    const source = new URL(sender.url);
+    return source.origin === "https://joxquin.github.io" &&
+      source.pathname.startsWith("/NotiVas-KMP/");
+  } catch {
+    return false;
+  }
+}
+
+function canvasDomain(rawDomain) {
+  if (typeof rawDomain !== "string" || !rawDomain.trim()) {
+    throw new Error("Falta el dominio de Canvas.");
+  }
+  const value = rawDomain.trim();
+  const target = new URL(value.includes("://") ? value : `https://${value}`);
+  const supported = target.hostname.endsWith(".instructure.com") ||
+    target.hostname === "canvas.utp.edu.pe";
+  if (!supported || target.protocol !== "https:" || target.port ||
+      target.username || target.password || target.pathname !== "/" ||
+      target.search || target.hash) {
+    throw new Error("La extension admite dominios HTTPS de Instructure y canvas.utp.edu.pe. Para otro campus, usa la vinculacion con el movil.");
+  }
+  return target.hostname;
+}
+
 async function handleFetchCookies(rawDomain) {
-  const domain = (rawDomain || "instructure.com").replace(/^https?:\/\//, "").split("/")[0];
-  const url = `https://${domain}`;
-
-  // 1. Intentar primero con la URL completa (captura cookies de subdominio, dominio padre y host-only)
-  let cookies = await queryCookies({ url: url });
-
-  // 2. Si no encontro, intentar por dominio exacto
-  if (!cookies || cookies.length === 0) {
-    cookies = await queryCookies({ domain: domain });
-  }
-
-  // 3. Si aun no encontro, intentar con el dominio base instructure.com
-  if (!cookies || cookies.length === 0) {
-    cookies = await queryCookies({ domain: "instructure.com" });
-  }
+  const domain = canvasDomain(rawDomain);
+  // Consultar solo las cookies que el navegador enviaria a este campus.
+  // Buscar por el dominio padre mezclaria sesiones de otras instituciones.
+  const cookies = await queryCookies({ url: `https://${domain}/` });
 
   if (!cookies || cookies.length === 0) {
     return {
@@ -55,6 +75,9 @@ async function handleFetchCookies(rawDomain) {
 }
 
 function queryCookies(details) {
+  if (typeof browser !== "undefined") {
+    return browser.cookies.getAll(details);
+  }
   return new Promise((resolve) => {
     try {
       browserAPI.cookies.getAll(details, (cookies) => {
