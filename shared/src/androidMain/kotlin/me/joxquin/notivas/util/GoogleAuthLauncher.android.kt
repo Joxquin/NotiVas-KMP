@@ -17,6 +17,7 @@ import com.google.android.gms.common.api.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.joxquin.notivas.di.AppModule
 
 actual class GoogleAuthLauncher(
     private val onLaunch: () -> Unit
@@ -37,15 +38,8 @@ actual fun rememberGoogleAuthLauncher(
     val currentOnSuccess = rememberUpdatedState(onAuthSuccess)
     val currentOnError = rememberUpdatedState(onAuthError)
 
-    val gso = remember {
-        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestScopes(
-                Scope("https://www.googleapis.com/auth/drive.file"),
-                Scope("https://www.googleapis.com/auth/drive.readonly")
-            )
-            .build()
-    }
+    val webClientId = AppModule.simulationCloudSync.googleWebClientId
+    val gso = remember(webClientId) { driveSignInOptions(webClientId) }
 
     val googleSignInClient = remember(context, gso) {
         GoogleSignIn.getClient(context, gso)
@@ -62,6 +56,7 @@ actual fun rememberGoogleAuthLauncher(
                 val accountObj = account?.account
 
                 if (accountObj != null && email != null) {
+                    account.idToken?.let(AppModule.simulationCloudSync::onGoogleIdToken)
                     coroutineScope.launch(Dispatchers.IO) {
                         try {
                             val scopeStr = "oauth2:https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email"
@@ -100,4 +95,30 @@ actual fun rememberGoogleAuthLauncher(
             }
         }
     }
+}
+
+/**
+ * Opciones del login de Google Drive. Con Firebase activo también se pide el ID token,
+ * que sirve para vincular la cuenta anónima del respaldo sin un segundo inicio de sesión.
+ */
+private fun driveSignInOptions(webClientId: String?): GoogleSignInOptions =
+    GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        .requestEmail()
+        .requestScopes(
+            Scope("https://www.googleapis.com/auth/drive.file"),
+            Scope("https://www.googleapis.com/auth/drive.readonly")
+        )
+        .apply { if (webClientId != null) requestIdToken(webClientId) }
+        .build()
+
+/**
+ * Para quien ya había conectado Google Drive antes de existir el respaldo: pide un ID token
+ * en silencio y vincula la cuenta sin volver a mostrar el selector.
+ */
+fun linkCloudBackupWithLastGoogleAccount(context: Context) {
+    val cloudSync = AppModule.simulationCloudSync
+    val webClientId = cloudSync.googleWebClientId ?: return
+    if (cloudSync.isLinkedWithGoogle || GoogleSignIn.getLastSignedInAccount(context) == null) return
+    GoogleSignIn.getClient(context, driveSignInOptions(webClientId)).silentSignIn()
+        .addOnSuccessListener { account -> account.idToken?.let(cloudSync::onGoogleIdToken) }
 }

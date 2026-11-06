@@ -5,6 +5,13 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+// Firebase se activa solo si existe google-services.json (proyecto de Google Cloud notivas-510404).
+// Sin el archivo la app compila igual y el respaldo en la nube queda apagado.
+if (file("google-services.json").exists()) {
+    apply(plugin = libs.plugins.googleServices.get().pluginId)
+    apply(plugin = libs.plugins.firebaseCrashlytics.get().pluginId)
+}
+
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_21
@@ -16,6 +23,13 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.work.runtime.ktx)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.perf)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
