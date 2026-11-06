@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import me.joxquin.notivas.data.local.db.entities.SimulationGroupEntity
 import me.joxquin.notivas.data.local.db.entities.SimulationGroupWithItemsRelation
 import me.joxquin.notivas.data.local.db.entities.SimulationItemEntity
+import me.joxquin.notivas.data.model.SimulationGroupWithItems
 
 @Dao
 interface SimulationDao {
@@ -70,6 +71,16 @@ interface SimulationDao {
 
     @Query("DELETE FROM simulation_groups WHERE course_id = :courseId")
     suspend fun deleteGroupsForCourse(courseId: Long)
+
+    /** Reemplaza los grupos de un curso en una sola transacción: si falla, se conservan los anteriores. */
+    @Transaction
+    suspend fun replaceGroupsForCourse(courseId: Long, groups: List<SimulationGroupWithItems>) {
+        deleteGroupsForCourse(courseId)
+        groups.forEach { g ->
+            val groupId = insertGroup(SimulationGroupEntity.fromDomain(g.group.copy(id = 0L, courseId = courseId)))
+            insertItems(g.items.map { SimulationItemEntity.fromDomain(it.copy(id = 0L, groupId = groupId)) })
+        }
+    }
 
     @Query("DELETE FROM simulation_groups")
     suspend fun deleteAllGroups()
