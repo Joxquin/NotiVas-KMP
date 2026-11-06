@@ -10,9 +10,8 @@
     "cookies"
   ],
   "host_permissions": [
-    "*://*.instructure.com/*",
-    "*://joxquin.github.io/*",
-    "<all_urls>"
+    "https://*.instructure.com/*",
+    "https://canvas.utp.edu.pe/*"
   ],
   "background": {
     "scripts": ["background.js"]
@@ -20,9 +19,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://joxquin.github.io/NotiVas-KMP/*",
-        "file:///*",
-        "<all_urls>"
+        "https://joxquin.github.io/NotiVas-KMP/*"
       ],
       "js": ["content.js"],
       "run_at": "document_start"
