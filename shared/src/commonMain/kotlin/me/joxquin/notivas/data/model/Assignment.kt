@@ -5,6 +5,15 @@ import kotlinx.serialization.Serializable
 import me.joxquin.notivas.util.DateTimeUtil
 
 @Serializable
+data class ExternalToolTagAttributes(
+    @SerialName("url") val url: String? = null,
+    @SerialName("new_tab") val newTab: Boolean? = null,
+    @SerialName("resource_link_id") val resourceLinkId: String? = null,
+    @SerialName("content_type") val contentType: String? = null,
+    @SerialName("content_id") val contentId: Long? = null
+)
+
+@Serializable
 data class Assignment(
     @SerialName("id") val id: Long,
     @SerialName("name") val name: String,
@@ -20,6 +29,11 @@ data class Assignment(
     @SerialName("locked_for_user") val isLocked: Boolean = false,
     @SerialName("submission") val submission: SubmissionDetails? = null,
     @SerialName("allowed_attempts") val allowedAttempts: Int? = null,
+    @SerialName("quiz_id") val quizId: Long? = null,
+    @SerialName("is_quiz_assignment") val isQuizAssignment: Boolean? = null,
+    @SerialName("is_quiz_lti_assignment") val isQuizLtiAssignment: Boolean? = null,
+    @SerialName("external_tool_tag_attributes") val externalToolTagAttributes: ExternalToolTagAttributes? = null,
+    @SerialName("url") val url: String? = null,
     val status: String = "upcoming", // "upcoming", "completed", "missing"
     val submittedAt: String? = null,
     val gradedAt: String? = null,
@@ -31,10 +45,21 @@ data class Assignment(
     val notified30m: Boolean = false
 ) {
     val isQuiz: Boolean
-        get() = submissionTypes?.contains("online_quiz") == true
+        get() = submissionTypes?.contains("online_quiz") == true ||
+                submissionTypes?.contains("quiz_lti") == true ||
+                isQuizAssignment == true ||
+                isQuizLtiAssignment == true ||
+                quizId != null ||
+                externalToolTagAttributes?.url?.contains("quiz", ignoreCase = true) == true ||
+                url?.contains("launch_type=assessment", ignoreCase = true) == true ||
+                submission?.url?.contains("quiz-lti", ignoreCase = true) == true ||
+                (submissionTypes?.contains("external_tool") == true && (
+                    submission?.submissionType == "basic_lti_launch" &&
+                    submission.url?.contains("quiz", ignoreCase = true) == true
+                ))
 
     val supportsDirectSubmission: Boolean
-        get() = submissionTypes?.any { it in listOf("online_upload", "online_text_entry", "online_url", "media_recording") } == true
+        get() = !isQuiz && submissionTypes?.any { it in listOf("online_upload", "online_text_entry", "online_url", "media_recording") } == true
 
     fun isHardLocked(nowEpochMillis: Long = DateTimeUtil.nowEpochMillis()): Boolean {
         if (isLocked) return true

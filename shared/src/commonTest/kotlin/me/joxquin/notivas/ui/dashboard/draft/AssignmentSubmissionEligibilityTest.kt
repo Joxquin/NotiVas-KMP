@@ -1,6 +1,8 @@
 package me.joxquin.notivas.ui.dashboard.draft
 
+import me.joxquin.notivas.data.local.db.entities.AssignmentEntity
 import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.ExternalToolTagAttributes
 import me.joxquin.notivas.data.model.SubmissionDetails
 import me.joxquin.notivas.ui.dashboard.draft.components.SubmissionTab
 import me.joxquin.notivas.ui.dashboard.draft.components.formatCanvasLockDate
@@ -211,5 +213,125 @@ class AssignmentSubmissionEligibilityTest {
         )
         assertEquals(listOf(SubmissionTab.UPLOAD, SubmissionTab.DRIVE), tabs)
         assertTrue(tabs.size > 1)
+    }
+
+    @Test
+    fun testIsQuiz_classicQuizOnlineQuiz() {
+        val assignment = Assignment(
+            id = 10,
+            name = "Quiz Clásico",
+            courseId = 100,
+            submissionTypes = listOf("online_quiz")
+        )
+        assertTrue(assignment.isQuiz)
+        assertFalse(assignment.supportsDirectSubmission)
+    }
+
+    @Test
+    fun testIsQuiz_classicQuizWithQuizId() {
+        val assignment = Assignment(
+            id = 11,
+            name = "Quiz con quiz_id",
+            courseId = 100,
+            quizId = 999L
+        )
+        assertTrue(assignment.isQuiz)
+        assertFalse(assignment.supportsDirectSubmission)
+    }
+
+    @Test
+    fun testIsQuiz_newQuizWithIsQuizLtiAssignment() {
+        val assignment = Assignment(
+            id = 12,
+            name = "Práctica Calificada 03",
+            courseId = 100,
+            submissionTypes = listOf("external_tool"),
+            isQuizLtiAssignment = true
+        )
+        assertTrue(assignment.isQuiz)
+        assertFalse(assignment.supportsDirectSubmission)
+    }
+
+    @Test
+    fun testIsQuiz_newQuizWithQuizLtiMarker() {
+        val assignment = Assignment(
+            id = 13,
+            name = "Examen New Quizzes",
+            courseId = 100,
+            submissionTypes = listOf("external_tool", "quiz_lti")
+        )
+        assertTrue(assignment.isQuiz)
+        assertFalse(assignment.supportsDirectSubmission)
+    }
+
+    @Test
+    fun testIsQuiz_newQuizWithExternalToolUrl() {
+        val assignment = Assignment(
+            id = 14,
+            name = "Examen con LTI URL",
+            courseId = 100,
+            submissionTypes = listOf("external_tool"),
+            externalToolTagAttributes = ExternalToolTagAttributes(
+                url = "https://tecsup.quiz-lti-iad-prod.instructure.com/lti/launch"
+            )
+        )
+        assertTrue(assignment.isQuiz)
+        assertFalse(assignment.supportsDirectSubmission)
+    }
+
+    @Test
+    fun testIsQuiz_newQuizWithSubmissionUrl() {
+        val assignment = Assignment(
+            id = 15,
+            name = "Examen rendido",
+            courseId = 100,
+            submissionTypes = listOf("external_tool"),
+            submission = SubmissionDetails(
+                submissionType = "basic_lti_launch",
+                url = "https://tecsup.instructure.com/courses/72704/external_tools/retrieve?assignment_id=15&url=https%3A%2F%2Ftecsup.quiz-lti-iad-prod.instructure.com"
+            )
+        )
+        assertTrue(assignment.isQuiz)
+        assertFalse(assignment.supportsDirectSubmission)
+    }
+
+    @Test
+    fun testIsQuiz_regularExternalTool_notQuiz() {
+        val assignment = Assignment(
+            id = 16,
+            name = "Laboratorio Virtual",
+            courseId = 100,
+            submissionTypes = listOf("external_tool"),
+            url = "https://vlab.tecsup.edu.pe/launch"
+        )
+        assertFalse(assignment.isQuiz)
+    }
+
+    @Test
+    fun testIsQuiz_regularUploadAssignment() {
+        val assignment = Assignment(
+            id = 17,
+            name = "Tarea de programación",
+            courseId = 100,
+            submissionTypes = listOf("online_upload")
+        )
+        assertFalse(assignment.isQuiz)
+        assertTrue(assignment.supportsDirectSubmission)
+    }
+
+    @Test
+    fun testAssignmentEntity_domainRoundTrip_preservesQuizLti() {
+        val assignment = Assignment(
+            id = 18,
+            name = "Evaluación LTI",
+            courseId = 100,
+            submissionTypes = listOf("external_tool"),
+            isQuizLtiAssignment = true
+        )
+        val entity = AssignmentEntity.fromDomain(assignment)
+        assertTrue(entity.submissionTypes?.contains("quiz_lti") == true)
+        val restored = entity.toDomain()
+        assertTrue(restored.isQuiz)
+        assertTrue(restored.isQuizLtiAssignment == true)
     }
 }

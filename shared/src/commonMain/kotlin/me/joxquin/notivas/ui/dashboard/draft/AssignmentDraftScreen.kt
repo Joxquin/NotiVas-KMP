@@ -338,11 +338,26 @@ fun AssignmentDraftScreen(
                     }
 
                     // 3. Consigna de Canvas (Lazy granular: cada sección se renderiza solo al ser visible)
-                    item(key = "task_consigna_header") {
-                        ConsignaHeaderTitle(themeStyle = themeStyle)
-                    }
-
-                    if (consignaSections.isEmpty()) {
+                    if (consignaSections.isNotEmpty()) {
+                        item(key = "task_consigna_header") {
+                            ConsignaHeaderTitle(themeStyle = themeStyle)
+                        }
+                        items(
+                            items = consignaSections,
+                            key = { section -> "consigna_miuix_${section.title.hashCode()}_${section.introText.take(15).hashCode()}" }
+                        ) { section ->
+                            ConsignaSectionItem(
+                                section = section,
+                                themeStyle = themeStyle,
+                                baseUrl = baseUrl,
+                                token = token,
+                                cookies = cookies
+                            )
+                        }
+                    } else if (!assignment.isQuiz) {
+                        item(key = "task_consigna_header") {
+                            ConsignaHeaderTitle(themeStyle = themeStyle)
+                        }
                         item(key = "task_consigna_empty") {
                             Box(
                                 modifier = Modifier
@@ -357,19 +372,6 @@ fun AssignmentDraftScreen(
                                     fontSize = 13.sp
                                 )
                             }
-                        }
-                    } else {
-                        items(
-                            items = consignaSections,
-                            key = { section -> "consigna_miuix_${section.title.hashCode()}_${section.introText.take(15).hashCode()}" }
-                        ) { section ->
-                            ConsignaSectionItem(
-                                section = section,
-                                themeStyle = themeStyle,
-                                baseUrl = baseUrl,
-                                token = token,
-                                cookies = cookies
-                            )
                         }
                     }
 
@@ -552,11 +554,26 @@ fun AssignmentDraftScreen(
                 }
 
                 // 3. Consigna de Canvas (Lazy granular: cada sección se renderiza solo al ser visible)
-                item(key = "task_consigna_header_material") {
-                    ConsignaHeaderTitle(themeStyle = themeStyle)
-                }
-
-                if (consignaSections.isEmpty()) {
+                if (consignaSections.isNotEmpty()) {
+                    item(key = "task_consigna_header_material") {
+                        ConsignaHeaderTitle(themeStyle = themeStyle)
+                    }
+                    items(
+                        items = consignaSections,
+                        key = { section -> "consigna_mat_${section.title.hashCode()}_${section.introText.take(15).hashCode()}" }
+                    ) { section ->
+                        ConsignaSectionItem(
+                            section = section,
+                            themeStyle = themeStyle,
+                            baseUrl = baseUrl,
+                            token = token,
+                            cookies = cookies
+                        )
+                    }
+                } else if (!assignment.isQuiz) {
+                    item(key = "task_consigna_header_material") {
+                        ConsignaHeaderTitle(themeStyle = themeStyle)
+                    }
                     item(key = "task_consigna_empty_material") {
                         Box(
                             modifier = Modifier
@@ -571,19 +588,6 @@ fun AssignmentDraftScreen(
                                 fontSize = 13.sp
                             )
                         }
-                    }
-                } else {
-                    items(
-                        items = consignaSections,
-                        key = { section -> "consigna_mat_${section.title.hashCode()}_${section.introText.take(15).hashCode()}" }
-                    ) { section ->
-                        ConsignaSectionItem(
-                            section = section,
-                            themeStyle = themeStyle,
-                            baseUrl = baseUrl,
-                            token = token,
-                            cookies = cookies
-                        )
                     }
                 }
 

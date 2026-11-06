@@ -113,6 +113,8 @@ data class AssignmentEntity(
             )
         } else null,
         allowedAttempts = allowedAttempts,
+        quizId = if (submissionTypes?.contains("online_quiz") == true) id else null,
+        isQuizLtiAssignment = submissionTypes?.contains("quiz_lti") == true,
         status = status,
         submittedAt = submittedAt,
         gradedAt = gradedAt,
@@ -125,16 +127,27 @@ data class AssignmentEntity(
     )
 
     companion object {
-        fun fromDomain(a: Assignment): AssignmentEntity = AssignmentEntity(
-            id = a.id,
-            courseId = a.courseId,
-            name = a.name,
-            description = a.description,
-            dueAt = a.dueAt,
-            lockAt = a.lockAt,
-            pointsPossible = a.pointsPossible,
-            htmlUrl = a.htmlUrl,
-            submissionTypes = a.submissionTypes,
+        fun fromDomain(a: Assignment): AssignmentEntity {
+            val effectiveSubmissionTypes = buildList {
+                a.submissionTypes?.let { addAll(it) }
+                if (a.isQuiz && a.submissionTypes?.contains("online_quiz") != true) {
+                    if (!contains("quiz_lti")) add("quiz_lti")
+                }
+                if ((a.quizId != null || a.isQuizAssignment == true) && !contains("online_quiz")) {
+                    add("online_quiz")
+                }
+            }.ifEmpty { a.submissionTypes }
+
+            return AssignmentEntity(
+                id = a.id,
+                courseId = a.courseId,
+                name = a.name,
+                description = a.description,
+                dueAt = a.dueAt,
+                lockAt = a.lockAt,
+                pointsPossible = a.pointsPossible,
+                htmlUrl = a.htmlUrl,
+                submissionTypes = effectiveSubmissionTypes,
             allowedExtensions = a.allowedExtensions,
             isCompleted = a.isCompleted,
             isLocked = a.isLocked,
@@ -159,4 +172,5 @@ data class AssignmentEntity(
             notified30m = a.notified30m
         )
     }
+}
 }

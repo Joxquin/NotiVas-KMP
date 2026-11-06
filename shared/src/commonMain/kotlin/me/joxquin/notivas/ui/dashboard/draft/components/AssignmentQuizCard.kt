@@ -77,6 +77,17 @@ fun AssignmentQuizCard(
         } else null
     }
 
+    val formattedSubmittedAt = remember(assignment.submittedAt, assignment.submission?.submittedAt) {
+        val dateStr = assignment.submittedAt ?: assignment.submission?.submittedAt
+        if (dateStr.isNullOrBlank()) null
+        else {
+            val comp = me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(dateStr)
+            if (comp != null) {
+                "${comp.date.day.toString().padStart(2, '0')}/${comp.date.month.toString().padStart(2, '0')}/${comp.date.year} ${comp.hour.toString().padStart(2, '0')}:${comp.minute.toString().padStart(2, '0')}"
+            } else dateStr.take(16)
+        }
+    }
+
     if (themeStyle == AppThemeStyle.MIUIX) {
         Box(
             modifier = modifier
@@ -168,6 +179,47 @@ fun AssignmentQuizCard(
 
                 // Puntaje obtenido (si esta disponible)
                 if (scorePair != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .squircleSurface(
+                                color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                                cornerRadius = 14.dp
+                            )
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            MiuixText(
+                                text = stringResource(Res.string.assignment_quiz_score_label),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                            )
+                            MiuixText(
+                                text = stringResource(
+                                    Res.string.assignment_quiz_score_format,
+                                    scorePair.first,
+                                    scorePair.second
+                                ),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MiuixTheme.colorScheme.primary
+                            )
+                        }
+                        if (formattedSubmittedAt != null) {
+                            MiuixText(
+                                text = stringResource(Res.string.assignment_submission_submitted_at_prefix, formattedSubmittedAt),
+                                fontSize = 11.sp,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                            )
+                        }
+                    }
+                } else if (formattedSubmittedAt != null) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -180,20 +232,9 @@ fun AssignmentQuizCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         MiuixText(
-                            text = stringResource(Res.string.assignment_quiz_score_label),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
+                            text = stringResource(Res.string.assignment_submission_submitted_at_prefix, formattedSubmittedAt),
+                            fontSize = 12.sp,
                             color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                        )
-                        MiuixText(
-                            text = stringResource(
-                                Res.string.assignment_quiz_score_format,
-                                scorePair.first,
-                                scorePair.second
-                            ),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MiuixTheme.colorScheme.primary
                         )
                     }
                 }
@@ -352,26 +393,51 @@ fun AssignmentQuizCard(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text(
-                                text = stringResource(Res.string.assignment_quiz_score_label),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = stringResource(
-                                    Res.string.assignment_quiz_score_format,
-                                    scorePair.first,
-                                    scorePair.second
-                                ),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.assignment_quiz_score_label),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = stringResource(
+                                        Res.string.assignment_quiz_score_format,
+                                        scorePair.first,
+                                        scorePair.second
+                                    ),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            if (formattedSubmittedAt != null) {
+                                Text(
+                                    text = stringResource(Res.string.assignment_submission_submitted_at_prefix, formattedSubmittedAt),
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
+                    }
+                } else if (formattedSubmittedAt != null) {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.assignment_submission_submitted_at_prefix, formattedSubmittedAt),
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(14.dp)
+                        )
                     }
                 }
 
