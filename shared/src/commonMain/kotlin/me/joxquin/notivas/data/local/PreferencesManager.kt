@@ -557,6 +557,16 @@ class PreferencesManager(
         _googleDriveAccessToken.value = null
         _googleDriveRefreshToken.value = null
         _googleDriveLastSyncTimestamp.value = 0L
+        // Estado ligado a la cuenta: si queda en memoria, la siguiente cuenta hereda
+        // los ids conocidos y no recibe avisos de tareas/foros nuevos en su primera sync.
+        _isSessionExpired.value = false
+        _knownAssignmentIds.value = emptySet()
+        _knownForumIds.value = emptySet()
+        _hasCompletedInitialSync.value = false
+        _lastSyncTimestamp.value = 0L
+        _discardedAssignmentIds.value = emptySet()
+        _recentSearches.value = emptyList()
+        _unconfiguredCoursesBannerDismissedUntil.value = 0L
         PlatformFileSystem.deleteFile(prefsFile)
     }
 }

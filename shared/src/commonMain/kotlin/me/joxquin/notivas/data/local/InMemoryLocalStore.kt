@@ -97,7 +97,15 @@ class InMemoryLocalStore(
     fun syncCourses(activeCourses: List<Course>) {
         scope.launch {
             if (activeCourses.isEmpty()) return@launch
-            database.courseDao().upsert(activeCourses.map { CourseEntity.fromDomain(it) })
+            // Canvas no conoce semanas ni nota mínima: conservar las que el usuario configuró.
+            val existing = database.courseDao().getAll().associateBy { it.id }
+            database.courseDao().upsert(activeCourses.map { course ->
+                val local = existing[course.id]
+                CourseEntity.fromDomain(
+                    if (local == null) course
+                    else course.copy(totalWeeks = local.totalWeeks, passingGrade = local.passingGrade)
+                )
+            })
             database.courseDao().deleteNotIn(activeCourses.map { it.id })
         }
     }
@@ -189,11 +197,8 @@ class InMemoryLocalStore(
         }
     }
 
-    fun deleteAssignmentById(id: Long) {
-        scope.launch {
-            val existing = database.assignmentDao().getById(id) ?: return@launch
-            database.assignmentDao().deleteByCourse(existing.courseId)
-        }
+    suspend fun deleteAssignmentById(id: Long) {
+        database.assignmentDao().deleteById(id)
     }
 
     fun deleteAssignments() {
@@ -358,15 +363,7 @@ class InMemoryLocalStore(
     ) {
         courseUpdates.forEach { (course, groupsWithItems) ->
             database.courseDao().upsert(CourseEntity.fromDomain(course))
-            database.simulationDao().deleteGroupsForCourse(course.id)
-            groupsWithItems.forEach { g ->
-                val groupEntity = SimulationGroupEntity.fromDomain(g.group.copy(id = 0L, courseId = course.id))
-                val groupId = database.simulationDao().insertGroup(groupEntity)
-                val itemEntities = g.items.map { item ->
-                    SimulationItemEntity.fromDomain(item.copy(id = 0L, groupId = groupId))
-                }
-                database.simulationDao().insertItems(itemEntities)
-            }
+            database.simulationDao().replaceGroupsForCourse(course.id, groupsWithItems)
         }
     }
 
@@ -376,15 +373,7 @@ class InMemoryLocalStore(
     ) {
         scope.launch {
             database.courseDao().upsert(CourseEntity.fromDomain(course))
-            database.simulationDao().deleteGroupsForCourse(course.id)
-            groupsWithItems.forEach { g ->
-                val groupEntity = SimulationGroupEntity.fromDomain(g.group.copy(id = 0L, courseId = course.id))
-                val groupId = database.simulationDao().insertGroup(groupEntity)
-                val itemEntities = g.items.map { item ->
-                    SimulationItemEntity.fromDomain(item.copy(id = 0L, groupId = groupId))
-                }
-                database.simulationDao().insertItems(itemEntities)
-            }
+            database.simulationDao().replaceGroupsForCourse(course.id, groupsWithItems)
         }
     }
 
@@ -474,17 +463,9 @@ class InMemoryLocalStore(
         } catch (_: Exception) {}
     }
 
-    fun clearDiskStorage() {
+    suspend fun clearDiskStorage() {
+        database.clearAllTables()
         clearUserProfile()
-        scope.launch {
-            database.courseDao().deleteAll()
-            database.assignmentDao().deleteAll()
-            database.plannerDao().deleteAll()
-            database.copilotChatDao().deleteAllSessions()
-            database.copilotChatDao().deleteAllMessages()
-            database.simulationDao().deleteAllGroups()
-            database.simulationDao().deleteAllItems()
-        }
     }
 }
 
