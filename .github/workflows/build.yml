@@ -2,7 +2,7 @@ name: CI Android Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature/** ]
     paths:
       - 'androidApp/**'
       - 'shared/**'
@@ -12,7 +12,7 @@ on:
       - 'gradle.properties'
       - '.github/workflows/build.yml'
   pull_request:
-    branches: [ main ]
+    branches: [ main, feature/** ]
     paths:
       - 'androidApp/**'
       - 'shared/**'
@@ -48,6 +48,17 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      - name: Inject google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" > androidApp/google-services.json
+            echo "google-services.json injected successfully."
+          else
+            echo "Warning: GOOGLE_SERVICES_JSON secret not found."
+          fi
 
       - name: Build Android Debug APK
         run: ./gradlew :androidApp:assembleDebug --stacktrace
