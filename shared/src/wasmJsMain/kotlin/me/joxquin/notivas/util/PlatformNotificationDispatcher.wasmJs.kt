@@ -7,7 +7,8 @@ actual object PlatformNotificationDispatcher {
         targetId: Long?,
         secondaryId: Long?,
         courseCode: String?,
-        courseName: String?
+        courseName: String?,
+        type: String?
     ) {
         // No-op en Web
     }

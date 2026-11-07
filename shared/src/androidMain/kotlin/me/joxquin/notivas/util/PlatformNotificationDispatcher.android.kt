@@ -22,7 +22,8 @@ actual object PlatformNotificationDispatcher {
         targetId: Long?,
         secondaryId: Long?,
         courseCode: String?,
-        courseName: String?
+        courseName: String?,
+        type: String?
     ) {
         val context = getContext() ?: return
         val helper = NotificationHelper(context)
@@ -32,7 +33,8 @@ actual object PlatformNotificationDispatcher {
             targetId = targetId,
             secondaryId = secondaryId,
             courseCode = courseCode,
-            courseName = courseName
+            courseName = courseName,
+            type = type
         )
     }
 }

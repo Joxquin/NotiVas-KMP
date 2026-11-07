@@ -242,6 +242,23 @@ class DashboardViewModel(
         refreshSubmissionDetails(assignmentUi.assignment.courseId, assignmentUi.assignment.id)
     }
 
+    fun openDraftById(assignmentId: Long, courseName: String? = null) {
+        viewModelScope.launch {
+            val existing = _allAssignmentsUi.value.find { it.assignment.id == assignmentId }
+            if (existing != null) {
+                openDraft(existing)
+                return@launch
+            }
+            val assignment = repository.getAssignment(assignmentId)
+            if (assignment != null) {
+                val resolvedCourseName = courseName
+                    ?: repository.allCourses.first().find { it.id == assignment.courseId }?.name
+                    ?: "Curso"
+                openDraft(AssignmentUiModel(assignment, resolvedCourseName))
+            }
+        }
+    }
+
     fun refreshSubmissionDetails(courseId: Long, assignmentId: Long) {
         viewModelScope.launch {
             val result = repository.getSubmissionForAssignment(courseId, assignmentId)

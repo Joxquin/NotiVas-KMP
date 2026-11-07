@@ -16,6 +16,9 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import me.joxquin.notivas.background.BackgroundSyncScheduler
 import me.joxquin.notivas.di.AppModule
 
+import me.joxquin.notivas.ui.navigation.NotificationNavHandler
+import me.joxquin.notivas.ui.navigation.NotificationNavTarget
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -37,9 +40,7 @@ class MainActivity : ComponentActivity() {
         val syncInterval = AppModule.preferencesManager.syncIntervalMinutes
         BackgroundSyncScheduler.schedulePeriodicSync(15L)
 
-        if (intent?.getStringExtra("action") == "relogin") {
-            AppModule.preferencesManager.setSessionExpired(true)
-        }
+        handleIntent(intent)
 
         setContent {
             androidx.compose.runtime.CompositionLocalProvider(
@@ -52,8 +53,30 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: android.content.Intent?) {
+        if (intent == null) return
         if (intent.getStringExtra("action") == "relogin") {
             AppModule.preferencesManager.setSessionExpired(true)
+        }
+        val navAction = intent.getStringExtra("extra_nav_action") ?: return
+        val targetId = intent.getLongExtra("extra_target_id", -1L).takeIf { it != -1L }
+        val secondaryId = intent.getLongExtra("extra_secondary_id", -1L).takeIf { it != -1L }
+        val courseName = intent.getStringExtra("extra_course_name")
+
+        val target = when (navAction) {
+            "assignment" -> targetId?.let { NotificationNavTarget.Assignment(it, secondaryId, courseName) }
+            "forum" -> targetId?.let { NotificationNavTarget.Forum(it, secondaryId) }
+            "recent_activity" -> NotificationNavTarget.RecentActivity
+            "schedule" -> NotificationNavTarget.Schedule
+            "course" -> targetId?.let { NotificationNavTarget.Course(it) }
+            else -> null
+        }
+        if (target != null) {
+            NotificationNavHandler.navigateTo(target)
         }
     }
 }

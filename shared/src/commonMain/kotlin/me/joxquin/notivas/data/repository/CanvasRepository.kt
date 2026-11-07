@@ -863,7 +863,8 @@ class CanvasRepository(
             targetId = targetId,
             secondaryId = secondaryId,
             courseCode = courseCode,
-            courseName = courseName
+            courseName = courseName,
+            type = type
         )
     }
 

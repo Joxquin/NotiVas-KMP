@@ -41,12 +41,43 @@ class NotificationHelper(
         targetId: Long? = null,
         secondaryId: Long? = null,
         courseCode: String? = null,
-        courseName: String? = null
+        courseName: String? = null,
+        type: String? = null
     ) {
         createChannels()
 
         val smallIconRes = context.applicationInfo.icon.takeIf { it != 0 }
             ?: android.R.drawable.ic_dialog_info
+
+        val id = notificationId ?: notificationIdGenerator.incrementAndGet()
+
+        val navAction = when {
+            type?.contains("BATCH", ignoreCase = true) == true -> "recent_activity"
+            type?.contains("FORO", ignoreCase = true) == true || type?.contains("FORUM", ignoreCase = true) == true -> "forum"
+            type?.contains("ASSIGNMENT", ignoreCase = true) == true ||
+            type?.contains("TASK", ignoreCase = true) == true ||
+            type?.contains("QUIZ", ignoreCase = true) == true ||
+            channelId == CHANNEL_REMINDERS_ID -> "assignment"
+            targetId != null -> "assignment"
+            else -> "recent_activity"
+        }
+
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+            flags = android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("extra_nav_action", navAction)
+            targetId?.let { putExtra("extra_target_id", it) }
+            secondaryId?.let { putExtra("extra_secondary_id", it) }
+            courseName?.let { putExtra("extra_course_name", it) }
+            courseCode?.let { putExtra("extra_course_code", it) }
+        }
+        val pendingIntent = intent?.let {
+            android.app.PendingIntent.getActivity(
+                context,
+                id,
+                it,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+        }
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(smallIconRes)
@@ -56,9 +87,13 @@ class NotificationHelper(
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setGroup(NOTIFICATION_GROUP_KEY)
+            .apply {
+                if (pendingIntent != null) {
+                    setContentIntent(pendingIntent)
+                }
+            }
             .build()
 
-        val id = notificationId ?: notificationIdGenerator.incrementAndGet()
         notificationManager.notify(id, notification)
 
         // Registrar evento en la base de datos Room para el feed de Actividad Reciente
@@ -68,7 +103,7 @@ class NotificationHelper(
                 val derivedCode = me.joxquin.notivas.util.CourseUtil.extractCourseTag(courseCode, courseName)
                 db.activityLogDao().insert(
                     me.joxquin.notivas.data.local.db.entities.ActivityLogEntity(
-                        type = "CANVAS_NOTIFICATION",
+                        type = type ?: "CANVAS_NOTIFICATION",
                         title = title,
                         description = message,
                         timestamp = System.currentTimeMillis(),
@@ -83,6 +118,19 @@ class NotificationHelper(
         } catch (_: Throwable) {}
 
         // Generar o actualizar notificación resumen para agrupar
+        val summaryIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+            flags = android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("extra_nav_action", "recent_activity")
+        }
+        val summaryPendingIntent = summaryIntent?.let {
+            android.app.PendingIntent.getActivity(
+                context,
+                SUMMARY_NOTIFICATION_ID,
+                it,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
         val summaryNotification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(smallIconRes)
             .setStyle(NotificationCompat.InboxStyle().setSummaryText("Recordatorios Activos"))
@@ -90,6 +138,11 @@ class NotificationHelper(
             .setGroup(NOTIFICATION_GROUP_KEY)
             .setGroupSummary(true)
             .setAutoCancel(true)
+            .apply {
+                if (summaryPendingIntent != null) {
+                    setContentIntent(summaryPendingIntent)
+                }
+            }
             .build()
 
         notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)

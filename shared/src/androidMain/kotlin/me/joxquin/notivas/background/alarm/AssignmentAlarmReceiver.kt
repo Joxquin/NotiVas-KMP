@@ -76,7 +76,8 @@ class AssignmentAlarmReceiver : BroadcastReceiver() {
                     targetId = assignmentId,
                     secondaryId = assignment.courseId,
                     courseCode = course?.courseCode,
-                    courseName = courseName
+                    courseName = courseName,
+                    type = "TASK_REMINDER"
                 )
 
                 when (alertType) {

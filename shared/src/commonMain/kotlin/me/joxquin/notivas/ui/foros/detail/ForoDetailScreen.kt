@@ -94,7 +94,25 @@ fun ForoDetailScreen(
     if (currentTopic != null) {
         retainedTopic = currentTopic
     }
-    val topic = currentTopic ?: retainedTopic ?: return
+    val topic = currentTopic ?: retainedTopic
+    if (topic == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (themeStyle == AppThemeStyle.MIUIX) {
+                top.yukonga.miuix.kmp.basic.InfiniteProgress(
+                    modifier = Modifier.size(48.dp),
+                    color = top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.primary
+                )
+            } else {
+                androidx.compose.material3.CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        return
+    }
 
     var showCopilotAssistant by remember { mutableStateOf(false) }
 

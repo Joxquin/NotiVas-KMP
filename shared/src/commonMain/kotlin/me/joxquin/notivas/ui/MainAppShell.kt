@@ -106,6 +106,8 @@ import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixNavigator
 import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixSnackbarHostState
 import me.joxquin.notivas.ui.navigation.miuix.MiuixNavigator
 import me.joxquin.notivas.ui.navigation.miuix.MiuixRoute
+import me.joxquin.notivas.ui.navigation.NotificationNavHandler
+import me.joxquin.notivas.ui.navigation.NotificationNavTarget
 import top.yukonga.miuix.kmp.basic.SnackbarHost
 import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import me.joxquin.notivas.ui.notas.NotasScreen
@@ -320,10 +322,55 @@ fun MainAppShell(
     )
 
     val isWideScreen = shouldShowSplitPane()
+    val pendingNavTarget by NotificationNavHandler.pendingTarget.collectAsState()
+
+    fun navigateToTarget(target: NotificationNavTarget, navigator: MiuixNavigator) {
+        when (target) {
+            is NotificationNavTarget.Assignment -> {
+                coroutineScope.launch {
+                    val assignment = canvasRepository.getAssignment(target.assignmentId)
+                    val courseName = target.courseName
+                        ?: assignment?.courseId?.let { cId -> notasViewModel.uiState.value.courses.find { it.id == cId }?.name }
+                        ?: "Curso"
+                    val assignmentUi = if (assignment != null) {
+                        AssignmentUiModel(assignment, courseName)
+                    } else {
+                        dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == target.assignmentId }
+                    }
+                    if (assignmentUi != null) {
+                        dashboardViewModel.openDraft(assignmentUi)
+                    } else {
+                        dashboardViewModel.openDraftById(target.assignmentId, courseName)
+                    }
+                    navigator.push(MiuixRoute.AssignmentDraft(target.assignmentId, courseName))
+                }
+            }
+            is NotificationNavTarget.Forum -> {
+                forosViewModel.selectDiscussionById(target.topicId, target.courseId)
+                navigator.push(MiuixRoute.ForoDetail(target.topicId))
+            }
+            is NotificationNavTarget.RecentActivity -> {
+                navigator.push(MiuixRoute.RecentActivity)
+            }
+            is NotificationNavTarget.Schedule -> {
+                navigator.push(MiuixRoute.Schedule)
+            }
+            is NotificationNavTarget.Course -> {
+                navigator.push(MiuixRoute.CourseDetail(target.courseId))
+            }
+        }
+    }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val miuixBackStack = rememberNavBackStack<MiuixRoute>(MiuixRoute.Main)
         val miuixNavigator = remember(miuixBackStack) { MiuixNavigator(miuixBackStack) }
+
+        LaunchedEffect(pendingNavTarget, isEntranceTriggered) {
+            if (!isEntranceTriggered) return@LaunchedEffect
+            val target = pendingNavTarget ?: return@LaunchedEffect
+            NotificationNavHandler.consumePendingTarget()
+            navigateToTarget(target, miuixNavigator)
+        }
         val navCornerRadius = if (isWideScreen) 0.dp else rememberNavSystemCornerRadius()
         val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
         val backdropColor = MiuixTheme.colorScheme.surface
@@ -673,6 +720,11 @@ fun MainAppShell(
                     val currentDraft = selectedAssignmentForDraft ?: remember(route) {
                         dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == route.assignmentId }
                     }
+                    LaunchedEffect(route.assignmentId) {
+                        if (selectedAssignmentForDraft?.assignment?.id != route.assignmentId) {
+                            dashboardViewModel.openDraftById(route.assignmentId, route.courseName)
+                        }
+                    }
                     if (currentDraft != null) {
                         AssignmentDraftScreen(
                             assignmentUi = currentDraft,
@@ -680,6 +732,13 @@ fun MainAppShell(
                             viewModel = dashboardViewModel,
                             themeStyle = AppThemeStyle.MIUIX
                         )
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            top.yukonga.miuix.kmp.basic.InfiniteProgress(
+                                modifier = Modifier.size(48.dp),
+                                color = MiuixTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
 
@@ -703,10 +762,7 @@ fun MainAppShell(
                 entry<MiuixRoute.ForoDetail>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.ForoDetail ->
                     LaunchedEffect(route.topicId) {
                         if (forosUiState.selectedDiscussion?.id != route.topicId) {
-                            val existing = forosUiState.discussions.find { it.id == route.topicId }
-                            if (existing != null) {
-                                forosViewModel.selectDiscussion(existing)
-                            }
+                            forosViewModel.selectDiscussionById(route.topicId)
                         }
                     }
                     ForoDetailScreen(
@@ -889,6 +945,13 @@ fun MainAppShell(
         // ─── ARQUITECTURA MATERIAL DESIGN 3 (AOSP PREDICTIVE BACK & NAVDISPLAY) ───
         val materialBackStack = rememberNavBackStack<MiuixRoute>(MiuixRoute.Main)
         val materialNavigator = remember(materialBackStack) { MiuixNavigator(materialBackStack) }
+
+        LaunchedEffect(pendingNavTarget, isEntranceTriggered) {
+            if (!isEntranceTriggered) return@LaunchedEffect
+            val target = pendingNavTarget ?: return@LaunchedEffect
+            NotificationNavHandler.consumePendingTarget()
+            navigateToTarget(target, materialNavigator)
+        }
 
         var materialDestination by remember { mutableStateOf(MainDestination.Inicio) }
         fun navigateToMaterial(destination: MainDestination) {
@@ -1238,6 +1301,11 @@ fun MainAppShell(
                     val currentDraft = selectedAssignmentForDraft ?: remember(route) {
                         dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == route.assignmentId }
                     }
+                    LaunchedEffect(route.assignmentId) {
+                        if (selectedAssignmentForDraft?.assignment?.id != route.assignmentId) {
+                            dashboardViewModel.openDraftById(route.assignmentId, route.courseName)
+                        }
+                    }
                     if (currentDraft != null) {
                         AssignmentDraftScreen(
                             assignmentUi = currentDraft,
@@ -1245,6 +1313,12 @@ fun MainAppShell(
                             viewModel = dashboardViewModel,
                             themeStyle = AppThemeStyle.MATERIAL
                         )
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
 
@@ -1268,10 +1342,7 @@ fun MainAppShell(
                 entry<MiuixRoute.ForoDetail>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.ForoDetail ->
                     LaunchedEffect(route.topicId) {
                         if (forosUiState.selectedDiscussion?.id != route.topicId) {
-                            val existing = forosUiState.discussions.find { it.id == route.topicId }
-                            if (existing != null) {
-                                forosViewModel.selectDiscussion(existing)
-                            }
+                            forosViewModel.selectDiscussionById(route.topicId)
                         }
                     }
                     ForoDetailScreen(

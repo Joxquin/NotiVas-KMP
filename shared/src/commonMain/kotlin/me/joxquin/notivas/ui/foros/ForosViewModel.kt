@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -364,6 +365,31 @@ class ForosViewModel(
         _currentDraft.value = _draftsMemory[topic.id] ?: ""
         _isDraftSavedMessage.value = false
         loadDiscussionEntries(topic)
+    }
+
+    fun selectDiscussionById(topicId: Long, courseId: Long? = null) {
+        viewModelScope.launch {
+            val existing = _rawDiscussions.value.find { it.id == topicId }
+            if (existing != null) {
+                selectDiscussion(existing)
+                return@launch
+            }
+            if (courseId != null) {
+                val fetched = canvasRepository.getDiscussionTopic(courseId, topicId)
+                if (fetched != null) {
+                    selectDiscussion(fetched)
+                    return@launch
+                }
+            }
+            val courses = canvasRepository.allCourses.first()
+            for (course in courses) {
+                val fetched = canvasRepository.getDiscussionTopic(course.id, topicId)
+                if (fetched != null) {
+                    selectDiscussion(fetched)
+                    return@launch
+                }
+            }
+        }
     }
 
     fun clearSelectedDiscussion() {

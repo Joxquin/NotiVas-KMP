@@ -7,7 +7,8 @@ expect object PlatformNotificationDispatcher {
         targetId: Long? = null,
         secondaryId: Long? = null,
         courseCode: String? = null,
-        courseName: String? = null
+        courseName: String? = null,
+        type: String? = null
     )
 }
 

@@ -103,7 +103,8 @@ class ReminderWorker(
                             targetId = assignment.id,
                             secondaryId = assignment.courseId,
                             courseCode = courseCode,
-                            courseName = courseName
+                            courseName = courseName,
+                            type = "TASK_REMINDER"
                         )
                         localStore.markNotified30m(assignment.id)
                     }
@@ -121,7 +122,8 @@ class ReminderWorker(
                             targetId = assignment.id,
                             secondaryId = assignment.courseId,
                             courseCode = courseCode,
-                            courseName = courseName
+                            courseName = courseName,
+                            type = "TASK_REMINDER"
                         )
                         localStore.markNotified3h(assignment.id)
                     }
@@ -138,7 +140,8 @@ class ReminderWorker(
                             targetId = assignment.id,
                             secondaryId = assignment.courseId,
                             courseCode = courseCode,
-                            courseName = courseName
+                            courseName = courseName,
+                            type = "TASK_REMINDER"
                         )
                         localStore.markNotified24h(assignment.id)
                     }
