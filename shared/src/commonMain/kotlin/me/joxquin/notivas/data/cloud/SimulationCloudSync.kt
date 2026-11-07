@@ -87,6 +87,9 @@ class SimulationCloudSync(
     }
 
     private suspend fun sync(backend: CloudBackend, state: LocalState) {
+        // Un curso que salió de Room (sesión cerrada u otro ciclo) deja de contar como visto:
+        // si vuelve sin grupos se restaura desde la nube en vez de subirse vacío.
+        seenLocally.retainAll(state.courseNames.keys)
         try {
             val uid = userId ?: backend.ensureSignedIn().also { userId = it }
             val known = remote ?: backend.trace(TRACE_FETCH) { backend.fetchCourses(uid) }
