@@ -244,7 +244,7 @@ class DashboardViewModel(
 
     fun openDraftById(assignmentId: Long, courseName: String? = null) {
         viewModelScope.launch {
-            val existing = _allAssignmentsUi.value.find { it.assignment.id == assignmentId }
+            val existing = allAssignmentsUi.value.find { it.assignment.id == assignmentId }
             if (existing != null) {
                 openDraft(existing)
                 return@launch
