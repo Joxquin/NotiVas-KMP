@@ -29,8 +29,8 @@ android {
         applicationId = "me.joxquin.notivas"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 7
-        versionName = "1.5.0"
+        versionCode = 8
+        versionName = "1.6.0"
     }
     packaging {
         resources {
