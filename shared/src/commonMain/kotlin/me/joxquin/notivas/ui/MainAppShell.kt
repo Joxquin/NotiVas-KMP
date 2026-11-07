@@ -734,8 +734,7 @@ fun MainAppShell(
                         )
                     } else {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            top.yukonga.miuix.kmp.basic.InfiniteProgress(
-                                modifier = Modifier.size(48.dp),
+                            androidx.compose.material3.CircularProgressIndicator(
                                 color = MiuixTheme.colorScheme.primary
                             )
                         }

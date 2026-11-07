@@ -100,16 +100,13 @@ fun ForoDetailScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            if (themeStyle == AppThemeStyle.MIUIX) {
-                top.yukonga.miuix.kmp.basic.InfiniteProgress(
-                    modifier = Modifier.size(48.dp),
-                    color = top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.primary
-                )
-            } else {
-                androidx.compose.material3.CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            androidx.compose.material3.CircularProgressIndicator(
+                color = if (themeStyle == AppThemeStyle.MIUIX) {
+                    top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.primary
+                }
+            )
         }
         return
     }
