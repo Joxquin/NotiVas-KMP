@@ -280,7 +280,7 @@ fun AjustesScreen(
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
             val contentPadding = miuixPageContentPadding(
-                scaffoldPadding = paddingValues,
+                innerPadding = paddingValues,
                 extraTop = 16.dp,
                 extraBottom = 32.dp
             )
@@ -325,7 +325,7 @@ fun AjustesScreen(
                                 AppThemeStyle.MIUIX -> "HyperOS MIUIX"
                                 AppThemeStyle.MATERIAL -> "Material 3"
                             } + " • " + when (uiState.appLanguage) {
-                                AppLanguage.ESPANOL -> "Español"
+                                AppLanguage.SPANISH -> "Español"
                                 AppLanguage.ENGLISH -> "English"
                                 AppLanguage.SYSTEM -> "Sistema"
                             }
@@ -344,7 +344,10 @@ fun AjustesScreen(
                             )
 
                             val copilotSummary = if (uiState.copilotEnabled) {
-                                uiState.copilotProvider.displayName
+                                when (uiState.copilotProvider) {
+                                    me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
+                                    me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
+                                }
                             } else {
                                 "Desactivado"
                             }
@@ -510,7 +513,7 @@ fun AjustesScreen(
                         AppThemeStyle.MIUIX -> "HyperOS MIUIX"
                         AppThemeStyle.MATERIAL -> "Material 3"
                     } + " • " + when (uiState.appLanguage) {
-                        AppLanguage.ESPANOL -> "Español"
+                        AppLanguage.SPANISH -> "Español"
                         AppLanguage.ENGLISH -> "English"
                         AppLanguage.SYSTEM -> "Sistema"
                     }
@@ -531,7 +534,10 @@ fun AjustesScreen(
                     )
 
                     val copilotSummary = if (uiState.copilotEnabled) {
-                        uiState.copilotProvider.displayName
+                        when (uiState.copilotProvider) {
+                            me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
+                            me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
+                        }
                     } else {
                         "Desactivado"
                     }
