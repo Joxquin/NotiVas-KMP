@@ -846,4 +846,11 @@
     <string name="settings_category_drive_desc">Copias de seguridad, cuenta conectada y caché de borradores</string>
     <string name="settings_category_about">Acerca de NotiVas</string>
     <string name="settings_category_about_desc">Versión, detalles del desarrollador, código fuente y créditos</string>
+    <string name="about_app_description">Cliente inteligente y asistente para estudiantes en Canvas LMS</string>
+    <string name="about_developer_title">Desarrollador</string>
+    <string name="about_developer_name">Joxquin</string>
+    <string name="about_repo_title">Código fuente</string>
+    <string name="about_repo_subtitle">GitHub • Joxquin/NotiVas-KMP</string>
+    <string name="about_license_title">Licencia</string>
+    <string name="about_license_name">MIT License</string>
 </resources>

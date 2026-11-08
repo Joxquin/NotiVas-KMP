@@ -75,10 +75,13 @@ fun AjustesDriveScreen(
             },
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
+            val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
             val contentPadding = miuixPageContentPadding(
                 innerPadding = paddingValues,
-                extraTop = 16.dp,
-                extraBottom = 32.dp
+                extraTop = 8.dp,
+                extraStart = 0.dp,
+                extraEnd = 0.dp,
+                extraBottom = if (isWideScreen) 24.dp else 32.dp
             )
 
             androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
@@ -144,10 +147,8 @@ fun AjustesDriveScreen(
             LazyColumn(
                 state = lazyListState,
                 contentPadding = PaddingValues(
-                    top = paddingValues.calculateTopPadding() + 12.dp,
-                    bottom = paddingValues.calculateBottomPadding() + 32.dp,
-                    start = 8.dp,
-                    end = 8.dp
+                    top = paddingValues.calculateTopPadding() + 8.dp,
+                    bottom = paddingValues.calculateBottomPadding() + 32.dp
                 ),
                 modifier = Modifier.fillMaxSize()
             ) {

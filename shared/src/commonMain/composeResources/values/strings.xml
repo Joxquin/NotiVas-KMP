@@ -846,4 +846,11 @@
     <string name="settings_category_drive_desc">Cloud backups, linked account and drafts cache</string>
     <string name="settings_category_about">About NotiVas</string>
     <string name="settings_category_about_desc">Version, developer details, source code and credits</string>
+    <string name="about_app_description">Smart client and companion for students using Canvas LMS</string>
+    <string name="about_developer_title">Developer</string>
+    <string name="about_developer_name">Joxquin</string>
+    <string name="about_repo_title">Source code</string>
+    <string name="about_repo_subtitle">GitHub • Joxquin/NotiVas-KMP</string>
+    <string name="about_license_title">License</string>
+    <string name="about_license_name">MIT License</string>
 </resources>

@@ -279,10 +279,13 @@ fun AjustesScreen(
             },
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
+            val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
             val contentPadding = miuixPageContentPadding(
                 innerPadding = paddingValues,
-                extraTop = 16.dp,
-                extraBottom = 32.dp
+                extraTop = 8.dp,
+                extraStart = 0.dp,
+                extraEnd = 0.dp,
+                extraBottom = if (isWideScreen) 24.dp else 120.dp
             )
 
             Box(modifier = Modifier.fillMaxSize()) {
