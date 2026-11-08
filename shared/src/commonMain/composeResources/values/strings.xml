@@ -231,7 +231,7 @@
     <string name="foros_loading">Loading academic forums from Canvas LMS...</string>
     <string name="foro_detail_title">Forum Detail</string>
     <string name="foros_search_placeholder">Search discussions, topics or instructors...</string>
-    <string name="foros_search_empty_query">No discussions found for \'%1$s\'</string>
+    <string name="foros_search_empty_query">No discussions found for '%1$s'</string>
     <string name="foros_empty_category">No discussions available in this category</string>
     <string name="foros_empty_suggestion">Try changing course or filter to see more discussions.</string>
     <string name="foros_filter_all">All</string>
@@ -269,7 +269,7 @@
     <string name="copilot_hero_title">How can I help you today?</string>
     <string name="copilot_hero_subtitle">Your AI academic copilot with direct Canvas LMS context</string>
     <string name="copilot_badge_courses">%1$d courses active</string>
-    <string name="copilot_suggestion_summary">Summarize my week\'s urgent deliveries</string>
+    <string name="copilot_suggestion_summary">Summarize my week's urgent deliveries</string>
     <string name="copilot_suggestion_grades">What do I need to pass my courses?</string>
     <string name="copilot_suggestion_forums">Draft a reply for my open forum</string>
 
@@ -287,7 +287,7 @@
     <string name="onboarding_alarms_title">Exact Alarms &amp; Reminders</string>
     <string name="onboarding_alarms_desc">Allows alerting you at the exact minute for 24h, 3h, and 30m deadlines</string>
     <string name="onboarding_miui_title">HyperOS / MIUI Settings</string>
-    <string name="onboarding_miui_desc">On Xiaomi devices, \'Autostart\' and unrestricted battery saver are required</string>
+    <string name="onboarding_miui_desc">On Xiaomi devices, 'Autostart' and unrestricted battery saver are required</string>
     <string name="onboarding_miui_autostart_btn">Autostart</string>
     <string name="onboarding_miui_battery_btn">Battery Saver</string>
     <string name="onboarding_notifications_title">Notifications</string>
@@ -300,7 +300,7 @@
     <string name="onboarding_domain_input_placeholder">e.g. mycampus</string>
     <string name="onboarding_domain_quick_suggestions">Quick suggestions</string>
     <string name="onboarding_domain_continue_btn">Continue</string>
-    <string name="onboarding_domain_help">Can\'t find your university domain?</string>
+    <string name="onboarding_domain_help">Can't find your university domain?</string>
     <string name="permission_status_granted">Configured</string>
     <string name="permission_status_action">Allow</string>
     <string name="permission_status_granted_label">Granted</string>
@@ -439,7 +439,7 @@
     <string name="foro_show_less">Show less</string>
     <string name="foro_no_replies_yet">No contributions in this forum yet. Be the first to reply!</string>
 
-    <string name="foro_loading_replies">Loading classmates\' replies...</string>
+    <string name="foro_loading_replies">Loading classmates' replies...</string>
     <string name="foro_no_replies_subtitle">Be the first in your class to post an academic response.</string>
     <string name="foro_show_more_replies">Show %1$d more contributions</string>
     <string name="foro_author_classmate">Classmate</string>
@@ -681,7 +681,7 @@
     <string name="dashboard_performance_status">+3.45% this month</string>
     <string name="dashboard_check_now">Check now</string>
     <string name="dashboard_projects_section">Projects &amp; Courses</string>
-    <string name="dashboard_todays_tasks_section">Today\'s tasks</string>
+    <string name="dashboard_todays_tasks_section">Today's tasks</string>
     <string name="dashboard_see_all">See all</string>
     <string name="dashboard_no_tasks_today">No tasks scheduled for today</string>
     <string name="schedule_screen_title">Schedule</string>
