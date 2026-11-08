@@ -44,7 +44,7 @@ fun AjustesDriveScreen(
     email: String?,
     lastSyncText: String,
     cacheSize: String,
-    onAuthSuccess: (token: String, refresh: String, email: String) -> Unit,
+    onAuthSuccess: (token: String, refresh: String?, email: String?) -> Unit,
     onUnlink: () -> Unit,
     onClearCache: () -> Unit,
     themeStyle: AppThemeStyle,
@@ -76,7 +76,7 @@ fun AjustesDriveScreen(
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
             val contentPadding = miuixPageContentPadding(
-                scaffoldPadding = paddingValues,
+                innerPadding = paddingValues,
                 extraTop = 16.dp,
                 extraBottom = 32.dp
             )

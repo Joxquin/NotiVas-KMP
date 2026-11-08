@@ -21,7 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
-import me.joxquin.notivas.data.model.CopilotProvider
+import me.joxquin.notivas.data.local.CopilotProvider
+import me.joxquin.notivas.data.repository.OpenRouterAccountBalance
+import me.joxquin.notivas.data.model.CustomModelAnalysisResult
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.settings_category_copilot
 import me.joxquin.notivas.ui.ajustes.components.CopilotSettingsSection
@@ -43,21 +45,21 @@ import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 fun AjustesCopilotScreen(
     enabled: Boolean,
     provider: CopilotProvider,
-    apiKey: String,
+    apiKey: String?,
     selectedModel: String,
-    googleAiStudioApiKey: String,
+    googleAiStudioApiKey: String?,
     googleAiStudioModel: String,
-    totalTokens: Int,
-    balance: Double?,
+    totalTokens: Long,
+    balance: OpenRouterAccountBalance?,
     isLoadingBalance: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     onProviderChange: (CopilotProvider) -> Unit,
-    onApiKeyChange: (String) -> Unit,
+    onApiKeyChange: (String?) -> Unit,
     onModelChange: (String) -> Unit,
-    onGoogleAiStudioApiKeyChange: (String) -> Unit,
+    onGoogleAiStudioApiKeyChange: (String?) -> Unit,
     onGoogleAiStudioModelChange: (String) -> Unit,
     onRefreshBalance: () -> Unit,
-    onAnalyzeModel: (String) -> Unit,
+    onAnalyzeModel: (suspend (String) -> CustomModelAnalysisResult)? = null,
     themeStyle: AppThemeStyle,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -87,7 +89,7 @@ fun AjustesCopilotScreen(
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
             val contentPadding = miuixPageContentPadding(
-                scaffoldPadding = paddingValues,
+                innerPadding = paddingValues,
                 extraTop = 16.dp,
                 extraBottom = 32.dp
             )

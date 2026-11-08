@@ -77,7 +77,7 @@ fun AjustesAppearanceScreen(
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
             val contentPadding = miuixPageContentPadding(
-                scaffoldPadding = paddingValues,
+                innerPadding = paddingValues,
                 extraTop = 16.dp,
                 extraBottom = 32.dp
             )

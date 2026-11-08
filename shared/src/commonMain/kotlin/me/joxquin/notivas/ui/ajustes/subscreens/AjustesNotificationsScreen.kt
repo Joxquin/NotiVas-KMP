@@ -46,14 +46,14 @@ fun AjustesNotificationsScreen(
     notifNewAssignments: Boolean,
     notifNewQuizzes: Boolean,
     notifNewForos: Boolean,
-    syncIntervalMinutes: Int,
+    syncIntervalMinutes: Long,
     onNotif24hChange: (Boolean) -> Unit,
     onNotif3hChange: (Boolean) -> Unit,
     onNotif30mChange: (Boolean) -> Unit,
     onNotifNewAssignmentsChange: (Boolean) -> Unit,
     onNotifNewQuizzesChange: (Boolean) -> Unit,
     onNotifNewForosChange: (Boolean) -> Unit,
-    onSyncIntervalChange: (Int) -> Unit,
+    onSyncIntervalChange: (Long) -> Unit,
     themeStyle: AppThemeStyle,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -83,7 +83,7 @@ fun AjustesNotificationsScreen(
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
             val contentPadding = miuixPageContentPadding(
-                scaffoldPadding = paddingValues,
+                innerPadding = paddingValues,
                 extraTop = 16.dp,
                 extraBottom = 32.dp
             )
