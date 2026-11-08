@@ -28,7 +28,9 @@ import me.joxquin.notivas.util.AppDispatchers
 class SimulationCloudSync(
     private val database: NotivasDatabase,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + AppDispatchers.IO),
-    private val debounceMillis: Long = DEBOUNCE_MS
+    private val debounceMillis: Long = DEBOUNCE_MS,
+    private val retryDelayMillis: Long = RETRY_DELAY_MS,
+    private val maxRetryDelayMillis: Long = MAX_RETRY_DELAY_MS
 ) {
     private val mutex = Mutex()
     private var backend: CloudBackend? = null
@@ -56,7 +58,7 @@ class SimulationCloudSync(
                 .collect { state ->
                     mutex.withLock {
                         latestState = state
-                        sync(backend, state)
+                        syncOrRetry(backend, state)
                     }
                 }
         }
@@ -81,16 +83,21 @@ class SimulationCloudSync(
                     remote = null
                     seenLocally.clear()
                 }
-                latestState?.let { sync(backend, it) }
+                latestState?.let { syncOrRetry(backend, it) }
             }
         }
     }
 
-    private suspend fun sync(backend: CloudBackend, state: LocalState) {
+    private suspend fun syncOrRetry(backend: CloudBackend, state: LocalState) {
+        if (sync(backend, state)) retryJob?.cancel() else scheduleRetry(backend)
+    }
+
+    /** Devuelve false si falló (sin red, Firestore caído...); el error ya quedó registrado. */
+    private suspend fun sync(backend: CloudBackend, state: LocalState): Boolean {
         // Un curso que salió de Room (sesión cerrada u otro ciclo) deja de contar como visto:
         // si vuelve sin grupos se restaura desde la nube en vez de subirse vacío.
         seenLocally.retainAll(state.courseNames.keys)
-        try {
+        return try {
             val uid = userId ?: backend.ensureSignedIn().also { userId = it }
             val known = remote ?: backend.trace(TRACE_FETCH) { backend.fetchCourses(uid) }
                 .mapNotNull { (courseId, data) -> CloudCourseSnapshot.fromMap(data)?.let { courseId to it } }
@@ -117,19 +124,28 @@ class SimulationCloudSync(
                 known[snapshot.courseId] = snapshot
             }
             seenLocally += state.snapshots.keys
+            true
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             backend.recordError(e)
-            scheduleRetry(backend)
+            false
         }
     }
 
+    // Un solo bucle de reintentos con espera creciente (1, 2, 4... hasta 15 min) que sigue
+    // hasta lograr un sync. Antes el reintento llamaba a sync() desde su propio job, que seguía
+    // activo, así que tras dos fallos seguidos ya no se programaba ninguno más.
     private fun scheduleRetry(backend: CloudBackend) {
         if (retryJob?.isActive == true) return
         retryJob = scope.launch {
-            delay(RETRY_DELAY_MS)
-            mutex.withLock { latestState?.let { sync(backend, it) } }
+            var waitMillis = retryDelayMillis
+            while (true) {
+                delay(waitMillis)
+                val synced = mutex.withLock { latestState?.let { sync(backend, it) } ?: true }
+                if (synced) break
+                waitMillis = (waitMillis * 2).coerceAtMost(maxRetryDelayMillis)
+            }
         }
     }
 
@@ -156,6 +172,7 @@ class SimulationCloudSync(
     companion object {
         const val DEBOUNCE_MS = 3_000L
         const val RETRY_DELAY_MS = 60_000L
+        const val MAX_RETRY_DELAY_MS = 15 * 60_000L
         const val TRACE_FETCH = "cloud_fetch_courses"
         const val TRACE_RESTORE = "cloud_restore_course"
     }
