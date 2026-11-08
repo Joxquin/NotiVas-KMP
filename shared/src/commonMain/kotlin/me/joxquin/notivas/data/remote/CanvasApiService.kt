@@ -74,7 +74,7 @@ class CanvasApiService(
         } else {
             val cleanToken = credentialOrToken.removePrefix("Bearer ").trim()
             header("Authorization", "Bearer $cleanToken")
-            println("[CanvasApiService] applyAuth usando Bearer token (prefijo: ${cleanToken.take(10)}...)")
+            println("[CanvasApiService] applyAuth usando Bearer token")
         }
     }
 
@@ -126,7 +126,11 @@ class CanvasApiService(
                 csrfToken?.let { header("X-CSRF-Token", it) }
             }
             val text = response.body<String>()
-            println("[CanvasApiService] generateStudentAccessToken status: ${response.status.value}, body: ${text.take(300)}")
+            // La respuesta exitosa trae el token completo: solo se imprime el cuerpo de los errores.
+            println("[CanvasApiService] generateStudentAccessToken status: ${response.status.value}")
+            if (!response.status.isSuccess()) {
+                println("[CanvasApiService] generateStudentAccessToken error: ${text.take(300)}")
+            }
             if (response.status.isSuccess() && text.trimStart().startsWith("{")) {
                 val json = KtorHttpClientProvider.jsonConfig.parseToJsonElement(text) as? JsonObject
                 val token = json?.get("token")?.let { (it as? JsonPrimitive)?.contentOrNull }
