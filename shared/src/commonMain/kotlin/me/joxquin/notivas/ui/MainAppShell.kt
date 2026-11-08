@@ -595,7 +595,22 @@ fun MainAppShell(
                                         me.joxquin.notivas.ui.ajustes.AjustesScreen(
                                             viewModel = profileViewModel,
                                             themeStyle = AppThemeStyle.MIUIX,
-                                            lazyListState = ajustesListState
+                                            lazyListState = ajustesListState,
+                                            onNavigateToAppearance = {
+                                                miuixNavigator.push(MiuixRoute.SettingsAppearance)
+                                            },
+                                            onNavigateToNotifications = {
+                                                miuixNavigator.push(MiuixRoute.SettingsNotifications)
+                                            },
+                                            onNavigateToCopilot = {
+                                                miuixNavigator.push(MiuixRoute.SettingsCopilot)
+                                            },
+                                            onNavigateToDrive = {
+                                                miuixNavigator.push(MiuixRoute.SettingsDrive)
+                                            },
+                                            onNavigateToAbout = {
+                                                miuixNavigator.push(MiuixRoute.SettingsAbout)
+                                            }
                                         )
                                     }
                                 }
@@ -929,6 +944,90 @@ fun MainAppShell(
                         }
                     )
                 }
+
+                entry<MiuixRoute.SettingsAppearance>(swipeDismiss = swipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesAppearanceScreen(
+                        dynamicColorEnabled = uiState.dynamicColorEnabled,
+                        onDynamicColorChange = { profileViewModel.setDynamicColorEnabled(it) },
+                        themeStyle = uiState.themeStyle,
+                        onThemeStyleChange = { profileViewModel.setThemeStyle(it) },
+                        appLanguage = uiState.appLanguage,
+                        onLanguageChange = { profileViewModel.setAppLanguage(it) },
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsNotifications>(swipeDismiss = swipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesNotificationsScreen(
+                        notif24h = uiState.notif24h,
+                        notif3h = uiState.notif3h,
+                        notif30m = uiState.notif30m,
+                        notifNewAssignments = uiState.notifNewAssignments,
+                        notifNewQuizzes = uiState.notifNewQuizzes,
+                        notifNewForos = uiState.notifNewForos,
+                        syncIntervalMinutes = uiState.syncIntervalMinutes,
+                        onNotif24hChange = { profileViewModel.setNotif24h(it) },
+                        onNotif3hChange = { profileViewModel.setNotif3h(it) },
+                        onNotif30mChange = { profileViewModel.setNotif30m(it) },
+                        onNotifNewAssignmentsChange = { profileViewModel.setNotifNewAssignments(it) },
+                        onNotifNewQuizzesChange = { profileViewModel.setNotifNewQuizzes(it) },
+                        onNotifNewForosChange = { profileViewModel.setNotifNewForos(it) },
+                        onSyncIntervalChange = { profileViewModel.setSyncIntervalMinutes(it) },
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsCopilot>(swipeDismiss = swipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesCopilotScreen(
+                        enabled = uiState.copilotEnabled,
+                        provider = uiState.copilotProvider,
+                        apiKey = uiState.openRouterApiKey,
+                        selectedModel = uiState.openRouterModel,
+                        googleAiStudioApiKey = uiState.googleAiStudioApiKey,
+                        googleAiStudioModel = uiState.googleAiStudioModel,
+                        totalTokens = uiState.totalCopilotTokens,
+                        balance = uiState.openRouterBalance,
+                        isLoadingBalance = uiState.isLoadingBalance,
+                        onEnabledChange = { profileViewModel.setCopilotEnabled(it) },
+                        onProviderChange = { profileViewModel.setCopilotProvider(it) },
+                        onApiKeyChange = { profileViewModel.setOpenRouterApiKey(it) },
+                        onModelChange = { profileViewModel.setOpenRouterModel(it) },
+                        onGoogleAiStudioApiKeyChange = { profileViewModel.setGoogleAiStudioApiKey(it) },
+                        onGoogleAiStudioModelChange = { profileViewModel.setGoogleAiStudioModel(it) },
+                        onRefreshBalance = { profileViewModel.refreshOpenRouterBalance() },
+                        onAnalyzeModel = { profileViewModel.analyzeCustomModel(it) },
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsDrive>(swipeDismiss = swipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesDriveScreen(
+                        connected = uiState.googleDriveConnected,
+                        email = uiState.googleDriveEmail,
+                        lastSyncText = uiState.lastSyncAgoText,
+                        cacheSize = uiState.googleDriveCacheSize,
+                        onAuthSuccess = { token, refresh, email ->
+                            profileViewModel.saveGoogleDriveAuth(token, refresh, email)
+                        },
+                        onUnlink = { profileViewModel.unlinkGoogleDrive() },
+                        onClearCache = { profileViewModel.clearDraftsCache() },
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsAbout>(swipeDismiss = swipeBackDirection) {
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesAboutScreen(
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
             }
 
             SnackbarHost(
@@ -1203,7 +1302,24 @@ fun MainAppShell(
 
                                     MainDestination.Ajustes -> {
                                         me.joxquin.notivas.ui.ajustes.AjustesScreen(
-                                            viewModel = profileViewModel
+                                            viewModel = profileViewModel,
+                                            themeStyle = AppThemeStyle.MATERIAL,
+                                            lazyListState = ajustesListState,
+                                            onNavigateToAppearance = {
+                                                materialNavigator.push(MiuixRoute.SettingsAppearance)
+                                            },
+                                            onNavigateToNotifications = {
+                                                materialNavigator.push(MiuixRoute.SettingsNotifications)
+                                            },
+                                            onNavigateToCopilot = {
+                                                materialNavigator.push(MiuixRoute.SettingsCopilot)
+                                            },
+                                            onNavigateToDrive = {
+                                                materialNavigator.push(MiuixRoute.SettingsDrive)
+                                            },
+                                            onNavigateToAbout = {
+                                                materialNavigator.push(MiuixRoute.SettingsAbout)
+                                            }
                                         )
                                     }
                                 }
@@ -1507,6 +1623,90 @@ fun MainAppShell(
                                 }
                             }
                         }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsAppearance>(swipeDismiss = materialSwipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesAppearanceScreen(
+                        dynamicColorEnabled = uiState.dynamicColorEnabled,
+                        onDynamicColorChange = { profileViewModel.setDynamicColorEnabled(it) },
+                        themeStyle = uiState.themeStyle,
+                        onThemeStyleChange = { profileViewModel.setThemeStyle(it) },
+                        appLanguage = uiState.appLanguage,
+                        onLanguageChange = { profileViewModel.setAppLanguage(it) },
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsNotifications>(swipeDismiss = materialSwipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesNotificationsScreen(
+                        notif24h = uiState.notif24h,
+                        notif3h = uiState.notif3h,
+                        notif30m = uiState.notif30m,
+                        notifNewAssignments = uiState.notifNewAssignments,
+                        notifNewQuizzes = uiState.notifNewQuizzes,
+                        notifNewForos = uiState.notifNewForos,
+                        syncIntervalMinutes = uiState.syncIntervalMinutes,
+                        onNotif24hChange = { profileViewModel.setNotif24h(it) },
+                        onNotif3hChange = { profileViewModel.setNotif3h(it) },
+                        onNotif30mChange = { profileViewModel.setNotif30m(it) },
+                        onNotifNewAssignmentsChange = { profileViewModel.setNotifNewAssignments(it) },
+                        onNotifNewQuizzesChange = { profileViewModel.setNotifNewQuizzes(it) },
+                        onNotifNewForosChange = { profileViewModel.setNotifNewForos(it) },
+                        onSyncIntervalChange = { profileViewModel.setSyncIntervalMinutes(it) },
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsCopilot>(swipeDismiss = materialSwipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesCopilotScreen(
+                        enabled = uiState.copilotEnabled,
+                        provider = uiState.copilotProvider,
+                        apiKey = uiState.openRouterApiKey,
+                        selectedModel = uiState.openRouterModel,
+                        googleAiStudioApiKey = uiState.googleAiStudioApiKey,
+                        googleAiStudioModel = uiState.googleAiStudioModel,
+                        totalTokens = uiState.totalCopilotTokens,
+                        balance = uiState.openRouterBalance,
+                        isLoadingBalance = uiState.isLoadingBalance,
+                        onEnabledChange = { profileViewModel.setCopilotEnabled(it) },
+                        onProviderChange = { profileViewModel.setCopilotProvider(it) },
+                        onApiKeyChange = { profileViewModel.setOpenRouterApiKey(it) },
+                        onModelChange = { profileViewModel.setOpenRouterModel(it) },
+                        onGoogleAiStudioApiKeyChange = { profileViewModel.setGoogleAiStudioApiKey(it) },
+                        onGoogleAiStudioModelChange = { profileViewModel.setGoogleAiStudioModel(it) },
+                        onRefreshBalance = { profileViewModel.refreshOpenRouterBalance() },
+                        onAnalyzeModel = { profileViewModel.analyzeCustomModel(it) },
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsDrive>(swipeDismiss = materialSwipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesDriveScreen(
+                        connected = uiState.googleDriveConnected,
+                        email = uiState.googleDriveEmail,
+                        lastSyncText = uiState.lastSyncAgoText,
+                        cacheSize = uiState.googleDriveCacheSize,
+                        onAuthSuccess = { token, refresh, email ->
+                            profileViewModel.saveGoogleDriveAuth(token, refresh, email)
+                        },
+                        onUnlink = { profileViewModel.unlinkGoogleDrive() },
+                        onClearCache = { profileViewModel.clearDraftsCache() },
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsAbout>(swipeDismiss = materialSwipeBackDirection) {
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesAboutScreen(
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
                     )
                 }
             }

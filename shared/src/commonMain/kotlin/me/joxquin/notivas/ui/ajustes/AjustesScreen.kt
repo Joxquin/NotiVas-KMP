@@ -8,31 +8,39 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,7 +51,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import me.joxquin.notivas.data.local.AppThemeStyle
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -53,51 +60,55 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.joxquin.notivas.ui.ajustes.components.AjustesAppInfoFooter
-import me.joxquin.notivas.ui.ajustes.components.CopilotSettingsSection
-import me.joxquin.notivas.ui.ajustes.components.GoogleDriveSettingsSection
-import me.joxquin.notivas.ui.ajustes.components.GranularNotificationsSection
-import me.joxquin.notivas.ui.ajustes.components.SecurityAndKeystoreSettingsSection
-import me.joxquin.notivas.ui.ajustes.components.StudentIdentitySettingsCard
-import me.joxquin.notivas.ui.ajustes.components.LanguageSettingsSection
-import me.joxquin.notivas.ui.ajustes.components.ThemeAppearanceSettingsSection
-import me.joxquin.notivas.ui.profile.ProfileViewModel
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.VerticalScrollBar
-import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import me.joxquin.notivas.ui.components.miuix.rememberMiuixAutoSettleScrollConnection
-import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Refresh
+import me.joxquin.notivas.data.local.AppLanguage
+import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.cancel
+import me.joxquin.notivas.shared.resources.logout_confirm
+import me.joxquin.notivas.shared.resources.logout_dialog_text
+import me.joxquin.notivas.shared.resources.logout_dialog_title
+import me.joxquin.notivas.shared.resources.settings_categories_section
+import me.joxquin.notivas.shared.resources.settings_category_about
+import me.joxquin.notivas.shared.resources.settings_category_about_desc
+import me.joxquin.notivas.shared.resources.settings_category_appearance
+import me.joxquin.notivas.shared.resources.settings_category_appearance_desc
+import me.joxquin.notivas.shared.resources.settings_category_copilot
+import me.joxquin.notivas.shared.resources.settings_category_copilot_desc
+import me.joxquin.notivas.shared.resources.settings_category_drive
+import me.joxquin.notivas.shared.resources.settings_category_drive_desc
+import me.joxquin.notivas.shared.resources.settings_category_notifications
+import me.joxquin.notivas.shared.resources.settings_category_notifications_desc
+import me.joxquin.notivas.shared.resources.settings_subtitle
+import me.joxquin.notivas.shared.resources.settings_title
+import me.joxquin.notivas.shared.resources.sync
+import me.joxquin.notivas.ui.ajustes.components.PairWebSessionDialog
+import me.joxquin.notivas.ui.ajustes.components.SettingsProfileHeroHeader
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
-import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
 import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
-import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
-import top.yukonga.miuix.kmp.window.WindowDialog
+import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import me.joxquin.notivas.ui.profile.ProfileViewModel
 import org.jetbrains.compose.resources.stringResource
-import me.joxquin.notivas.shared.resources.Res
-import me.joxquin.notivas.shared.resources.settings_title
-import me.joxquin.notivas.shared.resources.settings_subtitle
-import me.joxquin.notivas.shared.resources.logout_dialog_title
-import me.joxquin.notivas.shared.resources.logout_dialog_text
-import me.joxquin.notivas.shared.resources.logout_confirm
-import me.joxquin.notivas.shared.resources.cancel
-import me.joxquin.notivas.shared.resources.sync
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Refresh
+import top.yukonga.miuix.kmp.preference.ArrowPreference
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
 fun AjustesHeaderSection(
@@ -127,13 +138,18 @@ fun AjustesHeaderSection(
 
 /**
  * Orquestador declarativo de la pantalla de Ajustes y Perfil.
- * Soporta de manera reactiva los modos Material Design 3 Monet y HyperOS Miuix.
+ * Presenta el perfil y hero trio de acciones arriba, y navega a subpantallas temáticas.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AjustesScreen(
     viewModel: ProfileViewModel,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    onNavigateToAppearance: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToCopilot: () -> Unit = {},
+    onNavigateToDrive: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
     modifier: Modifier = Modifier,
     lazyListState: LazyListState = rememberLazyListState()
 ) {
@@ -142,7 +158,7 @@ fun AjustesScreen(
     var showPairWebDialog by remember { mutableStateOf(false) }
 
     if (showPairWebDialog) {
-        me.joxquin.notivas.ui.ajustes.components.PairWebSessionDialog(
+        PairWebSessionDialog(
             themeStyle = themeStyle,
             onDismissRequest = { showPairWebDialog = false },
             onAuthorizePairing = { pin -> viewModel.pairWebSession(pin) }
@@ -228,8 +244,8 @@ fun AjustesScreen(
         }
     }
 
+    // ─── MODO MIUIX ─────────────────────────────────────────────────────────
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
         val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
 
@@ -252,8 +268,8 @@ fun AjustesScreen(
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
                                         imageVector = MiuixIcons.Refresh,
-                                        contentDescription = "Sincronizar",
-                                        tint = MiuixTheme.colorScheme.onBackground
+                                        contentDescription = stringResource(Res.string.sync),
+                                        tint = MiuixTheme.colorScheme.onSurfaceVariantActions
                                     )
                                 }
                             }
@@ -262,147 +278,113 @@ fun AjustesScreen(
                 }
             },
             modifier = modifier.fillMaxSize()
-        ) { innerPadding ->
+        ) { paddingValues ->
             val contentPadding = miuixPageContentPadding(
-                innerPadding = innerPadding,
-                extraTop = 8.dp,
-                extraStart = 0.dp,
-                extraEnd = 0.dp,
-                extraBottom = if (isWideScreen) 24.dp else 100.dp
+                scaffoldPadding = paddingValues,
+                extraTop = 16.dp,
+                extraBottom = 32.dp
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MiuixTheme.colorScheme.surface)
-                    .miuixBackdropModifier(backdrop)
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
                     state = lazyListState,
+                    contentPadding = contentPadding,
                     modifier = Modifier
                         .fillMaxSize()
-                        .miuixPageScrollModifiers(scrollBehavior),
-                    contentPadding = contentPadding,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .miuixBackdropModifier(backdrop)
+                        .miuixPageScrollModifiers(scrollBehavior)
                 ) {
+                    // 1. Hero Header con Avatar y Trío de Acciones
+                    item {
+                        SettingsProfileHeroHeader(
+                            uiState = uiState,
+                            onVerifyToken = { viewModel.verifyToken() },
+                            onOpenDrive = onNavigateToDrive,
+                            onPairWeb = { showPairWebDialog = true },
+                            onRequestLogout = { showLogoutDialog = true },
+                            themeStyle = AppThemeStyle.MIUIX
+                        )
+                    }
 
-                // 1. Identidad Estudiantil Canvas
-                item {
-                    StudentIdentitySettingsCard(
-                        uiState = uiState,
-                        onVerifyToken = { viewModel.verifyToken() },
-                        themeStyle = AppThemeStyle.MIUIX
-                    )
+                    item {
+                        Spacer(modifier = Modifier.height(14.dp))
+                    }
+
+                    // 2. Secciones / Categorías
+                    item {
+                        SmallTitle(text = stringResource(Res.string.settings_categories_section))
+                    }
+
+                    item {
+                        MiuixCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                        ) {
+                            val appearanceSummary = when (uiState.themeStyle) {
+                                AppThemeStyle.MIUIX -> "HyperOS MIUIX"
+                                AppThemeStyle.MATERIAL -> "Material 3"
+                            } + " • " + when (uiState.appLanguage) {
+                                AppLanguage.ESPANOL -> "Español"
+                                AppLanguage.ENGLISH -> "English"
+                                AppLanguage.SYSTEM -> "Sistema"
+                            }
+
+                            ArrowPreference(
+                                title = stringResource(Res.string.settings_category_appearance),
+                                summary = appearanceSummary,
+                                onClick = onNavigateToAppearance
+                            )
+
+                            val notifSummary = "${uiState.syncIntervalMinutes} min"
+                            ArrowPreference(
+                                title = stringResource(Res.string.settings_category_notifications),
+                                summary = notifSummary,
+                                onClick = onNavigateToNotifications
+                            )
+
+                            val copilotSummary = if (uiState.copilotEnabled) {
+                                uiState.copilotProvider.displayName
+                            } else {
+                                "Desactivado"
+                            }
+                            ArrowPreference(
+                                title = stringResource(Res.string.settings_category_copilot),
+                                summary = copilotSummary,
+                                onClick = onNavigateToCopilot
+                            )
+
+                            val driveSummary = if (uiState.googleDriveConnected) {
+                                uiState.googleDriveEmail ?: "Conectado"
+                            } else {
+                                "Sin vincular"
+                            }
+                            ArrowPreference(
+                                title = stringResource(Res.string.settings_category_drive),
+                                summary = driveSummary,
+                                onClick = onNavigateToDrive
+                            )
+
+                            ArrowPreference(
+                                title = stringResource(Res.string.settings_category_about),
+                                summary = stringResource(Res.string.settings_category_about_desc),
+                                onClick = onNavigateToAbout
+                            )
+                        }
+                    }
                 }
 
-                // 2. Idioma & Región
-                item {
-                    LanguageSettingsSection(
-                        appLanguage = uiState.appLanguage,
-                        onLanguageChange = { viewModel.setAppLanguage(it) },
-                        themeStyle = AppThemeStyle.MIUIX
-                    )
-                }
-
-                // 3. Sistema Visual & Temas
-                item {
-                    ThemeAppearanceSettingsSection(
-                        dynamicColorEnabled = uiState.dynamicColorEnabled,
-                        onDynamicColorChange = { viewModel.setDynamicColorEnabled(it) },
-                        themeStyle = uiState.themeStyle,
-                        onThemeStyleChange = { viewModel.setThemeStyle(it) }
-                    )
-                }
-
-                // 3. Notificaciones Granulares
-                item {
-                    GranularNotificationsSection(
-                        notif24h = uiState.notif24h,
-                        notif3h = uiState.notif3h,
-                        notif30m = uiState.notif30m,
-                        notifNewAssignments = uiState.notifNewAssignments,
-                        notifNewQuizzes = uiState.notifNewQuizzes,
-                        notifNewForos = uiState.notifNewForos,
-                        syncIntervalMinutes = uiState.syncIntervalMinutes,
-                        onNotif24hChange = { viewModel.setNotif24h(it) },
-                        onNotif3hChange = { viewModel.setNotif3h(it) },
-                        onNotif30mChange = { viewModel.setNotif30m(it) },
-                        onNotifNewAssignmentsChange = { viewModel.setNotifNewAssignments(it) },
-                        onNotifNewQuizzesChange = { viewModel.setNotifNewQuizzes(it) },
-                        onNotifNewForosChange = { viewModel.setNotifNewForos(it) },
-                        onSyncIntervalChange = { viewModel.setSyncIntervalMinutes(it) },
-                        themeStyle = AppThemeStyle.MIUIX
-                    )
-                }
-
-                // 4. Configuración de IA (Copilot / OpenRouter / Google AI Studio)
-                item {
-                    CopilotSettingsSection(
-                        enabled = uiState.copilotEnabled,
-                        provider = uiState.copilotProvider,
-                        apiKey = uiState.openRouterApiKey,
-                        selectedModel = uiState.openRouterModel,
-                        googleAiStudioApiKey = uiState.googleAiStudioApiKey,
-                        googleAiStudioModel = uiState.googleAiStudioModel,
-                        totalTokens = uiState.totalCopilotTokens,
-                        balance = uiState.openRouterBalance,
-                        isLoadingBalance = uiState.isLoadingBalance,
-                        onEnabledChange = { viewModel.setCopilotEnabled(it) },
-                        onProviderChange = { viewModel.setCopilotProvider(it) },
-                        onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
-                        onModelChange = { viewModel.setOpenRouterModel(it) },
-                        onGoogleAiStudioApiKeyChange = { viewModel.setGoogleAiStudioApiKey(it) },
-                        onGoogleAiStudioModelChange = { viewModel.setGoogleAiStudioModel(it) },
-                        onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
-                        onAnalyzeModel = { viewModel.analyzeCustomModel(it) },
-                        themeStyle = AppThemeStyle.MIUIX
-                    )
-                }
-
-                // 4.1 Google Drive y Borradores
-                item {
-                    GoogleDriveSettingsSection(
-                        connected = uiState.googleDriveConnected,
-                        email = uiState.googleDriveEmail,
-                        lastSyncText = uiState.lastSyncAgoText,
-                        cacheSize = uiState.googleDriveCacheSize,
-                        onAuthSuccess = { token, refresh, email ->
-                            viewModel.saveGoogleDriveAuth(token, refresh, email)
-                        },
-                        onUnlink = { viewModel.unlinkGoogleDrive() },
-                        onClearCache = { viewModel.clearDraftsCache() },
-                        themeStyle = AppThemeStyle.MIUIX
-                    )
-                }
-
-                // 5. Seguridad y Zona Crítica
-                item {
-                    SecurityAndKeystoreSettingsSection(
-                        onRequestLogout = { showLogoutDialog = true },
-                        onRequestPairWeb = { showPairWebDialog = true },
-                        themeStyle = AppThemeStyle.MIUIX
-                    )
-                }
-
-                // 6. Pie de Página con Versión
-                item {
-                    AjustesAppInfoFooter(
-                        themeStyle = AppThemeStyle.MIUIX
-                    )
-                }
+                VerticalScrollBar(
+                    adapter = rememberScrollBarAdapter(lazyListState),
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxHeight(),
+                    trackPadding = contentPadding
+                )
             }
-
-            VerticalScrollBar(
-                adapter = rememberScrollBarAdapter(lazyListState),
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .fillMaxHeight(),
-                trackPadding = contentPadding
-            )
         }
+        return
     }
-    return
-}
 
     // ─── MODO MATERIAL DESIGN 3 ─────────────────────────────────────────────
     val isScrolled by remember {
@@ -451,7 +433,7 @@ fun AjustesScreen(
                                 )
                             }
                             Text(
-                                text = "Ajustes & Perfil",
+                                text = stringResource(Res.string.settings_title),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -462,7 +444,7 @@ fun AjustesScreen(
                     IconButton(onClick = { viewModel.verifyToken() }) {
                         Icon(
                             imageVector = Icons.Default.Sync,
-                            contentDescription = "Sincronizar",
+                            contentDescription = stringResource(Res.string.sync),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp)
                         )
@@ -481,118 +463,174 @@ fun AjustesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding()),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // 1. Header Contextual
             item {
                 AjustesHeaderSection()
             }
 
-            // 2. Identidad Estudiantil Canvas
+            // 2. Hero Header con Avatar y Trío de Acciones
             item {
-                StudentIdentitySettingsCard(
+                SettingsProfileHeroHeader(
                     uiState = uiState,
                     onVerifyToken = { viewModel.verifyToken() },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // 3. Idioma & Región
-            item {
-                LanguageSettingsSection(
-                    appLanguage = uiState.appLanguage,
-                    onLanguageChange = { viewModel.setAppLanguage(it) },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // 4. Sistema Visual & Temas
-            item {
-                ThemeAppearanceSettingsSection(
-                    dynamicColorEnabled = uiState.dynamicColorEnabled,
-                    onDynamicColorChange = { viewModel.setDynamicColorEnabled(it) },
-                    themeStyle = uiState.themeStyle,
-                    onThemeStyleChange = { viewModel.setThemeStyle(it) }
-                )
-            }
-
-            // 4. Notificaciones Granulares
-            item {
-                GranularNotificationsSection(
-                    notif24h = uiState.notif24h,
-                    notif3h = uiState.notif3h,
-                    notif30m = uiState.notif30m,
-                    notifNewAssignments = uiState.notifNewAssignments,
-                    notifNewQuizzes = uiState.notifNewQuizzes,
-                    notifNewForos = uiState.notifNewForos,
-                    syncIntervalMinutes = uiState.syncIntervalMinutes,
-                    onNotif24hChange = { viewModel.setNotif24h(it) },
-                    onNotif3hChange = { viewModel.setNotif3h(it) },
-                    onNotif30mChange = { viewModel.setNotif30m(it) },
-                    onNotifNewAssignmentsChange = { viewModel.setNotifNewAssignments(it) },
-                    onNotifNewQuizzesChange = { viewModel.setNotifNewQuizzes(it) },
-                    onNotifNewForosChange = { viewModel.setNotifNewForos(it) },
-                    onSyncIntervalChange = { viewModel.setSyncIntervalMinutes(it) },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // 5. Configuración de IA (Copilot / OpenRouter / Google AI Studio)
-            item {
-                CopilotSettingsSection(
-                    enabled = uiState.copilotEnabled,
-                    provider = uiState.copilotProvider,
-                    apiKey = uiState.openRouterApiKey,
-                    selectedModel = uiState.openRouterModel,
-                    googleAiStudioApiKey = uiState.googleAiStudioApiKey,
-                    googleAiStudioModel = uiState.googleAiStudioModel,
-                    totalTokens = uiState.totalCopilotTokens,
-                    balance = uiState.openRouterBalance,
-                    isLoadingBalance = uiState.isLoadingBalance,
-                    onEnabledChange = { viewModel.setCopilotEnabled(it) },
-                    onProviderChange = { viewModel.setCopilotProvider(it) },
-                    onApiKeyChange = { viewModel.setOpenRouterApiKey(it) },
-                    onModelChange = { viewModel.setOpenRouterModel(it) },
-                    onGoogleAiStudioApiKeyChange = { viewModel.setGoogleAiStudioApiKey(it) },
-                    onGoogleAiStudioModelChange = { viewModel.setGoogleAiStudioModel(it) },
-                    onRefreshBalance = { viewModel.refreshOpenRouterBalance() },
-                    onAnalyzeModel = { viewModel.analyzeCustomModel(it) },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // 5.1 Google Drive y Borradores
-            item {
-                GoogleDriveSettingsSection(
-                    connected = uiState.googleDriveConnected,
-                    email = uiState.googleDriveEmail,
-                    lastSyncText = uiState.lastSyncAgoText,
-                    cacheSize = uiState.googleDriveCacheSize,
-                    onAuthSuccess = { token, refresh, email ->
-                        viewModel.saveGoogleDriveAuth(token, refresh, email)
-                    },
-                    onUnlink = { viewModel.unlinkGoogleDrive() },
-                    onClearCache = { viewModel.clearDraftsCache() },
-                    themeStyle = AppThemeStyle.MATERIAL
-                )
-            }
-
-            // 6. Seguridad y Zona Crítica
-            item {
-                SecurityAndKeystoreSettingsSection(
+                    onOpenDrive = onNavigateToDrive,
+                    onPairWeb = { showPairWebDialog = true },
                     onRequestLogout = { showLogoutDialog = true },
-                    onRequestPairWeb = { showPairWebDialog = true },
                     themeStyle = AppThemeStyle.MATERIAL
                 )
             }
 
-            // 7. Pie de Página con Versión
             item {
-                AjustesAppInfoFooter(
-                    themeStyle = AppThemeStyle.MATERIAL
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+
+            // 3. Título de Secciones
+            item {
+                Text(
+                    text = stringResource(Res.string.settings_categories_section),
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 )
             }
+
+            // 4. Categorías en Tarjetas M3
+            item {
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val appearanceSummary = when (uiState.themeStyle) {
+                        AppThemeStyle.MIUIX -> "HyperOS MIUIX"
+                        AppThemeStyle.MATERIAL -> "Material 3"
+                    } + " • " + when (uiState.appLanguage) {
+                        AppLanguage.ESPANOL -> "Español"
+                        AppLanguage.ENGLISH -> "English"
+                        AppLanguage.SYSTEM -> "Sistema"
+                    }
+
+                    MaterialCategoryCard(
+                        title = stringResource(Res.string.settings_category_appearance),
+                        subtitle = appearanceSummary,
+                        icon = Icons.Default.Palette,
+                        onClick = onNavigateToAppearance
+                    )
+
+                    val notifSummary = "${uiState.syncIntervalMinutes} min"
+                    MaterialCategoryCard(
+                        title = stringResource(Res.string.settings_category_notifications),
+                        subtitle = notifSummary,
+                        icon = Icons.Default.Notifications,
+                        onClick = onNavigateToNotifications
+                    )
+
+                    val copilotSummary = if (uiState.copilotEnabled) {
+                        uiState.copilotProvider.displayName
+                    } else {
+                        "Desactivado"
+                    }
+                    MaterialCategoryCard(
+                        title = stringResource(Res.string.settings_category_copilot),
+                        subtitle = copilotSummary,
+                        icon = Icons.Default.AutoAwesome,
+                        onClick = onNavigateToCopilot
+                    )
+
+                    val driveSummary = if (uiState.googleDriveConnected) {
+                        uiState.googleDriveEmail ?: "Conectado"
+                    } else {
+                        "Sin vincular"
+                    }
+                    MaterialCategoryCard(
+                        title = stringResource(Res.string.settings_category_drive),
+                        subtitle = driveSummary,
+                        icon = Icons.Default.Cloud,
+                        onClick = onNavigateToDrive
+                    )
+
+                    MaterialCategoryCard(
+                        title = stringResource(Res.string.settings_category_about),
+                        subtitle = stringResource(Res.string.settings_category_about_desc),
+                        icon = Icons.Default.Info,
+                        onClick = onNavigateToAbout
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MaterialCategoryCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }

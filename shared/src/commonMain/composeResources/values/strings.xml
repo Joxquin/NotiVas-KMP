@@ -824,4 +824,26 @@
     <string name="performance_score_prefix">Grade: %1$s</string>
     <string name="performance_view_simulation">View simulation &amp; groups</string>
     <string name="performance_configure_formula">Configure formulas</string>
+
+    <!-- Settings Hub & Subviews -->
+    <string name="settings_status_online">Online</string>
+    <string name="settings_status_synced">Synced</string>
+    <string name="settings_action_drive">Drive</string>
+    <string name="settings_action_drive_connected">Connected</string>
+    <string name="settings_action_drive_disconnected">Not linked</string>
+    <string name="settings_action_web">Web PIN</string>
+    <string name="settings_action_web_desc">Pair PC</string>
+    <string name="settings_action_logout">Log out</string>
+    <string name="settings_action_logout_desc">Sign out</string>
+    <string name="settings_categories_section">SECTIONS &amp; CONFIGURATION</string>
+    <string name="settings_category_appearance">Appearance &amp; Language</string>
+    <string name="settings_category_appearance_desc">Themes, dynamic Monet color and app language</string>
+    <string name="settings_category_notifications">Notifications &amp; Sync</string>
+    <string name="settings_category_notifications_desc">Deliverable reminders, new content and sync frequency</string>
+    <string name="settings_category_copilot">Copilot AI Assistant</string>
+    <string name="settings_category_copilot_desc">OpenRouter, Google AI Studio, custom models and token balance</string>
+    <string name="settings_category_drive">Google Drive &amp; Drafts</string>
+    <string name="settings_category_drive_desc">Cloud backups, linked account and drafts cache</string>
+    <string name="settings_category_about">About NotiVas</string>
+    <string name="settings_category_about_desc">Version, developer details, source code and credits</string>
 </resources>

@@ -45,4 +45,19 @@ sealed interface MiuixRoute : NavKey {
 
     @Serializable
     data object AcademicPerformance : MiuixRoute
+
+    @Serializable
+    data object SettingsAppearance : MiuixRoute
+
+    @Serializable
+    data object SettingsNotifications : MiuixRoute
+
+    @Serializable
+    data object SettingsCopilot : MiuixRoute
+
+    @Serializable
+    data object SettingsDrive : MiuixRoute
+
+    @Serializable
+    data object SettingsAbout : MiuixRoute
 }

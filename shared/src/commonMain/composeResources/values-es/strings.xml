@@ -824,4 +824,26 @@
     <string name="performance_score_prefix">Nota: %1$s</string>
     <string name="performance_view_simulation">Ver simulación y grupos</string>
     <string name="performance_configure_formula">Configurar fórmulas</string>
+
+    <!-- Settings Hub & Subviews -->
+    <string name="settings_status_online">En línea</string>
+    <string name="settings_status_synced">Sincronizado</string>
+    <string name="settings_action_drive">Drive</string>
+    <string name="settings_action_drive_connected">Conectado</string>
+    <string name="settings_action_drive_disconnected">Sin vincular</string>
+    <string name="settings_action_web">Web PIN</string>
+    <string name="settings_action_web_desc">Vincular PC</string>
+    <string name="settings_action_logout">Cerrar sesión</string>
+    <string name="settings_action_logout_desc">Salir</string>
+    <string name="settings_categories_section">SECCIONES Y AJUSTES</string>
+    <string name="settings_category_appearance">Apariencia e Idioma</string>
+    <string name="settings_category_appearance_desc">Temas, color dinámico Monet e idioma de la aplicación</string>
+    <string name="settings_category_notifications">Notificaciones y Sincronización</string>
+    <string name="settings_category_notifications_desc">Recordatorios de tareas, novedades y frecuencia de refresco</string>
+    <string name="settings_category_copilot">Asistente Copilot IA</string>
+    <string name="settings_category_copilot_desc">OpenRouter, Google AI Studio, modelos y saldo de tokens</string>
+    <string name="settings_category_drive">Google Drive y Borradores</string>
+    <string name="settings_category_drive_desc">Copias de seguridad, cuenta conectada y caché de borradores</string>
+    <string name="settings_category_about">Acerca de NotiVas</string>
+    <string name="settings_category_about_desc">Versión, detalles del desarrollador, código fuente y créditos</string>
 </resources>
