@@ -176,7 +176,7 @@
     <string name="foros_loading">Descargando foros académicos de Canvas LMS...</string>
     <string name="foro_detail_title">Detalle del Foro</string>
     <string name="foros_search_placeholder">Buscar foros, temas o profesores...</string>
-    <string name="foros_search_empty_query">No se encontraron foros con \'%1$s\'</string>
+    <string name="foros_search_empty_query">No se encontraron foros con '%1$s'</string>
     <string name="foros_empty_category">No hay foros disponibles en esta categoría</string>
     <string name="foros_empty_suggestion">Prueba cambiando de curso o filtro para ver más discusiones.</string>
     <string name="foros_clear_search">Limpiar búsqueda</string>
@@ -215,7 +215,7 @@
     <string name="onboarding_alarms_title">Alarmas y recordatorios exactos</string>
     <string name="onboarding_alarms_desc">Permite avisarte al minuto exacto a las 24h, 3h y 30m previas a la hora de entrega de cada evaluación</string>
     <string name="onboarding_miui_title">Ajustes de HyperOS / MIUI</string>
-    <string name="onboarding_miui_desc">En dispositivos Xiaomi se requiere activar \'Inicio automático\' y quitar el ahorro de batería agresivo</string>
+    <string name="onboarding_miui_desc">En dispositivos Xiaomi se requiere activar 'Inicio automático' y quitar el ahorro de batería agresivo</string>
     <string name="onboarding_miui_autostart_btn">Inicio Automático</string>
     <string name="onboarding_miui_battery_btn">Ahorro de Batería</string>
     <string name="onboarding_notifications_title">Notificaciones</string>
