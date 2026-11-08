@@ -47,7 +47,8 @@ sealed interface OnboardingRoute : NavKey {
 @Composable
 fun OnboardingFlow(
     viewModel: OnboardingViewModel,
-    onComplete: () -> Unit
+    onComplete: () -> Unit,
+    themeStyle: me.joxquin.notivas.data.local.AppThemeStyle = me.joxquin.notivas.di.AppModule.preferencesManager.getThemeStyle()
 ) {
     val universityUrl by viewModel.universityUrl.collectAsState(initial = "https://canvas.utp.edu.pe")
     val accessToken by viewModel.accessToken.collectAsState(initial = "")
@@ -153,13 +154,14 @@ fun OnboardingFlow(
         entry<OnboardingRoute.WebLogin>(swipeDismiss = swipeBackDirection) {
             OnboardingWebLoginScreen(
                 universityUrl = universityUrl,
-                onLoginSuccess = { cookies, csrfToken ->
-                    viewModel.verifySessionConnection(cookies, csrfToken)
+                onLoginSuccess = { cookies, csrfToken, generateStudentToken ->
+                    viewModel.verifySessionConnection(cookies, csrfToken, generateStudentToken)
                 },
                 onUseManualToken = {
                     onboardingNavigator.pop()
                 },
-                onBack = { handleOnboardingBack() }
+                onBack = { handleOnboardingBack() },
+                themeStyle = themeStyle
             )
         }
 
@@ -181,7 +183,8 @@ fun OnboardingFlow(
                 onBack = { handleOnboardingBack() },
                 onSaveGoogleAuth = { token, refresh, email ->
                     viewModel.saveGoogleDriveAuth(token, refresh, email)
-                }
+                },
+                themeStyle = themeStyle
             )
         }
 

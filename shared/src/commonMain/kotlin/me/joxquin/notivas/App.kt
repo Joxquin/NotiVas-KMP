@@ -94,7 +94,8 @@ fun App() {
                                     viewModel = onboardingViewModel,
                                     onComplete = {
                                         onboardingViewModel.finishOnboarding()
-                                    }
+                                    },
+                                    themeStyle = effectiveThemeStyle
                                 )
                             }
                         } else {

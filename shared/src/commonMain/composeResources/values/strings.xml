@@ -554,6 +554,28 @@
     <string name="onboarding_drive_link_btn">Link Google Drive Now</string>
     <string name="onboarding_drive_skip_btn">Skip for now</string>
     <string name="drive_auth_error_title">Error linking Google Drive</string>
+
+    <!-- Onboarding Token Consent -->
+    <string name="onboarding_token_dialog_title">Generate app access token?</string>
+    <string name="onboarding_token_dialog_desc">Canvas allows creating a secure API token for NotiVas. This allows background synchronization of assignments, announcements, and grades without frequent web session expirations.\n\nWould you like to automatically generate this student token, or continue using only the current web session?</string>
+    <string name="onboarding_token_dialog_btn_generate">Generate token (Recommended)</string>
+    <string name="onboarding_token_dialog_btn_cookies">Continue with web session only</string>
+
+    <!-- Onboarding Cloud & Firebase Integration -->
+    <string name="onboarding_cloud_link_title">Cloud Services &amp; Backup</string>
+    <string name="onboarding_cloud_link_desc">Connect your Google account to back up assignment drafts in Google Drive and sync simulated grades with Firebase</string>
+    <string name="onboarding_cloud_card_drive_title">Google Drive</string>
+    <string name="onboarding_cloud_card_drive_desc">Automatic backup of assignment instructions, rubrics, and drafts in Google Docs.</string>
+    <string name="onboarding_cloud_card_firebase_title">Firebase Cloud Sync</string>
+    <string name="onboarding_cloud_card_firebase_desc">Real-time sync of simulator formulas, weights, and predicted grades across all your devices.</string>
+    <string name="onboarding_cloud_card_privacy_title">Private &amp; Secure</string>
+    <string name="onboarding_cloud_card_privacy_desc">Your data stays isolated and protected in your personal Google account without intermediaries.</string>
+
+    <!-- Onboarding Skip Warning -->
+    <string name="onboarding_skip_dialog_title">Continue without linking Google?</string>
+    <string name="onboarding_skip_dialog_desc">If you skip this step, NotiVas will operate as follows:\n\n• Grade simulator: Will use an anonymous local backup on this device. Your predicted grades are saved here, but will not sync across other devices or restore if you reinstall.\n\n• Google Drive: Will be disabled. Assignment drafts will not be backed up to the cloud.\n\nYou can link your Google account at any time from Settings.</string>
+    <string name="onboarding_skip_dialog_btn_confirm">Understood, continue</string>
+    <string name="onboarding_skip_dialog_btn_cancel">Go back and link</string>
     <string name="task_detail_header_label">TASK DETAIL</string>
     <string name="canvas_synced_badge">Canvas Synced</string>
     <string name="canvas_graded_badge">Canvas Graded</string>

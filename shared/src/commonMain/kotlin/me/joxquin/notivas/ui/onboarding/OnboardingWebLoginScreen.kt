@@ -41,22 +41,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.onboarding_login_sso
 import me.joxquin.notivas.shared.resources.onboarding_token_switch_btn
+import me.joxquin.notivas.shared.resources.onboarding_token_dialog_title
+import me.joxquin.notivas.shared.resources.onboarding_token_dialog_desc
+import me.joxquin.notivas.shared.resources.onboarding_token_dialog_btn_generate
+import me.joxquin.notivas.shared.resources.onboarding_token_dialog_btn_cookies
 import me.joxquin.notivas.ui.components.CanvasLoginWebView
 import me.joxquin.notivas.ui.onboarding.components.OnboardingStepIndicator
 import org.jetbrains.compose.resources.stringResource
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingWebLoginScreen(
     universityUrl: String,
-    onLoginSuccess: (cookies: String, csrfToken: String?) -> Unit,
+    onLoginSuccess: (cookies: String, csrfToken: String?, generateStudentToken: Boolean) -> Unit,
     onUseManualToken: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
 ) {
     var isLoading by remember { mutableStateOf(true) }
+    var pendingLoginCredentials by remember { mutableStateOf<Pair<String, String?>?>(null) }
 
     val formattedLoginUrl = remember(universityUrl) {
         val clean = universityUrl.trim().trimEnd('/')
@@ -176,10 +186,106 @@ fun OnboardingWebLoginScreen(
             ) {
                 CanvasLoginWebView(
                     url = formattedLoginUrl,
-                    onLoginSuccess = onLoginSuccess,
+                    onLoginSuccess = { cookies, csrfToken ->
+                        pendingLoginCredentials = Pair(cookies, csrfToken)
+                    },
                     modifier = Modifier.fillMaxSize(),
                     onPageStarted = { isLoading = true },
                     onPageFinished = { isLoading = false }
+                )
+            }
+        }
+
+        // Diálogo de consentimiento para generar el token de estudiante permanente
+        if (pendingLoginCredentials != null) {
+            val (cookies, csrf) = pendingLoginCredentials!!
+            if (themeStyle == AppThemeStyle.MIUIX) {
+                WindowDialog(
+                    show = true,
+                    title = stringResource(Res.string.onboarding_token_dialog_title),
+                    summary = stringResource(Res.string.onboarding_token_dialog_desc),
+                    onDismissRequest = { pendingLoginCredentials = null },
+                    content = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                        ) {
+                            MiuixTextButton(
+                                text = stringResource(Res.string.onboarding_token_dialog_btn_generate),
+                                onClick = {
+                                    val creds = pendingLoginCredentials
+                                    pendingLoginCredentials = null
+                                    if (creds != null) {
+                                        onLoginSuccess(creds.first, creds.second, true)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = MiuixButtonDefaults.textButtonColorsPrimary()
+                            )
+                            MiuixTextButton(
+                                text = stringResource(Res.string.onboarding_token_dialog_btn_cookies),
+                                onClick = {
+                                    val creds = pendingLoginCredentials
+                                    pendingLoginCredentials = null
+                                    if (creds != null) {
+                                        onLoginSuccess(creds.first, creds.second, false)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                )
+            } else {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { pendingLoginCredentials = null },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Key,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = stringResource(Res.string.onboarding_token_dialog_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = stringResource(Res.string.onboarding_token_dialog_desc),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    confirmButton = {
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                val creds = pendingLoginCredentials
+                                pendingLoginCredentials = null
+                                if (creds != null) {
+                                    onLoginSuccess(creds.first, creds.second, true)
+                                }
+                            }
+                        ) {
+                            Text(stringResource(Res.string.onboarding_token_dialog_btn_generate))
+                        }
+                    },
+                    dismissButton = {
+                        androidx.compose.material3.TextButton(
+                            onClick = {
+                                val creds = pendingLoginCredentials
+                                pendingLoginCredentials = null
+                                if (creds != null) {
+                                    onLoginSuccess(creds.first, creds.second, false)
+                                }
+                            }
+                        ) {
+                            Text(stringResource(Res.string.onboarding_token_dialog_btn_cookies))
+                        }
+                    }
                 )
             }
         }

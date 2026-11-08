@@ -56,18 +56,33 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.outlined.Sync
+import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.close
 import me.joxquin.notivas.shared.resources.drive_auth_error_title
 import me.joxquin.notivas.shared.resources.drive_connected_status
 import me.joxquin.notivas.shared.resources.onboarding_drive_link_btn
-import me.joxquin.notivas.shared.resources.onboarding_drive_link_desc
-import me.joxquin.notivas.shared.resources.onboarding_drive_link_title
 import me.joxquin.notivas.shared.resources.onboarding_drive_skip_btn
 import me.joxquin.notivas.shared.resources.onboarding_finish_btn
+import me.joxquin.notivas.shared.resources.onboarding_cloud_link_title
+import me.joxquin.notivas.shared.resources.onboarding_cloud_link_desc
+import me.joxquin.notivas.shared.resources.onboarding_cloud_card_drive_title
+import me.joxquin.notivas.shared.resources.onboarding_cloud_card_drive_desc
+import me.joxquin.notivas.shared.resources.onboarding_cloud_card_firebase_title
+import me.joxquin.notivas.shared.resources.onboarding_cloud_card_firebase_desc
+import me.joxquin.notivas.shared.resources.onboarding_cloud_card_privacy_title
+import me.joxquin.notivas.shared.resources.onboarding_cloud_card_privacy_desc
+import me.joxquin.notivas.shared.resources.onboarding_skip_dialog_title
+import me.joxquin.notivas.shared.resources.onboarding_skip_dialog_desc
+import me.joxquin.notivas.shared.resources.onboarding_skip_dialog_btn_confirm
+import me.joxquin.notivas.shared.resources.onboarding_skip_dialog_btn_cancel
 import me.joxquin.notivas.ui.onboarding.components.OnboardingStepIndicator
 import me.joxquin.notivas.util.rememberGoogleAuthLauncher
 import org.jetbrains.compose.resources.stringResource
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.window.WindowDialog
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -77,11 +92,13 @@ fun OnboardingGoogleDriveScreen(
     onFinish: () -> Unit,
     onBack: () -> Unit,
     onSaveGoogleAuth: (accessToken: String, refreshToken: String?, userEmail: String?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
 ) {
     var connectedEmail by remember { mutableStateOf<String?>(null) }
     var authErrorMsg by remember { mutableStateOf<String?>(null) }
     var isAuthenticating by remember { mutableStateOf(false) }
+    var showSkipWarningDialog by remember { mutableStateOf(false) }
 
     val authLauncher = rememberGoogleAuthLauncher(
         onAuthSuccess = { token, refresh, email ->
@@ -152,10 +169,10 @@ fun OnboardingGoogleDriveScreen(
 
                 // 2. Titulo Expresivo y Subtitulo Claro
                 Text(
-                    text = stringResource(Res.string.onboarding_drive_link_title),
+                    text = stringResource(Res.string.onboarding_cloud_link_title),
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Black,
-                        letterSpacing = (-0.5).sp
+                        letterSpacing = (-0.5f).sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
@@ -164,7 +181,7 @@ fun OnboardingGoogleDriveScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = stringResource(Res.string.onboarding_drive_link_desc),
+                    text = stringResource(Res.string.onboarding_cloud_link_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -221,24 +238,24 @@ fun OnboardingGoogleDriveScreen(
                 // 4. Tarjetas Bento de Beneficios
                 DriveFeatureCard(
                     icon = Icons.Outlined.CloudUpload,
-                    title = "Respaldo Automatico",
-                    description = "Consignas, rubricas y plantillas respaldadas en tu carpeta personal de Google Drive."
+                    title = stringResource(Res.string.onboarding_cloud_card_drive_title),
+                    description = stringResource(Res.string.onboarding_cloud_card_drive_desc)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 DriveFeatureCard(
-                    icon = Icons.Outlined.Devices,
-                    title = "Acceso Multi-dispositivo",
-                    description = "Accede a tus borradores y entregas generadas desde cualquier computadora o dispositivo."
+                    icon = Icons.Outlined.Sync,
+                    title = stringResource(Res.string.onboarding_cloud_card_firebase_title),
+                    description = stringResource(Res.string.onboarding_cloud_card_firebase_desc)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 DriveFeatureCard(
                     icon = Icons.Outlined.Lock,
-                    title = "100% Privado y Seguro",
-                    description = "Permiso restringido exclusivamente a la carpeta NotiVas. No se accede a tus archivos personales."
+                    title = stringResource(Res.string.onboarding_cloud_card_privacy_title),
+                    description = stringResource(Res.string.onboarding_cloud_card_privacy_desc)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -289,7 +306,7 @@ fun OnboardingGoogleDriveScreen(
 
                 if (connectedEmail == null) {
                     TextButton(
-                        onClick = onFinish,
+                        onClick = { showSkipWarningDialog = true },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp)
@@ -305,35 +322,132 @@ fun OnboardingGoogleDriveScreen(
         }
     }
 
-    if (authErrorMsg != null) {
-        AlertDialog(
-            onDismissRequest = { authErrorMsg = null },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.CloudOff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(Res.string.drive_auth_error_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
-            },
-            text = {
-                Text(
-                    text = authErrorMsg ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { authErrorMsg = null }) {
-                    Text(stringResource(Res.string.close))
+    // Diálogo informativo sobre el modo de funcionamiento sin cuenta vinculada
+    if (showSkipWarningDialog) {
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            WindowDialog(
+                show = true,
+                title = stringResource(Res.string.onboarding_skip_dialog_title),
+                summary = stringResource(Res.string.onboarding_skip_dialog_desc),
+                onDismissRequest = { showSkipWarningDialog = false },
+                content = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        MiuixTextButton(
+                            text = stringResource(Res.string.onboarding_skip_dialog_btn_confirm),
+                            onClick = {
+                                showSkipWarningDialog = false
+                                onFinish()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
+                        )
+                        MiuixTextButton(
+                            text = stringResource(Res.string.onboarding_skip_dialog_btn_cancel),
+                            onClick = { showSkipWarningDialog = false },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
-            }
-        )
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { showSkipWarningDialog = false },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.CloudOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.onboarding_skip_dialog_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(Res.string.onboarding_skip_dialog_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showSkipWarningDialog = false
+                            onFinish()
+                        }
+                    ) {
+                        Text(stringResource(Res.string.onboarding_skip_dialog_btn_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showSkipWarningDialog = false }
+                    ) {
+                        Text(stringResource(Res.string.onboarding_skip_dialog_btn_cancel))
+                    }
+                }
+            )
+        }
+    }
+
+    if (authErrorMsg != null) {
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            WindowDialog(
+                show = true,
+                title = stringResource(Res.string.drive_auth_error_title),
+                summary = authErrorMsg ?: "",
+                onDismissRequest = { authErrorMsg = null },
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        MiuixTextButton(
+                            text = stringResource(Res.string.close),
+                            onClick = { authErrorMsg = null },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
+                        )
+                    }
+                }
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { authErrorMsg = null },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.CloudOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.drive_auth_error_title),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                text = {
+                    Text(
+                        text = authErrorMsg ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { authErrorMsg = null }) {
+                        Text(stringResource(Res.string.close))
+                    }
+                }
+            )
+        }
     }
 }
 

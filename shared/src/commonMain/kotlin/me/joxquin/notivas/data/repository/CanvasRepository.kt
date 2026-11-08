@@ -829,15 +829,6 @@ class CanvasRepository(
             } catch (e: Throwable) {
                 println("[CanvasRepository] Error detectando nuevos contenidos: ${e.message}")
             }
-
-            // Si está en sesión de cookies, intentar migrar silenciosamente a Token permanente
-            if (preferencesManager.getAuthMode() == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
-                try {
-                    tryUpgradeSessionToToken()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Throwable) {}
-            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: me.joxquin.notivas.data.remote.CanvasAuthExpiredException) {
@@ -899,7 +890,12 @@ class CanvasRepository(
         }
     }
 
-    suspend fun verifyAndSaveSession(url: String, cookies: String, csrfToken: String? = null): Boolean = withContext(AppDispatchers.IO) {
+    suspend fun verifyAndSaveSession(
+        url: String,
+        cookies: String,
+        csrfToken: String? = null,
+        generateStudentToken: Boolean = true
+    ): Boolean = withContext(AppDispatchers.IO) {
         try {
             var targetUrl = url
             var credentialString = cookies.trim()
@@ -924,19 +920,23 @@ class CanvasRepository(
             apiService.verifyToken(targetUrl, "Cookie: $credentialString")
             preferencesManager.saveUniversityUrl(targetUrl)
 
-            // Primera opción: Intentar obtener el token de estudiante permanente vía Canvas API
-            val studentToken = apiService.generateStudentAccessToken(
-                baseUrl = targetUrl,
-                cookies = credentialString,
-                csrfToken = csrfToken,
-                purpose = "NotiVas App"
-            )
+            // Si el usuario autorizó generar el token de estudiante permanente vía Canvas API
+            val studentToken = if (generateStudentToken) {
+                apiService.generateStudentAccessToken(
+                    baseUrl = targetUrl,
+                    cookies = credentialString,
+                    csrfToken = csrfToken,
+                    purpose = "NotiVas App"
+                )
+            } else {
+                null
+            }
 
             if (!studentToken.isNullOrBlank()) {
-                println("[CanvasRepository] Primera opción exitosa: Token de estudiante autogenerado. Guardando BearerToken.")
+                println("[CanvasRepository] Token de estudiante autogenerado con autorización del usuario. Guardando BearerToken.")
                 preferencesManager.saveAccessToken(studentToken)
             } else {
-                println("[CanvasRepository] Creación de token no disponible en la institución. Guardando SessionCookies como fallback.")
+                println("[CanvasRepository] Guardando SessionCookies como método de autenticación.")
                 preferencesManager.saveSessionCookies(credentialString, csrfToken)
             }
             preferencesManager.setSessionExpired(false)

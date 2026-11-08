@@ -81,7 +81,7 @@ class OnboardingViewModel(
         }
     }
 
-    fun verifySessionConnection(cookies: String, csrfToken: String?) {
+    fun verifySessionConnection(cookies: String, csrfToken: String?, generateStudentToken: Boolean = true) {
         viewModelScope.launch {
             _isVerifying.value = true
             _verificationSuccess.value = null
@@ -98,7 +98,7 @@ class OnboardingViewModel(
                     val token = cookies.removePrefix("access_token=").removePrefix("Bearer ").split(Regex("[&;]"))[0].trim()
                     _accessToken.value = token
                 }
-                val success = repository.verifyAndSaveSession(targetUrl, cookies, csrfToken)
+                val success = repository.verifyAndSaveSession(targetUrl, cookies, csrfToken, generateStudentToken)
                 if (success) {
                     try {
                         val profile = repository.getProfile()
