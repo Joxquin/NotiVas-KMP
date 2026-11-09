@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.WarningAmber
+import androidx.compose.material.icons.outlined.BatteryChargingFull
+import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
