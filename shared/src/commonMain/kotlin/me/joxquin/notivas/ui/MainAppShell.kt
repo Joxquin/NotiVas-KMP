@@ -65,7 +65,6 @@ import me.joxquin.notivas.util.rememberFilePickerLauncher
 import me.joxquin.notivas.ui.components.UpdateDialog
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.components.miuix.FloatingNavigationBar
-import me.joxquin.notivas.ui.components.miuix.MiuixTopAppBar
 import me.joxquin.notivas.ui.copilot.CopilotViewModel
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.InicioScreen
@@ -193,7 +192,7 @@ class MainPagerState(
  * - En Material 3: Utiliza Scaffold con NavigationBar adosada al pie y pila de historial para BackHandler.
  * - En HyperOS Miuix: Utiliza la Arquitectura de 3 Capas Root Overlay con
  *   HorizontalPager interpolado para transiciones 100% fluidas sin tirones,
- *   MiuixTopAppBar colapsable, FloatingNavigationBar Liquid Glass y BackHandler con historial.
+ *   MiuixBlurredBar colapsable, FloatingNavigationBar Liquid Glass y BackHandler con historial.
  */
 @Composable
 fun MainAppShell(

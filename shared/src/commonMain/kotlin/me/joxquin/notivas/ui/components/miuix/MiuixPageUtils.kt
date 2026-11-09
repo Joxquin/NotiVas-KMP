@@ -15,6 +15,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
@@ -180,6 +181,25 @@ fun shortenCourseSubtitle(courseName: String?, maxLength: Int = 36): String {
         cleanName.take(maxLength - 1).trimEnd() + "…"
     } else {
         cleanName
+    }
+}
+
+/**
+ * Botón de acción canónico para la barra superior de HyperOS Miuix.
+ * Utiliza el componente oficial IconButton de compose-miuix-ui con forma squircle
+ * y retroalimentación háptica nativa idéntica a la implementación de referencia.
+ */
+@Composable
+fun MiuixTopAppBarAction(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        content()
     }
 }
 

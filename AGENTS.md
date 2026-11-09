@@ -17,7 +17,7 @@ En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implemen
 
 2. **Ruta Raíz (`MiuixRoute.Main`):**
    - Aloja el paginador horizontal (`HorizontalPager`) de las 4 pestañas canónicas (Inicio, Herramientas, Copilot, Ajustes).
-   - Aloja el encabezado [MiuixTopAppBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixTopAppBar.kt) anclado en `Alignment.TopCenter` para los 4 destinos raíz.
+   - Aloja el encabezado [MiuixBlurredBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixPageUtils.kt) anclado en `Alignment.TopCenter` para los 4 destinos raíz.
    - Aloja la [FloatingNavigationBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/FloatingNavigationBar.kt) ("Liquid Glass") anclada en `Alignment.BottomCenter`.
    - Al navegar a una pantalla secundaria, `NavDisplay` escala y difumina automáticamente `MiuixRoute.Main` al fondo, retirando de forma natural la barra flotante.
 
@@ -170,7 +170,7 @@ Card(
 
 ## 4. Checklist para Nuevas Vistas (Views)
 1. **¿Se implementó el diseño dual?** Ramificar con `if (themeStyle == AppThemeStyle.MIUIX) { ... } else { ... }`.
-2. **¿Se respetó el TopAppBar en MIUIX?** Comprobar que la vista no duplique el `TopAppBar` y que esté integrada en el `MiuixTopAppBar` de [MainAppShell.kt](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/MainAppShell.kt).
+2. **¿Se respetó el TopAppBar en MIUIX?** Comprobar que la vista no duplique el `TopAppBar` y que esté integrada con `MiuixBlurredBar` de [MiuixPageUtils.kt](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixPageUtils.kt).
 3. **¿Se usaron los componentes nativos de MIUIX?** Usar `MiuixCard`, `InputField`, `SmallTitle`, `TextButton`.
 4. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
 5. **¿Navegación e interacción verificadas?** Asegurar que las tarjetas clickeables tengan su callback `onClick` conectado al flujo de navegación adecuado.
