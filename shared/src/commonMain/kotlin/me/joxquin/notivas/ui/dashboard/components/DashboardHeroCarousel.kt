@@ -58,13 +58,7 @@ import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.shared.resources.Res
-import me.joxquin.notivas.shared.resources.dashboard_check_now
-import me.joxquin.notivas.shared.resources.dashboard_performance_status
-import me.joxquin.notivas.shared.resources.dashboard_see_performance
-import me.joxquin.notivas.shared.resources.unconfigured_banner_btn
-import me.joxquin.notivas.shared.resources.unconfigured_banner_desc_multiple
-import me.joxquin.notivas.shared.resources.unconfigured_banner_desc_single
-import me.joxquin.notivas.shared.resources.unconfigured_banner_title
+import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.dashboard.CourseStat
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
