@@ -99,8 +99,12 @@ import me.joxquin.notivas.shared.resources.permission_status_action
 import me.joxquin.notivas.shared.resources.settings_battery_desc
 import me.joxquin.notivas.shared.resources.settings_alarms_desc
 import me.joxquin.notivas.shared.resources.settings_miui_desc
-import androidx.compose.material.icons.outlined.BatteryChargingFull
-import androidx.compose.material.icons.outlined.RocketLaunch
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import me.joxquin.notivas.getPlatform
+import me.joxquin.notivas.shared.resources.onboarding_notifications_title
+import me.joxquin.notivas.shared.resources.settings_notifications_allowed
+import me.joxquin.notivas.shared.resources.settings_notifications_blocked
 import me.joxquin.notivas.shared.resources.cancel
 
 @Composable
@@ -124,6 +128,27 @@ fun GranularNotificationsSection(
 ) {
     var showSyncIntervalDialog by remember { mutableStateOf(false) }
     val permissionManager = me.joxquin.notivas.util.rememberBackgroundPermissionManager()
+    val showNotificationPermission = remember { getPlatform().name.startsWith("Android") }
+    var isNotificationGranted by remember(permissionManager) {
+        mutableStateOf(permissionManager.isNotificationPermissionGranted())
+    }
+    var isBatteryIgnored by remember(permissionManager) {
+        mutableStateOf(permissionManager.isBatteryOptimizationIgnored())
+    }
+    var canScheduleAlarms by remember(permissionManager) {
+        mutableStateOf(permissionManager.canScheduleExactAlarms())
+    }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        isNotificationGranted = permissionManager.isNotificationPermissionGranted()
+        isBatteryIgnored = permissionManager.isBatteryOptimizationIgnored()
+        canScheduleAlarms = permissionManager.canScheduleExactAlarms()
+    }
+
+    val notificationPermissionSummary = stringResource(
+        if (isNotificationGranted) Res.string.settings_notifications_allowed
+        else Res.string.settings_notifications_blocked
+    )
 
     val sync15 = stringResource(Res.string.sync_interval_15m)
     val sync30 = stringResource(Res.string.sync_interval_30m)
@@ -233,6 +258,13 @@ fun GranularNotificationsSection(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
+                if (showNotificationPermission) {
+                    ArrowPreference(
+                        title = stringResource(Res.string.onboarding_notifications_title),
+                        summary = notificationPermissionSummary,
+                        onClick = { permissionManager.openNotificationSettings() }
+                    )
+                }
                 SwitchPreference(
                     title = stringResource(Res.string.notif_24h_title),
                     summary = stringResource(Res.string.notif_24h_desc),
@@ -263,7 +295,7 @@ fun GranularNotificationsSection(
                 )
                 ArrowPreference(
                     title = stringResource(Res.string.onboarding_battery_title),
-                    summary = if (permissionManager.isBatteryOptimizationIgnored()) {
+                    summary = if (isBatteryIgnored) {
                         stringResource(Res.string.permission_status_granted)
                     } else {
                         stringResource(Res.string.permission_status_action)
@@ -272,7 +304,7 @@ fun GranularNotificationsSection(
                 )
                 ArrowPreference(
                     title = stringResource(Res.string.onboarding_alarms_title),
-                    summary = if (permissionManager.canScheduleExactAlarms()) {
+                    summary = if (canScheduleAlarms) {
                         stringResource(Res.string.permission_status_granted)
                     } else {
                         stringResource(Res.string.permission_status_action)
@@ -347,6 +379,21 @@ fun GranularNotificationsSection(
                         ),
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                }
+
+                if (showNotificationPermission) {
+                    MaterialNotificationActionRow(
+                        icon = Icons.Default.NotificationsActive,
+                        title = stringResource(Res.string.onboarding_notifications_title),
+                        subtitle = notificationPermissionSummary,
+                        actionLabel = stringResource(
+                            if (isNotificationGranted) Res.string.change
+                            else Res.string.permission_status_action
+                        ),
+                        isActionActive = isNotificationGranted,
+                        onClick = { permissionManager.openNotificationSettings() }
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 }
 
                 // Item 1: 24h
@@ -458,12 +505,12 @@ fun GranularNotificationsSection(
                     icon = Icons.Outlined.BatteryChargingFull,
                     title = stringResource(Res.string.onboarding_battery_title),
                     subtitle = stringResource(Res.string.settings_battery_desc),
-                    actionLabel = if (permissionManager.isBatteryOptimizationIgnored()) {
+                    actionLabel = if (isBatteryIgnored) {
                         stringResource(Res.string.permission_status_granted)
                     } else {
                         stringResource(Res.string.permission_status_action)
                     },
-                    isActionActive = permissionManager.isBatteryOptimizationIgnored(),
+                    isActionActive = isBatteryIgnored,
                     onClick = { permissionManager.requestIgnoreBatteryOptimization() }
                 )
 
@@ -473,12 +520,12 @@ fun GranularNotificationsSection(
                     icon = Icons.Default.NotificationsActive,
                     title = stringResource(Res.string.onboarding_alarms_title),
                     subtitle = stringResource(Res.string.settings_alarms_desc),
-                    actionLabel = if (permissionManager.canScheduleExactAlarms()) {
+                    actionLabel = if (canScheduleAlarms) {
                         stringResource(Res.string.permission_status_granted)
                     } else {
                         stringResource(Res.string.permission_status_action)
                     },
-                    isActionActive = permissionManager.canScheduleExactAlarms(),
+                    isActionActive = canScheduleAlarms,
                     onClick = { permissionManager.requestScheduleExactAlarms() }
                 )
 

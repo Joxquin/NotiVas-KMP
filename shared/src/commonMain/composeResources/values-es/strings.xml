@@ -228,6 +228,8 @@
     <string name="onboarding_domain_help">¿No encuentras el dominio de tu universidad?</string>
     <string name="permission_status_granted">Configurado</string>
     <string name="permission_status_action">Permitir</string>
+    <string name="settings_notifications_allowed">Permitidas por Android</string>
+    <string name="settings_notifications_blocked">Bloqueadas por Android. Toca para activar.</string>
     <string name="onboarding_finish_btn">Comenzar a usar NotiVas</string>
 
     <!-- Bento Cards & Herramientas extras -->

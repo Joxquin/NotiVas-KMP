@@ -21,16 +21,17 @@ actual class BackgroundPermissionManager(
 ) {
     actual fun isNotificationPermissionGranted(): Boolean {
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasRuntimePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED
             } else {
-                NotificationManagerCompat.from(context).areNotificationsEnabled()
+                true
             }
+            hasRuntimePermission && NotificationManagerCompat.from(context).areNotificationsEnabled()
         } catch (_: Exception) {
-            true
+            false
         }
     }
 
