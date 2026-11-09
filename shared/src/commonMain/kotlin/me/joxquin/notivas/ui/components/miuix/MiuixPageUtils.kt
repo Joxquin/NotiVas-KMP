@@ -119,8 +119,8 @@ fun MiuixBlurredBar(
                     .progressiveTextureBlur(
                         backdrop = backdrop,
                         shape = RectangleShape,
-                        gradient = ProgressiveBlur.Top.copy(curve = 2.2f),
-                        blurRadius = 16f,
+                        gradient = ProgressiveBlur.Top.copy(curve = 0.5f),
+                        blurRadius = 80f,
                         colors = miuixBarBlurColors(progressive = true),
                     ),
             )
@@ -132,7 +132,7 @@ fun MiuixBlurredBar(
 @Composable
 private fun miuixBarBlurColors(progressive: Boolean = false): BlurColors = BlurDefaults.blurColors(
     blendColors = listOf(
-        BlendColorEntry(color = MiuixTheme.colorScheme.surface.copy(if (progressive) 0.35f else 0.85f)),
+        BlendColorEntry(color = MiuixTheme.colorScheme.surface.copy(if (progressive) 0.3f else 0.85f)),
     ),
 )
 

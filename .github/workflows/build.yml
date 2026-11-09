@@ -61,6 +61,9 @@ jobs:
           fi
 
       - name: Build Android Debug APK
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
         run: ./gradlew :androidApp:assembleDebug --stacktrace
 
       - name: Upload Android APK

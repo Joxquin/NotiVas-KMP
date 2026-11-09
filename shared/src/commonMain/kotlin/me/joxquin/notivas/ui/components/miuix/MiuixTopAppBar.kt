@@ -26,6 +26,7 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -90,7 +91,9 @@ fun MiuixTopAppBar(
     modifier: Modifier = Modifier
 ) {
     // Opacidad de blur progresivo clamp(deltaY / threshold, 0.0, 1.0)
-    val blurAlpha = (scrollOffset / 64f).coerceIn(0f, 1f)
+    val density = LocalDensity.current
+    val thresholdPx = with(density) { 48.dp.toPx() }
+    val blurAlpha = (scrollOffset / thresholdPx).coerceIn(0f, 1f)
     val borderColor = MiuixTheme.colorScheme.dividerLine.copy(alpha = blurAlpha)
     val fallbackBg = MiuixTheme.colorScheme.surface.copy(alpha = 0.85f * blurAlpha)
 
@@ -108,11 +111,11 @@ fun MiuixTopAppBar(
                     .progressiveTextureBlur(
                         backdrop = backdrop,
                         shape = RectangleShape,
-                        gradient = ProgressiveBlur.Top.copy(curve = 2.2f),
-                        blurRadius = 16f,
+                        gradient = ProgressiveBlur.Top.copy(curve = 0.5f),
+                        blurRadius = 80f,
                         colors = BlurDefaults.blurColors(
                             blendColors = listOf(
-                                BlendColorEntry(color = MiuixTheme.colorScheme.surface.copy(alpha = 0.45f))
+                                BlendColorEntry(color = MiuixTheme.colorScheme.surface.copy(alpha = 0.3f))
                             )
                         )
                     )

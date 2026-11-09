@@ -181,6 +181,9 @@ jobs:
           fi
 
       - name: Build Android Release APKs
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
         run: ./gradlew :androidApp:assembleRelease --stacktrace
 
       - name: Filter arm64 and universal APKs

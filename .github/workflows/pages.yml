@@ -47,6 +47,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build WebAssembly Distribution
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
         run: ./gradlew :webApp:wasmJsBrowserDistribution --stacktrace
 
       - name: Setup Pages
