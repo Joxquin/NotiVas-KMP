@@ -3,7 +3,6 @@
     <!-- App & General -->
     <string name="app_name">NotiVas</string>
     <string name="cancel">Cancel</string>
-    <string name="confirm">Confirm</string>
     <string name="close">Close</string>
     <string name="save">Save</string>
     <string name="delete">Delete</string>
@@ -18,7 +17,6 @@
     <string name="manage">Manage</string>
     <string name="view_all">View all</string>
     <string name="pending_badge">Pending</string>
-    <string name="unknown_error">Unknown error</string>
 
     <!-- Navigation -->
     <string name="nav_inicio">Home</string>
@@ -72,12 +70,6 @@
     <string name="notif_new_quizzes_desc">Immediate alert when an exam or quiz becomes available</string>
     <string name="notif_new_foros_title">New academic forums</string>
     <string name="notif_new_foros_desc">Alert when new discussion topics are created</string>
-    <string name="notif_banner_new_assignment_title">New Assignment · %1$s</string>
-    <string name="notif_banner_new_assignment_msg">Published: %1$s</string>
-    <string name="notif_banner_new_quiz_title">Exam Available · %1$s</string>
-    <string name="notif_banner_new_quiz_msg">%1$s is now open for submissions</string>
-    <string name="notif_banner_new_foro_title">New Academic Forum · %1$s</string>
-    <string name="notif_banner_new_foro_msg">New discussion topic: %1$s</string>
     <string name="sync_interval_title">Sync Frequency</string>
     <string name="sync_interval_desc">How often Canvas data is checked in the background</string>
     <string name="sync_interval_dialog_title">Sync frequency</string>
@@ -101,22 +93,15 @@
     <string name="openrouter_api_key_dialog_title">OpenRouter API Key</string>
     <string name="openrouter_api_key_dialog_desc">Enter your OpenRouter key to power the AI assistant with top frontier models (Gemini, Claude, GPT, Llama):</string>
     <string name="openrouter_api_key_placeholder">sk-or-v1-...</string>
-    <string name="openrouter_api_key_get_key">Get free API key on OpenRouter</string>
     <string name="openrouter_model_title">AI Model</string>
     <string name="openrouter_model_dialog_title">Select AI Model</string>
     <string name="openrouter_model_dialog_desc">Select the LLM model to process your queries:</string>
     <string name="openrouter_balance_title">Account Balance</string>
-    <string name="openrouter_balance_subtitle">Total usage &amp; available credits</string>
-    <string name="openrouter_balance_usage">Usage: $%1$s / $%2$s USD</string>
     <string name="tokens_used_format">Total tokens used: %1$d</string>
     <string name="openrouter_analyze_model_btn">Analyze model</string>
     <string name="openrouter_analyzing_model">Analyzing model...</string>
     <string name="openrouter_custom_model_hint">Model ID (e.g. meta-llama/llama-3.3-70b-instruct)</string>
     <string name="openrouter_custom_model_title">Custom ID (Manual)</string>
-    <string name="openrouter_model_optimal">100% Compatible with NotiVas: Supports conversational chat and automatic Canvas LMS tools.</string>
-    <string name="openrouter_model_compatible">Compatible with chat: Answers questions and drafts text, but does not support dynamic Canvas tools.</string>
-    <string name="openrouter_model_incompatible">Model not recommended: Does not support conversational text generation.</string>
-    <string name="openrouter_model_not_found">Model not found on OpenRouter. Check the model ID.</string>
     <string name="openrouter_model_context">Context: %1$d tokens</string>
     <string name="openrouter_model_info_title">Model Information</string>
     <string name="copilot_provider_title">AI Provider</string>
@@ -135,55 +120,31 @@
     <string name="google_ai_studio_balance_title">Local Tokens Used</string>
 
     <!-- Security and Session -->
-    <string name="settings_security_section_title">SECURITY &amp; CRITICAL ZONE</string>
-    <string name="logout_button">Unlink Canvas Account</string>
-    <string name="logout_button_desc">Delete token and locally cached data</string>
 
     <!-- Web Pairing -->
-    <string name="pair_web_title">Link NotiVas Web</string>
-    <string name="pair_web_summary">Log in instantly to notivas.joxquin.me with a 6-digit PIN</string>
     <string name="pair_web_dialog_title">Link NotiVas Web</string>
     <string name="pair_web_dialog_desc">Enter the 6-digit code shown on the NotiVas Web screen to authorize session login.</string>
     <string name="pair_web_input_placeholder">000000</string>
     <string name="pair_web_authorizing">Authorizing and transferring session...</string>
     <string name="pair_web_success">Session transferred to NotiVas Web successfully.</string>
     <string name="pair_web_error_invalid_pin">The entered code is invalid or has expired.</string>
-    <string name="pair_web_error_network">Could not connect to the pairing server. Please retry.</string>
     <string name="pair_web_action_authorize">Authorize Web Login</string>
-    <string name="pair_web_tab_title">Link via Mobile</string>
-    <string name="pair_web_tab_desc">Open the NotiVas app on your phone &gt; Settings &gt; Security &gt; Link NotiVas Web and enter this code:</string>
-    <string name="pair_web_expires_in">Code expires in</string>
-    <string name="pair_web_refresh_btn">Generate new code</string>
     <string name="logout_dialog_title">Unlink account?</string>
     <string name="logout_dialog_text">Your session will be closed, the local database will be cleared, and the secure token destroyed.</string>
     <string name="logout_confirm">Confirm and exit</string>
 
     <!-- Student Identity -->
-    <string name="student_id_title">STUDENT IDENTITY</string>
     <string name="student_unlinked">Canvas Student</string>
     <string name="student_avatar_cd">Profile photo</string>
-    <string name="student_verify_token">Verify Session</string>
-    <string name="student_verifying">Verifying…</string>
-    <string name="student_auth_mode_cookies">Web Session</string>
     <string name="student_auth_mode_token">API Token</string>
 
     <!-- Focus & Habits Section -->
-    <string name="focus_section_title">Focus &amp; Study Habits</string>
-    <string name="focus_section_desc">Calendar-linked automation</string>
-    <string name="focus_mode_title">Automatic Focus Mode</string>
-    <string name="focus_mode_desc">Enable Do Not Disturb if a task is due in under 4h</string>
 
     <!-- App Info Footer -->
-    <string name="app_version_format">NotiVas v%1$s (%2$d)</string>
-    <string name="app_build_desc">Canvas LMS Native Client • Offline-First</string>
 
     <!-- Dashboard / Inicio -->
     <string name="greeting_hello">Hello</string>
     <string name="greeting_hello_name">Hello, %1$s</string>
-    <string name="greeting_morning">Good morning</string>
-    <string name="greeting_afternoon">Good afternoon</string>
-    <string name="greeting_evening">Good evening</string>
-    <string name="greeting_night">Good night</string>
     <string name="sync_status_syncing">Syncing...</string>
     <string name="sync_status_synced">Synced</string>
     <string name="sync_status_offline">Offline</string>
@@ -191,17 +152,11 @@
     <string name="session_expired_banner_title">Canvas Session Expired</string>
     <string name="session_expired_banner_desc">Your web session has expired. Tap to reconnect in 1 step.</string>
     <string name="session_expired_banner_action">Reconnect</string>
-    <string name="notif_session_expired_title">Canvas Session Expired</string>
-    <string name="notif_session_expired_desc">Your web session has expired. Tap to reconnect and keep your tasks up to date.</string>
     <string name="urgent_tasks_title">For Today &amp; Tomorrow</string>
     <string name="urgent_badge_count">%1$d urgent</string>
-    <string name="no_urgent_tasks">No pending assignments!</string>
-    <string name="urgent_due_today">Due today</string>
     <string name="urgent_due_tomorrow">Due tomorrow</string>
-    <string name="urgent_due_days_format">Due in %1$d days</string>
     <string name="courses_section_title">Active Courses</string>
     <string name="courses_enrolled_format">%1$d enrolled</string>
-    <string name="weekly_schedule_title">Weekly Schedule</string>
     <string name="no_tasks_for_selected_day">No assignments scheduled for this day</string>
 
     <!-- Tools / Herramientas & Grades -->
@@ -209,34 +164,21 @@
     <string name="herramientas_subtitle">Weighting calculation, simulation, and academic forums</string>
     <string name="herramientas_modules_header">ACTIVE MODULES</string>
     <string name="grades_progreso_title">Course Progress</string>
-    <string name="grades_progreso_desc">Continuous evaluations, grades, and projected targets</string>
     <string name="foros_hub_title">Academic Forums</string>
-    <string name="foros_hub_desc">Ask questions, collaborate, and prepare answers</string>
-    <string name="grades_simulation_title">Grade Simulator (What-If)</string>
-    <string name="grades_simulation_desc">Simulate final grades and evaluation scenarios</string>
-    <string name="current_average_label">Current Average</string>
-    <string name="desired_grade_label">Target Grade</string>
-    <string name="needed_score_label">Needed Score</string>
     <string name="status_good_performance">Good performance</string>
     <string name="status_above_average">Above average</string>
     <string name="status_at_risk">At risk</string>
     <string name="status_unevaluated">Unevaluated</string>
-    <string name="create_group_button">Create Evaluation Group</string>
-    <string name="import_template_button">Import Course Template</string>
 
     <!-- Forums / Foros -->
     <string name="foros_title">Academic Forums</string>
     <string name="foros_subtitle_format">Canvas LMS • %1$d active</string>
-    <string name="foros_syncing">Syncing forums...</string>
     <string name="foros_loading">Loading academic forums from Canvas LMS...</string>
     <string name="foro_detail_title">Forum Detail</string>
     <string name="foros_search_placeholder">Search discussions, topics or instructors...</string>
     <string name="foros_search_empty_query">No discussions found for \'%1$s\'</string>
     <string name="foros_empty_category">No discussions available in this category</string>
     <string name="foros_empty_suggestion">Try changing course or filter to see more discussions.</string>
-    <string name="foros_filter_all">All</string>
-    <string name="foros_filter_unread">Unread</string>
-    <string name="foros_filter_pinned">Pinned</string>
     <string name="foros_clear_search">Clear search</string>
     <string name="foro_due_none">No closing date</string>
     <string name="foro_due_closed">Closed</string>
@@ -250,14 +192,11 @@
     <string name="foro_score_obtained">Score obtained</string>
     <string name="foro_available_to_participate">Available to participate</string>
     <string name="foro_closed_status">Forum closed</string>
-    <string name="no_forums_found">No discussions found</string>
     <string name="foro_reply_placeholder">Write your response here...</string>
-    <string name="foro_send_reply">Send Reply</string>
     <string name="foro_replies_count">%1$d replies</string>
     <string name="foro_author_you">You</string>
     <string name="foro_author_you_role">Your contribution</string>
     <string name="foro_status_responded">Answered</string>
-    <string name="foro_status_pending_reply">Pending reply</string>
 
     <!-- Copilot AI Screen -->
     <string name="copilot_title">Copilot AI</string>
@@ -265,23 +204,12 @@
     <string name="copilot_history_title">Chat History</string>
     <string name="copilot_input_placeholder">Ask anything about your courses, homework, or schedule...</string>
     <string name="copilot_send">Send</string>
-    <string name="copilot_thinking">Thinking...</string>
-    <string name="copilot_hero_title">How can I help you today?</string>
     <string name="copilot_hero_subtitle">Your AI academic copilot with direct Canvas LMS context</string>
-    <string name="copilot_badge_courses">%1$d courses active</string>
-    <string name="copilot_suggestion_summary">Summarize my week\'s urgent deliveries</string>
-    <string name="copilot_suggestion_grades">What do I need to pass my courses?</string>
-    <string name="copilot_suggestion_forums">Draft a reply for my open forum</string>
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Welcome to NotiVas</string>
     <string name="onboarding_welcome_subtitle">Your modern, intelligent, offline-first Canvas LMS assistant</string>
-    <string name="onboarding_start_button">Get Started</string>
-    <string name="onboarding_domain_title">Select your University</string>
     <string name="onboarding_login_sso">Institutional Login</string>
-    <string name="onboarding_login_token">Manual Access Token</string>
-    <string name="onboarding_bg_sync_title">Background Sync &amp; Alerts</string>
-    <string name="onboarding_bg_sync_subtitle">Configure these permissions to receive timely reminders and keep courses synced without opening the app</string>
     <string name="onboarding_battery_title">Unrestricted Battery</string>
     <string name="onboarding_battery_desc">Prevents Android from freezing background sync and suspending reminders when the screen is off</string>
     <string name="onboarding_alarms_title">Exact Alarms &amp; Reminders</string>
@@ -292,10 +220,7 @@
     <string name="onboarding_miui_battery_btn">Battery Saver</string>
     <string name="onboarding_notifications_title">Notifications</string>
     <string name="onboarding_notifications_desc">Receive instant alerts for new grades, announcements, and upcoming deadlines</string>
-    <string name="onboarding_permissions_header">Permissions &amp; Background Sync</string>
-    <string name="onboarding_permissions_subtitle">Configure key permissions to keep your academic schedule and courses always up to date</string>
     <string name="onboarding_token_switch_btn">Manual Token</string>
-    <string name="onboarding_web_switch_btn">Web Login</string>
     <string name="onboarding_domain_input_label">INSTITUTION OR CAMPUS</string>
     <string name="onboarding_domain_input_placeholder">e.g. mycampus</string>
     <string name="onboarding_domain_quick_suggestions">Quick suggestions</string>
@@ -303,8 +228,6 @@
     <string name="onboarding_domain_help">Can\'t find your university domain?</string>
     <string name="permission_status_granted">Configured</string>
     <string name="permission_status_action">Allow</string>
-    <string name="permission_status_granted_label">Granted</string>
-    <string name="permission_status_configure_label">Configure</string>
     <string name="onboarding_finish_btn">Start using NotiVas</string>
 
     <!-- Bento Cards & Herramientas extras -->
@@ -373,12 +296,7 @@
     <string name="unconfigured_banner_desc_single">1 course without weighting or groups</string>
     <string name="unconfigured_banner_desc_multiple">%1$d courses without weighting</string>
     <string name="unconfigured_banner_btn">Configure formulas and groups</string>
-    <string name="urgent_critical_badge">%1$d Critical</string>
-    <string name="urgent_tasks_all_clear">All clear! You have no pending urgent tasks.</string>
-    <string name="urgent_due_overdue">Overdue</string>
-    <string name="urgent_due_within_1h">&lt; 1h</string>
     <string name="urgent_due_hours_format">In %1$dh</string>
-    <string name="urgent_virtual">Virtual</string>
     <string name="course_pending_format">%1$d pending</string>
     <string name="course_up_to_date">On track</string>
 
@@ -433,7 +351,6 @@
     <string name="foro_publish_btn">Post to Canvas</string>
     <string name="foro_publishing">Posting to Canvas...</string>
     <string name="foro_publish_success">Reply posted successfully to Canvas!</string>
-    <string name="foro_publish_empty_error">Cannot post an empty response.</string>
     <string name="foro_replies_recent_header">Recent contributions (%1$d replies)</string>
     <string name="foro_view_all_replies">View all (%1$d)</string>
     <string name="foro_show_less">Show less</string>
@@ -480,31 +397,14 @@
 
     <!-- Assignment Detail & Synchronized Draft Flow -->
     <string name="assignment_detail_title">Assignment Details</string>
-    <string name="assignment_detail_tab_draft">Draft</string>
-    <string name="assignment_detail_tab_instructions">Instructions</string>
     <string name="assignment_detail_tab_options">Options</string>
     <string name="draft_status_card_title">Draft Synchronization</string>
-    <string name="draft_status_ready_desc">Create or link an editable document in Google Drive linked with NotiVas.</string>
-    <string name="draft_btn_start_template_format">Start copy of: %1$s</string>
-    <string name="draft_btn_start_blank">Start Blank Draft</string>
-    <string name="draft_template_detected_badge">Template detected</string>
-    <string name="draft_free_submission_badge">Open submission</string>
-    <string name="draft_syncing_title">Creating in Google Drive...</string>
-    <string name="draft_syncing_step_1">Generating document in your cloud...</string>
-    <string name="draft_syncing_step_2">Saving in folder NotiVas / %1$s</string>
-    <string name="draft_syncing_step_3">Linking file with Canvas LMS...</string>
-    <string name="draft_synced_chip">Draft in progress • Edited just now</string>
     <string name="draft_open_docs_btn">Open in Google Docs</string>
-    <string name="draft_submit_canvas_btn">Submit to Canvas</string>
-    <string name="draft_reset_simulation_btn">Reset state</string>
-    <string name="draft_folder_location">Location: Google Drive / NotiVas / %1$s</string>
     <string name="task_actions_title">Management &amp; Options</string>
     <string name="task_submenu_manage_draft">Manage Draft in Google Drive</string>
     <string name="task_submenu_manage_draft_desc">Create synchronized document or open existing draft</string>
     <string name="task_consigna_title">Instructions &amp; Prompts</string>
     <string name="task_submenu_open_canvas">Open assignment in Canvas LMS</string>
-    <string name="task_submenu_view_rubric">View evaluation rubric</string>
-    <string name="task_submenu_archive">Archive assignment from Dashboard</string>
     <string name="task_submenu_mark_completed">Mark as completed</string>
     <string name="task_submenu_custom_reminder">Custom reminder</string>
     <string name="task_mark_completed_dialog_title">Mark as completed?</string>
@@ -529,15 +429,12 @@
     <string name="foros_loading_groups">Organizing academic forums...</string>
     <string name="task_submenu_share">Share assignment link</string>
     <string name="task_due_label">Due:</string>
-    <string name="task_points_label">Points:</string>
-    <string name="task_submission_types_label">Submission type:</string>
     <string name="task_no_instructions">This assignment does not include additional instructor instructions.</string>
 
     <!-- Google Drive & Drafts Settings -->
     <string name="settings_drive_section_title">Google Drive &amp; Drafts</string>
     <string name="drive_connected_status">Connected</string>
     <string name="drive_disconnected_status">Not linked</string>
-    <string name="drive_privacy_notice">Permission restricted to the NotiVas folder. No access to the rest of your personal files.</string>
     <string name="drive_last_sync_format">Synced %1$s</string>
     <string name="drive_connect_btn">Connect Google Drive</string>
     <string name="drive_unlink_btn">Unlink Account</string>
@@ -547,10 +444,6 @@
     <string name="drive_unlink_dialog_desc">Google Drive credentials will be removed from this device. Cloud documents will not be affected.</string>
     <string name="drive_clear_cache_dialog_title">Clear drafts cache?</string>
     <string name="drive_clear_cache_dialog_desc">Local copies of drafts used by the AI Copilot will be cleared to free up storage. Your documents in Google Drive remain safe.</string>
-    <string name="drive_cache_cleared_toast">Drafts cache cleared successfully.</string>
-    <string name="drive_cache_size_label">Cached drafts: %1$s</string>
-    <string name="onboarding_drive_link_title">Google Drive Integration</string>
-    <string name="onboarding_drive_link_desc">Automatically sync assignment templates and drafts with Google Docs</string>
     <string name="onboarding_drive_link_btn">Link Google Drive Now</string>
     <string name="onboarding_drive_skip_btn">Skip for now</string>
     <string name="drive_auth_error_title">Error linking Google Drive</string>
@@ -576,16 +469,10 @@
     <string name="onboarding_skip_dialog_desc">If you skip this step, NotiVas will operate as follows:\n\n• Grade simulator: Will use an anonymous local backup on this device. Your predicted grades are saved here, but will not sync across other devices or restore if you reinstall.\n\n• Google Drive: Will be disabled. Assignment drafts will not be backed up to the cloud.\n\nYou can link your Google account at any time from Settings.</string>
     <string name="onboarding_skip_dialog_btn_confirm">Understood, continue</string>
     <string name="onboarding_skip_dialog_btn_cancel">Go back and link</string>
-    <string name="task_detail_header_label">TASK DETAIL</string>
-    <string name="canvas_synced_badge">Canvas Synced</string>
-    <string name="canvas_graded_badge">Canvas Graded</string>
     <string name="task_rubric_header">Canvas Rubric Criteria</string>
     <string name="task_rubric_criteria_count">%1$d criteria</string>
     <string name="task_action_save_later">Save for later</string>
-    <string name="task_action_go_to_editor">Go to Editor</string>
     <string name="draft_drive_sync_subtitle">Sync with Google Drive</string>
-    <string name="draft_create_location_format">Will be created in: Google Drive / NotiVas / %1$s</string>
-    <string name="draft_btn_start_template_docx">Start DOCX template copy</string>
     <string name="draft_official_template_subtitle">Canvas LMS official template</string>
     <string name="task_menu_open_canvas">Open in Canvas LMS</string>
     <string name="task_menu_explore_templates">Search template in modules</string>
@@ -608,12 +495,6 @@
     <string name="draft_cancel_action">Cancel</string>
     <string name="draft_preparing_docs">Preparing Docs...</string>
     <string name="draft_btn_send_to_canvas">Submit to Canvas</string>
-    <string name="draft_sync_success">Draft created and synced with Google Drive</string>
-    <string name="draft_sync_error_auth">Google Drive session expired. Please reconnect your account in Settings.</string>
-    <string name="draft_sync_error_download">Could not download Canvas template.</string>
-    <string name="draft_sync_error_general">Error creating document in Google Drive.</string>
-    <string name="draft_btn_open_docs">Open in Docs</string>
-    <string name="draft_btn_cancel_sync">Cancel synchronization</string>
     <string name="task_rubric_empty">This assignment does not have an associated grading rubric configured by the teacher.</string>
 
     <!-- Task History & Archive -->
@@ -650,9 +531,6 @@
     <string name="archive_empty_submitted">No submitted assignments found.</string>
     <string name="archive_empty_discarded">No discarded assignments in archive.</string>
     <string name="archive_empty_expired">No expired assignments.</string>
-    <string name="archive_trash_cleared">Trash emptied successfully.</string>
-    <string name="archive_pdf_exported">Report exported to downloads.</string>
-    <string name="archive_restored_to_pending">Assignment restored to pending.</string>
 
     <!-- Recent Activity & Submissions Screen -->
     <string name="recent_activity_title">Recent Activity</string>
@@ -680,7 +558,6 @@
     <string name="dashboard_see_performance">See your performance</string>
     <string name="dashboard_performance_status">+3.45% this month</string>
     <string name="dashboard_check_now">Check now</string>
-    <string name="dashboard_projects_section">Projects &amp; Courses</string>
     <string name="dashboard_todays_tasks_section">Today\'s tasks</string>
     <string name="dashboard_see_all">See all</string>
     <string name="dashboard_no_tasks_today">No tasks scheduled for today</string>
@@ -699,43 +576,17 @@
 
     <!-- Course Detail Screen (Stitch Redesign) -->
     <string name="course_detail_screen_title">Course Detail</string>
-    <string name="course_detail_modules_header">CANVAS MODULES</string>
     <string name="course_detail_learning_path">Learning Path</string>
-    <string name="course_detail_services_header">Services &amp; Connections</string>
     <string name="course_detail_stat_promedio">Average</string>
     <string name="course_detail_stat_avance">Progress</string>
     <string name="course_detail_stat_modulos">Modules</string>
     <string name="course_detail_deliverables_format">%1$d of %2$d deliverables ready</string>
     <string name="course_detail_percent_completed_format">%1$d%% completed</string>
-    <string name="course_detail_item_completed">Completed</string>
-    <string name="course_detail_item_pending">Pending submission</string>
-    <string name="course_detail_item_due_format">Due %1$s</string>
-    <string name="course_detail_announcements_title">Announcements Board</string>
-    <string name="course_detail_unread_format">%1$d unread</string>
-    <string name="course_detail_coach_title">Tecsup Coach</string>
-    <string name="course_detail_coach_badge">AI Coach</string>
-    <string name="course_detail_coach_action">Consult tutoring</string>
-    <string name="course_detail_coach_default_tip">Review unit guidelines and ask if you have questions before submitting.</string>
-    <string name="course_detail_peers_title">Classmates &amp; Instructors</string>
-    <string name="course_detail_students_badge">%1$d Students</string>
-    <string name="course_detail_peers_action">Open directory</string>
-    <string name="course_detail_syllabus_title">Course Syllabus &amp; Progress</string>
-    <string name="course_detail_syllabus_badge">Grading</string>
-    <string name="course_detail_syllabus_desc">Exit competencies, grade weights and milestone schedule.</string>
-    <string name="course_detail_syllabus_action">View document</string>
     <string name="course_detail_empty_modules">No modules available for this course.</string>
-    <string name="course_detail_no_announcements">No recent announcements in this course.</string>
     <string name="course_modules_screen_title">Modules</string>
     <string name="course_detail_view_all_modules">View all modules (%1$d)</string>
-    <string name="course_module_section_before_class">Before class</string>
-    <string name="course_module_section_during_class">During class</string>
-    <string name="course_module_section_after_class">After class</string>
-    <string name="course_module_section_resources">Additional resources</string>
-    <string name="course_module_points_format">%1$s pts</string>
     <string name="course_module_locked_status">Locked</string>
     <string name="course_module_unlocks_at">Unlocks on %1$s</string>
-    <string name="assignment_graded_format">Graded %1$s</string>
-    <string name="assignment_not_graded">Not graded</string>
     <string name="assignment_submission_tab_upload">Upload file</string>
     <string name="assignment_submission_tab_drive">Drive draft</string>
     <string name="assignment_submission_tab_text">Text entry</string>
@@ -748,18 +599,11 @@
     <string name="assignment_submission_comment_hint">Comments for instructor (optional)</string>
     <string name="assignment_submission_submit_action">Submit assignment</string>
     <string name="assignment_submission_submitting">Submitting...</string>
-    <string name="assignment_submission_success">Assignment submitted successfully</string>
-    <string name="assignment_submission_file_selected">%1$s selected</string>
-    <string name="assignment_submission_no_file_error">Please select a file to submit</string>
-    <string name="assignment_submission_empty_text_error">Please enter text to submit</string>
     <string name="assignment_submission_card_title">Assignment Submission</string>
     <string name="assignment_submission_status_submitted">Submitted</string>
     <string name="assignment_submission_resubmit_action">Resubmit assignment</string>
-    <string name="assignment_submission_unsupported_hint">This assignment does not accept online submissions or is handled externally.</string>
     <string name="assignment_submission_formats_hint">PDF, DOCX, ZIP, code or multimedia</string>
-    <string name="assignment_submission_allowed_formats_label">Allowed formats: %1$s</string>
     <string name="assignment_submission_required_format">Required format: %1$s</string>
-    <string name="assignment_submission_invalid_format_error">Invalid file format. Only %1$s files are accepted</string>
     <string name="assignment_submission_view_file">View</string>
     <string name="assignment_submission_download_file">Download</string>
     <string name="assignment_submission_submitted_file_title">Submitted file</string>
@@ -813,10 +657,7 @@
     <string name="performance_lowest_score">Lowest grade</string>
     <string name="performance_courses_breakdown">Course Breakdown</string>
     <string name="performance_no_tasks_day">No deliverables scheduled for this day</string>
-    <string name="performance_prev_week">Previous week</string>
-    <string name="performance_next_week">Next week</string>
     <string name="performance_current_week">Current week</string>
-    <string name="performance_day_tasks_title">Tasks for the day</string>
     <string name="performance_average_label">Real Average</string>
     <string name="performance_average_scale">/ 20</string>
     <string name="performance_heatmap_title">Deliverables Calendar</string>
@@ -857,7 +698,6 @@
     <string name="dashboard_unreviewed_grades_desc">%1$d assignment(s) in %2$d course(s) are over 7 days overdue for grading. Tap to view details and simulate your grade.</string>
     <string name="dashboard_unreviewed_grades_badge">Unreviewed (+7d)</string>
     <string name="course_unreviewed_format">%d unreviewed (+7d)</string>
-    <string name="unreviewed_evaluations_title">Awaiting instructor grading</string>
     <string name="unreviewed_evaluations_count_format">View %d unreviewed assessments (+7d)</string>
     <string name="unreviewed_evaluations_desc">Activities whose due date passed over 7 days ago but the instructor has not yet recorded the score in Canvas.</string>
     <string name="unreviewed_days_overdue_format">Due %d days ago</string>

@@ -98,7 +98,6 @@ fun InicioScreen(
     val weeklyDayBlocks by viewModel.weeklyDayBlocks.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
     val institutionName by viewModel.institutionName.collectAsState()
-    val selectedAssignmentForDraft by viewModel.selectedAssignmentForDraft.collectAsState()
     val discussions by viewModel.discussions.collectAsState()
     val isSessionExpired by viewModel.isSessionExpired.collectAsState()
     val showQuickRelogin by viewModel.showQuickRelogin.collectAsState()
