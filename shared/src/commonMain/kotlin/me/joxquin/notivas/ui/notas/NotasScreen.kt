@@ -1,12 +1,7 @@
 package me.joxquin.notivas.ui.notas
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,18 +12,23 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,31 +50,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
-import me.joxquin.notivas.data.model.SimulationGroup
-import me.joxquin.notivas.data.model.SimulationItem
-import me.joxquin.notivas.ui.components.BackHandler
-import me.joxquin.notivas.ui.notas.components.AddAssignmentDialog
-import me.joxquin.notivas.ui.notas.components.CreateGroupBottomSheet
-import me.joxquin.notivas.ui.notas.components.EditGroupDialog
-import me.joxquin.notivas.ui.notas.components.GruposPorcentajeCard
-import me.joxquin.notivas.ui.notas.components.HeroSummaryCard
-import me.joxquin.notivas.ui.notas.components.ImportTemplateDialog
-import me.joxquin.notivas.ui.notas.components.LinkPlaceholderDialog
-import me.joxquin.notivas.ui.notas.components.NotasHeaderSection
 import me.joxquin.notivas.shared.resources.*
-import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
-import top.yukonga.miuix.kmp.basic.VerticalScrollBar
-import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
+import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
+import me.joxquin.notivas.ui.notas.components.CopilotGroupAnalysisSheet
+import me.joxquin.notivas.ui.notas.components.CreateGroupBottomSheet
+import me.joxquin.notivas.ui.notas.components.EmptyGruposState
+import me.joxquin.notivas.ui.notas.components.GroupCreationChoiceBottomSheet
+import me.joxquin.notivas.ui.notas.components.HeroSummaryCard
+import me.joxquin.notivas.ui.notas.components.ImportTemplateDialog
+import me.joxquin.notivas.ui.notas.components.NotasHeaderSection
+import me.joxquin.notivas.ui.notas.components.SimulationGroupSummaryCard
+import org.jetbrains.compose.resources.stringResource
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
+import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,23 +84,78 @@ fun NotasScreen(
     viewModel: NotasViewModel,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     lazyListState: LazyListState = rememberLazyListState(),
+    onOpenGroupDetail: (groupId: Long, courseId: Long) -> Unit = { _, _ -> },
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     BackHandler(enabled = false, onBack = onBack)
 
     val uiState by viewModel.uiState.collectAsState()
-    var showImportTemplateDialog by remember { mutableStateOf(false) }
-    var showCreateGroupBottomSheet by remember { mutableStateOf(false) }
-    var selectedGroupForAddAssignment by remember { mutableStateOf<SimulationGroup?>(null) }
-    var selectedGroupForEdit by remember { mutableStateOf<SimulationGroup?>(null) }
-    var selectedItemForLink by remember { mutableStateOf<SimulationItem?>(null) }
+    val activeCourse = uiState.selectedCourse
+
+    var showCreationChoiceSheet by remember { mutableStateOf(false) }
+    var showManualCreateBottomSheet by remember { mutableStateOf(false) }
+    var showGitHubImportDialog by remember { mutableStateOf(false) }
+    var showCopilotAnalysisSheet by remember { mutableStateOf(false) }
 
     val isScrolled by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 40
         }
     }
+
+    // Modal de selección de método de creación
+    if (showCreationChoiceSheet) {
+        GroupCreationChoiceBottomSheet(
+            onDismiss = { showCreationChoiceSheet = false },
+            onSelectManual = { showManualCreateBottomSheet = true },
+            onSelectGitHub = { showGitHubImportDialog = true },
+            onSelectCopilot = { showCopilotAnalysisSheet = true },
+            themeStyle = themeStyle
+        )
+    }
+
+    // Creación manual
+    if (showManualCreateBottomSheet) {
+        CreateGroupBottomSheet(
+            currentTotalWeight = uiState.totalConfiguredWeight,
+            themeStyle = themeStyle,
+            onDismiss = { showManualCreateBottomSheet = false },
+            onSave = { name, weight, targetAssessments, dropLowest, minToDrop ->
+                viewModel.createGroupWithItems(name, weight, targetAssessments, dropLowest, minToDrop)
+                showManualCreateBottomSheet = false
+            }
+        )
+    }
+
+    // Importación de plantillas desde GitHub
+    if (showGitHubImportDialog) {
+        ImportTemplateDialog(
+            onDismiss = { showGitHubImportDialog = false },
+            showApplyToAllToggle = true,
+            onApplyTemplate = { template, applyToAll ->
+                if (applyToAll) {
+                    viewModel.applyTemplateToAllCourses(template)
+                } else {
+                    viewModel.applyTemplate(template)
+                }
+                showGitHubImportDialog = false
+            }
+        )
+    }
+
+    // Generación con IA Copilot
+    if (showCopilotAnalysisSheet && activeCourse != null) {
+        CopilotGroupAnalysisSheet(
+            course = activeCourse,
+            viewModel = viewModel,
+            themeStyle = themeStyle,
+            onDismiss = { showCopilotAnalysisSheet = false },
+            onGroupsApplied = { showCopilotAnalysisSheet = false }
+        )
+    }
+
+    val totalWeight = uiState.totalConfiguredWeight.roundToInt()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val backdrop = rememberMiuixBlurBackdrop()
@@ -114,9 +171,7 @@ fun NotasScreen(
                         title = stringResource(Res.string.grades_progreso_title),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                backdrop = backdrop
-                            ) {
+                            MiuixGlassyActionsContainer(backdrop = backdrop) {
                                 BackNavigationIcon(onClick = onBack)
                             }
                         }
@@ -128,6 +183,8 @@ fun NotasScreen(
             val contentPadding = miuixPageContentPadding(
                 innerPadding = innerPadding,
                 extraTop = 8.dp,
+                extraStart = 0.dp,
+                extraEnd = 0.dp,
                 extraBottom = 24.dp
             )
             Box(
@@ -144,66 +201,90 @@ fun NotasScreen(
                     contentPadding = contentPadding,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                        // ─── 1. Selector de Curso Dropdown ──────────────────────────────
-                        item {
-                            NotasHeaderSection(
-                                courses = uiState.courses,
-                                selectedCourse = uiState.selectedCourse,
-                                onCourseSelect = { viewModel.selectCourse(it) },
-                                themeStyle = themeStyle
-                            )
-                        }
+                    // ─── 1. Selector de Curso Dropdown ──────────────────────────────
+                    item {
+                        NotasHeaderSection(
+                            courses = uiState.courses,
+                            selectedCourse = uiState.selectedCourse,
+                            onCourseSelect = { viewModel.selectCourse(it) },
+                            themeStyle = themeStyle
+                        )
+                    }
 
-                        // ─── 2. Resumen Hero Académico & Evaluaciones Calificadas ───────
-                        item {
-                            HeroSummaryCard(
-                                currentAverage = uiState.currentAverage,
-                                progressRatio = uiState.evaluatedProgressRatio,
-                                riskLevel = uiState.riskLevel,
-                                projectedGrade = uiState.projectedFinalGrade,
-                                gradedEvaluations = uiState.evaluations.filter { it.isGraded },
-                                unreviewedEvaluations = uiState.unreviewedEvaluations,
-                                onToggleOfflineGroup = { viewModel.toggleOfflineGroupAssignment(it) },
-                                onSimulateScore = { id, score -> viewModel.setUnreviewedSimulatedScore(id, score) },
-                                themeStyle = themeStyle
-                            )
-                        }
+                    // ─── 2. Resumen Hero Académico ──────────────────────────────────
+                    item {
+                        HeroSummaryCard(
+                            currentAverage = uiState.currentAverage,
+                            progressRatio = uiState.evaluatedProgressRatio,
+                            riskLevel = uiState.riskLevel,
+                            projectedGrade = uiState.projectedFinalGrade,
+                            themeStyle = themeStyle
+                        )
+                    }
 
-                        // ─── 3. Grupos y Porcentaje (Simulador Ponderado) ───────────────
-                        item {
-                            GruposPorcentajeCard(
-                                simulationGroups = uiState.simulationGroups,
-                                totalConfiguredWeight = uiState.totalConfiguredWeight,
-                                onAddGroup = { showCreateGroupBottomSheet = true },
-                                onAddItem = { groupId ->
-                                    selectedGroupForAddAssignment = uiState.simulationGroups.find { it.group.id == groupId }?.group
-                                },
-                                onEditGroup = { group -> selectedGroupForEdit = group },
-                                onUpdateItemScore = { id, score -> viewModel.updateSimulationItemScore(id, score) },
-                                onDeleteGroup = { viewModel.deleteSimulationGroup(it) },
-                                onDeleteItem = { viewModel.deleteSimulationItem(it) },
-                                onLinkPlaceholder = { item -> selectedItemForLink = item },
-                                onImportTemplateClick = { showImportTemplateDialog = true },
-                                themeStyle = themeStyle
-                            )
-                        }
-
-                        item {
-                            Spacer(Modifier.height(16.dp))
+                    // ─── 3. Header de Grupos de Evaluación ──────────────────────────
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                SmallTitle(text = stringResource(Res.string.groups_section_title))
+                                Text(
+                                    text = stringResource(Res.string.groups_total_weight_format, totalWeight),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (totalWeight == 100) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                )
+                            }
+                            if (uiState.simulationGroups.isNotEmpty()) {
+                                TextButton(
+                                    text = stringResource(Res.string.groups_add_group_btn),
+                                    onClick = { showCreationChoiceSheet = true },
+                                    colors = ButtonDefaults.textButtonColorsPrimary()
+                                )
+                            }
                         }
                     }
 
-                    VerticalScrollBar(
-                        adapter = rememberScrollBarAdapter(lazyListState),
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(
-                                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
-                                bottom = 24.dp
+                    // ─── 4. Lista de Grupos de Evaluación ───────────────────────────
+                    if (uiState.simulationGroups.isEmpty()) {
+                        item {
+                            EmptyGruposState(
+                                onAddGroup = { showCreationChoiceSheet = true },
+                                themeStyle = themeStyle
                             )
-                    )
+                        }
+                    } else {
+                        items(uiState.simulationGroups, key = { it.group.id }) { groupModel ->
+                            val currentCourseId = activeCourse?.id ?: groupModel.group.courseId
+                            SimulationGroupSummaryCard(
+                                groupModel = groupModel,
+                                onClick = { onOpenGroupDetail(groupModel.group.id, currentCourseId) },
+                                themeStyle = themeStyle
+                            )
+                        }
+                    }
+
+                    item {
+                        Spacer(Modifier.height(16.dp))
+                    }
                 }
+
+                VerticalScrollBar(
+                    adapter = rememberScrollBarAdapter(lazyListState),
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(
+                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 68.dp,
+                            bottom = 24.dp
+                        )
+                )
             }
+        }
     } else {
         val topAppBarContainerColor by animateColorAsState(
             targetValue = if (isScrolled) {
@@ -291,38 +372,68 @@ fun NotasScreen(
                     )
                 }
 
-                // ─── 2. Resumen Hero Académico & Evaluaciones Calificadas ───────
+                // ─── 2. Resumen Hero Académico ──────────────────────────────────
                 item {
                     HeroSummaryCard(
                         currentAverage = uiState.currentAverage,
                         progressRatio = uiState.evaluatedProgressRatio,
                         riskLevel = uiState.riskLevel,
                         projectedGrade = uiState.projectedFinalGrade,
-                        gradedEvaluations = uiState.evaluations.filter { it.isGraded },
-                        unreviewedEvaluations = uiState.unreviewedEvaluations,
-                        onToggleOfflineGroup = { viewModel.toggleOfflineGroupAssignment(it) },
-                        onSimulateScore = { id, score -> viewModel.setUnreviewedSimulatedScore(id, score) },
                         themeStyle = themeStyle
                     )
                 }
 
-                // ─── 3. Grupos y Porcentaje (Simulador Ponderado) ───────────────
+                // ─── 3. Header de Grupos de Evaluación ──────────────────────────
                 item {
-                    GruposPorcentajeCard(
-                        simulationGroups = uiState.simulationGroups,
-                        totalConfiguredWeight = uiState.totalConfiguredWeight,
-                        onAddGroup = { showCreateGroupBottomSheet = true },
-                        onAddItem = { groupId ->
-                            selectedGroupForAddAssignment = uiState.simulationGroups.find { it.group.id == groupId }?.group
-                        },
-                        onEditGroup = { group -> selectedGroupForEdit = group },
-                        onUpdateItemScore = { id, score -> viewModel.updateSimulationItemScore(id, score) },
-                        onDeleteGroup = { viewModel.deleteSimulationGroup(it) },
-                        onDeleteItem = { viewModel.deleteSimulationItem(it) },
-                        onLinkPlaceholder = { item -> selectedItemForLink = item },
-                        onImportTemplateClick = { showImportTemplateDialog = true },
-                        themeStyle = themeStyle
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = stringResource(Res.string.groups_section_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = stringResource(Res.string.groups_total_weight_format, totalWeight),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (totalWeight == 100) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (uiState.simulationGroups.isNotEmpty()) {
+                            FilledTonalButton(
+                                onClick = { showCreationChoiceSheet = true },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.size(6.dp))
+                                Text(stringResource(Res.string.groups_add_group_btn))
+                            }
+                        }
+                    }
+                }
+
+                // ─── 4. Lista de Grupos de Evaluación ───────────────────────────
+                if (uiState.simulationGroups.isEmpty()) {
+                    item {
+                        EmptyGruposState(
+                            onAddGroup = { showCreationChoiceSheet = true },
+                            themeStyle = themeStyle
+                        )
+                    }
+                } else {
+                    items(uiState.simulationGroups, key = { it.group.id }) { groupModel ->
+                        val currentCourseId = activeCourse?.id ?: groupModel.group.courseId
+                        SimulationGroupSummaryCard(
+                            groupModel = groupModel,
+                            onClick = { onOpenGroupDetail(groupModel.group.id, currentCourseId) },
+                            themeStyle = themeStyle
+                        )
+                    }
                 }
 
                 item {
@@ -330,73 +441,5 @@ fun NotasScreen(
                 }
             }
         }
-    }
-
-    // ─── Modals and Dialogs ──────────────────────────────────────────────────
-
-    if (showImportTemplateDialog) {
-        ImportTemplateDialog(
-            onDismiss = { showImportTemplateDialog = false },
-            showApplyToAllToggle = true,
-            onApplyTemplate = { template, applyToAll ->
-                if (applyToAll) {
-                    viewModel.applyTemplateToAllCourses(template)
-                } else {
-                    viewModel.applyTemplate(template)
-                }
-                showImportTemplateDialog = false
-            }
-        )
-    }
-
-    if (showCreateGroupBottomSheet) {
-        CreateGroupBottomSheet(
-            currentTotalWeight = uiState.totalConfiguredWeight,
-            onDismiss = { showCreateGroupBottomSheet = false },
-            onSave = { name, weight, target, drop, minDrop ->
-                viewModel.createGroupWithItems(name, weight, target, drop, minDrop)
-                showCreateGroupBottomSheet = false
-            }
-        )
-    }
-
-    selectedGroupForAddAssignment?.let { group ->
-        AddAssignmentDialog(
-            groupName = group.name,
-            availableAssignments = uiState.availableCourseAssignments,
-            onDismiss = { selectedGroupForAddAssignment = null },
-            onAddExisting = { assignment ->
-                viewModel.addExistingAssignmentToGroup(group.id, assignment)
-                selectedGroupForAddAssignment = null
-            },
-            onAddPlaceholder = { name, score ->
-                viewModel.addPlaceholderItemToGroup(group.id, name, score)
-                selectedGroupForAddAssignment = null
-            }
-        )
-    }
-
-    selectedGroupForEdit?.let { group ->
-        EditGroupDialog(
-            group = group,
-            onDismiss = { selectedGroupForEdit = null },
-            onConfirm = { updated ->
-                viewModel.updateSimulationGroup(updated)
-                selectedGroupForEdit = null
-            }
-        )
-    }
-
-    selectedItemForLink?.let { item ->
-        LinkPlaceholderDialog(
-            placeholderItem = item,
-            availableAssignments = uiState.availableCourseAssignments,
-            onDismiss = { selectedItemForLink = null },
-            onLink = { assignment ->
-                val rawScore = assignment.score?.toFloat() ?: assignment.submission?.score?.toFloat()
-                viewModel.linkSimulationItem(item.id, assignment.id, assignment.name, rawScore)
-                selectedItemForLink = null
-            }
-        )
     }
 }

@@ -110,6 +110,7 @@ import me.joxquin.notivas.ui.navigation.NotificationNavTarget
 import top.yukonga.miuix.kmp.basic.SnackbarHost
 import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import me.joxquin.notivas.ui.notas.NotasScreen
+import me.joxquin.notivas.ui.notas.detail.SimulationGroupDetailScreen
 import me.joxquin.notivas.ui.foros.ForosScreen
 import me.joxquin.notivas.ui.activity.RecentActivityScreen
 import me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen
@@ -557,6 +558,9 @@ fun MainAppShell(
                                                 dashboardViewModel.openDraft(assignmentUi)
                                                 miuixNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
                                             },
+                                            onOpenGroupDetail = { gid, cid ->
+                                                miuixNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
+                                            },
                                             onOpenTuneSettings = { showHerramientasTuneSheet = true },
                                             onBack = {},
                                             themeStyle = AppThemeStyle.MIUIX,
@@ -785,6 +789,16 @@ fun MainAppShell(
                     )
                 }
 
+                entry<MiuixRoute.SimulationGroupDetail>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.SimulationGroupDetail ->
+                    SimulationGroupDetailScreen(
+                        groupId = route.groupId,
+                        courseId = route.courseId,
+                        viewModel = notasViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
                 entry<MiuixRoute.CourseProgreso>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.CourseProgreso ->
                     LaunchedEffect(route.courseId) {
                         if (route.courseId != 0L && notasViewModel.uiState.value.selectedCourse?.id != route.courseId) {
@@ -797,6 +811,9 @@ fun MainAppShell(
                     NotasScreen(
                         viewModel = notasViewModel,
                         themeStyle = AppThemeStyle.MIUIX,
+                        onOpenGroupDetail = { groupId, courseId ->
+                            miuixNavigator.push(MiuixRoute.SimulationGroupDetail(groupId, courseId))
+                        },
                         onBack = { handleMiuixBack() }
                     )
                 }
@@ -1263,6 +1280,9 @@ fun MainAppShell(
                                                 dashboardViewModel.openDraft(assignmentUi)
                                                 materialNavigator.push(MiuixRoute.AssignmentDraft(assignment.id, courseName))
                                             },
+                                            onOpenGroupDetail = { gid, cid ->
+                                                materialNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
+                                            },
                                             onOpenTuneSettings = { showHerramientasTuneSheet = true },
                                             onOpenCatalogImport = { showCatalogImportDialog = true },
                                             onImportJsonClick = { filePicker.launchFilePicker() },
@@ -1466,6 +1486,16 @@ fun MainAppShell(
                     )
                 }
 
+                entry<MiuixRoute.SimulationGroupDetail>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.SimulationGroupDetail ->
+                    SimulationGroupDetailScreen(
+                        groupId = route.groupId,
+                        courseId = route.courseId,
+                        viewModel = notasViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
                 entry<MiuixRoute.CourseProgreso>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.CourseProgreso ->
                     LaunchedEffect(route.courseId) {
                         if (route.courseId != 0L && notasViewModel.uiState.value.selectedCourse?.id != route.courseId) {
@@ -1478,6 +1508,9 @@ fun MainAppShell(
                     NotasScreen(
                         viewModel = notasViewModel,
                         themeStyle = AppThemeStyle.MATERIAL,
+                        onOpenGroupDetail = { groupId, courseId ->
+                            materialNavigator.push(MiuixRoute.SimulationGroupDetail(groupId, courseId))
+                        },
                         onBack = { handleMaterialBack() }
                     )
                 }

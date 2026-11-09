@@ -48,6 +48,7 @@ fun HerramientasScreen(
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenArchive: () -> Unit = {},
     onOpenAssignmentDetail: ((me.joxquin.notivas.data.model.Assignment) -> Unit)? = null,
+    onOpenGroupDetail: ((Long, Long) -> Unit)? = null,
     onOpenTuneSettings: () -> Unit = {},
     onOpenCatalogImport: () -> Unit = {},
     onImportJsonClick: () -> Unit = {},
@@ -143,6 +144,7 @@ fun HerramientasScreen(
                         viewModel = viewModel,
                         themeStyle = themeStyle,
                         lazyListState = lazyListState,
+                        onOpenGroupDetail = { gid, cid -> onOpenGroupDetail?.invoke(gid, cid) },
                         onBack = onBack
                     )
                 }

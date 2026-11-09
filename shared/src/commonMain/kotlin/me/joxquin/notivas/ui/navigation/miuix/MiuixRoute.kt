@@ -29,6 +29,12 @@ sealed interface MiuixRoute : NavKey {
     data class CourseProgreso(val courseId: Long) : MiuixRoute
 
     @Serializable
+    data class SimulationGroupDetail(
+        val groupId: Long,
+        val courseId: Long
+    ) : MiuixRoute
+
+    @Serializable
     data object ForosHub : MiuixRoute
 
     @Serializable

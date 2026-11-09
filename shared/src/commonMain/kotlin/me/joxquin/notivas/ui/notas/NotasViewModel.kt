@@ -17,9 +17,39 @@ import me.joxquin.notivas.data.model.SimulationGroup
 import me.joxquin.notivas.data.model.SimulationGroupWithItems
 import me.joxquin.notivas.data.model.SimulationItem
 import me.joxquin.notivas.data.repository.CanvasRepository
+import me.joxquin.notivas.data.repository.CopilotRepository
+import me.joxquin.notivas.data.model.OpenRouterMessage
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.di.AppModule
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.longOrNull
 import kotlin.math.roundToInt
+
+@Serializable
+data class CopilotProposedItem(
+    val name: String,
+    val maxScore: Float = 20f,
+    val canvasAssignmentId: Long? = null
+)
+
+@Serializable
+data class CopilotProposedGroup(
+    val name: String,
+    val weightPercentage: Float,
+    val items: List<CopilotProposedItem> = emptyList()
+)
+
+@Serializable
+data class CopilotAnalysisResult(
+    val groups: List<CopilotProposedGroup> = emptyList(),
+    val reasoning: String = ""
+)
 
 data class SimEvaluation(
     val id: Long,
@@ -69,7 +99,8 @@ data class NotasUiState(
 
 class NotasViewModel(
     private val repository: CanvasRepository,
-    private val preferencesManager: PreferencesManager = AppModule.preferencesManager
+    private val preferencesManager: PreferencesManager = AppModule.preferencesManager,
+    private val copilotRepository: CopilotRepository = AppModule.copilotRepository
 ) : ViewModel() {
 
     private val _selectedCourse = MutableStateFlow<Course?>(null)
@@ -396,5 +427,247 @@ class NotasViewModel(
         viewModelScope.launch {
             repository.deleteSimulationItem(item)
         }
+    }
+
+    fun applyCopilotProposedGroups(courseId: Long, groups: List<CopilotProposedGroup>) {
+        viewModelScope.launch {
+            groups.forEachIndexed { groupIdx, proposed ->
+                val group = SimulationGroup(
+                    courseId = courseId,
+                    name = proposed.name,
+                    weightPercentage = proposed.weightPercentage,
+                    targetAssessments = proposed.items.size.coerceAtLeast(1),
+                    orderIndex = groupIdx
+                )
+                val items = proposed.items.mapIndexed { idx, itm ->
+                    SimulationItem(
+                        groupId = 0L,
+                        canvasAssignmentId = itm.canvasAssignmentId,
+                        name = itm.name,
+                        isPlaceholder = itm.canvasAssignmentId == null,
+                        simulatedScore = 15f,
+                        isSimulated = false,
+                        maxScore = itm.maxScore,
+                        orderIndex = idx
+                    )
+                }
+                repository.createGroupWithItems(group, items)
+            }
+        }
+    }
+
+    fun analyzeCourseWithCopilot(
+        courseId: Long,
+        userPromptOverride: String? = null,
+        onSuccess: (CopilotAnalysisResult) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val activeCourse = uiState.value.courses.find { it.id == courseId } ?: getTargetCourse()
+                val courseName = activeCourse?.name ?: "Curso"
+                val courseAssignments = repository.getAssignmentsForCourse(courseId).firstOrNull() ?: emptyList()
+
+                val assignmentSummaries = courseAssignments.joinToString("\n") { 
+                    "- ID: ${it.id}, Nombre: \"${it.name}\", Puntos: ${it.pointsPossible ?: 20.0}" 
+                }
+
+                val prompt = buildString {
+                    append("Eres un asistente universitario experto. Analiza las siguientes evaluaciones del curso '")
+                    append(courseName)
+                    append("' y organízalas en grupos de evaluación académicos lógicos (ej. Evaluaciones Continuas, Examen Parcial, Examen Final, Laboratorios o Proyectos).\n")
+                    if (!userPromptOverride.isNullOrBlank()) {
+                        append("Requerimientos e instrucciones específicas del estudiante:\n\"")
+                        append(userPromptOverride.trim())
+                        append("\"\n")
+                    }
+                    append("Reglas estrictas:\n")
+                    append("1. Las ponderaciones de los grupos deben sumar exactamente 100.0%.\n")
+                    append("2. Incluye las evaluaciones encontradas de Canvas LMS dentro de sus respectivos grupos con su nombre y canvas_assignment_id.\n")
+                    append("3. En el campo 'reasoning', explica de forma clara, concisa y profesional tu criterio académico y por qué decidiste agrupar y ponderar las evaluaciones de esta manera.\n")
+                    append("4. Responde únicamente con un objeto JSON válido con la siguiente estructura, sin texto adicional ni bloques explicativos fuera del JSON:\n")
+                    append("{\"reasoning\": \"Breve justificación del criterio de ponderación y agrupación\", \"groups\": [{\"name\": \"Nombre Grupo\", \"weight\": 30.0, \"items\": [{\"name\": \"Tarea 1\", \"max_score\": 20.0, \"canvas_assignment_id\": 12345}]}]}")
+                    if (assignmentSummaries.isNotBlank()) {
+                        append("\n\nTareas encontradas en Canvas LMS:\n")
+                        append(assignmentSummaries)
+                    }
+                }
+
+                val result = copilotRepository.queryCopilot(
+                    history = emptyList(),
+                    userPrompt = prompt,
+                    selectedCourseId = courseId
+                )
+
+                val reply = result.getOrNull()?.reply.orEmpty()
+                val parsedResult = if (reply.isNotBlank()) parseCopilotGroupsJson(reply, courseAssignments) else null
+                if (parsedResult != null && parsedResult.groups.isNotEmpty()) {
+                    onSuccess(parsedResult)
+                } else {
+                    val fallback = generateHeuristicGroups(courseName, courseAssignments)
+                    onSuccess(fallback)
+                }
+            } catch (_: Exception) {
+                val activeCourse = uiState.value.courses.find { it.id == courseId }
+                val fallback = generateHeuristicGroups(activeCourse?.name ?: "Curso", emptyList())
+                onSuccess(fallback)
+            }
+        }
+    }
+
+    private fun parseCopilotGroupsJson(
+        reply: String,
+        availableAssignments: List<Assignment>
+    ): CopilotAnalysisResult? {
+        return try {
+            val cleanJson = reply
+                .substringAfter("```json")
+                .substringBefore("```")
+                .trim()
+                .ifEmpty { reply.trim() }
+
+            val jsonElement = Json.parseToJsonElement(cleanJson)
+            val jsonObject = jsonElement.jsonObject
+            val reasoning = jsonObject["reasoning"]?.jsonPrimitive?.content.orEmpty()
+            val groupsArray = jsonObject["groups"]?.jsonArray ?: return null
+
+            var totalWeight = 0f
+            val groups = groupsArray.mapNotNull { gObj ->
+                val obj = gObj.jsonObject
+                val name = obj["name"]?.jsonPrimitive?.content ?: return@mapNotNull null
+                val weight = obj["weight"]?.jsonPrimitive?.doubleOrNull?.toFloat() ?: 0f
+                val itemsArray = obj["items"]?.jsonArray ?: kotlinx.serialization.json.JsonArray(emptyList())
+
+                val items = itemsArray.mapNotNull { iObj ->
+                    val itm = iObj.jsonObject
+                    val itmName = itm["name"]?.jsonPrimitive?.content ?: return@mapNotNull null
+                    val maxScore = itm["max_score"]?.jsonPrimitive?.doubleOrNull?.toFloat() ?: 20f
+                    val canvasId = itm["canvas_assignment_id"]?.jsonPrimitive?.longOrNull
+                    CopilotProposedItem(
+                        name = itmName,
+                        maxScore = maxScore,
+                        canvasAssignmentId = canvasId
+                    )
+                }
+
+                totalWeight += weight
+                CopilotProposedGroup(
+                    name = name,
+                    weightPercentage = weight,
+                    items = items
+                )
+            }
+
+            if (groups.isNotEmpty()) {
+                val normalizedGroups = if (kotlin.math.abs(totalWeight - 100f) > 0.5f && totalWeight > 0f) {
+                    val factor = 100f / totalWeight
+                    groups.map { it.copy(weightPercentage = (it.weightPercentage * factor * 10f).roundToInt() / 10f) }
+                } else {
+                    groups
+                }
+                CopilotAnalysisResult(groups = normalizedGroups, reasoning = reasoning)
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun generateHeuristicGroups(
+        courseName: String,
+        assignments: List<Assignment>
+    ): CopilotAnalysisResult {
+        if (assignments.isEmpty()) {
+            return CopilotAnalysisResult(
+                groups = listOf(
+                    CopilotProposedGroup(
+                        name = "Evaluación Continua",
+                        weightPercentage = 40f,
+                        items = listOf(
+                            CopilotProposedItem("Práctica Calificada 1", 20f),
+                            CopilotProposedItem("Práctica Calificada 2", 20f),
+                            CopilotProposedItem("Trabajo Grupal", 20f)
+                        )
+                    ),
+                    CopilotProposedGroup(
+                        name = "Examen Parcial",
+                        weightPercentage = 25f,
+                        items = listOf(CopilotProposedItem("Examen Parcial", 20f))
+                    ),
+                    CopilotProposedGroup(
+                        name = "Examen Final",
+                        weightPercentage = 35f,
+                        items = listOf(CopilotProposedItem("Examen Final", 20f))
+                    )
+                ),
+                reasoning = "Estructura académica estándar para $courseName dividida en Evaluación Continua, Examen Parcial y Examen Final."
+            )
+        }
+
+        val labs = mutableListOf<CopilotProposedItem>()
+        val continuous = mutableListOf<CopilotProposedItem>()
+        val exams = mutableListOf<CopilotProposedItem>()
+        val other = mutableListOf<CopilotProposedItem>()
+
+        assignments.forEach { a ->
+            val lower = a.name.lowercase()
+            val item = CopilotProposedItem(
+                name = a.name,
+                maxScore = (a.pointsPossible ?: 20.0).toFloat().coerceAtLeast(1f),
+                canvasAssignmentId = a.id
+            )
+            when {
+                lower.contains("lab") || lower.contains("taller") -> labs.add(item)
+                lower.contains("parcial") || lower.contains("final") || lower.contains("examen") -> exams.add(item)
+                lower.contains("pc") || lower.contains("práctica") || lower.contains("tarea") -> continuous.add(item)
+                else -> other.add(item)
+            }
+        }
+
+        val result = mutableListOf<CopilotProposedGroup>()
+        val nonExams = labs + continuous + other
+        if (nonExams.isNotEmpty()) {
+            result.add(
+                CopilotProposedGroup(
+                    name = "Evaluaciones Continuas",
+                    weightPercentage = if (exams.isNotEmpty()) 50f else 100f,
+                    items = nonExams
+                )
+            )
+        }
+        if (exams.isNotEmpty()) {
+            val parcial = exams.filter { it.name.contains("parcial", ignoreCase = true) }
+            val finalExam = exams.filter { it.name.contains("final", ignoreCase = true) }
+            val otherExams = exams.filter { it !in parcial && it !in finalExam }
+
+            if (parcial.isNotEmpty() && finalExam.isNotEmpty()) {
+                result.add(CopilotProposedGroup("Examen Parcial", 20f, parcial))
+                result.add(CopilotProposedGroup("Examen Final", 30f, finalExam + otherExams))
+            } else {
+                result.add(CopilotProposedGroup("Exámenes", 50f, exams))
+            }
+        }
+
+        if (result.isEmpty()) {
+            result.add(
+                CopilotProposedGroup(
+                    name = "Evaluaciones del Curso",
+                    weightPercentage = 100f,
+                    items = assignments.map {
+                        CopilotProposedItem(
+                            it.name,
+                            (it.pointsPossible ?: 20.0).toFloat().coerceAtLeast(1f),
+                            it.id
+                        )
+                    }
+                )
+            )
+        }
+
+        return CopilotAnalysisResult(
+            groups = result,
+            reasoning = "Estructura calculada a partir de las ${assignments.size} tareas registradas en Canvas LMS, diferenciando evaluaciones continuas de los exámenes."
+        )
     }
 }

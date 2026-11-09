@@ -162,12 +162,6 @@ fun HerramientasMiuixContent(
                     )
                 }
 
-                // ─── CARD 2: Simulador What-If ──────────────────────────
-                item {
-                    WhatIfBentoCard(
-                        onClick = onOpenProgreso
-                    )
-                }
 
                 // ─── CARD 3: Foros de Discusión ─────────────────────────
                 item {

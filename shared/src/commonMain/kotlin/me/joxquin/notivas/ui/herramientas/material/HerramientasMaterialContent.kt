@@ -291,12 +291,6 @@ fun HerramientasMaterialContent(
                 )
             }
 
-            // ─── CARD 2: Simulador What-If ───────────────────────────────────
-            item {
-                MaterialWhatIfCard(
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
 
             // ─── CARD 3: Foros de Discusión ─────────────────────────────────
             item {
