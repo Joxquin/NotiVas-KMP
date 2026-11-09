@@ -162,6 +162,9 @@ fun NotasScreen(
                                 riskLevel = uiState.riskLevel,
                                 projectedGrade = uiState.projectedFinalGrade,
                                 gradedEvaluations = uiState.evaluations.filter { it.isGraded },
+                                unreviewedEvaluations = uiState.unreviewedEvaluations,
+                                onToggleOfflineGroup = { viewModel.toggleOfflineGroupAssignment(it) },
+                                onSimulateScore = { id, score -> viewModel.setUnreviewedSimulatedScore(id, score) },
                                 themeStyle = themeStyle
                             )
                         }
@@ -296,6 +299,9 @@ fun NotasScreen(
                         riskLevel = uiState.riskLevel,
                         projectedGrade = uiState.projectedFinalGrade,
                         gradedEvaluations = uiState.evaluations.filter { it.isGraded },
+                        unreviewedEvaluations = uiState.unreviewedEvaluations,
+                        onToggleOfflineGroup = { viewModel.toggleOfflineGroupAssignment(it) },
+                        onSimulateScore = { id, score -> viewModel.setUnreviewedSimulatedScore(id, score) },
                         themeStyle = themeStyle
                     )
                 }

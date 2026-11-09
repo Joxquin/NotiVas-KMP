@@ -42,6 +42,7 @@ import coil3.compose.AsyncImage
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.course_pending_format
+import me.joxquin.notivas.shared.resources.course_unreviewed_format
 import me.joxquin.notivas.shared.resources.course_up_to_date
 import me.joxquin.notivas.shared.resources.courses_enrolled_format
 import me.joxquin.notivas.shared.resources.courses_section_title
@@ -265,17 +266,22 @@ private fun MaterialCourseGridCard(
                     modifier = Modifier.height(34.dp)
                 )
 
+                val unreviewedCount = stat?.unreviewedAssignmentsCount ?: 0
                 Text(
-                    text = if (pendingCount > 0) {
-                        stringResource(Res.string.course_pending_format, pendingCount)
-                    } else {
-                        stringResource(Res.string.course_up_to_date)
+                    text = when {
+                        unreviewedCount > 0 -> stringResource(Res.string.course_unreviewed_format, unreviewedCount)
+                        pendingCount > 0 -> stringResource(Res.string.course_pending_format, pendingCount)
+                        else -> stringResource(Res.string.course_up_to_date)
                     },
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Normal
+                        fontWeight = if (unreviewedCount > 0) FontWeight.SemiBold else FontWeight.Normal
                     ),
-                    color = if (pendingCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = when {
+                        unreviewedCount > 0 -> MaterialTheme.colorScheme.primary
+                        pendingCount > 0 -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

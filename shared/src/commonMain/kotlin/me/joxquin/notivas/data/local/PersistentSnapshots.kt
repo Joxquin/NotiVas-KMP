@@ -53,6 +53,8 @@ data class PersistentPreferencesSnapshot(
     val knownAssignmentIds: Set<Long> = emptySet(),
     val knownForumIds: Set<Long> = emptySet(),
     val hasCompletedInitialSync: Boolean = false,
-    val lastSyncTimestamp: Long = 0L
+    val lastSyncTimestamp: Long = 0L,
+    val offlineGroupAssignmentIds: Set<Long> = emptySet(),
+    val unreviewedSimulatedScores: Map<Long, Float> = emptyMap()
 )
 

@@ -53,7 +53,9 @@ data class CourseStat(
     val averageScore: Double?,
     val hasConfiguredGroups: Boolean = false,
     val evaluatedProgressPercentage: Float = 0f,
-    val performanceLevel: GradePerformanceLevel = GradePerformanceLevel.AT_RISK
+    val performanceLevel: GradePerformanceLevel = GradePerformanceLevel.AT_RISK,
+    val unreviewedAssignmentsCount: Int = 0,
+    val unreviewedAssignments: List<Assignment> = emptyList()
 )
 
 data class DaySchedule(
@@ -954,11 +956,23 @@ class DashboardViewModel(
         ) { courseList, assignmentList, allGroupRelations ->
             val relationsByCourse = allGroupRelations.groupBy { it.group.courseId }
 
+            val now = DateTimeUtil.nowEpochMillis()
+            val sevenDaysMillis = 7L * 24L * 60L * 60L * 1000L
+
             courseList.map { course ->
                 val courseAssignments = assignmentList.filter { it.courseId == course.id }
                 val pending = courseAssignments.count { it.status == "upcoming" }
                 val completed = courseAssignments.count { it.status == "completed" }
                 val missing = courseAssignments.count { it.status == "missing" }
+
+                val unreviewed = courseAssignments.filter { a ->
+                    val hasNoScore = a.score == null && a.submission?.score == null && a.gradedAt == null
+                    val dueStr = a.dueAt ?: a.lockAt
+                    if (!hasNoScore || dueStr == null) return@filter false
+                    if (a.pointsPossible != null && a.pointsPossible <= 0.0) return@filter false
+                    val dueEpoch = DateTimeUtil.parseIsoToComponents(dueStr)?.epochMillis ?: return@filter false
+                    now - dueEpoch >= sevenDaysMillis
+                }
 
                 val groups = relationsByCourse[course.id]?.map { it.toDomain() } ?: emptyList()
 
@@ -984,7 +998,9 @@ class DashboardViewModel(
                         averageScore = fallbackAvg,
                         hasConfiguredGroups = false,
                         evaluatedProgressPercentage = if (courseAssignments.isNotEmpty()) (completed.toFloat() / courseAssignments.size.toFloat()) * 100f else 0f,
-                        performanceLevel = performanceLevel
+                        performanceLevel = performanceLevel,
+                        unreviewedAssignmentsCount = unreviewed.size,
+                        unreviewedAssignments = unreviewed
                     )
                 } else {
                     // Calcular con motor académico estricto
@@ -997,7 +1013,9 @@ class DashboardViewModel(
                         averageScore = summary.currentAverage?.toDouble(),
                         hasConfiguredGroups = true,
                         evaluatedProgressPercentage = summary.evaluatedProgressPercentage,
-                        performanceLevel = summary.performanceLevel
+                        performanceLevel = summary.performanceLevel,
+                        unreviewedAssignmentsCount = unreviewed.size,
+                        unreviewedAssignments = unreviewed
                     )
                 }
             }

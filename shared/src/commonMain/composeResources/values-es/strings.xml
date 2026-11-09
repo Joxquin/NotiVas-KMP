@@ -853,4 +853,20 @@
     <string name="about_repo_subtitle">GitHub • Joxquin/NotiVas-KMP</string>
     <string name="about_license_title">Licencia</string>
     <string name="about_license_name">MIT License</string>
+    <string name="dashboard_unreviewed_grades_title">Notas pendientes de calificación docente</string>
+    <string name="dashboard_unreviewed_grades_desc">%1$d tarea(s) en %2$d curso(s) tienen más de 7 días sin calificar. Toca para ver el detalle y simular tu promedio.</string>
+    <string name="dashboard_unreviewed_grades_badge">Sin calificar (+7d)</string>
+    <string name="course_unreviewed_format">%d sin calificar (+7d)</string>
+    <string name="unreviewed_evaluations_title">En espera de calificación docente</string>
+    <string name="unreviewed_evaluations_count_format">Ver %d evaluaciones sin calificar (+7d)</string>
+    <string name="unreviewed_evaluations_desc">Actividades cuya fecha de entrega pasó hace más de 7 días pero el docente aún no ha registrado la nota en Canvas.</string>
+    <string name="unreviewed_days_overdue_format">Venció hace %d días</string>
+    <string name="unreviewed_mark_group">Entrega grupal / presencial</string>
+    <string name="unreviewed_simulate_score">Simular nota</string>
+    <string name="unreviewed_simulated_badge">Nota simulada</string>
+    <string name="unreviewed_clear_simulation">Quitar simulación</string>
+    <string name="unreviewed_dialog_title">Simular nota tentativa</string>
+    <string name="unreviewed_dialog_desc">Ingresa la nota estimada (0 - 20) que esperas obtener o que el docente indicó en clase. Esta simulación ajustará tu promedio proyectado sin modificar los datos oficiales de Canvas.</string>
+    <string name="unreviewed_dialog_save">Guardar nota</string>
+    <string name="unreviewed_dialog_cancel">Cancelar</string>
 </resources>
