@@ -32,7 +32,7 @@ fun Modifier.staggeredEntrance(
     initialOffsetY: Dp = (-26).dp
 ): Modifier {
     val density = LocalDensity.current
-    val progress by animateFloatAsState(
+    val progressState = animateFloatAsState(
         targetValue = if (trigger) 1f else 0f,
         animationSpec = tween(
             durationMillis = durationMs,
@@ -42,12 +42,9 @@ fun Modifier.staggeredEntrance(
         label = "staggered_entrance_$index"
     )
 
-    if (progress >= 1f) {
-        return this
-    }
-
     val offsetPx = with(density) { initialOffsetY.toPx() }
     return this.graphicsLayer {
+        val progress = progressState.value
         alpha = progress
         translationY = (1f - progress) * offsetPx
     }
