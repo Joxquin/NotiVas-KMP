@@ -14,7 +14,9 @@ import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.model.SimulationGroup
+import me.joxquin.notivas.data.model.SimulationGroupWithItems
 import me.joxquin.notivas.data.model.SimulationItem
+import me.joxquin.notivas.data.repository.CanvasRepository
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.di.AppModule
 import kotlin.math.roundToInt
@@ -117,7 +119,7 @@ class NotasViewModel(
                 repository.getSimulationGroupsWithItems(courseId),
                 preferencesManager.offlineGroupAssignmentIds,
                 preferencesManager.unreviewedSimulatedScores
-            ) { assignments, groupsWithItems, offlineGroupIds, customSimScores ->
+            ) { assignments: List<Assignment>, groupsWithItems: List<SimulationGroupWithItems>, offlineGroupIds: Set<Long>, customSimScores: Map<Long, Float> ->
                 val now = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
                 val sevenDaysMillis = 7L * 24L * 60L * 60L * 1000L
 
