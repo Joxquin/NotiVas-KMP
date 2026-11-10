@@ -159,7 +159,7 @@ fun AjustesTokenScreen(
     fun showFeedback(message: String) {
         coroutineScope.launch {
             if (themeStyle == AppThemeStyle.MIUIX) {
-                miuixSnackbarHostState.showSnackbar(message)
+                miuixSnackbarHostState?.showSnackbar(message)
             } else {
                 materialSnackbarHostState.showSnackbar(message)
             }
@@ -202,15 +202,18 @@ fun AjustesTokenScreen(
     } else {
         0
     }
-    val formattedExpirationDate = if (tokenExpiresAt > 0L) {
-        try {
-            val date = DateTimeUtil.formatIso(tokenExpiresAt)
-            date.take(10)
-        } catch (_: Throwable) {
-            "28 días"
+    val formattedExpirationDate = remember(tokenExpiresAt, daysRemaining) {
+        if (tokenExpiresAt > 0L) {
+            try {
+                val now = DateTimeUtil.nowLocalDate()
+                val targetDate = DateTimeUtil.addDays(now, daysRemaining)
+                DateTimeUtil.formatFullDate(targetDate)
+            } catch (_: Throwable) {
+                null
+            }
+        } else {
+            null
         }
-    } else {
-        null
     }
 
     // Enmascaramiento de token
