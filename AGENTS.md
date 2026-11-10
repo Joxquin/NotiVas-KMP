@@ -96,21 +96,29 @@ Card(
 }
 ```
 
-### 2. Campos de Búsqueda y Entrada (`top.yukonga.miuix.kmp.basic.InputField`)
-- Reemplazar implementaciones manuales de `BasicTextField` con el componente nativo `InputField`.
-- Parámetros estándar:
+### 2. Campos de Búsqueda y Entrada (`top.yukonga.miuix.kmp.basic.TextField` vs `InputField`)
+- **Campos de formulario y diálogo:** Utilizar `TextField` nativo con título/etiqueta flotante (`label = "..."`), basado en el patrón `TextField with title` de `/storage/emulated/0/CodeSpace/miuix/example`.
   ```kotlin
-  InputField(
-      query = searchQuery,
-      onQueryChange = onQueryChange,
-      onSearch = onQueryChange,
-      expanded = false,
-      onExpandedChange = {},
-      label = placeholder,
+  val fieldColors = if (themeStyle == AppThemeStyle.MIUIX) {
+      TextFieldDefaults.textFieldColors()
+  } else {
+      TextFieldDefaults.textFieldColors(
+          backgroundColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+          labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+          borderColor = MaterialTheme.colorScheme.primary
+      )
+  }
+
+  TextField(
+      value = textValue,
+      onValueChange = { textValue = it },
+      label = stringResource(Res.string.mi_campo_label),
       modifier = Modifier.fillMaxWidth(),
-      color = MiuixTheme.colorScheme.surfaceContainerHigh
+      colors = fieldColors
   )
   ```
+  *Nota sobre parámetros de `TextFieldDefaults.textFieldColors` en MIUIX:* solo acepta `backgroundColor`, `labelColor` y `borderColor`. No usar `color`, `textColor` ni `cursorColor`.
+- **Búsqueda exclusivamente:** Reservar `InputField` únicamente para barras de búsqueda (como en el overlay de búsqueda del Dashboard). No utilizar `InputField` para formularios, creación o edición de entidades.
 
 ### 3. Títulos de Sección (`top.yukonga.miuix.kmp.basic.SmallTitle`)
 - Para agrupar listas o separar secciones de tarjetas bento, utilizar:
@@ -144,9 +152,67 @@ Card(
   )
   ```
 
+### 5. Hojas y Diálogos Rápidos (Quicks / `WindowBottomSheet`)
+- **Uso universal:** Tanto en MIUIX como en Material Design 3, utilizar preferentemente `WindowBottomSheet` de MIUIX para las hojas emergentes (quicks) para garantizar consistencia visual y soporte háptico nativo.
+- **Márgenes consistentes:**
+  - Evitar paddings horizontales excesivos dentro de la hoja: el contenido debe alinearse de forma limpia con los márgenes estándar (12.dp a 16.dp).
+  - No añadir espaciados superiores innecesarios (`padding(top = ...)` excesivo), ya que `WindowBottomSheet` ya incluye su propio drag handle y cabecera de título.
+- **Botones de cabecera condicionales:** Si una vista implementa un estado vacío (`EmptyState`) con un botón de acción principal destacado, el botón equivalente en la cabecera (ej. "Crear grupo") debe condicionarse a `if (items.isNotEmpty()) { ... }` para evitar duplicación innecesaria en la pantalla.
+
 ---
 
-## 3. Respeto al Sistema de Color Dinámico Monet (`MiuixTheme.colorScheme`)
+## 3. Navegación Idempotente y Prevención de Doble Retroceso (`onBack`)
+
+Un error recurrente al eliminar o modificar entidades desde una pantalla de detalle es la ejecución duplicada de `onBack()`, lo que desapila dos pantallas consecutivas en el `NavDisplay` (ej. saltando de Detalle a Progreso y de inmediato retrocediendo a Herramientas).
+
+### Reglas obligatorias:
+1. **Cero `LaunchedEffect(entity) { if (entity == null) onBack() }` cuando ya hay acción explícita:** Si el usuario confirma una acción destructiva desde un diálogo de confirmación, la navegación de retorno debe ejecutarse **exclusivamente en el callback del botón** y nunca duplicarse mediante un `LaunchedEffect` que reaccione al cambio de estado en la base de datos.
+2. **Bandera de guardia `isNavigatingBack` o `isDeleted`:** Proteger el callback para asegurar que `onBack()` se invoque exactamente una sola vez:
+   ```kotlin
+   var isDeleted by remember { mutableStateOf(false) }
+
+   confirmButton = {
+       TextButton(
+           onClick = {
+               if (!isDeleted) {
+                   isDeleted = true
+                   showConfirmDialog = false
+                   viewModel.deleteItem(item)
+                   onBack()
+               }
+           }
+       ) { ... }
+   }
+   ```
+3. **Caché del modelo visual durante la transición de salida (`lastValidModel`):**
+   Para evitar parpadeos o pantallas en blanco durante la animación de salida de la ventana (~300ms de `CrossActivityTransition`), mantener en memoria el último estado válido de la entidad:
+   ```kotlin
+   val currentModel = uiState.items.find { it.id == itemId }
+   var lastValidModel by remember { mutableStateOf(currentModel) }
+   if (currentModel != null) {
+       lastValidModel = currentModel
+   }
+   val model = currentModel ?: lastValidModel
+
+   if (model == null) return
+   ```
+
+---
+
+## 4. Reglas de Formateo de Strings e i18n (`composeResources`)
+
+Compose Multiplatform procesa los recursos de strings mediante un motor propio y no utiliza el formateador estándar de Java `String.format` que exige escapar el porcentaje con `%%`.
+
+### Reglas estrictas para `strings.xml`:
+1. **Símbolo de porcentaje (`%`):** Usar siempre un único `%`.
+   - **Incorrecto:** `<string name="total_weight">Total: %1$d%%</string>` (Produce `Total: 0%%` en pantalla).
+   - **Correcto:** `<string name="total_weight">Total: %1$d%</string>` (Produce `Total: 0%` en pantalla).
+2. **Sincronización exacta:** Cada string añadido en `values-es/strings.xml` DEBE estar presente con la misma clave en `values/strings.xml`.
+3. **Prohibido hardcodear textos:** Ningún texto visible para el usuario puede estar en el código Kotlin; todos deben referenciarse vía `stringResource(Res.string.clave)`.
+
+---
+
+## 5. Respeto al Sistema de Color Dinámico Monet (`MiuixTheme.colorScheme`)
 
 **Prohibido el uso de colores hexadecimales fijos** (como `Color(0xFF1F1F23)`, `Color(0xFF292A2D)`, `Color(0xFF83DA85)`, `Color(0xFFE3E2E6)`) en el código de componentes MIUIX. Esto rompería la compatibilidad con el modo claro/oscuro dinámico y la paleta Monet del sistema.
 
@@ -168,14 +234,16 @@ Card(
 
 ---
 
-## 4. Checklist para Nuevas Vistas (Views)
+## 6. Checklist para Nuevas Vistas (Views)
 1. **¿Se implementó el diseño dual?** Ramificar con `if (themeStyle == AppThemeStyle.MIUIX) { ... } else { ... }`.
 2. **¿Se respetó el TopAppBar en MIUIX?** Comprobar que la vista no duplique el `TopAppBar` y que esté integrada con `MiuixBlurredBar` de [MiuixPageUtils.kt](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixPageUtils.kt).
-3. **¿Se usaron los componentes nativos de MIUIX?** Usar `MiuixCard`, `InputField`, `SmallTitle`, `TextButton`.
-4. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
-5. **¿Navegación e interacción verificadas?** Asegurar que las tarjetas clickeables tengan su callback `onClick` conectado al flujo de navegación adecuado.
-6. **¿Strings i18n?** Asegurar que todos los textos provengan de `composeResources/values/strings.xml` y `composeResources/values-es/strings.xml`.
-7. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
+3. **¿Se usaron los componentes nativos correctos?** Usar `Card`, `TextField` (with title para formularios, no `InputField`), `SmallTitle`, `TextButton`.
+4. **¿Márgenes y paddings consistentes?** Padding horizontal de 16.dp en pantallas y 12.dp a 16.dp en quicks/sheets; sin paddings superiores excesivos en `WindowBottomSheet`.
+5. **¿Navegación protegida contra doble `onBack`?** No usar `LaunchedEffect` para retroceder tras eliminar; proteger con banderas y guardar caché `lastValidModel`.
+6. **¿Botones no redundantes?** Los botones de cabecera deben ocultarse cuando el estado vacío ya provee el CTA principal.
+7. **¿Formato de strings e i18n correcto?** Comprobar que los porcentajes usen `%1$d%` (no `%%`), y que todas las claves existan en `values` y `values-es`.
+8. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
+9. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
 
 <!-- graphify-rules-start (managed by `graphify init`) -->
 ## Use Graphify before grep
