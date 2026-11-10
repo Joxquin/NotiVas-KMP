@@ -752,4 +752,31 @@
     <string name="group_create_drop_lowest_desc">Automatically removes lowest grade from average</string>
     <string name="group_create_min_to_drop_label">Minimum submitted grades to drop</string>
     <string name="group_create_save_btn">Save Group</string>
+
+    <!-- Token Management -->
+    <string name="settings_token_title">Canvas Token Management</string>
+    <string name="settings_token_subtitle">Manage your Canvas API access token and auto-renewal</string>
+    <string name="settings_token_summary_web">Web session (Cookies)</string>
+    <string name="settings_token_summary_token">Active token</string>
+    <string name="token_banner_web_session_title">Active web session</string>
+    <string name="token_banner_web_session_desc">You are currently logged in using web browser cookies. To enable token options and auto-renewal, generate an access token below.</string>
+    <string name="token_create_student_token_btn">Create access token</string>
+    <string name="token_create_student_token_loading">Generating access token...</string>
+    <string name="token_create_student_token_success">Access token generated successfully</string>
+    <string name="token_create_student_token_error">Failed to generate access token from web session</string>
+    <string name="token_active_info_title">Token Information</string>
+    <string name="token_active_value_label">Access token</string>
+    <string name="token_active_expires_label">Expiration</string>
+    <string name="token_active_expires_format">Expires in %1$d days (%2$s)</string>
+    <string name="token_active_no_expiration">No expiration date recorded</string>
+    <string name="token_auto_renew_title">Auto-renew token</string>
+    <string name="token_auto_renew_desc">Automatically renew 1 day before expiration</string>
+    <string name="token_auto_renew_web_disabled_hint">Unavailable in web session. Create a token first.</string>
+    <string name="token_new_section_title">Change Access Token</string>
+    <string name="token_new_input_label">New Canvas LMS Token</string>
+    <string name="token_new_save_btn">Save new token</string>
+    <string name="token_new_saving_btn">Verifying and saving...</string>
+    <string name="token_new_success">Token updated and verified successfully</string>
+    <string name="token_new_error">Invalid token or error connecting to Canvas</string>
+    <string name="token_copy_clipboard">Token copied to clipboard</string>
 </resources>

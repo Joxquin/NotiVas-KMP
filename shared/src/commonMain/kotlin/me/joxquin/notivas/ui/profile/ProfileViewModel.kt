@@ -50,7 +50,12 @@ data class ProfileUiState(
     val googleDriveConnected: Boolean = false,
     val googleDriveEmail: String? = null,
     val googleDriveLastSyncTimestamp: Long = 0L,
-    val googleDriveCacheSize: String = "0 KB"
+    val googleDriveCacheSize: String = "0 KB",
+    val currentToken: String? = null,
+    val autoRenewToken: Boolean = true,
+    val tokenExpiresAt: Long = 0L,
+    val isGeneratingToken: Boolean = false,
+    val isUpdatingToken: Boolean = false
 )
 
 class ProfileViewModel(
@@ -65,6 +70,12 @@ class ProfileViewModel(
 
     private val _isVerifyingToken = MutableStateFlow(false)
     val isVerifyingToken: StateFlow<Boolean> = _isVerifyingToken.asStateFlow()
+
+    private val _isGeneratingToken = MutableStateFlow(false)
+    val isGeneratingToken: StateFlow<Boolean> = _isGeneratingToken.asStateFlow()
+
+    private val _isUpdatingToken = MutableStateFlow(false)
+    val isUpdatingToken: StateFlow<Boolean> = _isUpdatingToken.asStateFlow()
 
     private val _openRouterBalance = MutableStateFlow<OpenRouterAccountBalance?>(null)
     private val _isLoadingBalance = MutableStateFlow(false)
@@ -143,7 +154,12 @@ class ProfileViewModel(
         preferencesManager.googleDriveConnected,
         preferencesManager.googleDriveEmail,
         preferencesManager.googleDriveLastSyncTimestamp,
-        _googleDriveCacheSize
+        _googleDriveCacheSize,
+        preferencesManager.accessToken,
+        preferencesManager.autoRenewToken,
+        preferencesManager.tokenExpiresAt,
+        _isGeneratingToken,
+        _isUpdatingToken
     ) { args: Array<Any?> ->
         val url = args[1] as String?
         val host = if (url.isNullOrBlank()) "Canvas LMS" else {
@@ -180,7 +196,12 @@ class ProfileViewModel(
             googleDriveConnected = args[25] as Boolean,
             googleDriveEmail = args[26] as String?,
             googleDriveLastSyncTimestamp = args[27] as Long,
-            googleDriveCacheSize = args[28] as String
+            googleDriveCacheSize = args[28] as String,
+            currentToken = args[29] as String?,
+            autoRenewToken = args[30] as Boolean,
+            tokenExpiresAt = args[31] as Long,
+            isGeneratingToken = args[32] as Boolean,
+            isUpdatingToken = args[33] as Boolean
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
 
@@ -206,6 +227,36 @@ class ProfileViewModel(
             canvasRepository.deleteAllAssignmentDrafts()
             _googleDriveCacheSize.value = "0 KB"
             preferencesManager.updateGoogleDriveLastSync()
+        }
+    }
+
+    fun setAutoRenewToken(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setAutoRenewToken(enabled) }
+    }
+
+    suspend fun createStudentToken(): Result<String> {
+        _isGeneratingToken.value = true
+        return try {
+            val result = canvasRepository.createStudentTokenFromSession()
+            if (result.isSuccess) {
+                fetchProfile()
+            }
+            result
+        } finally {
+            _isGeneratingToken.value = false
+        }
+    }
+
+    suspend fun updateManualToken(token: String): Result<Boolean> {
+        _isUpdatingToken.value = true
+        return try {
+            val result = canvasRepository.updateManualToken(token)
+            if (result.isSuccess) {
+                fetchProfile()
+            }
+            result
+        } finally {
+            _isUpdatingToken.value = false
         }
     }
 

@@ -40,6 +40,14 @@ class PreferencesManager(
     val accessToken: Flow<String?> = _accessToken.asStateFlow()
     fun getAccessToken(): String? = _accessToken.value
 
+    private val _autoRenewToken = MutableStateFlow(true)
+    val autoRenewToken: Flow<Boolean> = _autoRenewToken.asStateFlow()
+    fun getAutoRenewToken(): Boolean = _autoRenewToken.value
+
+    private val _tokenExpiresAt = MutableStateFlow(0L)
+    val tokenExpiresAt: Flow<Long> = _tokenExpiresAt.asStateFlow()
+    fun getTokenExpiresAt(): Long = _tokenExpiresAt.value
+
     private val _authMode = MutableStateFlow(me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION)
     val authMode: Flow<me.joxquin.notivas.data.model.AuthMode> = _authMode.asStateFlow()
     fun getAuthMode(): me.joxquin.notivas.data.model.AuthMode = _authMode.value
@@ -260,6 +268,8 @@ class PreferencesManager(
             val snapshot = json.decodeFromString<PersistentPreferencesSnapshot>(content)
             _universityUrl.value = snapshot.universityUrl
             _accessToken.value = snapshot.accessToken
+            _autoRenewToken.value = snapshot.autoRenewToken
+            _tokenExpiresAt.value = snapshot.tokenExpiresAt
             _authMode.value = snapshot.authMode
             _sessionCookies.value = snapshot.sessionCookies
             _csrfToken.value = snapshot.csrfToken
@@ -323,6 +333,8 @@ class PreferencesManager(
             val snapshot = PersistentPreferencesSnapshot(
                 universityUrl = _universityUrl.value,
                 accessToken = _accessToken.value,
+                autoRenewToken = _autoRenewToken.value,
+                tokenExpiresAt = _tokenExpiresAt.value,
                 authMode = _authMode.value,
                 sessionCookies = _sessionCookies.value,
                 csrfToken = _csrfToken.value,
@@ -403,12 +415,23 @@ class PreferencesManager(
         schedulePersist()
     }
 
-    suspend fun saveAccessToken(token: String) {
+    suspend fun saveAccessToken(token: String, expiresAt: Long = 0L) {
         _accessToken.value = token
+        _tokenExpiresAt.value = expiresAt
         _sessionCookies.value = null
         _csrfToken.value = null
         _authMode.value = me.joxquin.notivas.data.model.AuthMode.TOKEN
         _isSessionExpired.value = false
+        schedulePersist()
+    }
+
+    suspend fun setAutoRenewToken(enabled: Boolean) {
+        _autoRenewToken.value = enabled
+        schedulePersist()
+    }
+
+    suspend fun setTokenExpiresAt(timestampMs: Long) {
+        _tokenExpiresAt.value = timestampMs
         schedulePersist()
     }
 
@@ -547,6 +570,7 @@ class PreferencesManager(
 
     suspend fun clear() {
         _accessToken.value = null
+        _tokenExpiresAt.value = 0L
         _sessionCookies.value = null
         _csrfToken.value = null
         _authMode.value = me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION

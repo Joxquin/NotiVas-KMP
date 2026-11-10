@@ -65,5 +65,8 @@ sealed interface MiuixRoute : NavKey {
     data object SettingsDrive : MiuixRoute
 
     @Serializable
+    data object SettingsToken : MiuixRoute
+
+    @Serializable
     data object SettingsAbout : MiuixRoute
 }

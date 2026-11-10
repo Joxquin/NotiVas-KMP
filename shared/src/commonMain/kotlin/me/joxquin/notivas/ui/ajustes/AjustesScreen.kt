@@ -32,6 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
@@ -85,6 +86,10 @@ import me.joxquin.notivas.shared.resources.settings_category_notifications
 import me.joxquin.notivas.shared.resources.settings_category_notifications_desc
 import me.joxquin.notivas.shared.resources.settings_subtitle
 import me.joxquin.notivas.shared.resources.settings_title
+import me.joxquin.notivas.shared.resources.settings_token_subtitle
+import me.joxquin.notivas.shared.resources.settings_token_summary_token
+import me.joxquin.notivas.shared.resources.settings_token_summary_web
+import me.joxquin.notivas.shared.resources.settings_token_title
 import me.joxquin.notivas.shared.resources.sync
 import me.joxquin.notivas.ui.ajustes.components.PairWebSessionDialog
 import me.joxquin.notivas.ui.ajustes.components.SettingsProfileHeroHeader
@@ -149,6 +154,7 @@ fun AjustesScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToCopilot: () -> Unit = {},
     onNavigateToDrive: () -> Unit = {},
+    onNavigateToToken: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     modifier: Modifier = Modifier,
     lazyListState: LazyListState = rememberLazyListState()
@@ -371,6 +377,17 @@ fun AjustesScreen(
                                 onClick = onNavigateToDrive
                             )
 
+                            val tokenSummary = if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
+                                stringResource(Res.string.settings_token_summary_web)
+                            } else {
+                                stringResource(Res.string.settings_token_summary_token)
+                            }
+                            ArrowPreference(
+                                title = stringResource(Res.string.settings_token_title),
+                                summary = tokenSummary,
+                                onClick = onNavigateToToken
+                            )
+
                             ArrowPreference(
                                 title = stringResource(Res.string.settings_category_about),
                                 summary = stringResource(Res.string.settings_category_about_desc),
@@ -561,6 +578,18 @@ fun AjustesScreen(
                         subtitle = driveSummary,
                         icon = Icons.Default.Cloud,
                         onClick = onNavigateToDrive
+                    )
+
+                    val tokenSummary = if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
+                        stringResource(Res.string.settings_token_summary_web)
+                    } else {
+                        stringResource(Res.string.settings_token_summary_token)
+                    }
+                    MaterialCategoryCard(
+                        title = stringResource(Res.string.settings_token_title),
+                        subtitle = tokenSummary,
+                        icon = Icons.Default.Key,
+                        onClick = onNavigateToToken
                     )
 
                     MaterialCategoryCard(

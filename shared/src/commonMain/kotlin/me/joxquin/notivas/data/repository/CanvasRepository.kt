@@ -866,12 +866,54 @@ class CanvasRepository(
             val url = preferencesManager.universityUrl.first() ?: return@withContext false
             val token = apiService.generateStudentAccessToken(url, cookies, csrf)
             if (!token.isNullOrBlank()) {
-                preferencesManager.saveAccessToken(token)
+                val expiresAt = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + (28L * 24 * 60 * 60 * 1000)
+                preferencesManager.saveAccessToken(token, expiresAt)
                 println("[CanvasRepository] Migración exitosa de COOKIE_SESSION a BearerToken permanente")
                 return@withContext true
             }
         }
         false
+    }
+
+    suspend fun createStudentTokenFromSession(): Result<String> = withContext(AppDispatchers.IO) {
+        try {
+            val cookies = preferencesManager.getSessionCookies()
+                ?: return@withContext Result.failure(IllegalStateException("No hay cookies de sesión disponibles"))
+            val csrf = preferencesManager.getCsrfToken()
+            val url = preferencesManager.universityUrl.first()
+                ?: return@withContext Result.failure(IllegalStateException("No hay URL configurada"))
+            val token = apiService.generateStudentAccessToken(url, cookies, csrf)
+            if (!token.isNullOrBlank()) {
+                val expiresAt = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + (28L * 24 * 60 * 60 * 1000)
+                preferencesManager.saveAccessToken(token, expiresAt)
+                Result.success(token)
+            } else {
+                Result.failure(Exception("No se pudo generar el token desde la sesión web"))
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateManualToken(newToken: String): Result<Boolean> = withContext(AppDispatchers.IO) {
+        try {
+            val trimmedToken = newToken.trim()
+            if (trimmedToken.isBlank()) {
+                return@withContext Result.failure(IllegalArgumentException("El token no puede estar vacío"))
+            }
+            val url = preferencesManager.universityUrl.first()
+                ?: "https://canvas.utp.edu.pe"
+            apiService.verifyToken(url, "Bearer $trimmedToken")
+            preferencesManager.saveAccessToken(trimmedToken, 0L)
+            preferencesManager.setSessionExpired(false)
+            Result.success(true)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
     }
 
     suspend fun verifyAndSave(url: String, token: String): Boolean = withContext(AppDispatchers.IO) {

@@ -611,6 +611,9 @@ fun MainAppShell(
                                             onNavigateToDrive = {
                                                 miuixNavigator.push(MiuixRoute.SettingsDrive)
                                             },
+                                            onNavigateToToken = {
+                                                miuixNavigator.push(MiuixRoute.SettingsToken)
+                                            },
                                             onNavigateToAbout = {
                                                 miuixNavigator.push(MiuixRoute.SettingsAbout)
                                             }
@@ -1038,6 +1041,23 @@ fun MainAppShell(
                     )
                 }
 
+                entry<MiuixRoute.SettingsToken>(swipeDismiss = swipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesTokenScreen(
+                        authMode = uiState.authMode,
+                        currentToken = uiState.currentToken,
+                        autoRenewToken = uiState.autoRenewToken,
+                        tokenExpiresAt = uiState.tokenExpiresAt,
+                        isGeneratingToken = uiState.isGeneratingToken,
+                        isUpdatingToken = uiState.isUpdatingToken,
+                        onAutoRenewChange = { profileViewModel.setAutoRenewToken(it) },
+                        onCreateStudentToken = { profileViewModel.createStudentToken() },
+                        onUpdateManualToken = { profileViewModel.updateManualToken(it) },
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
                 entry<MiuixRoute.SettingsAbout>(swipeDismiss = swipeBackDirection) {
                     me.joxquin.notivas.ui.ajustes.subscreens.AjustesAboutScreen(
                         themeStyle = AppThemeStyle.MIUIX,
@@ -1335,6 +1355,9 @@ fun MainAppShell(
                                             },
                                             onNavigateToDrive = {
                                                 materialNavigator.push(MiuixRoute.SettingsDrive)
+                                            },
+                                            onNavigateToToken = {
+                                                materialNavigator.push(MiuixRoute.SettingsToken)
                                             },
                                             onNavigateToAbout = {
                                                 materialNavigator.push(MiuixRoute.SettingsAbout)
@@ -1730,6 +1753,23 @@ fun MainAppShell(
                         },
                         onUnlink = { profileViewModel.unlinkGoogleDrive() },
                         onClearCache = { profileViewModel.clearDraftsCache() },
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsToken>(swipeDismiss = materialSwipeBackDirection) {
+                    val uiState by profileViewModel.uiState.collectAsState()
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesTokenScreen(
+                        authMode = uiState.authMode,
+                        currentToken = uiState.currentToken,
+                        autoRenewToken = uiState.autoRenewToken,
+                        tokenExpiresAt = uiState.tokenExpiresAt,
+                        isGeneratingToken = uiState.isGeneratingToken,
+                        isUpdatingToken = uiState.isUpdatingToken,
+                        onAutoRenewChange = { profileViewModel.setAutoRenewToken(it) },
+                        onCreateStudentToken = { profileViewModel.createStudentToken() },
+                        onUpdateManualToken = { profileViewModel.updateManualToken(it) },
                         themeStyle = AppThemeStyle.MATERIAL,
                         onBack = { handleMaterialBack() }
                     )

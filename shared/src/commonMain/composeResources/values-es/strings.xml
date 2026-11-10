@@ -752,4 +752,31 @@
     <string name="group_create_drop_lowest_desc">Elimina automáticamente la menor nota del promedio</string>
     <string name="group_create_min_to_drop_label">Mínimo de notas rendidas para aplicar descarte</string>
     <string name="group_create_save_btn">Guardar Grupo</string>
+
+    <!-- Token Management -->
+    <string name="settings_token_title">Gestión de Token Canvas</string>
+    <string name="settings_token_subtitle">Administra tu token de acceso API y opciones de renovación</string>
+    <string name="settings_token_summary_web">Sesión web (Cookies)</string>
+    <string name="settings_token_summary_token">Token activo</string>
+    <string name="token_banner_web_session_title">Sesión web activa</string>
+    <string name="token_banner_web_session_desc">Actualmente estás autenticado mediante cookies del navegador web. Para habilitar la configuración avanzada de token y renovación automática, genera un token de acceso a continuación.</string>
+    <string name="token_create_student_token_btn">Crear token de acceso</string>
+    <string name="token_create_student_token_loading">Generando token de acceso...</string>
+    <string name="token_create_student_token_success">Token de acceso generado con éxito</string>
+    <string name="token_create_student_token_error">Error al generar token desde la sesión web</string>
+    <string name="token_active_info_title">Información del Token</string>
+    <string name="token_active_value_label">Token de acceso</string>
+    <string name="token_active_expires_label">Vencimiento</string>
+    <string name="token_active_expires_format">Expira en %1$d días (%2$s)</string>
+    <string name="token_active_no_expiration">Sin fecha de expiración registrada</string>
+    <string name="token_auto_renew_title">Autorenovar token</string>
+    <string name="token_auto_renew_desc">Renovar automáticamente 1 día antes de expirar</string>
+    <string name="token_auto_renew_web_disabled_hint">No disponible en sesión web. Crea un token primero.</string>
+    <string name="token_new_section_title">Cambiar Token de Acceso</string>
+    <string name="token_new_input_label">Nuevo Token de Canvas LMS</string>
+    <string name="token_new_save_btn">Guardar nuevo token</string>
+    <string name="token_new_saving_btn">Verificando y guardando...</string>
+    <string name="token_new_success">Token actualizado y verificado correctamente</string>
+    <string name="token_new_error">Token inválido o error al conectar con Canvas</string>
+    <string name="token_copy_clipboard">Token copiado al portapapeles</string>
 </resources>
