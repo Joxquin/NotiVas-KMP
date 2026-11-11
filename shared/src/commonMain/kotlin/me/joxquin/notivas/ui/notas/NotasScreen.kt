@@ -54,7 +54,6 @@ import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
-import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
@@ -68,13 +67,26 @@ import me.joxquin.notivas.ui.notas.components.HeroSummaryCard
 import me.joxquin.notivas.ui.notas.components.ImportTemplateDialog
 import me.joxquin.notivas.ui.notas.components.NotasHeaderSection
 import me.joxquin.notivas.ui.notas.components.SimulationGroupSummaryCard
-import org.jetbrains.compose.resources.stringResource
+import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.filled.Restore
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.glass.GlassIconButton
+import top.yukonga.miuix.kmp.glass.GlassPopupItem
+import top.yukonga.miuix.kmp.glass.GlassTopAppBarDefaults
+import top.yukonga.miuix.kmp.glass.GlassTransformPopup
+import top.yukonga.miuix.kmp.glass.glassPopupAnchor
+import top.yukonga.miuix.kmp.glass.glassPopupAnchorContent
+import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Tune
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.ui.herramientas.components.GroupsSettingsBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
 
@@ -97,6 +109,7 @@ fun NotasScreen(
     var showManualCreateBottomSheet by remember { mutableStateOf(false) }
     var showGitHubImportDialog by remember { mutableStateOf(false) }
     var showCopilotAnalysisSheet by remember { mutableStateOf(false) }
+    var showTuneSettingsSheet by remember { mutableStateOf(false) }
 
     val isScrolled by remember {
         derivedStateOf {
@@ -155,31 +168,72 @@ fun NotasScreen(
         )
     }
 
+    // Modal de ajustes de grupos de ponderación (Importar/Exportar/Reset)
+    if (showTuneSettingsSheet) {
+        GroupsSettingsBottomSheet(
+            onDismiss = { showTuneSettingsSheet = false },
+            onOpenCatalogImport = {
+                showTuneSettingsSheet = false
+                showGitHubImportDialog = true
+            },
+            onImportJson = { json ->
+                viewModel.importGlobalGroupsFromJson(json) { }
+            },
+            onRequestExportContent = { callback ->
+                viewModel.exportGlobalGroups { json ->
+                    callback(json)
+                }
+            },
+            onResetGroups = {
+                viewModel.resetAllSimulationGroups()
+            },
+            themeStyle = themeStyle
+        )
+    }
+
     val totalWeight = uiState.totalConfiguredWeight.roundToInt()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
+        val menuAnchor = rememberGlassPopupAnchor()
+        var showTuneMenu by remember { mutableStateOf(false) }
 
-        top.yukonga.miuix.kmp.basic.Scaffold(
-            topBar = {
-                MiuixBlurredBar(
-                    backdrop = backdrop,
-                    scrollBehavior = scrollBehavior
-                ) {
-                    MiuixPageTopAppBar(
-                        title = stringResource(Res.string.grades_progreso_title),
-                        scrollBehavior = scrollBehavior,
-                        navigationIcon = {
-                            MiuixGlassyActionsContainer(backdrop = backdrop) {
+        Box(modifier = modifier.fillMaxSize()) {
+            top.yukonga.miuix.kmp.basic.Scaffold(
+                topBar = {
+                    MiuixBlurredBar(
+                        backdrop = backdrop,
+                        scrollBehavior = scrollBehavior
+                    ) {
+                        MiuixPageTopAppBar(
+                            title = stringResource(Res.string.grades_progreso_title),
+                            scrollBehavior = scrollBehavior,
+                            navigationIcon = {
                                 BackNavigationIcon(onClick = onBack)
+                            },
+                            actions = {
+                                GlassIconButton(
+                                    onClick = { showTuneMenu = true },
+                                    backdrop = backdrop,
+                                    modifier = Modifier.glassPopupAnchor(
+                                        anchor = menuAnchor,
+                                        cornerRadius = GlassTopAppBarDefaults.ButtonSize / 2,
+                                    ),
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Tune,
+                                        contentDescription = stringResource(Res.string.groups_menu_options_title),
+                                        modifier = Modifier.size(28.dp).glassPopupAnchorContent(menuAnchor),
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                    )
+                                }
                             }
-                        }
-                    )
-                }
-            },
-            modifier = modifier.fillMaxSize()
-        ) { innerPadding ->
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            ) { innerPadding ->
             val contentPadding = miuixPageContentPadding(
                 innerPadding = innerPadding,
                 extraTop = 8.dp,
@@ -285,7 +339,59 @@ fun NotasScreen(
                 )
             }
         }
-    } else {
+
+        GlassTransformPopup(
+            show = showTuneMenu,
+            onDismissRequest = { showTuneMenu = false },
+            anchor = menuAnchor,
+            backdrop = backdrop,
+            anchorContent = {
+                top.yukonga.miuix.kmp.basic.Icon(
+                    imageVector = MiuixIcons.Tune,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = MiuixTheme.colorScheme.onSurface,
+                )
+            },
+            gap = 0.dp,
+        ) {
+            GlassPopupItem(
+                text = stringResource(Res.string.groups_menu_options_title),
+                icon = MiuixIcons.Tune,
+                onClick = {
+                    showTuneMenu = false
+                    showTuneSettingsSheet = true
+                }
+            )
+            GlassPopupItem(
+                text = stringResource(Res.string.groups_create_github_title),
+                icon = Icons.Default.LibraryBooks,
+                onClick = {
+                    showTuneMenu = false
+                    showGitHubImportDialog = true
+                }
+            )
+            if (activeCourse != null) {
+                GlassPopupItem(
+                    text = stringResource(Res.string.groups_create_copilot_title),
+                    icon = Icons.Default.Insights,
+                    onClick = {
+                        showTuneMenu = false
+                        showCopilotAnalysisSheet = true
+                    }
+                )
+            }
+            GlassPopupItem(
+                text = stringResource(Res.string.groups_menu_reset_groups),
+                icon = Icons.Default.Restore,
+                onClick = {
+                    showTuneMenu = false
+                    viewModel.resetAllSimulationGroups()
+                }
+            )
+        }
+    }
+} else {
         val topAppBarContainerColor by animateColorAsState(
             targetValue = if (isScrolled) {
                 MaterialTheme.colorScheme.surfaceContainer

@@ -2,7 +2,7 @@ name: CI Android Build
 
 on:
   push:
-    branches: [ main, feature/** ]
+    branches: [ main, feature/**, refactor/** ]
     paths:
       - 'androidApp/**'
       - 'shared/**'
@@ -12,7 +12,7 @@ on:
       - 'gradle.properties'
       - '.github/workflows/build.yml'
   pull_request:
-    branches: [ main, feature/** ]
+    branches: [ main, feature/**, refactor/** ]
     paths:
       - 'androidApp/**'
       - 'shared/**'

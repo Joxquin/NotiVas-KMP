@@ -292,6 +292,7 @@
     <string name="foros_default_message_prompt">Accede al foro de debate para consultar la consigna y participar activamente con tus compañeros.</string>
 
     <!-- Additional Dashboard & Miuix Strings -->
+    <string name="dashboard_welcome">Bienvenido, %1$s</string>
     <string name="dashboard_academic_title">Dashboard Académico y Seguimiento Canvas</string>
     <string name="dashboard_this_week">Esta semana</string>
     <string name="unconfigured_banner_title">Configuración de Fórmulas</string>

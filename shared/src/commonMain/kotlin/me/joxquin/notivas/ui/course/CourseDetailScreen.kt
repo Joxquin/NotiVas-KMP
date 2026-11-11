@@ -90,23 +90,18 @@ fun CourseDetailScreen(
                         subtitle = (uiState.course?.courseCode ?: "").uppercase(),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                backdrop = blurBackdrop
-                            ) {
-                                BackNavigationIcon(onClick = onBack)
-                            }
+                            BackNavigationIcon(onClick = onBack)
                         },
                         actions = {
-                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                            MiuixTopAppBarAction(
+                                onClick = { viewModel.loadCourseDetail(isRefresh = true) },
                                 backdrop = blurBackdrop
                             ) {
-                                MiuixTopAppBarAction(onClick = { viewModel.loadCourseDetail(isRefresh = true) }) {
-                                    top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Refresh,
-                                        contentDescription = "Refrescar",
-                                        tint = MiuixTheme.colorScheme.onBackground
-                                    )
-                                }
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Refresh,
+                                    contentDescription = "Refrescar",
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
                             }
                         }
                     )

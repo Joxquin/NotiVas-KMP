@@ -76,7 +76,8 @@ import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Recent
 import top.yukonga.miuix.kmp.icon.extended.Create
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
-import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
+import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import org.jetbrains.compose.resources.stringResource
@@ -165,37 +166,34 @@ fun CopilotScreen(
                     MiuixBlurredBar(
                         backdrop = backdrop,
                     ) {
-                        top.yukonga.miuix.kmp.basic.SmallTopAppBar(
+                        MiuixPageTopAppBar(
                             title = stringResource(Res.string.copilot_title),
                             color = Color.Transparent,
+                            isContentScrolled = true,
+                            progressiveBlur = true,
+                            collapsed = true,
                             navigationIcon = {
-                                me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                    backdrop = backdrop
+                                GlassIconButton(
+                                    backdrop = backdrop,
+                                    onClick = { isHistorySheetVisible = true }
                                 ) {
-                                    top.yukonga.miuix.kmp.basic.IconButton(
-                                        onClick = { isHistorySheetVisible = true }
-                                    ) {
-                                        top.yukonga.miuix.kmp.basic.Icon(
-                                            imageVector = MiuixIcons.Recent,
-                                            contentDescription = "Historial",
-                                            tint = MiuixTheme.colorScheme.onBackground
-                                        )
-                                    }
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Recent,
+                                        contentDescription = "Historial",
+                                        tint = MiuixTheme.colorScheme.onBackground
+                                    )
                                 }
                             },
                             actions = {
-                                me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                    backdrop = backdrop
+                                GlassIconButton(
+                                    backdrop = backdrop,
+                                    onClick = { viewModel.startNewSession() }
                                 ) {
-                                    top.yukonga.miuix.kmp.basic.IconButton(
-                                        onClick = { viewModel.startNewSession() }
-                                    ) {
-                                        top.yukonga.miuix.kmp.basic.Icon(
-                                            imageVector = MiuixIcons.Create,
-                                            contentDescription = "Nuevo Chat",
-                                            tint = MiuixTheme.colorScheme.onBackground
-                                        )
-                                    }
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Create,
+                                        contentDescription = "Nuevo Chat",
+                                        tint = MiuixTheme.colorScheme.onBackground
+                                    )
                                 }
                             }
                         )

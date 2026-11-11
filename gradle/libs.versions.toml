@@ -17,7 +17,7 @@ material3 = "1.12.0-alpha03"
 compose-material-icons = "1.7.3"
 kotlinx-serialization = "1.8.0"
 ktor = "3.1.1"
-miuix = "0.9.4-45645854-SNAPSHOT"
+miuix = "0.9.4-96d613aa-SNAPSHOT"
 androidx-room3 = "3.0.3"
 androidx-sqlite = "2.7.1"
 androidx-sqlite-web = "2.7.1"
@@ -35,6 +35,7 @@ androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", versi
 miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui", version.ref = "miuix" }
 miuix-preference = { module = "top.yukonga.miuix.kmp:miuix-preference", version.ref = "miuix" }
 miuix-blur = { module = "top.yukonga.miuix.kmp:miuix-blur", version.ref = "miuix" }
+miuix-material = { module = "top.yukonga.miuix.kmp:miuix-material", version.ref = "miuix" }
 miuix-glass = { module = "top.yukonga.miuix.kmp:miuix-glass", version.ref = "miuix" }
 miuix-glass-icons = { module = "top.yukonga.miuix.kmp:miuix-glass-icons", version.ref = "miuix" }
 miuix-squircle = { module = "top.yukonga.miuix.kmp:miuix-squircle", version.ref = "miuix" }

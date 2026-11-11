@@ -69,14 +69,21 @@ import me.joxquin.notivas.ui.dashboard.draft.components.parseConsignaSections
 
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusCard
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo
-import top.yukonga.miuix.kmp.basic.DropdownEntry
-import top.yukonga.miuix.kmp.basic.DropdownItem
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.LibraryBooks
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.glass.GlassIconButton
+import top.yukonga.miuix.kmp.glass.GlassPopupItem
+import top.yukonga.miuix.kmp.glass.GlassTopAppBarDefaults
+import top.yukonga.miuix.kmp.glass.GlassTransformPopup
+import top.yukonga.miuix.kmp.glass.glassPopupAnchor
+import top.yukonga.miuix.kmp.glass.glassPopupAnchorContent
+import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Tune
-import top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -215,78 +222,46 @@ fun AssignmentDraftScreen(
         val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
         val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
-        val openCanvasLabel = stringResource(Res.string.task_menu_open_canvas)
-        val exploreTemplatesLabel = stringResource(Res.string.task_menu_explore_templates)
-        val copyCanvasLinkLabel = stringResource(Res.string.task_menu_copy_canvas_link)
+        val menuAnchor = rememberGlassPopupAnchor()
+        var showMenu by remember { mutableStateOf(false) }
 
-        val dropdownEntries = remember(assignment, openCanvasLabel, exploreTemplatesLabel, copyCanvasLinkLabel) {
-            val items = mutableListOf<DropdownItem>()
-            items.add(
-                DropdownItem(
-                    text = openCanvasLabel,
-                    onClick = { onOpenCanvas() }
-                )
-            )
-            if (!assignment.isQuiz) {
-                items.add(
-                    DropdownItem(
-                        text = exploreTemplatesLabel,
-                        onClick = handleExploreTemplates
-                    )
-                )
-            }
-            items.add(
-                DropdownItem(
-                    text = copyCanvasLinkLabel,
-                    onClick = {
-                        assignment.htmlUrl?.let { url ->
-                            clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(url))
-                        }
-                    }
-                )
-            )
-            listOf(DropdownEntry(items = items))
-        }
-
-        top.yukonga.miuix.kmp.basic.Scaffold(
-            topBar = {
-                MiuixBlurredBar(
-                    backdrop = backdrop,
-                    scrollBehavior = scrollBehavior
-                ) {
-                    MiuixPageTopAppBar(
-                        title = stringResource(Res.string.assignment_detail_title),
-                        largeTitle = assignment.name,
-                        subtitle = shortenCourseSubtitle(courseName.ifBlank { "Canvas LMS" }),
-                        scrollBehavior = scrollBehavior,
-                        navigationIcon = {
-                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                backdrop = backdrop
-                            ) {
+        Box(modifier = modifier.fillMaxSize()) {
+            top.yukonga.miuix.kmp.basic.Scaffold(
+                topBar = {
+                    MiuixBlurredBar(
+                        backdrop = backdrop,
+                        scrollBehavior = scrollBehavior
+                    ) {
+                        MiuixPageTopAppBar(
+                            title = stringResource(Res.string.assignment_detail_title),
+                            largeTitle = assignment.name,
+                            subtitle = shortenCourseSubtitle(courseName.ifBlank { "Canvas LMS" }),
+                            scrollBehavior = scrollBehavior,
+                            navigationIcon = {
                                 BackNavigationIcon(onClick = onBack)
-                            }
-                        },
-                        actions = {
-                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                backdrop = backdrop
-                            ) {
-                                WindowIconDropdownMenu(
-                                    entries = dropdownEntries,
-                                    collapseOnSelection = true
+                            },
+                            actions = {
+                                GlassIconButton(
+                                    onClick = { showMenu = true },
+                                    backdrop = backdrop,
+                                    modifier = Modifier.glassPopupAnchor(
+                                        anchor = menuAnchor,
+                                        cornerRadius = GlassTopAppBarDefaults.ButtonSize / 2,
+                                    ),
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
                                         imageVector = MiuixIcons.Tune,
                                         contentDescription = stringResource(Res.string.assignment_detail_tab_options),
-                                        tint = MiuixTheme.colorScheme.onBackground
+                                        modifier = Modifier.size(28.dp).glassPopupAnchorContent(menuAnchor),
+                                        tint = MiuixTheme.colorScheme.onSurface
                                     )
                                 }
                             }
-                        }
-                    )
-                }
-            },
-            modifier = modifier.fillMaxSize()
-        ) { innerPadding ->
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            ) { innerPadding ->
             val contentPadding = miuixPageContentPadding(innerPadding)
             Box(
                 modifier = Modifier
@@ -395,7 +370,53 @@ fun AssignmentDraftScreen(
                 )
             }
         }
-    } else {
+
+        GlassTransformPopup(
+            show = showMenu,
+            onDismissRequest = { showMenu = false },
+            anchor = menuAnchor,
+            backdrop = backdrop,
+            anchorContent = {
+                top.yukonga.miuix.kmp.basic.Icon(
+                    imageVector = MiuixIcons.Tune,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = MiuixTheme.colorScheme.onSurface,
+                )
+            },
+            gap = 0.dp,
+        ) {
+            GlassPopupItem(
+                text = stringResource(Res.string.task_menu_open_canvas),
+                icon = Icons.Default.Language,
+                onClick = {
+                    showMenu = false
+                    onOpenCanvas()
+                }
+            )
+            if (!assignment.isQuiz) {
+                GlassPopupItem(
+                    text = stringResource(Res.string.task_menu_explore_templates),
+                    icon = Icons.Default.LibraryBooks,
+                    onClick = {
+                        showMenu = false
+                        handleExploreTemplates()
+                    }
+                )
+            }
+            GlassPopupItem(
+                text = stringResource(Res.string.task_menu_copy_canvas_link),
+                icon = Icons.Default.ContentCopy,
+                onClick = {
+                    showMenu = false
+                    assignment.htmlUrl?.let { url ->
+                        clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(url))
+                    }
+                }
+            )
+        }
+    }
+} else {
         val topAppBarContainerColor by animateColorAsState(
             targetValue = if (isScrolled) {
                 MaterialTheme.colorScheme.surfaceContainer

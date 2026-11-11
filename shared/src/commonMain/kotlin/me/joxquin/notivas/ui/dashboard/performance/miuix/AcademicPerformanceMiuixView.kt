@@ -79,8 +79,8 @@ import me.joxquin.notivas.shared.resources.performance_view_simulation
 import me.joxquin.notivas.shared.resources.performance_weekly
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
-import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
@@ -157,20 +157,19 @@ fun AcademicPerformanceMiuixView(
                     subtitle = stringResource(Res.string.performance_subtitle),
                     scrollBehavior = scrollBehavior,
                     navigationIcon = {
-                        MiuixGlassyActionsContainer(backdrop = backdrop) {
-                            BackNavigationIcon(onClick = onBack)
-                        }
+                        BackNavigationIcon(onClick = onBack)
                     },
                     actions = {
                         if (weekOffset != 0 && !isMonthlyView) {
-                            MiuixGlassyActionsContainer(backdrop = backdrop) {
-                                IconButton(onClick = onResetWeek) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = stringResource(Res.string.performance_current_week),
-                                        tint = primaryColor
-                                    )
-                                }
+                            GlassIconButton(
+                                onClick = onResetWeek,
+                                backdrop = backdrop
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = stringResource(Res.string.performance_current_week),
+                                    tint = primaryColor
+                                )
                             }
                         }
                     }
@@ -529,7 +528,7 @@ private fun MiuixHeatmapCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = onPreviousWeek) {
+                    GlassIconButton(onClick = onPreviousWeek) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = "Semana anterior",
@@ -546,7 +545,7 @@ private fun MiuixHeatmapCard(
                         color = onSurfaceColor
                     )
 
-                    IconButton(onClick = onNextWeek) {
+                    GlassIconButton(onClick = onNextWeek) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = "Semana siguiente",
