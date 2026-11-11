@@ -9,25 +9,25 @@ Este documento establece los estándares y patrones obligatorios para la creaci�
 La aplicación opera bajo dos paradigmas de diseño visual con arquitecturas de navegación diferentes:
 
 ### A. HyperOS MIUIX (`AppThemeStyle.MIUIX`)
-En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implementación de referencia de `/home/joxquin/miuix/example`:
-1. **Host Principal (`NavDisplay` con `CrossActivityTransition`):**
-   - Gobernado por [NavBackStack](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/navigation/miuix/MiuixNavigator.kt) y [MiuixRoute](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/navigation/miuix/MiuixRoute.kt).
-   - Transiciones oficiales de ventana HyperOS con [CrossActivityTransition](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/navigation/miuix/CrossActivityTransition.kt) (curva `FastOutExtraSlowIn`, escala a 0.9, desplazamiento de 96dp, `dimAmount` dinámico y resorte `FLING_BOUNCE` al soltar gestos de retroceso).
-   - Recorte de esquinas adaptativo al sistema (`NavCornerClipMode.All` con `rememberNavSystemCornerRadius()`).
+En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implementación de referencia oficial de `compose-miuix-ui` (`miuix/example`):
+1. **Host Principal (`NavDisplay` con `NavTransitions.MiuixDefault`):**
+   - Gobernado por `NavBackStack` y `MiuixRoute`.
+   - Transiciones oficiales de ventana HyperOS mediante `NavTransitions.MiuixDefault` (o la transición personalizada `CrossActivityTransition` con curva `FastOutExtraSlowIn`, escala a 0.9, desplazamiento de 96dp, `dimAmount` dinámico y resorte `FLING_BOUNCE` al soltar gestos de retroceso).
+   - Recorte de esquinas adaptativo al sistema (`NavCornerClipMode.Leading` con `rememberNavSystemCornerRadius()`).
 
 2. **Ruta Raíz (`MiuixRoute.Main`):**
    - Aloja el paginador horizontal (`HorizontalPager`) de las 4 pestañas canónicas (Inicio, Herramientas, Copilot, Ajustes).
-   - Aloja el encabezado [MiuixBlurredBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixPageUtils.kt) anclado en `Alignment.TopCenter` para los 4 destinos raíz.
-   - Aloja la [FloatingNavigationBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/FloatingNavigationBar.kt) ("Liquid Glass") anclada en `Alignment.BottomCenter`.
+   - Cada pestaña canónica aloja su propio encabezado `MiuixBlurredBar` con `MiuixPageTopAppBar` y desenfoque independiente (`rememberMiuixBlurBackdrop`).
+   - Aloja la `FloatingNavigationBar` ("Liquid Glass") anclada en `Alignment.BottomCenter`.
    - Al navegar a una pantalla secundaria, `NavDisplay` escala y difumina automáticamente `MiuixRoute.Main` al fondo, retirando de forma natural la barra flotante.
 
 3. **Pantallas Secundarias Modulares (`Screen`):**
-   - Cada pantalla secundaria (`RecentActivityScreen`, `ScheduleScreen`, `AssignmentDraftScreen`, `TaskHistoryArchiveScreen`, `ForoDetailScreen`) es un destino registrado en `NavDisplay`.
+   - Cada pantalla secundaria (`RecentActivityScreen`, `ScheduleScreen`, `AssignmentDraftScreen`, `TaskHistoryArchiveScreen`, `ForoDetailScreen`, etc.) es un destino registrado en `NavDisplay`.
    - Cada pantalla secundaria implementa su propio `Scaffold` modular de MIUIX con:
      - `MiuixBlurredBar` con desenfoque (`rememberMiuixBlurBackdrop`).
      - `MiuixPageTopAppBar` con su propio título, `BackNavigationIcon(onClick = onBack)` y acciones contextuales.
-     - Barra de desplazamiento háptica nativa [VerticalScrollBar](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixPageUtils.kt).
-     - Modificadores de scroll overscroll `miuixPageScrollModifiers` y padding `miuixPageContentPadding`.
+     - Barra de desplazamiento háptica nativa `top.yukonga.miuix.kmp.basic.VerticalScrollBar`.
+     - Modificadores de scroll overscroll `miuixPageScrollModifiers` y padding `miuixPageContentPadding` de `MiuixPageUtils.kt`.
 
 4. **Navegación Reactiva e Idempotente (`MiuixNavigator`):**
    - Acceso en cualquier punto del árbol de composición vía `LocalMiuixNavigator.current`.
@@ -76,7 +76,7 @@ En Material Design 3 se utiliza el enfoque estándar de Jetpack Compose mediante
 
 ## 2. Catálogo y Uso de Componentes Oficiales MIUIX (`compose-miuix-ui`)
 
-Basado en la implementación de referencia en `/home/joxquin/miuix/example`, se deben utilizar los componentes oficiales de `top.yukonga.miuix.kmp` en lugar de contenedores genéricos con formas simuladas:
+Basado en la implementación de referencia oficial de `compose-miuix-ui` (`example`), se deben utilizar los componentes oficiales de `top.yukonga.miuix.kmp` en lugar de contenedores genéricos con formas simuladas:
 
 ### 1. Tarjetas (`top.yukonga.miuix.kmp.basic.Card`)
 - Usar `Card` con `CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer)`.
@@ -97,7 +97,7 @@ Card(
 ```
 
 ### 2. Campos de Búsqueda y Entrada (`top.yukonga.miuix.kmp.basic.TextField` vs `InputField`)
-- **Campos de formulario y diálogo:** Utilizar `TextField` nativo con título/etiqueta flotante (`label = "..."`), basado en el patrón `TextField with title` de `/storage/emulated/0/CodeSpace/miuix/example`.
+- **Campos de formulario y diálogo:** Utilizar `TextField` nativo con título/etiqueta flotante (`label = "..."`), basado en el patrón `TextField with title` del módulo de ejemplo oficial de `compose-miuix-ui`.
   ```kotlin
   val fieldColors = if (themeStyle == AppThemeStyle.MIUIX) {
       TextFieldDefaults.textFieldColors()
@@ -158,6 +158,29 @@ Card(
   - Evitar paddings horizontales excesivos dentro de la hoja: el contenido debe alinearse de forma limpia con los márgenes estándar (12.dp a 16.dp).
   - No añadir espaciados superiores innecesarios (`padding(top = ...)` excesivo), ya que `WindowBottomSheet` ya incluye su propio drag handle y cabecera de título.
 - **Botones de cabecera condicionales:** Si una vista implementa un estado vacío (`EmptyState`) con un botón de acción principal destacado, el botón equivalente en la cabecera (ej. "Crear grupo") debe condicionarse a `if (items.isNotEmpty()) { ... }` para evitar duplicación innecesaria en la pantalla.
+
+### 6. Sistema Modular de Materiales y Shaders (`miuix-material`)
+En las versiones recientes de `compose-miuix-ui` (desde `0.9.4-ca674992` en adelante), los estilos visuales, shaders y sombras se dividieron en el módulo independiente `top.yukonga.miuix.kmp:miuix-material`.
+- **Regla estricta de paquetes:**
+  - **Sombras y Defaults:** Importar desde `top.yukonga.miuix.kmp.material.*` (ej. `GlassShadows`, `GlassDefaults`, `GlassStyles`, `GlassMaterials`, `GlassShape`). No importar desde `top.yukonga.miuix.kmp.glass.*`.
+  - **Shaders y compatibilidad de GPU:** `RuntimeShader`, `asBrush` e `isRuntimeShaderSupported` deben importarse exclusivamente desde `top.yukonga.miuix.kmp.material.*`. No importar desde `top.yukonga.miuix.kmp.blur.*`.
+  - **Bordes y relieve:** Para contornos translúcidos con reflejo de luz, utilizar `Modifier.edgeStroke(...)` con `EdgeStrokes.MiddleDark` o `EdgeStrokes.MiddleLight`. La antigua clase `GlassStroke` está deprecada.
+
+### 7. Barra de Navegación Flotante (`top.yukonga.miuix.kmp.glass.GlassNavigationBar`)
+- La barra flotante oficial de HyperOS utiliza el componente nativo `GlassNavigationBar` alojado en `FloatingNavigationBar.kt`:
+  - Se alimenta de `GlassNavigationItem(icon, label, contentDescription)`.
+  - Debe omitir los insets automáticos con `defaultWindowInsetsPadding = false` cuando esté contenida dentro de un contenedor alineado con paddings calculados (`WindowInsets.navigationBars`).
+  - Utilizar `shadow = GlassShadows.Float` para la elevación estándar de la cápsula flotante.
+
+### 8. Popups Flotantes y Menús Contextuales (`top.yukonga.miuix.kmp.glass.GlassTransformPopup`)
+- Para menús contextuales en cabeceras o listas (como el selector de cursos en Notas o acciones en Borradores):
+  - Utilizar `rememberGlassPopupAnchor()` sobre el elemento disparador y enlazar con `Modifier.glassPopupAnchor(anchor)`.
+  - Implementar `GlassTransformPopup` o `GlassPopup` que calcula automáticamente coordenadas de ventana sin desbordar el viewport seguro.
+
+### 9. Pull-to-Refresh Nativo (`top.yukonga.miuix.kmp.basic.PullToRefresh`)
+- Para vistas con actualización por deslizamiento en MIUIX (ej. `InicioMiuixContent`):
+  - Utilizar `val pullToRefreshState = rememberPullToRefreshState()` y envolver con `PullToRefresh(pullToRefreshState = pullToRefreshState, onRefresh = { ... })`.
+  - Sincronizar con el scroll overscroll elástico vertical (`Modifier.overScrollVertical()`), permitiendo amortiguación y desvanecimiento suave de texto de completado sin interrupciones.
 
 ---
 
@@ -236,14 +259,15 @@ Compose Multiplatform procesa los recursos de strings mediante un motor propio y
 
 ## 6. Checklist para Nuevas Vistas (Views)
 1. **¿Se implementó el diseño dual?** Ramificar con `if (themeStyle == AppThemeStyle.MIUIX) { ... } else { ... }`.
-2. **¿Se respetó el TopAppBar en MIUIX?** Comprobar que la vista no duplique el `TopAppBar` y que esté integrada con `MiuixBlurredBar` de [MiuixPageUtils.kt](file:///home/joxquin/AndroidStudioProjects/NotiVas-KMP-Rebuilt/shared/src/commonMain/kotlin/me/joxquin/notivas/ui/components/miuix/MiuixPageUtils.kt).
+2. **¿Se respetó el TopAppBar en MIUIX?** Comprobar que la vista no duplique el `TopAppBar` y que esté integrada con `MiuixBlurredBar` y `MiuixPageTopAppBar` de `MiuixPageUtils.kt`.
 3. **¿Se usaron los componentes nativos correctos?** Usar `Card`, `TextField` (with title para formularios, no `InputField`), `SmallTitle`, `TextButton`.
 4. **¿Márgenes y paddings consistentes?** Padding horizontal de 16.dp en pantallas y 12.dp a 16.dp en quicks/sheets; sin paddings superiores excesivos en `WindowBottomSheet`.
 5. **¿Navegación protegida contra doble `onBack`?** No usar `LaunchedEffect` para retroceder tras eliminar; proteger con banderas y guardar caché `lastValidModel`.
 6. **¿Botones no redundantes?** Los botones de cabecera deben ocultarse cuando el estado vacío ya provee el CTA principal.
 7. **¿Formato de strings e i18n correcto?** Comprobar que los porcentajes usen `%1$d%` (no `%%`), y que todas las claves existan en `values` y `values-es`.
 8. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
-9. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
+9. **¿Paquetes de materiales e imports correctos?** Importar `GlassShadows`, `GlassDefaults`, `RuntimeShader` e `isRuntimeShaderSupported` desde `top.yukonga.miuix.kmp.material.*` (no desde `.glass` ni `.blur`).
+10. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
 
 <!-- graphify-rules-start (managed by `graphify init`) -->
 ## Use Graphify before grep
