@@ -94,6 +94,7 @@ kotlin {
             implementation(libs.miuix.ui)
             implementation(libs.miuix.preference)
             implementation(libs.miuix.blur)
+            implementation(libs.miuix.material)
             implementation(libs.miuix.glass)
             implementation(libs.miuix.glass.icons)
             implementation(libs.miuix.squircle)
