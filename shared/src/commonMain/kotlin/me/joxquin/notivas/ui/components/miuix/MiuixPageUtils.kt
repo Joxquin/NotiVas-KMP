@@ -6,7 +6,11 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -15,9 +19,18 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.ui.layout.layout
+import kotlin.math.roundToInt
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
+import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.TopAppBar
+import top.yukonga.miuix.kmp.basic.TopAppBarDefaults
+import top.yukonga.miuix.kmp.glass.GlassTopAppBar
+import top.yukonga.miuix.kmp.glass.GlassTopAppBarDefaults
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.BlurColors
 import top.yukonga.miuix.kmp.blur.BlurDefaults
@@ -90,8 +103,11 @@ fun rememberMiuixBlurBackdrop(withSurfaceBackground: Boolean = true): LayerBackd
 fun Modifier.miuixBackdropModifier(backdrop: LayerBackdrop?): Modifier =
     if (backdrop != null) this.layerBackdrop(backdrop) else this
 
+val LocalMiuixPageBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
+
 /**
- * Contenedor de barra superior con desenfoque progresivo reactivo al MiuixScrollBehavior.
+ * Contenedor de barra superior para vistas HyperOS Miuix. Provee el backdrop de difuminado
+ * al árbol de composición para alimentar el desenfoque progresivo de GlassTopAppBar.
  */
 @Composable
 fun MiuixBlurredBar(
@@ -101,32 +117,12 @@ fun MiuixBlurredBar(
     alpha: Float? = null,
     content: @Composable () -> Unit,
 ) {
-    val density = LocalDensity.current
-    val thresholdPx = with(density) { 48.dp.toPx() }
-    val blurActive = blurEnabled && backdrop != null
-
-    Box(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        if (blurActive) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .graphicsLayer {
-                        this.alpha = alpha ?: (scrollBehavior?.state?.let {
-                            (-it.contentOffset / thresholdPx).coerceIn(0f, 1f)
-                        } ?: 1f)
-                    }
-                    .progressiveTextureBlur(
-                        backdrop = backdrop,
-                        shape = RectangleShape,
-                        gradient = ProgressiveBlur.Top.copy(curve = 0.5f),
-                        blurRadius = 80f,
-                        colors = miuixBarBlurColors(progressive = true),
-                    ),
-            )
+    CompositionLocalProvider(LocalMiuixPageBackdrop provides (backdrop.takeIf { blurEnabled })) {
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            content()
         }
-        content()
     }
 }
 
@@ -138,29 +134,93 @@ private fun miuixBarBlurColors(progressive: Boolean = false): BlurColors = BlurD
 )
 
 /**
- * TopAppBar canónico para pantallas Miuix, conectado con MiuixScrollBehavior.
+ * TopAppBar canónico para pantallas Miuix, basado en GlassTopAppBar oficial de HyperOS
+ * con soporte para modo contraído (SmallTopAppBar) o expandido, desenfoque progresivo
+ * reactivo al MiuixScrollBehavior y botones glass.
  */
 @Composable
 fun MiuixPageTopAppBar(
     title: String,
     largeTitle: String = title,
     scrollBehavior: ScrollBehavior? = null,
+    backdrop: LayerBackdrop? = LocalMiuixPageBackdrop.current,
+    progressiveBlur: Boolean = true,
+    isContentScrolled: Boolean? = null,
+    contentModifier: Modifier = Modifier,
+    titleAlpha: () -> Float = { 1f },
+    backgroundAlpha: () -> Float = { 1f },
     subtitle: String = "",
     color: Color = Color.Transparent,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     bottomContent: @Composable () -> Unit = {},
+    collapsed: Boolean = false,
 ) {
-    TopAppBar(
-        title = title,
-        largeTitle = largeTitle,
-        subtitle = subtitle,
-        color = color,
-        scrollBehavior = scrollBehavior,
-        navigationIcon = navigationIcon,
-        actions = actions,
-        bottomContent = bottomContent,
-    )
+    val contentScrolled by remember(scrollBehavior, isContentScrolled) {
+        derivedStateOf { isContentScrolled ?: (scrollBehavior?.state?.let { it.contentOffset < 0f } ?: false) }
+    }
+
+    if (collapsed) {
+        val topInsets = WindowInsets.statusBars
+        val rawBackdrop = backdrop?.takeIf { isRuntimeShaderSupported() }
+        val blurColors = BlurDefaults.blurColors(
+            blendColors = listOf(BlendColorEntry(MiuixTheme.colorScheme.surface.copy(alpha = 0.3f))),
+        )
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            if (progressiveBlur && rawBackdrop != null) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .layout { measurable, constraints ->
+                            val barHeight = topInsets.getTop(this) + TopAppBarDefaults.CollapsedHeight.toPx()
+                            val height = ((barHeight + 20.dp.toPx()) * 1.2f).roundToInt()
+                            val placeable = measurable.measure(constraints.copy(minHeight = height, maxHeight = height))
+                            layout(constraints.maxWidth, constraints.maxHeight) { placeable.placeRelative(0, 0) }
+                        }
+                        .graphicsLayer {
+                            val ramp = scrollBehavior?.let {
+                                (-it.state.contentOffset / GlassTopAppBarDefaults.ProgressiveBlurRampDistance.toPx()).coerceIn(0f, 1f)
+                            } ?: (if (contentScrolled) 1f else 0f)
+                            this.alpha = ramp * backgroundAlpha().coerceIn(0f, 1f)
+                        }
+                        .progressiveTextureBlur(
+                            backdrop = rawBackdrop,
+                            shape = RectangleShape,
+                            gradient = ProgressiveBlur.Top.copy(curve = 0.5f),
+                            blurRadius = GlassTopAppBarDefaults.ProgressiveBlurRadius.value,
+                            colors = blurColors,
+                        )
+                )
+            }
+            SmallTopAppBar(
+                title = title,
+                subtitle = subtitle,
+                color = color,
+                scrollBehavior = scrollBehavior,
+                navigationIcon = navigationIcon,
+                actions = actions,
+                bottomContent = bottomContent,
+                modifier = contentModifier,
+            )
+        }
+    } else {
+        GlassTopAppBar(
+            title = title,
+            largeTitle = largeTitle,
+            subtitle = subtitle,
+            contentModifier = contentModifier,
+            titleAlpha = titleAlpha,
+            backgroundAlpha = backgroundAlpha,
+            scrollBehavior = scrollBehavior,
+            backdrop = backdrop,
+            progressiveBlur = progressiveBlur && backdrop != null,
+            isContentScrolled = contentScrolled,
+            navigationIcon = navigationIcon,
+            actions = actions,
+            bottomContent = bottomContent,
+        )
+    }
 }
 
 /**
@@ -186,17 +246,19 @@ fun shortenCourseSubtitle(courseName: String?, maxLength: Int = 36): String {
 
 /**
  * Botón de acción canónico para la barra superior de HyperOS Miuix.
- * Utiliza el componente oficial IconButton de compose-miuix-ui con forma squircle
- * y retroalimentación háptica nativa idéntica a la implementación de referencia.
+ * Utiliza el componente oficial GlassIconButton de compose-miuix-ui
+ * con retroalimentación háptica nativa y adaptación de material glass idéntica a la implementación oficial.
  */
 @Composable
 fun MiuixTopAppBarAction(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    backdrop: LayerBackdrop? = LocalMiuixPageBackdrop.current,
     content: @Composable () -> Unit
 ) {
-    IconButton(
+    GlassIconButton(
         onClick = onClick,
+        backdrop = backdrop,
         modifier = modifier
     ) {
         content()

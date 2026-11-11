@@ -292,6 +292,7 @@
     <string name="foros_default_message_prompt">Access the discussion forum to read instructions and actively participate with classmates.</string>
 
     <!-- Additional Dashboard & Miuix Strings -->
+    <string name="dashboard_welcome">Welcome, %1$s</string>
     <string name="dashboard_academic_title">Academic Dashboard &amp; Canvas Tracking</string>
     <string name="dashboard_this_week">This week</string>
     <string name="unconfigured_banner_title">Formula Settings</string>

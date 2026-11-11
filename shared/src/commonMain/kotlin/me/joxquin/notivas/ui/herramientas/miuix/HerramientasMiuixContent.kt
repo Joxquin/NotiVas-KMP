@@ -18,21 +18,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import top.yukonga.miuix.kmp.basic.DropdownEntry
-import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Tune
-import top.yukonga.miuix.kmp.menu.WindowIconDropdownMenu
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
-import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
@@ -63,36 +58,6 @@ fun HerramientasMiuixContent(
     val backdrop = rememberMiuixBlurBackdrop()
     val scrollBehavior = MiuixScrollBehavior()
 
-    val importCatalogLabel = stringResource(Res.string.groups_menu_import_catalog)
-    val importJsonLabel = stringResource(Res.string.groups_menu_import_json)
-    val exportJsonLabel = stringResource(Res.string.groups_menu_export_json)
-    val resetGroupsLabel = stringResource(Res.string.groups_menu_reset_groups)
-
-    val herramientasDropdownEntries = remember(importCatalogLabel, importJsonLabel, exportJsonLabel, resetGroupsLabel) {
-        listOf(
-            DropdownEntry(
-                items = listOf(
-                    DropdownItem(
-                        text = importCatalogLabel,
-                        onClick = onOpenCatalogImport
-                    ),
-                    DropdownItem(
-                        text = importJsonLabel,
-                        onClick = onImportJsonClick
-                    ),
-                    DropdownItem(
-                        text = exportJsonLabel,
-                        onClick = onExportJsonClick
-                    ),
-                    DropdownItem(
-                        text = resetGroupsLabel,
-                        onClick = onResetGroups
-                    )
-                )
-            )
-        )
-    }
-
     Scaffold(
         topBar = {
             MiuixBlurredBar(
@@ -102,23 +67,7 @@ fun HerramientasMiuixContent(
                 MiuixPageTopAppBar(
                     title = stringResource(Res.string.herramientas_title),
                     subtitle = stringResource(Res.string.herramientas_subtitle),
-                    scrollBehavior = scrollBehavior,
-                    actions = {
-                        MiuixGlassyActionsContainer(
-                            backdrop = backdrop
-                        ) {
-                            WindowIconDropdownMenu(
-                                entries = herramientasDropdownEntries,
-                                collapseOnSelection = true
-                            ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = MiuixIcons.Tune,
-                                    contentDescription = stringResource(Res.string.groups_menu_options_title),
-                                    tint = MiuixTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
-                    }
+                    scrollBehavior = scrollBehavior
                 )
             }
         },

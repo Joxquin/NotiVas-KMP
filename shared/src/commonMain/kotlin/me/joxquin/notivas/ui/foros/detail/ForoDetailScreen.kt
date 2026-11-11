@@ -158,11 +158,7 @@ fun ForoDetailScreen(
                         subtitle = shortenCourseSubtitle(topic.courseName ?: "Canvas LMS"),
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                backdrop = backdrop
-                            ) {
-                                BackNavigationIcon(onClick = onBack)
-                            }
+                            BackNavigationIcon(onClick = onBack)
                         }
                     )
                 }

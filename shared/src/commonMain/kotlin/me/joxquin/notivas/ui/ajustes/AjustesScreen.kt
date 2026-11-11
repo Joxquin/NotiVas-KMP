@@ -94,8 +94,8 @@ import me.joxquin.notivas.shared.resources.sync
 import me.joxquin.notivas.ui.ajustes.components.PairWebSessionDialog
 import me.joxquin.notivas.ui.ajustes.components.SettingsProfileHeroHeader
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
-import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
@@ -266,18 +266,16 @@ fun AjustesScreen(
                         subtitle = stringResource(Res.string.settings_subtitle),
                         scrollBehavior = scrollBehavior,
                         actions = {
-                            MiuixGlassyActionsContainer(
+                            GlassIconButton(
+                                onClick = { viewModel.verifyToken() },
                                 backdrop = backdrop
                             ) {
-                                top.yukonga.miuix.kmp.basic.IconButton(
-                                    onClick = { viewModel.verifyToken() }
-                                ) {
-                                    top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Refresh,
-                                        contentDescription = stringResource(Res.string.sync),
-                                        tint = MiuixTheme.colorScheme.onSurfaceVariantActions
-                                    )
-                                }
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Refresh,
+                                    contentDescription = stringResource(Res.string.sync),
+                                    modifier = Modifier.size(28.dp),
+                                    tint = MiuixTheme.colorScheme.onSurface,
+                                )
                             }
                         }
                     )

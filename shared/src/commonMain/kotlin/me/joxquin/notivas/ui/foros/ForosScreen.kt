@@ -142,45 +142,40 @@ fun ForosScreen(
                         },
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                                backdrop = backdrop
-                            ) {
-                                BackNavigationIcon(onClick = onBack)
-                            }
+                            BackNavigationIcon(onClick = onBack)
                         },
                         actions = {
-                            me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
+                            top.yukonga.miuix.kmp.glass.GlassIconButton(
+                                onClick = { isGroupedByWeek = !isGroupedByWeek },
                                 backdrop = backdrop
                             ) {
-                                top.yukonga.miuix.kmp.basic.IconButton(
-                                    onClick = { isGroupedByWeek = !isGroupedByWeek }
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = if (isGroupedByWeek) MiuixIcons.ListView else MiuixIcons.GridView,
+                                    contentDescription = if (isGroupedByWeek) stringResource(Res.string.foros_view_mode_flat) else stringResource(Res.string.foros_view_mode_grouped),
+                                    tint = if (isGroupedByWeek) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
+                                )
+                            }
+                            if (isGroupedByWeek) {
+                                top.yukonga.miuix.kmp.glass.GlassIconButton(
+                                    onClick = { viewModel.toggleWeeksOrder() },
+                                    backdrop = backdrop
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = if (isGroupedByWeek) MiuixIcons.ListView else MiuixIcons.GridView,
-                                        contentDescription = if (isGroupedByWeek) stringResource(Res.string.foros_view_mode_flat) else stringResource(Res.string.foros_view_mode_grouped),
-                                        tint = if (isGroupedByWeek) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
+                                        imageVector = MiuixIcons.Sort,
+                                        contentDescription = stringResource(Res.string.foros_action_invert_weeks),
+                                        tint = if (!uiState.isWeeksReversed) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
                                     )
                                 }
-                                if (isGroupedByWeek) {
-                                    top.yukonga.miuix.kmp.basic.IconButton(
-                                        onClick = { viewModel.toggleWeeksOrder() }
-                                    ) {
-                                        top.yukonga.miuix.kmp.basic.Icon(
-                                            imageVector = MiuixIcons.Sort,
-                                            contentDescription = stringResource(Res.string.foros_action_invert_weeks),
-                                            tint = if (!uiState.isWeeksReversed) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onBackground
-                                        )
-                                    }
-                                }
-                                top.yukonga.miuix.kmp.basic.IconButton(
-                                    onClick = { viewModel.setShowFilterBottomSheet(true) }
-                                ) {
-                                    top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Tune,
-                                        contentDescription = stringResource(Res.string.foros_filter_sheet_title),
-                                        tint = MiuixTheme.colorScheme.onBackground
-                                    )
-                                }
+                            }
+                            top.yukonga.miuix.kmp.glass.GlassIconButton(
+                                onClick = { viewModel.setShowFilterBottomSheet(true) },
+                                backdrop = backdrop
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = MiuixIcons.Tune,
+                                    contentDescription = stringResource(Res.string.foros_filter_sheet_title),
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
                             }
                         },
                         bottomContent = {

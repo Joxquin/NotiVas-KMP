@@ -68,8 +68,8 @@ import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
-import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
@@ -262,28 +262,30 @@ fun SimulationGroupDetailScreen(
                         title = group.name,
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
-                            MiuixGlassyActionsContainer(backdrop = backdrop) {
-                                BackNavigationIcon(onClick = onBack)
-                            }
+                            BackNavigationIcon(onClick = onBack)
                         },
                         actions = {
-                            MiuixGlassyActionsContainer(backdrop = backdrop) {
-                                IconButton(onClick = { showEditDialog = true }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = "Editar",
-                                        tint = MiuixTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                                IconButton(onClick = { showDeleteConfirmDialog = true }) {
-                                    Icon(
-                                        imageVector = Icons.Default.DeleteOutline,
-                                        contentDescription = "Eliminar",
-                                        tint = MiuixTheme.colorScheme.error,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
+                            GlassIconButton(
+                                onClick = { showEditDialog = true },
+                                backdrop = backdrop
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Editar",
+                                    tint = MiuixTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            GlassIconButton(
+                                onClick = { showDeleteConfirmDialog = true },
+                                backdrop = backdrop
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DeleteOutline,
+                                    contentDescription = "Eliminar",
+                                    tint = MiuixTheme.colorScheme.error,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
                     )

@@ -143,7 +143,7 @@ class MainPagerState(
     private var navJob: Job? = null
 
     fun animateToPage(targetIndex: Int) {
-        if (targetIndex == selectedPage) return
+        if (targetIndex == selectedPage && targetIndex == pagerState.currentPage) return
 
         navJob?.cancel()
         selectedPage = targetIndex
@@ -153,27 +153,17 @@ class MainPagerState(
             val myJob = coroutineContext.job
             try {
                 if (targetIndex in 0 until pagerState.pageCount) {
-                    pagerState.scroll(MutatePriority.UserInput) {
-                        val destination = targetIndex.coerceIn(0, pagerState.pageCount - 1)
-                        val pageSize = pagerState.layoutInfo.pageSize + pagerState.layoutInfo.pageSpacing
-                        if (pageSize > 0) {
-                            val distance = (destination - pagerState.currentPage - pagerState.currentPageOffsetFraction) * pageSize
-                            var previousValue = 0f
-                            animate(
-                                initialValue = 0f,
-                                targetValue = distance,
-                                animationSpec = MiuixPagerSpringSpec,
-                            ) { currentValue, _ ->
-                                previousValue += scrollBy(currentValue - previousValue)
-                            }
-                        }
-                    }
+                    pagerState.animateScrollToPage(
+                        page = targetIndex,
+                        animationSpec = MiuixPagerSpringSpec,
+                    )
                 }
             } finally {
                 if (navJob == myJob) {
                     isNavigating = false
+                    selectedPage = targetIndex
                     if (pagerState.currentPage != targetIndex) {
-                        selectedPage = pagerState.currentPage
+                        pagerState.scrollToPage(targetIndex)
                     }
                 }
             }
@@ -646,7 +636,10 @@ fun MainAppShell(
                                             mainPagerState.animateToPage(targetIndex)
                                         }
                                     },
-                                    backdrop = contentBackdrop
+                                    backdrop = contentBackdrop,
+                                    onSearchClick = {
+                                        dashboardViewModel.setSearchExpanded(true)
+                                    }
                                 )
                             }
                         }

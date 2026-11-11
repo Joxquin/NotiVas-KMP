@@ -15,9 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -49,11 +53,16 @@ import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
 import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.platform.LocalDensity
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import me.joxquin.notivas.ui.components.miuix.SearchBox
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
-import me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer
+import me.joxquin.notivas.ui.dashboard.components.search.glassSearchBarTransition
+import me.joxquin.notivas.ui.dashboard.components.search.rememberGlassSearchBarAlpha
+import me.joxquin.notivas.ui.dashboard.components.search.rememberGlassSearchTitleAlpha
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
@@ -132,10 +141,9 @@ fun InicioMiuixContent(
 
     val recentSearches by viewModel.recentSearches.collectAsState()
     val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
-    val searchStatus by viewModel.searchStatus.collectAsState()
-    var searchOffsetY by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(140.dp) }
-    var searchOverlayAnimStatus by androidx.compose.runtime.remember {
-        androidx.compose.runtime.mutableStateOf(me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED)
+    val searchBarAlpha = rememberGlassSearchBarAlpha(isSearchExpanded)
+    val contentUnderTopBar by remember(listState) {
+        derivedStateOf { listState.canScrollBackward }
     }
 
     val backdrop = rememberMiuixBlurBackdrop()
@@ -149,91 +157,75 @@ fun InicioMiuixContent(
     ) {
         top.yukonga.miuix.kmp.basic.Scaffold(
             topBar = {
-            MiuixBlurredBar(
-                backdrop = backdrop,
-                scrollBehavior = scrollBehavior
-            ) {
-                MiuixPageTopAppBar(
-                    title = stringResource(Res.string.app_name),
-                    largeTitle = "Bienvenido, ${studentName.uppercase()}",
-                    subtitle = "",
+                MiuixBlurredBar(
+                    backdrop = backdrop,
                     scrollBehavior = scrollBehavior,
-                    actions = {
-                        me.joxquin.notivas.ui.components.miuix.MiuixGlassyActionsContainer(
-                            backdrop = backdrop
-                        ) {
-                            top.yukonga.miuix.kmp.basic.IconButton(
-                                onClick = onNavigateToSchedule
-                            ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = MiuixIcons.Weeks,
-                                    contentDescription = stringResource(Res.string.schedule_screen_title),
-                                    tint = MiuixTheme.colorScheme.onBackground
-                                )
+                ) {
+                    MiuixPageTopAppBar(
+                        title = stringResource(Res.string.app_name),
+                        largeTitle = stringResource(Res.string.dashboard_welcome, studentName.uppercase()),
+                        subtitle = "",
+                        isContentScrolled = contentUnderTopBar,
+                        contentModifier = Modifier.glassSearchBarTransition(isSearchExpanded, barAlpha = { searchBarAlpha.value }),
+                        titleAlpha = rememberGlassSearchTitleAlpha(
+                            isSearchExpanded,
+                            scrollBehavior.state.heightOffset == scrollBehavior.state.heightOffsetLimit
+                        ),
+                        scrollBehavior = scrollBehavior,
+                        backgroundAlpha = { searchBarAlpha.value },
+                        actions = {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                GlassIconButton(
+                                    onClick = onNavigateToSchedule
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Weeks,
+                                        contentDescription = stringResource(Res.string.schedule_screen_title),
+                                        modifier = Modifier.size(28.dp),
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                    )
+                                }
+                                GlassIconButton(
+                                    onClick = onNavigateToRecentActivity
+                                ) {
+                                    top.yukonga.miuix.kmp.basic.Icon(
+                                        imageVector = MiuixIcons.Alarm,
+                                        contentDescription = stringResource(Res.string.recent_activity_title),
+                                        modifier = Modifier.size(28.dp),
+                                        tint = MiuixTheme.colorScheme.onSurface,
+                                    )
+                                }
                             }
-                            top.yukonga.miuix.kmp.basic.IconButton(
-                                onClick = onNavigateToRecentActivity
-                            ) {
-                                top.yukonga.miuix.kmp.basic.Icon(
-                                    imageVector = MiuixIcons.Alarm,
-                                    contentDescription = stringResource(Res.string.recent_activity_title),
-                                    tint = MiuixTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
-                    },
-                    bottomContent = {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                        ) {
+                        },
+                        bottomContent = {
                             val collapsedFraction = scrollBehavior.state.collapsedFraction
-                            val subtitleAlpha = (1f - (collapsedFraction * 2.5f)).coerceIn(0f, 1f)
-                            val density = androidx.compose.ui.platform.LocalDensity.current
-                            val searchTranslationY = with(density) {
-                                (-26.dp * collapsedFraction).toPx()
-                            }
+                            val largeTitleFade = (collapsedFraction * 3f).coerceIn(0f, 1f)
+                            val subtitleAlpha = (1f - largeTitleFade) * (if (isSearchExpanded) 0f else 1f)
+                            val blurRadiusPx = with(LocalDensity.current) { 8.dp.toPx() } * largeTitleFade
 
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .graphicsLayer { alpha = subtitleAlpha }
-                                    .padding(bottom = 6.dp)
+                                    .padding(horizontal = 16.dp)
+                                    .graphicsLayer {
+                                        alpha = subtitleAlpha
+                                        if (blurRadiusPx > 0.1f) {
+                                            renderEffect = BlurEffect(blurRadiusPx, blurRadiusPx, TileMode.Decal)
+                                        }
+                                    }
                             ) {
                                 MiuixText(
-                                    text = "Dashboard Académico y Seguimiento Canvas",
+                                    text = stringResource(Res.string.dashboard_academic_title),
                                     style = MiuixTheme.textStyles.body2,
-                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                 )
                             }
-
-                            me.joxquin.notivas.ui.dashboard.components.search.DashboardSearchBarAnchor(
-                                query = searchQuery,
-                                onSearchClick = {
-                                    viewModel.updateSearchStatus(searchStatus.copy(current = me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING))
-                                    viewModel.setSearchExpanded(true)
-                                },
-                                onPositionChanged = {
-                                    searchOffsetY = it
-                                    viewModel.setSearchOffsetY(it)
-                                },
-                                onAskAi = { query -> onNavigateToCopilot() },
-                                themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-                                isVisible = searchStatus.isCollapsed() && searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .graphicsLayer {
-                                        translationY = searchTranslationY
-                                    }
-                            )
                         }
-                    }
-                )
-            }
-        },
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
         val pagePadding = miuixPageContentPadding(
             innerPadding = innerPadding,
             extraTop = 8.dp,
@@ -245,16 +237,16 @@ fun InicioMiuixContent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer { this.alpha = searchBarAlpha.value }
                 .background(MiuixTheme.colorScheme.surface)
                 .miuixBackdropModifier(backdrop)
         ) {
-            searchStatus.SearchBox {
-                val refreshTexts = listOf(
-                    stringResource(Res.string.refresh_pulling),
-                    stringResource(Res.string.refresh_release),
-                    stringResource(Res.string.refresh_refresh),
-                    stringResource(Res.string.refresh_complete),
-                )
+            val refreshTexts = listOf(
+                stringResource(Res.string.refresh_pulling),
+                stringResource(Res.string.refresh_release),
+                stringResource(Res.string.refresh_refresh),
+                stringResource(Res.string.refresh_complete),
+            )
 
                 PullToRefresh(
                     isRefreshing = isRefreshing,
@@ -366,23 +358,19 @@ fun InicioMiuixContent(
                 }
             }
 
-                if (searchStatus.shouldCollapsed()) {
-                    VerticalScrollBar(
-                        adapter = rememberScrollBarAdapter(listState),
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .fillMaxHeight(),
-                        trackPadding = pagePadding
-                    )
-                }
-            }
+            VerticalScrollBar(
+                adapter = rememberScrollBarAdapter(listState),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight(),
+                trackPadding = pagePadding
+            )
         }
 
-        // Vista Incrustada de Búsqueda con Animación Ease Continua
-        me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(
-            isExpanded = isSearchExpanded,
-            onExpandedChange = { viewModel.setSearchExpanded(it) },
-            initialOffsetY = searchOffsetY,
+        // Vista Incrustada de Búsqueda HyperOS (GlassSearchOverlay)
+        me.joxquin.notivas.ui.dashboard.components.search.GlassSearchOverlay(
+            expanded = isSearchExpanded,
+            onDismissRequest = { viewModel.setSearchExpanded(false) },
             query = searchQuery,
             onQueryChange = { searchQuery = it },
             onSearchCommit = { viewModel.addRecentSearch(it) },
@@ -397,19 +385,6 @@ fun InicioMiuixContent(
             onAssignmentClick = { selectedAssignmentForSubmenu = it },
             onForumClick = { onNavigateToForoDetail?.invoke(it) },
             onAskAi = { query -> onNavigateToCopilot() },
-            themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
-            onAnimStatusChange = {
-                searchOverlayAnimStatus = it
-                val mappedStatus = when (it) {
-                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.EXPANDED -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDED
-                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.EXPANDING -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.EXPANDING
-                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSING -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.COLLAPSING
-                    me.joxquin.notivas.ui.dashboard.components.search.SearchAnimStatus.COLLAPSED -> me.joxquin.notivas.ui.components.miuix.SearchStatus.Status.COLLAPSED
-                }
-                if (searchStatus.current != mappedStatus) {
-                    viewModel.updateSearchStatus(searchStatus.copy(current = mappedStatus))
-                }
-            }
         )
 
         // Submenú Rápido de Opciones y Gestión de Tarea (WindowBottomSheet)
