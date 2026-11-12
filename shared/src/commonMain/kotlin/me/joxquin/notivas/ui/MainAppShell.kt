@@ -115,7 +115,7 @@ import me.joxquin.notivas.ui.foros.ForosScreen
 import me.joxquin.notivas.ui.activity.RecentActivityScreen
 import me.joxquin.notivas.ui.dashboard.schedule.ScheduleScreen
 import me.joxquin.notivas.ui.dashboard.draft.AssignmentDraftScreen
-import me.joxquin.notivas.ui.herramientas.archive.TaskHistoryArchiveScreen
+import me.joxquin.notivas.ui.utilidades.archive.TaskHistoryArchiveScreen
 import me.joxquin.notivas.ui.foros.detail.ForoDetailScreen
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import me.joxquin.notivas.data.model.Assignment
@@ -200,7 +200,7 @@ fun MainAppShell(
     val destinations = remember {
         listOf(
             MainDestination.Inicio,
-            MainDestination.Herramientas,
+            MainDestination.Utilidades,
             MainDestination.Copilot,
             MainDestination.Ajustes
         )
@@ -232,7 +232,7 @@ fun MainAppShell(
         ProfileViewModel(canvasRepository, copilotRepository, preferencesManager)
     }
     val archiveViewModel = remember {
-        me.joxquin.notivas.ui.herramientas.archive.ArchiveViewModel(canvasRepository, preferencesManager)
+        me.joxquin.notivas.ui.utilidades.archive.ArchiveViewModel(canvasRepository, preferencesManager)
     }
     val activityViewModel = remember {
         me.joxquin.notivas.ui.activity.ActivityViewModel(canvasRepository)
@@ -276,7 +276,7 @@ fun MainAppShell(
 
     val inicioListState = androidx.compose.foundation.lazy.rememberLazyListState()
     val activityListState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val herramientasListState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val utilidadesListState = androidx.compose.foundation.lazy.rememberLazyListState()
     val ajustesListState = androidx.compose.foundation.lazy.rememberLazyListState()
     val copilotListState = androidx.compose.foundation.lazy.rememberLazyListState()
 
@@ -292,7 +292,7 @@ fun MainAppShell(
     var showingScheduleDetail by remember { mutableStateOf(false) }
     var selectedCourseForDetail by remember { mutableStateOf<Course?>(null) }
     var selectedCourseForModules by remember { mutableStateOf<Course?>(null) }
-    var showHerramientasTuneSheet by remember { mutableStateOf(false) }
+    var showUtilidadesTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
     val forosUiState by forosViewModel.uiState.collectAsState()
@@ -474,7 +474,7 @@ fun MainAppShell(
                                                 showingForosDetail = false
                                                 mainPagerState.animateToPage(2)
                                             },
-                                            onNavigateToHerramientas = {
+                                            onNavigateToUtilidades = {
                                                 showingNotasDetail = false
                                                 showingForosDetail = false
                                                 mainPagerState.animateToPage(1)
@@ -517,8 +517,8 @@ fun MainAppShell(
                                         )
                                     }
 
-                                    MainDestination.Herramientas -> {
-                                        me.joxquin.notivas.ui.herramientas.HerramientasScreen(
+                                    MainDestination.Utilidades -> {
+                                        me.joxquin.notivas.ui.utilidades.UtilidadesScreen(
                                             viewModel = notasViewModel,
                                             forosViewModel = forosViewModel,
                                             archiveViewModel = archiveViewModel,
@@ -551,10 +551,10 @@ fun MainAppShell(
                                             onOpenGroupDetail = { gid, cid ->
                                                 miuixNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
                                             },
-                                            onOpenTuneSettings = { showHerramientasTuneSheet = true },
+                                            onOpenTuneSettings = { showUtilidadesTuneSheet = true },
                                             onBack = {},
                                             themeStyle = AppThemeStyle.MIUIX,
-                                            lazyListState = herramientasListState
+                                            lazyListState = utilidadesListState
                                         )
                                     }
 
@@ -1229,8 +1229,8 @@ fun MainAppShell(
                                             onNavigateToCopilot = {
                                                 navigateToMaterial(MainDestination.Copilot)
                                             },
-                                            onNavigateToHerramientas = {
-                                                navigateToMaterial(MainDestination.Herramientas)
+                                            onNavigateToUtilidades = {
+                                                navigateToMaterial(MainDestination.Utilidades)
                                             },
                                             onNavigateToAjustes = {
                                                 navigateToMaterial(MainDestination.Ajustes)
@@ -1268,8 +1268,8 @@ fun MainAppShell(
                                         )
                                     }
 
-                                    MainDestination.Herramientas -> {
-                                        me.joxquin.notivas.ui.herramientas.HerramientasScreen(
+                                    MainDestination.Utilidades -> {
+                                        me.joxquin.notivas.ui.utilidades.UtilidadesScreen(
                                             viewModel = notasViewModel,
                                             forosViewModel = forosViewModel,
                                             archiveViewModel = archiveViewModel,
@@ -1302,14 +1302,14 @@ fun MainAppShell(
                                             onOpenGroupDetail = { gid, cid ->
                                                 materialNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
                                             },
-                                            onOpenTuneSettings = { showHerramientasTuneSheet = true },
+                                            onOpenTuneSettings = { showUtilidadesTuneSheet = true },
                                             onOpenCatalogImport = { showCatalogImportDialog = true },
                                             onImportJsonClick = { filePicker.launchFilePicker() },
                                             onExportJsonClick = { filePicker.launchFileCreator("notivas_ponderacion.json") },
                                             onResetGroups = { notasViewModel.resetAllSimulationGroups() },
                                             onBack = { handleMaterialBack() },
                                             themeStyle = AppThemeStyle.MATERIAL,
-                                            lazyListState = herramientasListState
+                                            lazyListState = utilidadesListState
                                         )
                                     }
 
@@ -1800,9 +1800,9 @@ fun MainAppShell(
         )
     }
 
-    if (showHerramientasTuneSheet) {
-        me.joxquin.notivas.ui.herramientas.components.GroupsSettingsBottomSheet(
-            onDismiss = { showHerramientasTuneSheet = false },
+    if (showUtilidadesTuneSheet) {
+        me.joxquin.notivas.ui.utilidades.components.GroupsSettingsBottomSheet(
+            onDismiss = { showUtilidadesTuneSheet = false },
             onOpenCatalogImport = { showCatalogImportDialog = true },
             onImportJson = { json ->
                 notasViewModel.importGlobalGroupsFromJson(json) { result ->

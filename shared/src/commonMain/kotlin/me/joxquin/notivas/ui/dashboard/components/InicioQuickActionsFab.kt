@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun InicioQuickActionsFab(
     onNavigateToCopilot: () -> Unit,
-    onNavigateToHerramientas: () -> Unit,
+    onNavigateToUtilidades: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isFabMenuOpen by remember { mutableStateOf(false) }
@@ -101,7 +101,7 @@ fun InicioQuickActionsFab(
                     shadowElevation = 4.dp,
                     modifier = Modifier.clickable {
                         isFabMenuOpen = false
-                        onNavigateToHerramientas()
+                        onNavigateToUtilidades()
                     }
                 ) {
                     Row(

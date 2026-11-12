@@ -1,4 +1,4 @@
-package me.joxquin.notivas.ui.herramientas.components
+package me.joxquin.notivas.ui.utilidades.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background

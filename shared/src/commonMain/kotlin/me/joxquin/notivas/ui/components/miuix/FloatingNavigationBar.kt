@@ -3,6 +3,7 @@
 
 package me.joxquin.notivas.ui.components.miuix
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,13 +28,14 @@ import me.joxquin.notivas.shared.resources.copilot_history_title
 import me.joxquin.notivas.shared.resources.dashboard_search_hint
 import me.joxquin.notivas.shared.resources.nav_ajustes
 import me.joxquin.notivas.shared.resources.nav_copilot
-import me.joxquin.notivas.shared.resources.nav_herramientas
+import me.joxquin.notivas.shared.resources.nav_utilidades
 import me.joxquin.notivas.shared.resources.nav_inicio
 import me.joxquin.notivas.ui.navigation.MainDestination
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassIconButton
+import top.yukonga.miuix.kmp.glass.GlassMotion
 import top.yukonga.miuix.kmp.glass.GlassNavigationBar
 import top.yukonga.miuix.kmp.glass.GlassNavigationBarDefaults
 import top.yukonga.miuix.kmp.glass.GlassNavigationItem
@@ -55,7 +58,7 @@ data class MiuixNavItem(
 
 val MiuixNavDestinations = listOf(
     MiuixNavItem(MainDestination.Inicio, MainDestination.Inicio.unselectedIcon, Res.string.nav_inicio),
-    MiuixNavItem(MainDestination.Herramientas, MainDestination.Herramientas.unselectedIcon, Res.string.nav_herramientas),
+    MiuixNavItem(MainDestination.Utilidades, MainDestination.Utilidades.unselectedIcon, Res.string.nav_utilidades),
     MiuixNavItem(MainDestination.Copilot, MainDestination.Copilot.unselectedIcon, Res.string.nav_copilot),
     MiuixNavItem(MainDestination.Ajustes, MainDestination.Ajustes.unselectedIcon, Res.string.nav_ajustes),
 )
@@ -81,7 +84,7 @@ fun FloatingNavigationBar(
     val destinations = remember {
         listOf(
             MainDestination.Inicio,
-            MainDestination.Herramientas,
+            MainDestination.Utilidades,
             MainDestination.Copilot,
             MainDestination.Ajustes,
         )
@@ -92,11 +95,11 @@ fun FloatingNavigationBar(
     }
 
     val inicioLabel = stringResource(Res.string.nav_inicio)
-    val herramientasLabel = stringResource(Res.string.nav_herramientas)
+    val utilidadesLabel = stringResource(Res.string.nav_utilidades)
     val copilotLabel = stringResource(Res.string.nav_copilot)
     val ajustesLabel = stringResource(Res.string.nav_ajustes)
 
-    val navItems = remember(inicioLabel, herramientasLabel, copilotLabel, ajustesLabel) {
+    val navItems = remember(inicioLabel, utilidadesLabel, copilotLabel, ajustesLabel) {
         listOf(
             GlassNavigationItem(
                 icon = MainDestination.Inicio.unselectedIcon,
@@ -104,9 +107,9 @@ fun FloatingNavigationBar(
                 contentDescription = inicioLabel,
             ),
             GlassNavigationItem(
-                icon = MainDestination.Herramientas.unselectedIcon,
-                label = herramientasLabel,
-                contentDescription = herramientasLabel,
+                icon = MainDestination.Utilidades.unselectedIcon,
+                label = utilidadesLabel,
+                contentDescription = utilidadesLabel,
             ),
             GlassNavigationItem(
                 icon = MainDestination.Copilot.unselectedIcon,
@@ -128,10 +131,21 @@ fun FloatingNavigationBar(
     val hasTrailingAction = (currentDestination == MainDestination.Inicio && onSearchClick != null) ||
             (currentDestination == MainDestination.Copilot && onHistoryClick != null)
 
+    val targetActionWidth = if (hasTrailingAction) {
+        GlassNavigationBarDefaults.Height + GlassNavigationBarDefaults.ActionSpacing
+    } else {
+        0.dp
+    }
+    val animatedActionWidth by animateDpAsState(
+        targetValue = targetActionWidth,
+        animationSpec = GlassMotion.navShowHide(),
+        label = "floatingNavActionWidth"
+    )
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = bottomMargin),
+            .padding(start = 14.dp, end = 14.dp, top = 16.dp, bottom = bottomMargin),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         GlassNavigationBar(
@@ -145,11 +159,7 @@ fun FloatingNavigationBar(
             backdrop = if (isBlurActive) backdrop else null,
             defaultWindowInsetsPadding = false,
             modifier = Modifier.layout { measurable, constraints ->
-                val actionWidth = if (hasTrailingAction) {
-                    (GlassNavigationBarDefaults.Height + GlassNavigationBarDefaults.ActionSpacing).roundToPx()
-                } else {
-                    0
-                }
+                val actionWidth = animatedActionWidth.roundToPx()
                 val available = constraints.maxWidth - actionWidth + (10.dp * (navItems.size - 1) - 6.dp).roundToPx()
                 val width = if (constraints.hasBoundedWidth && available > 400.dp.roundToPx()) {
                     constraints.constrainWidth(344.dp.roundToPx() + actionWidth)

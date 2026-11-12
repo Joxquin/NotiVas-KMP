@@ -86,7 +86,7 @@ import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import org.jetbrains.compose.resources.stringResource
-import me.joxquin.notivas.ui.herramientas.components.GroupsSettingsBottomSheet
+import me.joxquin.notivas.ui.utilidades.components.GroupsSettingsBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
 

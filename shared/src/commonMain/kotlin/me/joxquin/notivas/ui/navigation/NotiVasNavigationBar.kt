@@ -39,7 +39,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.nav_inicio
-import me.joxquin.notivas.shared.resources.nav_herramientas
+import me.joxquin.notivas.shared.resources.nav_utilidades
 import me.joxquin.notivas.shared.resources.nav_copilot
 import me.joxquin.notivas.shared.resources.nav_ajustes
 
@@ -49,7 +49,7 @@ enum class MainDestination(
     val unselectedIcon: ImageVector
 ) {
     Inicio(Res.string.nav_inicio, Icons.Filled.Home, Icons.Outlined.Home),
-    Herramientas(Res.string.nav_herramientas, Icons.Filled.Analytics, Icons.Outlined.Analytics),
+    Utilidades(Res.string.nav_utilidades, Icons.Filled.Analytics, Icons.Outlined.Analytics),
     Copilot(Res.string.nav_copilot, Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome),
     Ajustes(Res.string.nav_ajustes, Icons.Filled.Settings, Icons.Outlined.Settings)
 }

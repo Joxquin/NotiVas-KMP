@@ -1,4 +1,4 @@
-package me.joxquin.notivas.ui.herramientas.material
+package me.joxquin.notivas.ui.utilidades.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

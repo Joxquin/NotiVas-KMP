@@ -1,4 +1,4 @@
-package me.joxquin.notivas.ui.herramientas
+package me.joxquin.notivas.ui.utilidades
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -13,17 +13,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import me.joxquin.notivas.data.local.AppThemeStyle
-import me.joxquin.notivas.ui.herramientas.material.HerramientasMaterialContent
-import me.joxquin.notivas.ui.herramientas.miuix.HerramientasMiuixContent
+import me.joxquin.notivas.ui.utilidades.material.UtilidadesMaterialContent
+import me.joxquin.notivas.ui.utilidades.miuix.UtilidadesMiuixContent
 import me.joxquin.notivas.ui.notas.NotasScreen
 import me.joxquin.notivas.ui.notas.NotasViewModel
 
 import me.joxquin.notivas.ui.foros.ForosScreen
 import me.joxquin.notivas.ui.foros.ForosViewModel
-import me.joxquin.notivas.ui.herramientas.archive.ArchiveViewModel
-import me.joxquin.notivas.ui.herramientas.archive.TaskHistoryArchiveScreen
+import me.joxquin.notivas.ui.utilidades.archive.ArchiveViewModel
+import me.joxquin.notivas.ui.utilidades.archive.TaskHistoryArchiveScreen
 
-enum class HerramientasSubDestination {
+enum class UtilidadesSubDestination {
     HUB,
     PROGRESO_DETAIL,
     FOROS_LIST,
@@ -32,11 +32,11 @@ enum class HerramientasSubDestination {
 }
 
 /**
- * Hub de Herramientas, Simulador de Notas y Foros Académicos.
+ * Hub de Utilidades, Simulador de Notas y Foros Académicos.
  * Soporta de manera reactiva tanto Material Design 3 Monet como HyperOS Miuix.
  */
 @Composable
-fun HerramientasScreen(
+fun UtilidadesScreen(
     viewModel: NotasViewModel? = null,
     forosViewModel: ForosViewModel? = null,
     archiveViewModel: ArchiveViewModel? = null,
@@ -61,11 +61,11 @@ fun HerramientasScreen(
 ) {
     val forosUiState = forosViewModel?.uiState?.collectAsState()?.value
     val currentSubDestination = when {
-        showingArchiveDetail -> HerramientasSubDestination.ARCHIVE
-        showingForosDetail && forosUiState?.selectedDiscussion != null -> HerramientasSubDestination.FORO_DETAIL
-        showingForosDetail -> HerramientasSubDestination.FOROS_LIST
-        showingNotasDetail -> HerramientasSubDestination.PROGRESO_DETAIL
-        else -> HerramientasSubDestination.HUB
+        showingArchiveDetail -> UtilidadesSubDestination.ARCHIVE
+        showingForosDetail && forosUiState?.selectedDiscussion != null -> UtilidadesSubDestination.FORO_DETAIL
+        showingForosDetail -> UtilidadesSubDestination.FOROS_LIST
+        showingNotasDetail -> UtilidadesSubDestination.PROGRESO_DETAIL
+        else -> UtilidadesSubDestination.HUB
     }
 
     val handleOpenForoDetail: (me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit = { topic ->
@@ -78,7 +78,7 @@ fun HerramientasScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        HerramientasMiuixContent(
+        UtilidadesMiuixContent(
             viewModel = viewModel,
             forosViewModel = forosViewModel,
             onOpenProgreso = onOpenProgreso,
@@ -97,7 +97,7 @@ fun HerramientasScreen(
         transitionSpec = {
             when {
                 // Navegando a detalle de foro desde la lista de foros
-                initialState == HerramientasSubDestination.FOROS_LIST && targetState == HerramientasSubDestination.FORO_DETAIL -> {
+                initialState == UtilidadesSubDestination.FOROS_LIST && targetState == UtilidadesSubDestination.FORO_DETAIL -> {
                     (slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it } +
                             fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
                         .togetherWith(
@@ -106,7 +106,7 @@ fun HerramientasScreen(
                         )
                 }
                 // Regresando del detalle de foro a la lista de foros
-                initialState == HerramientasSubDestination.FORO_DETAIL && targetState == HerramientasSubDestination.FOROS_LIST -> {
+                initialState == UtilidadesSubDestination.FORO_DETAIL && targetState == UtilidadesSubDestination.FOROS_LIST -> {
                     (slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { -it / 3 } +
                             fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
                         .togetherWith(
@@ -115,7 +115,7 @@ fun HerramientasScreen(
                         )
                 }
                 // Entrando desde el HUB hacia alguna pantalla interna
-                targetState != HerramientasSubDestination.HUB -> {
+                targetState != UtilidadesSubDestination.HUB -> {
                     (slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(250)) { it } +
                             fadeIn(animationSpec = androidx.compose.animation.core.tween(250)))
                         .togetherWith(
@@ -134,11 +134,11 @@ fun HerramientasScreen(
                 }
             }
         },
-        label = "herramientasSubNavTransition",
+        label = "utilidadesSubNavTransition",
         modifier = modifier
     ) { destination ->
         when (destination) {
-            HerramientasSubDestination.PROGRESO_DETAIL -> {
+            UtilidadesSubDestination.PROGRESO_DETAIL -> {
                 if (viewModel != null) {
                     NotasScreen(
                         viewModel = viewModel,
@@ -149,7 +149,7 @@ fun HerramientasScreen(
                     )
                 }
             }
-            HerramientasSubDestination.FOROS_LIST -> {
+            UtilidadesSubDestination.FOROS_LIST -> {
                 if (forosViewModel != null) {
                     ForosScreen(
                         viewModel = forosViewModel,
@@ -159,7 +159,7 @@ fun HerramientasScreen(
                     )
                 }
             }
-            HerramientasSubDestination.FORO_DETAIL -> {
+            UtilidadesSubDestination.FORO_DETAIL -> {
                 if (forosViewModel != null) {
                     me.joxquin.notivas.ui.foros.detail.ForoDetailScreen(
                         viewModel = forosViewModel,
@@ -169,7 +169,7 @@ fun HerramientasScreen(
                     )
                 }
             }
-            HerramientasSubDestination.ARCHIVE -> {
+            UtilidadesSubDestination.ARCHIVE -> {
                 if (archiveViewModel != null) {
                     TaskHistoryArchiveScreen(
                         viewModel = archiveViewModel,
@@ -180,9 +180,9 @@ fun HerramientasScreen(
                     )
                 }
             }
-            HerramientasSubDestination.HUB -> {
+            UtilidadesSubDestination.HUB -> {
                 if (themeStyle == AppThemeStyle.MIUIX) {
-                    HerramientasMiuixContent(
+                    UtilidadesMiuixContent(
                         viewModel = viewModel,
                         forosViewModel = forosViewModel,
                         onOpenProgreso = onOpenProgreso,
@@ -193,7 +193,7 @@ fun HerramientasScreen(
                         lazyListState = lazyListState
                     )
                 } else {
-                    HerramientasMaterialContent(
+                    UtilidadesMaterialContent(
                         viewModel = viewModel,
                         forosViewModel = forosViewModel,
                         onOpenProgreso = onOpenProgreso,

@@ -16,7 +16,7 @@ En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implemen
    - Recorte de esquinas adaptativo al sistema (`NavCornerClipMode.Leading` con `rememberNavSystemCornerRadius()`).
 
 2. **Ruta Raíz (`MiuixRoute.Main`):**
-   - Aloja el paginador horizontal (`HorizontalPager`) de las 4 pestañas canónicas (Inicio, Herramientas, Copilot, Ajustes).
+   - Aloja el paginador horizontal (`HorizontalPager`) de las 4 pestañas canónicas (Inicio, Utilidades, Copilot, Ajustes).
    - Cada pestaña canónica aloja su propio encabezado `MiuixBlurredBar` con `MiuixPageTopAppBar` y desenfoque independiente (`rememberMiuixBlurBackdrop`).
    - Aloja la `FloatingNavigationBar` ("Liquid Glass") anclada en `Alignment.BottomCenter`.
    - Al navegar a una pantalla secundaria, `NavDisplay` escala y difumina automáticamente `MiuixRoute.Main` al fondo, retirando de forma natural la barra flotante.
@@ -186,7 +186,7 @@ En las versiones recientes de `compose-miuix-ui` (desde `0.9.4-ca674992` en adel
 
 ## 3. Navegación Idempotente y Prevención de Doble Retroceso (`onBack`)
 
-Un error recurrente al eliminar o modificar entidades desde una pantalla de detalle es la ejecución duplicada de `onBack()`, lo que desapila dos pantallas consecutivas en el `NavDisplay` (ej. saltando de Detalle a Progreso y de inmediato retrocediendo a Herramientas).
+Un error recurrente al eliminar o modificar entidades desde una pantalla de detalle es la ejecución duplicada de `onBack()`, lo que desapila dos pantallas consecutivas en el `NavDisplay` (ej. saltando de Detalle a Progreso y de inmediato retrocediendo a Utilidades).
 
 ### Reglas obligatorias:
 1. **Cero `LaunchedEffect(entity) { if (entity == null) onBack() }` cuando ya hay acción explícita:** Si el usuario confirma una acción destructiva desde un diálogo de confirmación, la navegación de retorno debe ejecutarse **exclusivamente en el callback del botón** y nunca duplicarse mediante un `LaunchedEffect` que reaccione al cambio de estado en la base de datos.

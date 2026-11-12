@@ -1,4 +1,4 @@
-package me.joxquin.notivas.ui.herramientas.archive
+package me.joxquin.notivas.ui.utilidades.archive
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

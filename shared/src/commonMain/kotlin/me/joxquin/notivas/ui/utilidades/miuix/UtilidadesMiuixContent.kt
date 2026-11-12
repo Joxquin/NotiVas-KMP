@@ -1,4 +1,4 @@
-package me.joxquin.notivas.ui.herramientas.miuix
+package me.joxquin.notivas.ui.utilidades.miuix
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +37,7 @@ import me.joxquin.notivas.ui.foros.ForosViewModel
 import me.joxquin.notivas.ui.notas.NotasViewModel
 
 @Composable
-fun HerramientasMiuixContent(
+fun UtilidadesMiuixContent(
     viewModel: NotasViewModel? = null,
     forosViewModel: ForosViewModel? = null,
     onOpenProgreso: () -> Unit = {},
@@ -65,8 +65,8 @@ fun HerramientasMiuixContent(
                 scrollBehavior = scrollBehavior
             ) {
                 MiuixPageTopAppBar(
-                    title = stringResource(Res.string.herramientas_title),
-                    subtitle = stringResource(Res.string.herramientas_subtitle),
+                    title = stringResource(Res.string.utilidades_title),
+                    subtitle = stringResource(Res.string.utilidades_subtitle),
                     scrollBehavior = scrollBehavior
                 )
             }
@@ -98,7 +98,7 @@ fun HerramientasMiuixContent(
             ) {
                 item {
                     SmallTitle(
-                        text = stringResource(Res.string.herramientas_modules_header),
+                        text = stringResource(Res.string.utilidades_modules_header),
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }

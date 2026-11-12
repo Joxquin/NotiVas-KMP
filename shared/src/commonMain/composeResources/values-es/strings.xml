@@ -20,7 +20,7 @@
 
     <!-- Navigation -->
     <string name="nav_inicio">Inicio</string>
-    <string name="nav_herramientas">Herramientas</string>
+    <string name="nav_utilidades">Utilidades</string>
     <string name="nav_copilot">Copilot IA</string>
     <string name="nav_ajustes">Ajustes</string>
 
@@ -159,10 +159,10 @@
     <string name="courses_enrolled_format">%1$d inscritos</string>
     <string name="no_tasks_for_selected_day">Sin entregas para este día</string>
 
-    <!-- Tools / Herramientas & Grades -->
-    <string name="herramientas_title">Herramientas</string>
-    <string name="herramientas_subtitle">Utilidades y módulos NotiVas</string>
-    <string name="herramientas_modules_header">MÓDULOS ACTIVOS</string>
+    <!-- Utilidades & Grades -->
+    <string name="utilidades_title">Utilidades</string>
+    <string name="utilidades_subtitle">Utilidades y módulos NotiVas</string>
+    <string name="utilidades_modules_header">MÓDULOS ACTIVOS</string>
     <string name="grades_progreso_title">Progreso Académico</string>
     <string name="foros_hub_title">Foros Académicos</string>
     <string name="status_good_performance">Buen rendimiento</string>
@@ -241,7 +241,7 @@
     <string name="settings_notifications_blocked">Bloqueadas por Android. Toca para activar.</string>
     <string name="onboarding_finish_btn">Comenzar a usar NotiVas</string>
 
-    <!-- Bento Cards & Herramientas extras -->
+    <!-- Bento Cards & Utilidades extras -->
     <string name="bento_progress_title">Progreso</string>
     <string name="bento_progress_subtitle">Notas y promedio actual</string>
     <string name="bento_active_course">Curso activo</string>
@@ -270,7 +270,7 @@
     <string name="bento_archive_subtitle">Descartadas y entregas pasadas (%1$d archivadas)</string>
     <string name="bento_archived_count">%1$d Archivadas</string>
 
-    <!-- Herramientas Settings Submenu -->
+    <!-- Utilidades Settings Submenu -->
     <string name="groups_menu_options_title">Opciones de Ponderación</string>
     <string name="groups_menu_import_catalog">Importar desde catálogo oficial</string>
     <string name="groups_menu_import_json">Importar archivo JSON (Storage)</string>

@@ -20,7 +20,7 @@ fun MiuixPersistentNavigationRail(
     currentDestination: MainDestination,
     onNavigate: (MainDestination) -> Unit,
     modifier: Modifier = Modifier,
-    badgeCountForHerramientas: Int = 3,
+    badgeCountForUtilidades: Int = 3,
 ) {
     val expandRail = shouldExpandNavigationRail()
     val railState = rememberNavigationRailState(
@@ -47,10 +47,10 @@ fun MiuixPersistentNavigationRail(
                 onClick = { onNavigate(destination) },
                 icon = if (isSelected) destination.selectedIcon else destination.unselectedIcon,
                 label = stringResource(destination.titleRes),
-                badge = if (destination == MainDestination.Herramientas && badgeCountForHerramientas > 0) {
+                badge = if (destination == MainDestination.Utilidades && badgeCountForUtilidades > 0) {
                     {
                         Badge {
-                            Text(badgeCountForHerramientas.toString())
+                            Text(badgeCountForUtilidades.toString())
                         }
                     }
                 } else null,

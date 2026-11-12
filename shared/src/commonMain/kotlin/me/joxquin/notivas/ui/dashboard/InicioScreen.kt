@@ -52,11 +52,11 @@ fun InicioScreen(
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     onNavigateToCopilot: () -> Unit = {},
-    onNavigateToHerramientas: () -> Unit = {},
+    onNavigateToUtilidades: () -> Unit = {},
     onNavigateToAjustes: () -> Unit = {},
     onNavigateToActivity: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
-    onNavigateToAcademicPerformance: () -> Unit = onNavigateToHerramientas,
+    onNavigateToAcademicPerformance: () -> Unit = onNavigateToUtilidades,
     onOpenAssignmentDraft: ((AssignmentUiModel) -> Unit)? = null,
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     onNavigateToCourseDetail: ((me.joxquin.notivas.data.model.Course) -> Unit)? = null,
@@ -77,7 +77,7 @@ fun InicioScreen(
             onNavigateToCourseProgreso = onNavigateToCourseProgreso,
             onNavigateToCourseDetail = onNavigateToCourseDetail,
             onNavigateToCopilot = onNavigateToCopilot,
-            onNavigateToHerramientas = onNavigateToHerramientas,
+            onNavigateToUtilidades = onNavigateToUtilidades,
             onNavigateToSchedule = onNavigateToSchedule,
             onNavigateToRecentActivity = onNavigateToActivity,
             onNavigateToAcademicPerformance = onNavigateToAcademicPerformance,
@@ -177,7 +177,7 @@ fun InicioScreen(
                     if (topBarAlpha > 0.05f) {
                         InicioQuickActionsFab(
                             onNavigateToCopilot = onNavigateToCopilot,
-                            onNavigateToHerramientas = onNavigateToHerramientas
+                            onNavigateToUtilidades = onNavigateToUtilidades
                         )
                     }
                 }

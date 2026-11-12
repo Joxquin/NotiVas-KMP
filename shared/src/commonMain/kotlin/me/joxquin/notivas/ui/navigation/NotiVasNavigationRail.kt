@@ -35,7 +35,7 @@ fun NotiVasNavigationRail(
     onNavigate: (MainDestination) -> Unit,
     isVisible: Boolean = true,
     modifier: Modifier = Modifier,
-    badgeCountForHerramientas: Int = 3,
+    badgeCountForUtilidades: Int = 3,
 ) {
     AnimatedVisibility(
         visible = isVisible,
@@ -88,11 +88,11 @@ fun NotiVasNavigationRail(
                             )
                         }
 
-                        if (destination == MainDestination.Herramientas && badgeCountForHerramientas > 0) {
+                        if (destination == MainDestination.Utilidades && badgeCountForUtilidades > 0) {
                             BadgedBox(
                                 badge = {
                                     Badge {
-                                        Text(badgeCountForHerramientas.toString())
+                                        Text(badgeCountForUtilidades.toString())
                                     }
                                 }
                             ) {

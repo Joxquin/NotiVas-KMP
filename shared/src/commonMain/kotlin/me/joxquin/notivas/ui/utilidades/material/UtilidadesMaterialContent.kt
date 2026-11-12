@@ -1,4 +1,4 @@
-package me.joxquin.notivas.ui.herramientas.material
+package me.joxquin.notivas.ui.utilidades.material
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -60,7 +60,7 @@ import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HerramientasMaterialContent(
+fun UtilidadesMaterialContent(
     viewModel: NotasViewModel? = null,
     forosViewModel: ForosViewModel? = null,
     onOpenProgreso: () -> Unit = {},
@@ -93,7 +93,7 @@ fun HerramientasMaterialContent(
             MaterialTheme.colorScheme.surface
         },
         animationSpec = tween(durationMillis = 250),
-        label = "herramientasTopBarColor"
+        label = "utilidadesTopBarColor"
     )
 
     Scaffold(
@@ -127,12 +127,12 @@ fun HerramientasMaterialContent(
                             }
                             Column {
                                 Text(
-                                    text = "Herramientas",
+                                    text = stringResource(Res.string.utilidades_title),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Utilidades y módulos",
+                                    text = stringResource(Res.string.utilidades_subtitle),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -254,7 +254,7 @@ fun HerramientasMaterialContent(
                         .padding(horizontal = 20.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = stringResource(Res.string.herramientas_title),
+                        text = stringResource(Res.string.utilidades_title),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 28.sp
@@ -263,7 +263,7 @@ fun HerramientasMaterialContent(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = stringResource(Res.string.herramientas_subtitle),
+                        text = stringResource(Res.string.utilidades_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -272,7 +272,7 @@ fun HerramientasMaterialContent(
 
             item {
                 Text(
-                    text = stringResource(Res.string.herramientas_modules_header),
+                    text = stringResource(Res.string.utilidades_modules_header),
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp

@@ -20,7 +20,7 @@
 
     <!-- Navigation -->
     <string name="nav_inicio">Home</string>
-    <string name="nav_herramientas">Tools</string>
+    <string name="nav_utilidades">Utilities</string>
     <string name="nav_copilot">Copilot AI</string>
     <string name="nav_ajustes">Settings</string>
 
@@ -159,10 +159,10 @@
     <string name="courses_enrolled_format">%1$d enrolled</string>
     <string name="no_tasks_for_selected_day">No assignments scheduled for this day</string>
 
-    <!-- Tools / Herramientas & Grades -->
-    <string name="herramientas_title">Academic Tools</string>
-    <string name="herramientas_subtitle">Weighting calculation, simulation, and academic forums</string>
-    <string name="herramientas_modules_header">ACTIVE MODULES</string>
+    <!-- Utilities & Grades -->
+    <string name="utilidades_title">Utilities</string>
+    <string name="utilidades_subtitle">Weighting calculation, simulation, and academic forums</string>
+    <string name="utilidades_modules_header">ACTIVE MODULES</string>
     <string name="grades_progreso_title">Course Progress</string>
     <string name="foros_hub_title">Academic Forums</string>
     <string name="status_good_performance">Good performance</string>
@@ -241,7 +241,7 @@
     <string name="settings_notifications_blocked">Blocked by Android. Tap to enable.</string>
     <string name="onboarding_finish_btn">Start using NotiVas</string>
 
-    <!-- Bento Cards & Herramientas extras -->
+    <!-- Bento Cards & Utilidades extras -->
     <string name="bento_progress_title">Progress</string>
     <string name="bento_progress_subtitle">Grades &amp; current average</string>
     <string name="bento_active_course">Active course</string>
@@ -270,7 +270,7 @@
     <string name="bento_archive_subtitle">Dismissed and past submissions (%1$d archived)</string>
     <string name="bento_archived_count">%1$d Archived</string>
 
-    <!-- Herramientas Settings Submenu -->
+    <!-- Utilidades Settings Submenu -->
     <string name="groups_menu_options_title">Weighting Options</string>
     <string name="groups_menu_import_catalog">Import from official catalog</string>
     <string name="groups_menu_import_json">Import JSON file (Storage)</string>

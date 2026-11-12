@@ -1,4 +1,4 @@
-package me.joxquin.notivas.ui.herramientas.miuix
+package me.joxquin.notivas.ui.utilidades.miuix
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
