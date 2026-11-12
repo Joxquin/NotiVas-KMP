@@ -40,6 +40,9 @@ import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,25 +66,53 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.data.local.CopilotProvider
 import me.joxquin.notivas.ui.components.aura.MonetAuraBackground
+import me.joxquin.notivas.ui.copilot.components.CopilotCustomInstructionsDialog
 import me.joxquin.notivas.ui.copilot.components.CopilotHeaderBar
-import me.joxquin.notivas.ui.copilot.components.CopilotHistoryBottomSheet
+import me.joxquin.notivas.ui.copilot.components.CopilotHistoryOverlay
 import me.joxquin.notivas.ui.copilot.components.CopilotInputBar
 import me.joxquin.notivas.ui.copilot.components.CopilotMentionPopup
 import me.joxquin.notivas.ui.copilot.components.CopilotMessageList
+import me.joxquin.notivas.ui.copilot.components.CopilotModelPickerDialog
+import me.joxquin.notivas.ui.copilot.components.CopilotProviderPickerDialog
 import me.joxquin.notivas.ui.copilot.components.CopilotQuickChipsRow
 import me.joxquin.notivas.ui.copilot.components.CopilotWarningBanner
+import me.joxquin.notivas.ui.copilot.components.resolveModelLabel
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Recent
 import top.yukonga.miuix.kmp.icon.extended.Create
+import top.yukonga.miuix.kmp.icon.extended.Tune
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.glass.GlassIconButton
+import top.yukonga.miuix.kmp.glass.GlassPopupDefaults
+import top.yukonga.miuix.kmp.glass.GlassPopupItem
+import top.yukonga.miuix.kmp.glass.GlassPopupSizing
+import top.yukonga.miuix.kmp.glass.GlassSecondaryPopup
+import top.yukonga.miuix.kmp.glass.GlassTopAppBarDefaults
+import top.yukonga.miuix.kmp.glass.GlassTransformPopup
+import top.yukonga.miuix.kmp.glass.glassPopupAnchor
+import top.yukonga.miuix.kmp.glass.glassPopupAnchorContent
+import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
+import top.yukonga.miuix.kmp.layout.CascadingPopupDefaults
+import me.joxquin.notivas.ui.copilot.components.OPENROUTER_MODELS
+import me.joxquin.notivas.ui.copilot.components.GOOGLE_AI_STUDIO_MODELS
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
+
+private enum class CopilotQuickMenuSubmenu {
+    PROVIDER,
+    MODEL
+}
 
 /**
  * Orquestador UDF declarativo para el Asistente Académico Copilot / Copilot IA.
@@ -103,6 +134,12 @@ fun CopilotScreen(
     val listState = lazyListState
     var isHistorySheetVisible by remember { mutableStateOf(false) }
 
+    var showQuickSettingsMenu by remember { mutableStateOf(false) }
+    var showMaterialSettingsMenu by remember { mutableStateOf(false) }
+    var showProviderDialog by remember { mutableStateOf(false) }
+    var showModelDialog by remember { mutableStateOf(false) }
+    var showCustomInstructionsDialog by remember { mutableStateOf(false) }
+
     // Auto-scroll al final con cada mensaje nuevo o respuesta recibida
     LaunchedEffect(uiState.messages.size, uiState.isLoading) {
         if (uiState.messages.isNotEmpty()) {
@@ -110,19 +147,45 @@ fun CopilotScreen(
         }
     }
 
-    // Modal de Historial
-    CopilotHistoryBottomSheet(
-        isVisible = isHistorySheetVisible || uiState.isHistorySheetVisible,
+    // Modal / Overlay de Historial con buscador integrado
+    CopilotHistoryOverlay(
+        expanded = isHistorySheetVisible || uiState.isHistorySheetVisible,
+        onDismissRequest = {
+            isHistorySheetVisible = false
+            viewModel.dismissHistorySheet()
+        },
         sessions = uiState.sessions,
         currentSessionId = uiState.currentSessionId,
         onSelectSession = { viewModel.loadSession(it) },
         onNewSession = { viewModel.startNewSession() },
         onRenameSession = { id, title -> viewModel.renameSession(id, title) },
         onDeleteSession = { viewModel.deleteSession(it) },
-        onDismiss = {
-            isHistorySheetVisible = false
-            viewModel.dismissHistorySheet()
-        },
+        themeStyle = themeStyle
+    )
+
+    // Diálogos de Ajustes Rápidos (Proveedor, Modelo y Personalización)
+    CopilotProviderPickerDialog(
+        visible = showProviderDialog,
+        currentProvider = uiState.provider,
+        onProviderSelected = { viewModel.setProvider(it) },
+        onDismiss = { showProviderDialog = false },
+        themeStyle = themeStyle
+    )
+
+    CopilotModelPickerDialog(
+        visible = showModelDialog,
+        provider = uiState.provider,
+        currentModel = uiState.currentModel,
+        onModelSelected = { viewModel.setModel(it) },
+        onDismiss = { showModelDialog = false },
+        themeStyle = themeStyle
+    )
+
+    CopilotCustomInstructionsDialog(
+        visible = showCustomInstructionsDialog,
+        initialInstructions = uiState.customInstructions,
+        onSaveInstructions = { viewModel.setCustomInstructions(it) },
+        onDismiss = { showCustomInstructionsDialog = false },
         themeStyle = themeStyle
     )
 
@@ -156,6 +219,28 @@ fun CopilotScreen(
         )
 
         val backdrop = rememberMiuixBlurBackdrop(withSurfaceBackground = false)
+        val menuAnchor = rememberGlassPopupAnchor()
+
+        var activeSubmenu by remember { mutableStateOf<CopilotQuickMenuSubmenu?>(null) }
+        var cachedSubmenu by remember { mutableStateOf<CopilotQuickMenuSubmenu?>(null) }
+        if (activeSubmenu != null) {
+            cachedSubmenu = activeSubmenu
+        }
+        val displayedSubmenu = activeSubmenu ?: cachedSubmenu
+
+        var submenuPresent by remember { mutableStateOf(false) }
+        var providerItemBounds by remember { mutableStateOf(Rect.Zero) }
+        var modelItemBounds by remember { mutableStateOf(Rect.Zero) }
+        var frozenBounds by remember { mutableStateOf(Rect.Zero) }
+        var menuWidth by remember { mutableStateOf(260.dp) }
+        val density = LocalDensity.current
+        val layoutDirection = LocalLayoutDirection.current
+        val arrowTurn = remember(layoutDirection) { CascadingPopupDefaults.arrowRotation(layoutDirection) }
+        val submenuArrow by animateFloatAsState(
+            targetValue = if (activeSubmenu != null) arrowTurn else 0f,
+            animationSpec = CascadingPopupDefaults.arrowSpring(activeSubmenu != null),
+            label = "copilotSubmenuArrow"
+        )
 
         Box(
             modifier = modifier.fillMaxSize()
@@ -175,11 +260,11 @@ fun CopilotScreen(
                             navigationIcon = {
                                 GlassIconButton(
                                     backdrop = backdrop,
-                                    onClick = { isHistorySheetVisible = true }
+                                    onClick = { viewModel.startNewSession() }
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Recent,
-                                        contentDescription = "Historial",
+                                        imageVector = MiuixIcons.Create,
+                                        contentDescription = stringResource(Res.string.copilot_new_chat),
                                         tint = MiuixTheme.colorScheme.onBackground
                                     )
                                 }
@@ -187,11 +272,16 @@ fun CopilotScreen(
                             actions = {
                                 GlassIconButton(
                                     backdrop = backdrop,
-                                    onClick = { viewModel.startNewSession() }
+                                    onClick = { showQuickSettingsMenu = true },
+                                    modifier = Modifier.glassPopupAnchor(
+                                        anchor = menuAnchor,
+                                        cornerRadius = GlassTopAppBarDefaults.ButtonSize / 2,
+                                    )
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
-                                        imageVector = MiuixIcons.Create,
-                                        contentDescription = "Nuevo Chat",
+                                        imageVector = MiuixIcons.Tune,
+                                        contentDescription = stringResource(Res.string.copilot_quick_settings_title),
+                                        modifier = Modifier.size(28.dp).glassPopupAnchorContent(menuAnchor),
                                         tint = MiuixTheme.colorScheme.onBackground
                                     )
                                 }
@@ -301,6 +391,177 @@ fun CopilotScreen(
                     )
                 }
             }
+
+            val currentModelLabel = resolveModelLabel(uiState.provider, uiState.currentModel)
+            val currentProviderLabel = if (uiState.provider == CopilotProvider.OPENROUTER) "OpenRouter" else "Google AI Studio"
+
+            GlassTransformPopup(
+                show = showQuickSettingsMenu,
+                onDismissRequest = {
+                    showQuickSettingsMenu = false
+                    activeSubmenu = null
+                    submenuPresent = false
+                    cachedSubmenu = null
+                },
+                anchor = menuAnchor,
+                backdrop = backdrop,
+                stacked = activeSubmenu != null,
+                sizing = GlassPopupSizing(minWidth = 260.dp),
+                onMeasured = { menuWidth = with(density) { it.width.toDp() } },
+                anchorContent = {
+                    top.yukonga.miuix.kmp.basic.Icon(
+                        imageVector = MiuixIcons.Tune,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        tint = MiuixTheme.colorScheme.onBackground,
+                    )
+                },
+                gap = 0.dp,
+            ) {
+                GlassPopupItem(
+                    text = stringResource(Res.string.copilot_provider_label),
+                    summary = currentProviderLabel,
+                    icon = Icons.Default.AutoAwesome,
+                    showArrow = true,
+                    arrowRotation = {
+                        if (displayedSubmenu == CopilotQuickMenuSubmenu.PROVIDER) {
+                            submenuArrow * (1f - menuAnchor.secondaryBackProgress)
+                        } else {
+                            0f
+                        }
+                    },
+                    modifier = Modifier.onGloballyPositioned {
+                        if (!submenuPresent) providerItemBounds = it.boundsInRoot()
+                    },
+                    onClick = {
+                        frozenBounds = providerItemBounds
+                        submenuPresent = true
+                        activeSubmenu = CopilotQuickMenuSubmenu.PROVIDER
+                    }
+                )
+                GlassPopupItem(
+                    text = stringResource(Res.string.copilot_model_label),
+                    summary = currentModelLabel,
+                    icon = Icons.Default.Psychology,
+                    showArrow = true,
+                    arrowRotation = {
+                        if (displayedSubmenu == CopilotQuickMenuSubmenu.MODEL) {
+                            submenuArrow * (1f - menuAnchor.secondaryBackProgress)
+                        } else {
+                            0f
+                        }
+                    },
+                    modifier = Modifier.onGloballyPositioned {
+                        if (!submenuPresent) modelItemBounds = it.boundsInRoot()
+                    },
+                    onClick = {
+                        frozenBounds = modelItemBounds
+                        submenuPresent = true
+                        activeSubmenu = CopilotQuickMenuSubmenu.MODEL
+                    }
+                )
+                GlassPopupItem(
+                    text = stringResource(Res.string.copilot_custom_instructions_title),
+                    icon = Icons.Default.Tune,
+                    onClick = {
+                        showQuickSettingsMenu = false
+                        showCustomInstructionsDialog = true
+                    }
+                )
+                GlassPopupItem(
+                    text = stringResource(Res.string.nav_ajustes),
+                    icon = Icons.Default.Settings,
+                    onClick = {
+                        showQuickSettingsMenu = false
+                        onNavigateToSettings()
+                    }
+                )
+            }
+
+            GlassSecondaryPopup(
+                show = showQuickSettingsMenu && activeSubmenu != null,
+                onDismissRequest = { activeSubmenu = null },
+                anchorBounds = frozenBounds,
+                backdrop = backdrop,
+                materialAnchor = menuAnchor,
+                sizing = GlassPopupSizing(
+                    minWidth = menuWidth,
+                    maxWidth = menuWidth,
+                ),
+                onDismissFinished = {
+                    submenuPresent = false
+                    cachedSubmenu = null
+                },
+            ) {
+                when (displayedSubmenu) {
+                    CopilotQuickMenuSubmenu.PROVIDER -> {
+                        GlassPopupItem(
+                            text = stringResource(Res.string.copilot_provider_label),
+                            summary = currentProviderLabel,
+                            icon = Icons.Default.AutoAwesome,
+                            showArrow = true,
+                            arrowRotation = { submenuArrow * (1f - menuAnchor.secondaryBackProgress) },
+                            onClick = { activeSubmenu = null }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(
+                                horizontal = GlassPopupDefaults.DividerPaddingHorizontal,
+                                vertical = GlassPopupDefaults.DividerPaddingVertical
+                            ),
+                            thickness = GlassPopupDefaults.DividerThickness
+                        )
+                        GlassPopupItem(
+                            text = "OpenRouter",
+                            selected = uiState.provider == CopilotProvider.OPENROUTER,
+                            onClick = {
+                                viewModel.setProvider(CopilotProvider.OPENROUTER)
+                                activeSubmenu = null
+                            }
+                        )
+                        GlassPopupItem(
+                            text = "Google AI Studio",
+                            selected = uiState.provider == CopilotProvider.GOOGLE_AI_STUDIO,
+                            onClick = {
+                                viewModel.setProvider(CopilotProvider.GOOGLE_AI_STUDIO)
+                                activeSubmenu = null
+                            }
+                        )
+                    }
+                    CopilotQuickMenuSubmenu.MODEL -> {
+                        GlassPopupItem(
+                            text = stringResource(Res.string.copilot_model_label),
+                            summary = currentModelLabel,
+                            icon = Icons.Default.Psychology,
+                            showArrow = true,
+                            arrowRotation = { submenuArrow * (1f - menuAnchor.secondaryBackProgress) },
+                            onClick = { activeSubmenu = null }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(
+                                horizontal = GlassPopupDefaults.DividerPaddingHorizontal,
+                                vertical = GlassPopupDefaults.DividerPaddingVertical
+                            ),
+                            thickness = GlassPopupDefaults.DividerThickness
+                        )
+                        val models = if (uiState.provider == CopilotProvider.OPENROUTER) {
+                            OPENROUTER_MODELS
+                        } else {
+                            GOOGLE_AI_STUDIO_MODELS
+                        }
+                        models.forEach { (modelId, label) ->
+                            GlassPopupItem(
+                                text = label,
+                                selected = uiState.currentModel == modelId,
+                                onClick = {
+                                    viewModel.setModel(modelId)
+                                    activeSubmenu = null
+                                }
+                            )
+                        }
+                    }
+                    null -> {}
+                }
+            }
         }
         return
     }
@@ -346,15 +607,15 @@ fun CopilotScreen(
                         }
                         Column {
                             Text(
-                                text = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_topbar_title),
+                                text = stringResource(Res.string.copilot_topbar_title),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = if (uiState.sessionTokens > 0) {
-                                    org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.tokens_used_format, uiState.sessionTokens)
+                                    stringResource(Res.string.tokens_used_format, uiState.sessionTokens)
                                 } else {
-                                    org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_topbar_subtitle)
+                                    stringResource(Res.string.copilot_topbar_subtitle)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -362,32 +623,102 @@ fun CopilotScreen(
                         }
                     }
                 },
-                actions = {
-                    IconButton(onClick = { isHistorySheetVisible = true }) {
+                navigationIcon = {
+                    IconButton(onClick = { viewModel.startNewSession() }) {
                         Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_history_title),
+                            imageVector = Icons.Default.AddComment,
+                            contentDescription = stringResource(Res.string.copilot_new_chat),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    if (uiState.messages.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.startNewSession() }) {
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { showMaterialSettingsMenu = true }) {
                             Icon(
-                                imageVector = Icons.Default.AddComment,
-                                contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.copilot_new_chat),
+                                imageVector = Icons.Default.Tune,
+                                contentDescription = stringResource(Res.string.copilot_quick_settings_title),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.nav_ajustes),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(22.dp)
-                        )
+                        DropdownMenu(
+                            expanded = showMaterialSettingsMenu,
+                            onDismissRequest = { showMaterialSettingsMenu = false }
+                        ) {
+                            val currentModelLabel = resolveModelLabel(uiState.provider, uiState.currentModel)
+                            val currentProviderLabel = if (uiState.provider == CopilotProvider.OPENROUTER) "OpenRouter" else "Google AI Studio"
+
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = stringResource(Res.string.copilot_provider_label),
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                                        )
+                                        Text(
+                                            text = currentProviderLabel,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.AutoAwesome, contentDescription = null)
+                                },
+                                onClick = {
+                                    showMaterialSettingsMenu = false
+                                    showProviderDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = stringResource(Res.string.copilot_model_label),
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                                        )
+                                        Text(
+                                            text = currentModelLabel,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Psychology, contentDescription = null)
+                                },
+                                onClick = {
+                                    showMaterialSettingsMenu = false
+                                    showModelDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(stringResource(Res.string.copilot_custom_instructions_title))
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Tune, contentDescription = null)
+                                },
+                                onClick = {
+                                    showMaterialSettingsMenu = false
+                                    showCustomInstructionsDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(stringResource(Res.string.nav_ajustes))
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Settings, contentDescription = null)
+                                },
+                                onClick = {
+                                    showMaterialSettingsMenu = false
+                                    onNavigateToSettings()
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

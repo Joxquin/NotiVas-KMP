@@ -205,6 +205,15 @@
     <string name="copilot_input_placeholder">Ask anything about your courses, homework, or schedule...</string>
     <string name="copilot_send">Send</string>
     <string name="copilot_hero_subtitle">Your AI academic copilot with direct Canvas LMS context</string>
+    <string name="copilot_quick_settings_title">AI Settings</string>
+    <string name="copilot_provider_label">Provider</string>
+    <string name="copilot_model_label">Model</string>
+    <string name="copilot_custom_instructions_title">Customization</string>
+    <string name="copilot_custom_instructions_desc">Customize tone, style and rules for AI responses.</string>
+    <string name="copilot_custom_instructions_placeholder">E.g. Reply in academic format with bullet points, be concise...</string>
+    <string name="copilot_history_search_placeholder">Search history...</string>
+    <string name="copilot_history_no_results">No queries found for \"%1$s\"</string>
+    <string name="copilot_history_empty_hint">Start a new conversation to begin recording your history.</string>
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Welcome to NotiVas</string>

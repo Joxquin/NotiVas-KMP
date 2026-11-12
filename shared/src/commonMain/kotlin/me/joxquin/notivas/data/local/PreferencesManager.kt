@@ -149,6 +149,10 @@ class PreferencesManager(
     private val _copilotEnabled = MutableStateFlow(true)
     val copilotEnabled: Flow<Boolean> = _copilotEnabled.asStateFlow()
 
+    private val _copilotCustomInstructions = MutableStateFlow("")
+    val copilotCustomInstructions: Flow<String> = _copilotCustomInstructions.asStateFlow()
+    fun getCopilotCustomInstructions(): String = _copilotCustomInstructions.value
+
     private val _totalCopilotTokens = MutableStateFlow(0L)
     val totalCopilotTokens: Flow<Long> = _totalCopilotTokens.asStateFlow()
 
@@ -314,6 +318,7 @@ class PreferencesManager(
             _recentSearches.value = snapshot.recentSearches
             _offlineGroupAssignmentIds.value = snapshot.offlineGroupAssignmentIds
             _unreviewedSimulatedScores.value = snapshot.unreviewedSimulatedScores
+            _copilotCustomInstructions.value = snapshot.copilotCustomInstructions
         } catch (_: Exception) {
         } finally {
             _isLoaded.value = true
@@ -371,7 +376,8 @@ class PreferencesManager(
                 discardedAssignmentIds = _discardedAssignmentIds.value,
                 recentSearches = _recentSearches.value,
                 offlineGroupAssignmentIds = _offlineGroupAssignmentIds.value,
-                unreviewedSimulatedScores = _unreviewedSimulatedScores.value
+                unreviewedSimulatedScores = _unreviewedSimulatedScores.value,
+                copilotCustomInstructions = _copilotCustomInstructions.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)
             PlatformFileSystem.writeString(prefsFile, jsonString)
@@ -536,6 +542,11 @@ class PreferencesManager(
         schedulePersist()
     }
 
+    suspend fun setCopilotCustomInstructions(instructions: String) {
+        _copilotCustomInstructions.value = instructions.trim()
+        schedulePersist()
+    }
+
     suspend fun addCopilotTokens(tokens: Long) {
         if (tokens <= 0) return
         _totalCopilotTokens.value += tokens
@@ -591,6 +602,7 @@ class PreferencesManager(
         _discardedAssignmentIds.value = emptySet()
         _recentSearches.value = emptyList()
         _unconfiguredCoursesBannerDismissedUntil.value = 0L
+        _copilotCustomInstructions.value = ""
         PlatformFileSystem.deleteFile(prefsFile)
     }
 }

@@ -614,12 +614,15 @@ fun MainAppShell(
                         }
 
                         val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
+                        val copilotUiState by copilotViewModel.uiState.collectAsState()
                         val isDashboardSearchExpandingOrExpanded = currentDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
+                        val isCopilotHistoryVisible = currentDestination == MainDestination.Copilot && copilotUiState.isHistorySheetVisible
+                        val isFloatingBarVisible = !isDashboardSearchExpandingOrExpanded && !isCopilotHistoryVisible
 
                         // Capa 3: FloatingNavigationBar ("Liquid Glass")
                         if (!isWideScreen) {
                             androidx.compose.animation.AnimatedVisibility(
-                                visible = !isDashboardSearchExpandingOrExpanded,
+                                visible = isFloatingBarVisible,
                                 enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(200)) +
                                         androidx.compose.animation.slideInVertically(animationSpec = androidx.compose.animation.core.tween(300)) { it },
                                 exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(150)) +
@@ -639,6 +642,9 @@ fun MainAppShell(
                                     backdrop = contentBackdrop,
                                     onSearchClick = {
                                         dashboardViewModel.setSearchExpanded(true)
+                                    },
+                                    onHistoryClick = {
+                                        copilotViewModel.setHistoryVisible(true)
                                     }
                                 )
                             }
