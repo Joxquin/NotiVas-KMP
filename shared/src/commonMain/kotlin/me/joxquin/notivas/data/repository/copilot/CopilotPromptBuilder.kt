@@ -9,7 +9,8 @@ class CopilotPromptBuilder {
     fun buildSystemPrompt(
         courses: List<Course>,
         selectedCourseId: Long?,
-        appLanguage: me.joxquin.notivas.data.local.AppLanguage = me.joxquin.notivas.data.local.AppLanguage.SYSTEM
+        appLanguage: me.joxquin.notivas.data.local.AppLanguage = me.joxquin.notivas.data.local.AppLanguage.SYSTEM,
+        customInstructions: String? = null
     ): String {
         val coursesSummary = courses.joinToString("; ") { "ID: ${it.id} - ${it.name} (${it.courseCode ?: "N/A"})" }
         val today = DateTimeUtil.nowLocalDate()
@@ -68,6 +69,11 @@ class CopilotPromptBuilder {
             append("   - Enlace Web o Externo: ::card[type=link, title=\"<titulo del enlace>\", url=\"<enlace https>\"]:: ")
             append("   IMPORTANTE: Pon la etiqueta ::card[...]:: siempre en una línea independiente, nunca precedida por viñetas como '•' o '-'. ")
             append("Sé siempre proactivo, empático, directo y resuelve las consultas por tu cuenta usando tus herramientas sin repreguntar cosas que puedes deducir.")
+            if (!customInstructions.isNullOrBlank()) {
+                append("\n\nPERSONALIZACIÓN DEL USUARIO (INSTRUCCIONES ADICIONALES):\n")
+                append(customInstructions.trim())
+                append("\nCumple estrictamente con estas preferencias de personalización en todas tus respuestas.")
+            }
         }
     }
 

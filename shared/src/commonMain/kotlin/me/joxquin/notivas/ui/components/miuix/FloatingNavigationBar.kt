@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.copilot_history_title
 import me.joxquin.notivas.shared.resources.dashboard_search_hint
 import me.joxquin.notivas.shared.resources.nav_ajustes
 import me.joxquin.notivas.shared.resources.nav_copilot
@@ -36,6 +37,7 @@ import top.yukonga.miuix.kmp.glass.GlassNavigationBar
 import top.yukonga.miuix.kmp.glass.GlassNavigationBarDefaults
 import top.yukonga.miuix.kmp.glass.GlassNavigationItem
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.glass.Book
 import top.yukonga.miuix.kmp.icon.glass.Search
 import top.yukonga.miuix.kmp.material.GlassShadows
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -73,6 +75,7 @@ fun FloatingNavigationBar(
     backdrop: Backdrop? = null,
     isBlurActive: Boolean = true,
     onSearchClick: (() -> Unit)? = null,
+    onHistoryClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val destinations = remember {
@@ -122,6 +125,9 @@ fun FloatingNavigationBar(
         .asPaddingValues().calculateBottomPadding()
     val bottomMargin = if (navigationBarBottom != 0.dp) 16.dp + navigationBarBottom else 32.dp
 
+    val hasTrailingAction = (currentDestination == MainDestination.Inicio && onSearchClick != null) ||
+            (currentDestination == MainDestination.Copilot && onHistoryClick != null)
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -139,7 +145,11 @@ fun FloatingNavigationBar(
             backdrop = if (isBlurActive) backdrop else null,
             defaultWindowInsetsPadding = false,
             modifier = Modifier.layout { measurable, constraints ->
-                val actionWidth = (GlassNavigationBarDefaults.Height + GlassNavigationBarDefaults.ActionSpacing).roundToPx()
+                val actionWidth = if (hasTrailingAction) {
+                    (GlassNavigationBarDefaults.Height + GlassNavigationBarDefaults.ActionSpacing).roundToPx()
+                } else {
+                    0
+                }
                 val available = constraints.maxWidth - actionWidth + (10.dp * (navItems.size - 1) - 6.dp).roundToPx()
                 val width = if (constraints.hasBoundedWidth && available > 400.dp.roundToPx()) {
                     constraints.constrainWidth(344.dp.roundToPx() + actionWidth)
@@ -150,24 +160,42 @@ fun FloatingNavigationBar(
                 layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
             },
             shadow = GlassShadows.Float,
-            trailingAction = if (currentDestination == MainDestination.Inicio && onSearchClick != null) {
-                {
-                    GlassIconButton(
-                        onClick = onSearchClick,
-                        backdrop = if (isBlurActive) backdrop else null,
-                        size = GlassNavigationBarDefaults.Height,
-                        shadow = GlassShadows.Float,
-                    ) {
-                        Icon(
-                            imageVector = MiuixIcons.Glass.Search,
-                            contentDescription = stringResource(Res.string.dashboard_search_hint),
-                            modifier = Modifier.size(28.dp),
-                            tint = MiuixTheme.colorScheme.onSurface,
-                        )
+            trailingAction = when {
+                currentDestination == MainDestination.Inicio && onSearchClick != null -> {
+                    {
+                        GlassIconButton(
+                            onClick = onSearchClick,
+                            backdrop = if (isBlurActive) backdrop else null,
+                            size = GlassNavigationBarDefaults.Height,
+                            shadow = GlassShadows.Float,
+                        ) {
+                            Icon(
+                                imageVector = MiuixIcons.Glass.Search,
+                                contentDescription = stringResource(Res.string.dashboard_search_hint),
+                                modifier = Modifier.size(28.dp),
+                                tint = MiuixTheme.colorScheme.onSurface,
+                            )
+                        }
                     }
                 }
-            } else {
-                null
+                currentDestination == MainDestination.Copilot && onHistoryClick != null -> {
+                    {
+                        GlassIconButton(
+                            onClick = onHistoryClick,
+                            backdrop = if (isBlurActive) backdrop else null,
+                            size = GlassNavigationBarDefaults.Height,
+                            shadow = GlassShadows.Float,
+                        ) {
+                            Icon(
+                                imageVector = MiuixIcons.Glass.Book,
+                                contentDescription = stringResource(Res.string.copilot_history_title),
+                                modifier = Modifier.size(28.dp),
+                                tint = MiuixTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                }
+                else -> null
             },
         )
     }

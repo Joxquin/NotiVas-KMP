@@ -205,6 +205,15 @@
     <string name="copilot_input_placeholder">Pregunta sobre tus tareas, notas o syllabus...</string>
     <string name="copilot_send">Enviar</string>
     <string name="copilot_hero_subtitle">Tu copiloto académico con contexto directo de Canvas LMS</string>
+    <string name="copilot_quick_settings_title">Configuración de IA</string>
+    <string name="copilot_provider_label">Proveedor</string>
+    <string name="copilot_model_label">Modelo</string>
+    <string name="copilot_custom_instructions_title">Personalización</string>
+    <string name="copilot_custom_instructions_desc">Personaliza el tono, estilo y reglas para las respuestas de la IA.</string>
+    <string name="copilot_custom_instructions_placeholder">Ej: Responde en formato académico con viñetas, sé breve y conciso...</string>
+    <string name="copilot_history_search_placeholder">Buscar en el historial...</string>
+    <string name="copilot_history_no_results">No se encontraron consultas para \"%1$s\"</string>
+    <string name="copilot_history_empty_hint">Inicia una nueva conversación para comenzar a registrar tu historial.</string>
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Bienvenido a NotiVas</string>

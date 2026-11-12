@@ -75,6 +75,8 @@ data class CopilotUiState(
     val totalAccountTokens: Long = 0L,
     val balance: Double? = null,
     val openRouterBalance: OpenRouterAccountBalance? = null,
+    val provider: me.joxquin.notivas.data.local.CopilotProvider = me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER,
+    val customInstructions: String = "",
     val thinkingStatus: String? = null
 )
 
@@ -152,6 +154,7 @@ class CopilotViewModel(
             preferencesManager.openRouterModel,
             preferencesManager.googleAiStudioApiKey,
             preferencesManager.googleAiStudioModel,
+            preferencesManager.copilotCustomInstructions,
             _errorMessage
         ) { args: Array<Any?> ->
             val enabled = args[0] as Boolean
@@ -160,7 +163,8 @@ class CopilotViewModel(
             val openRouterModel = args[3] as String
             val googleAiKey = args[4] as String?
             val googleAiModel = args[5] as String
-            val error = args[6] as String?
+            val customInstructions = args[6] as String
+            val error = args[7] as String?
 
             val hasKey = if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
                 !googleAiKey.isNullOrBlank()
@@ -174,7 +178,7 @@ class CopilotViewModel(
                 openRouterModel
             }
 
-            Tuple4(enabled, hasKey, currentModel, error)
+            Tuple6(enabled, hasKey, currentModel, error, provider, customInstructions)
         },
         combine(
             _isMentionPopupVisible,
@@ -210,7 +214,7 @@ class CopilotViewModel(
             Triple(resources, sessionInfo, tokenInfo)
         }
     ) { (c, sId, msgs, loading, input, thinking),
-        (enabled, hasApiKey, model, error),
+        (enabled, hasApiKey, model, error, provider, customInstructions),
         (showMenu, step, query, activeCourse),
         (resources, sessionInfo, tokenInfo) ->
         val (assignments, plannerItems, modules) = resources
@@ -289,13 +293,41 @@ class CopilotViewModel(
             sessionTokens = sessionTokens,
             totalAccountTokens = totalTokens,
             balance = balance?.remainingCredits,
-            openRouterBalance = balance
+            openRouterBalance = balance,
+            provider = provider,
+            customInstructions = customInstructions
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = CopilotUiState()
     )
+
+    fun setProvider(provider: me.joxquin.notivas.data.local.CopilotProvider) {
+        viewModelScope.launch {
+            preferencesManager.setCopilotProvider(provider)
+        }
+    }
+
+    fun setModel(model: String) {
+        viewModelScope.launch {
+            if (preferencesManager.getCopilotProvider() == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+                preferencesManager.setGoogleAiStudioModel(model)
+            } else {
+                preferencesManager.setOpenRouterModel(model)
+            }
+        }
+    }
+
+    fun setCustomInstructions(instructions: String) {
+        viewModelScope.launch {
+            preferencesManager.setCopilotCustomInstructions(instructions)
+        }
+    }
+
+    fun setHistoryVisible(visible: Boolean) {
+        _isHistorySheetVisible.value = visible
+    }
 
     fun startNewSession() {
         _currentSessionId.value = null
