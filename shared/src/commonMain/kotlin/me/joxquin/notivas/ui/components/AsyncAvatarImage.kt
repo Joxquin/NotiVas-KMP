@@ -19,9 +19,13 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import me.joxquin.notivas.data.local.FileStorageProvider
+import me.joxquin.notivas.data.local.PlatformFileSystem
 import me.joxquin.notivas.util.resolveApiUrl
 import org.jetbrains.compose.resources.decodeToImageBitmap
 
@@ -35,6 +39,12 @@ private object ImageCacheManager {
             }
             followRedirects = true
         }
+    }
+
+    fun getCacheFilePath(url: String): String {
+        val hash = url.hashCode().toUInt().toString(16)
+        val cleanSuffix = url.filter { it.isLetterOrDigit() }.takeLast(32)
+        return "${FileStorageProvider.getAppDataDirectory()}/avatar_${hash}_${cleanSuffix}.b64"
     }
 }
 
@@ -56,8 +66,33 @@ fun AsyncAvatarImage(
         mutableStateOf(ImageCacheManager.cache[url])
     }
 
+    @OptIn(ExperimentalEncodingApi::class)
     LaunchedEffect(url) {
         if (bitmap == null) {
+            val cacheFilePath = ImageCacheManager.getCacheFilePath(url)
+
+            // 1. Intentar cargar desde caché en disco
+            val diskBytes = withContext(Dispatchers.Default) {
+                try {
+                    val encoded = PlatformFileSystem.readString(cacheFilePath)
+                    if (!encoded.isNullOrBlank()) {
+                        Base64.Default.decode(encoded)
+                    } else null
+                } catch (_: Throwable) {
+                    null
+                }
+            }
+
+            if (diskBytes != null && diskBytes.isNotEmpty()) {
+                try {
+                    val decoded = diskBytes.decodeToImageBitmap()
+                    ImageCacheManager.cache[url] = decoded
+                    bitmap = decoded
+                    return@LaunchedEffect
+                } catch (_: Throwable) {}
+            }
+
+            // 2. Si no existe en disco, descargar por red
             try {
                 println("AsyncAvatarImage: Loading avatar from $url")
                 val resolvedUrl = resolveApiUrl(url)
@@ -69,7 +104,13 @@ fun AsyncAvatarImage(
                     val decoded = bytes.decodeToImageBitmap()
                     ImageCacheManager.cache[url] = decoded
                     bitmap = decoded
-                    println("AsyncAvatarImage: Successfully decoded bitmap (${decoded.width}x${decoded.height})")
+                    withContext(Dispatchers.Default) {
+                        try {
+                            val encoded = Base64.Default.encode(bytes)
+                            PlatformFileSystem.writeString(cacheFilePath, encoded)
+                        } catch (_: Throwable) {}
+                    }
+                    println("AsyncAvatarImage: Successfully decoded and cached bitmap (${decoded.width}x${decoded.height})")
                 }
             } catch (e: CancellationException) {
                 throw e

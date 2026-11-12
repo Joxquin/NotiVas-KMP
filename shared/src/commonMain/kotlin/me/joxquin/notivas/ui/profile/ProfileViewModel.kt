@@ -115,7 +115,7 @@ class ProfileViewModel(
         viewModelScope.launch {
             _isVerifyingToken.value = true
             try {
-                canvasRepository.getProfile()
+                canvasRepository.getProfile(forceRefresh = true)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Throwable) {

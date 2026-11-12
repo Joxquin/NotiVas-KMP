@@ -2,12 +2,14 @@ package me.joxquin.notivas.data.repository
 
 import me.joxquin.notivas.util.AppDispatchers
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
@@ -540,23 +542,36 @@ class CanvasRepository(
             } catch (_: Throwable) { }
 
             // 2. Fetch Active Courses & Dashboard Cards (con portadas firmadas de Canvas)
-            val dashboardCards = try {
-                apiService.getDashboardCards(baseUrl, token)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Throwable) {
-                emptyList()
+            val existingCourses = localStore.getCourseList().ifEmpty {
+                try {
+                    localStore.database.courseDao().getAll().map { it.toDomain() }
+                } catch (_: Throwable) {
+                    emptyList()
+                }
             }
-            val cardImagesByCourseId = buildMap {
-                dashboardCards.forEach { card ->
-                    val image = card.image?.takeIf { it.isNotBlank() } ?: return@forEach
-                    val courseId = card.id ?: card.pagesUrl?.let { url ->
-                        Regex("""/courses/(\d+)""").find(url)?.groupValues?.getOrNull(1)?.toLongOrNull()
-                    }
-                    if (courseId != null) {
-                        put(courseId, image)
+            val needDashboardCards = existingCourses.isEmpty() || existingCourses.any { it.imageUrl.isNullOrBlank() }
+
+            val cardImagesByCourseId = if (needDashboardCards) {
+                val dashboardCards = try {
+                    apiService.getDashboardCards(baseUrl, token)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Throwable) {
+                    emptyList()
+                }
+                buildMap {
+                    dashboardCards.forEach { card ->
+                        val image = card.image?.takeIf { it.isNotBlank() } ?: return@forEach
+                        val courseId = card.id ?: card.pagesUrl?.let { url ->
+                            Regex("""/courses/(\d+)""").find(url)?.groupValues?.getOrNull(1)?.toLongOrNull()
+                        }
+                        if (courseId != null) {
+                            put(courseId, image)
+                        }
                     }
                 }
+            } else {
+                emptyMap()
             }
 
             val rawCoursesList = apiService.getCourses(
@@ -564,8 +579,10 @@ class CanvasRepository(
                 token = token
             )
             val allCoursesList = rawCoursesList.map { course ->
+                val localCourse = existingCourses.find { it.id == course.id }
+                val localImage = localCourse?.imageUrl?.takeIf { it.isNotBlank() }
                 val cardImage = cardImagesByCourseId[course.id]
-                val finalImageUrl = cardImage ?: course.imageUrl
+                val finalImageUrl = localImage ?: cardImage ?: course.imageUrl
                 course.copy(imageUrl = finalImageUrl)
             }
             println("[CanvasRepository] Cursos actualizados: ${allCoursesList.size}. Con portada: ${allCoursesList.count { !it.imageUrl.isNullOrBlank() }}")
@@ -1000,9 +1017,20 @@ class CanvasRepository(
         preferencesManager.saveGoogleDriveTokens(accessToken, refreshToken, email)
     }
 
-    suspend fun getProfile(): UserProfile = withContext(AppDispatchers.IO) {
+    suspend fun getProfile(forceRefresh: Boolean = false): UserProfile = withContext(AppDispatchers.IO) {
+        val cached = localStore.getUserProfileOnce()
         val baseUrl = preferencesManager.universityUrl.first() ?: ""
         val token = getAuthToken() ?: throw IllegalStateException("No auth credential found")
+        if (cached != null && !forceRefresh) {
+            // Sincronizar en segundo plano de forma no bloqueante
+            CoroutineScope(AppDispatchers.IO).launch {
+                try {
+                    val remoteProfile = apiService.getProfile(baseUrl, token)
+                    localStore.saveUserProfile(remoteProfile)
+                } catch (_: Throwable) {}
+            }
+            return@withContext cached
+        }
         try {
             val remoteProfile = apiService.getProfile(baseUrl, token)
             localStore.saveUserProfile(remoteProfile)
@@ -1010,7 +1038,7 @@ class CanvasRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
-            localStore.getUserProfileOnce() ?: throw e
+            cached ?: throw e
         }
     }
 

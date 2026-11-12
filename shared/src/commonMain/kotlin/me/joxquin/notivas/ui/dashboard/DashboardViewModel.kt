@@ -1162,7 +1162,7 @@ class DashboardViewModel(
             _syncStatus.value = SyncStatus.SYNCING
             try {
                 repository.fetchAndSaveData()
-                repository.getProfile()
+                repository.getProfile(forceRefresh = true)
                 _syncStatus.value = SyncStatus.SYNCED
             } catch (e: CancellationException) {
                 throw e

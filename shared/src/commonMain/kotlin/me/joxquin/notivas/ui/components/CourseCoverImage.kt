@@ -21,6 +21,10 @@ import coil3.size.Precision
 import coil3.size.Scale
 import coil3.size.Size
 
+private object LoadedCourseCovers {
+    val memoryLoadedUrls = mutableSetOf<String>()
+}
+
 /**
  * CourseCoverImage: Componente de alto rendimiento para renderizar portadas de cursos
  * (tanto imágenes estáticas JPG/PNG como GIFs animados).
@@ -57,11 +61,13 @@ fun CourseCoverImage(
             .precision(Precision.INEXACT)
             .scale(Scale.FILL)
             .crossfade(true)
+            .memoryCacheKey(imageUrl)
+            .diskCacheKey(imageUrl)
             .build()
     }
 
     var isLoaded by remember(imageUrl) {
-        mutableStateOf(false)
+        mutableStateOf(LoadedCourseCovers.memoryLoadedUrls.contains(imageUrl))
     }
 
     Box(modifier = modifier) {
@@ -74,7 +80,10 @@ fun CourseCoverImage(
             model = imageRequest,
             contentDescription = contentDescription,
             contentScale = contentScale,
-            onSuccess = { isLoaded = true },
+            onSuccess = {
+                isLoaded = true
+                LoadedCourseCovers.memoryLoadedUrls.add(imageUrl)
+            },
             modifier = Modifier.fillMaxSize()
         )
     }

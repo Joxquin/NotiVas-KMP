@@ -53,6 +53,18 @@ class InMemoryLocalStore(
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: Flow<UserProfile?> = _userProfile.asStateFlow()
 
+    init {
+        scope.launch {
+            try {
+                val cached = PlatformFileSystem.readString(userProfileFile)
+                if (!cached.isNullOrBlank()) {
+                    val profile = json.decodeFromString(UserProfile.serializer(), cached)
+                    _userProfile.value = profile
+                }
+            } catch (_: Throwable) {}
+        }
+    }
+
     fun getUserProfileOnce(): UserProfile? = _userProfile.value
 
     fun saveUserProfile(profile: UserProfile) {
@@ -103,7 +115,11 @@ class InMemoryLocalStore(
                 val local = existing[course.id]
                 CourseEntity.fromDomain(
                     if (local == null) course
-                    else course.copy(totalWeeks = local.totalWeeks, passingGrade = local.passingGrade)
+                    else course.copy(
+                        totalWeeks = local.totalWeeks,
+                        passingGrade = local.passingGrade,
+                        imageUrl = local.imageUrl?.takeIf { it.isNotBlank() } ?: course.imageUrl
+                    )
                 )
             })
             database.courseDao().deleteNotIn(activeCourses.map { it.id })
