@@ -143,6 +143,8 @@ fun CopilotResourceCard(
                     onOpenForoDetail?.invoke(card.forumTopicId)
                 } else if (!card.url.isNullOrBlank()) {
                     CanvasDeepLinkHandler.openCanvasUrl(card.url)
+                } else {
+                    onOpenForoDetail?.invoke(0L)
                 }
             }
             ResourceCardType.MATERIAL,

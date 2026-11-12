@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.repository.CopilotMessageItem
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -69,6 +70,7 @@ fun CopilotMessageList(
     onOpenAssignmentDraft: ((Long, String) -> Unit)? = null,
     onOpenForoDetail: ((Long) -> Unit)? = null,
     knownAssignments: List<Assignment> = emptyList(),
+    knownDiscussions: List<CanvasDiscussionTopic> = emptyList(),
     courses: List<Course> = emptyList(),
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     bottomPadding: androidx.compose.ui.unit.Dp = 12.dp,
@@ -136,6 +138,7 @@ fun CopilotMessageList(
                     onOpenAssignmentDraft = onOpenAssignmentDraft,
                     onOpenForoDetail = onOpenForoDetail,
                     knownAssignments = knownAssignments,
+                    knownDiscussions = knownDiscussions,
                     courses = courses
                 )
             }

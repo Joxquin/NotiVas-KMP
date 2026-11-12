@@ -64,7 +64,7 @@ class CopilotPromptBuilder {
             append("11. TARJETAS INTERACTIVAS DE RECURSOS (Tareas, Foros, Materiales, Enlaces): ")
             append("   Cuando menciones, recomiendes o listes tareas/laboratorios pendientes, foros académicos de debate, lecturas/materiales o enlaces importantes, incluye inmediatamente después del ítem la etiqueta de tarjeta interactiva en SU PROPIA LÍNEA (SIN viñetas, guiones ni asteriscos previos): ")
             append("   - Tarea: ::card[type=assignment, title=\"<nombre exacto>\", course=\"<nombre del curso>\", due=\"<dia y hora>\"]:: ")
-            append("   - Foro: ::card[type=forum, title=\"<nombre exacto>\", course=\"<nombre del curso>\"]:: ")
+            append("   - Foro: ::card[type=forum, title=\"<nombre exacto>\", course=\"<nombre del curso>\", id=\"<id del foro>\", url=\"<url del debate si aplica>\"]:: ")
             append("   - Material o Recurso de Módulo: ::card[type=material, title=\"<nombre>\", course=\"<nombre del curso>\", url=\"<url opcional>\"]:: ")
             append("   - Enlace Web o Externo: ::card[type=link, title=\"<titulo del enlace>\", url=\"<enlace https>\"]:: ")
             append("   IMPORTANTE: Pon la etiqueta ::card[...]:: siempre en una línea independiente, nunca precedida por viñetas como '•' o '-'. ")

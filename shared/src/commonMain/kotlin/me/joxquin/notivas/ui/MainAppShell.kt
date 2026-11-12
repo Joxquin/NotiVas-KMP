@@ -578,8 +578,20 @@ fun MainAppShell(
                                                     }
                                                 }
                                             },
+                                            knownDiscussions = forosUiState.discussions,
                                             onOpenForoDetail = { topicId ->
-                                                miuixNavigator.push(MiuixRoute.ForoDetail(topicId))
+                                                if (topicId > 0L) {
+                                                    val topic = forosUiState.discussions.find { it.id == topicId }
+                                                    if (topic != null) {
+                                                        forosViewModel.selectDiscussion(topic)
+                                                        miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                                                    } else {
+                                                        forosViewModel.selectDiscussionById(topicId)
+                                                        miuixNavigator.push(MiuixRoute.ForoDetail(topicId))
+                                                    }
+                                                } else {
+                                                    miuixNavigator.push(MiuixRoute.ForosHub)
+                                                }
                                             }
                                         )
                                     }
@@ -1332,8 +1344,20 @@ fun MainAppShell(
                                                     }
                                                 }
                                             },
+                                            knownDiscussions = forosUiState.discussions,
                                             onOpenForoDetail = { topicId ->
-                                                materialNavigator.push(MiuixRoute.ForoDetail(topicId))
+                                                if (topicId > 0L) {
+                                                    val topic = forosUiState.discussions.find { it.id == topicId }
+                                                    if (topic != null) {
+                                                        forosViewModel.selectDiscussion(topic)
+                                                        materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
+                                                    } else {
+                                                        forosViewModel.selectDiscussionById(topicId)
+                                                        materialNavigator.push(MiuixRoute.ForoDetail(topicId))
+                                                    }
+                                                } else {
+                                                    materialNavigator.push(MiuixRoute.ForosHub)
+                                                }
                                             }
                                         )
                                     }

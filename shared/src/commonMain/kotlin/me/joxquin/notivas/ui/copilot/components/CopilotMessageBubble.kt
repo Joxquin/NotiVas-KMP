@@ -76,6 +76,7 @@ import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.util.DateTimeUtil
 import me.joxquin.notivas.util.PlatformShareHandler
@@ -120,6 +121,7 @@ fun CopilotMessageBubble(
     onOpenAssignmentDraft: ((Long, String) -> Unit)? = null,
     onOpenForoDetail: ((Long) -> Unit)? = null,
     knownAssignments: List<Assignment> = emptyList(),
+    knownDiscussions: List<CanvasDiscussionTopic> = emptyList(),
     courses: List<Course> = emptyList(),
     modifier: Modifier = Modifier
 ) {
@@ -151,8 +153,8 @@ fun CopilotMessageBubble(
     val displayedText = remember(message.text, revealedLength) {
         if (revealedLength >= message.text.length) message.text else message.text.take(revealedLength)
     }
-    val blocks = remember(displayedText, knownAssignments, courses) {
-        parseMessageBlocks(displayedText, knownAssignments, courses)
+    val blocks = remember(displayedText, knownAssignments, knownDiscussions, courses) {
+        parseMessageBlocks(displayedText, knownAssignments, knownDiscussions, courses)
     }
 
     val onCopyClick: () -> Unit = {
@@ -718,6 +720,7 @@ fun CopilotTableComposable(
 fun parseMessageBlocks(
     rawText: String,
     knownAssignments: List<Assignment> = emptyList(),
+    knownDiscussions: List<CanvasDiscussionTopic> = emptyList(),
     courses: List<Course> = emptyList()
 ): List<CopilotContentBlock> {
     val lines = rawText.lines()
@@ -763,9 +766,17 @@ fun parseMessageBlocks(
             }
             flushParagraph()
 
-            val cardBlock = parseCardTag(cardTagMatch.groupValues[1], knownAssignments, courses, currentCourseContext)
+            val cardBlock = parseCardTag(
+                rawTag = cardTagMatch.groupValues[1],
+                knownAssignments = knownAssignments,
+                knownDiscussions = knownDiscussions,
+                courses = courses,
+                currentCourseContext = currentCourseContext
+            )
             if (cardBlock != null) {
-                val cardKey = (cardBlock.assignmentId?.toString() ?: normalizeSearchString(cardBlock.title))
+                val cardKey = (cardBlock.assignmentId?.toString()
+                    ?: cardBlock.forumTopicId?.toString()
+                    ?: normalizeSearchString(cardBlock.title))
                 if (cardKey !in emittedCardKeys) {
                     emittedCardKeys.add(cardKey)
                     blocks.add(cardBlock)
@@ -817,6 +828,7 @@ fun parseMessageBlocks(
 private fun parseCardTag(
     rawTag: String,
     knownAssignments: List<Assignment>,
+    knownDiscussions: List<CanvasDiscussionTopic>,
     courses: List<Course>,
     currentCourseContext: Course?
 ): CopilotContentBlock.ResourceCardBlock? {
@@ -872,6 +884,28 @@ private fun parseCardTag(
                 pointsPossible = matchedAssignment.pointsPossible
             }
         }
+    } else if (type == ResourceCardType.FORUM) {
+        val explicitCourse = if (!courseName.isNullOrBlank()) {
+            courses.find { c ->
+                val normC = normalizeSearchString(c.name)
+                val normTarget = normalizeSearchString(courseName ?: "")
+                normC.isNotEmpty() && normTarget.isNotEmpty() && (normC.contains(normTarget) || normTarget.contains(normC))
+            }
+        } else currentCourseContext
+
+        val matchedDiscussion = knownDiscussions.find { d ->
+            (forumTopicId != null && d.id == forumTopicId) ||
+            matchesDiscussionTitle(title, d, explicitCourse)
+        }
+        if (matchedDiscussion != null) {
+            if (forumTopicId == null) forumTopicId = matchedDiscussion.id
+            if (url.isNullOrBlank()) url = matchedDiscussion.htmlUrl
+            if (courseName.isNullOrBlank()) {
+                courseName = matchedDiscussion.courseName
+                    ?: explicitCourse?.name
+                    ?: courses.find { it.id == matchedDiscussion.courseId }?.name
+            }
+        }
     }
 
     return CopilotContentBlock.ResourceCardBlock(
@@ -884,6 +918,29 @@ private fun parseCardTag(
         dueDate = dueDate,
         pointsPossible = pointsPossible
     )
+}
+
+private fun matchesDiscussionTitle(
+    title: String,
+    topic: CanvasDiscussionTopic,
+    explicitCourse: Course?
+): Boolean {
+    if (explicitCourse != null && topic.courseId != null && topic.courseId != explicitCourse.id) {
+        return false
+    }
+    val normTitle = normalizeSearchString(title)
+    val normName = normalizeSearchString(topic.title)
+    if (normName == normTitle) return true
+
+    if (normName.contains(normTitle) || normTitle.contains(normName)) {
+        val titleNumbers = EXTRACT_DIGITS_REGEX.findAll(normTitle).map { it.value }.toSet()
+        val nameNumbers = EXTRACT_DIGITS_REGEX.findAll(normName).map { it.value }.toSet()
+        if (titleNumbers.isNotEmpty() && nameNumbers.isNotEmpty()) {
+            return titleNumbers == nameNumbers || nameNumbers.containsAll(titleNumbers)
+        }
+        return true
+    }
+    return false
 }
 
 private fun matchesAssignmentTitle(

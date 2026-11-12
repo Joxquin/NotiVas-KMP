@@ -67,6 +67,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.local.CopilotProvider
+import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.ui.components.aura.MonetAuraBackground
 import me.joxquin.notivas.ui.copilot.components.CopilotCustomInstructionsDialog
 import me.joxquin.notivas.ui.copilot.components.CopilotHeaderBar
@@ -127,6 +128,7 @@ fun CopilotScreen(
     onNavigateToSettings: () -> Unit = {},
     onOpenAssignmentDraft: ((Long, String) -> Unit)? = null,
     onOpenForoDetail: ((Long) -> Unit)? = null,
+    knownDiscussions: List<CanvasDiscussionTopic> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -320,6 +322,7 @@ fun CopilotScreen(
                         onOpenAssignmentDraft = onOpenAssignmentDraft,
                         onOpenForoDetail = onOpenForoDetail,
                         knownAssignments = allAssignments,
+                        knownDiscussions = knownDiscussions,
                         courses = uiState.courses,
                         themeStyle = AppThemeStyle.MIUIX,
                         bottomPadding = animatedBottomPadding,
@@ -762,6 +765,7 @@ fun CopilotScreen(
                     onOpenAssignmentDraft = onOpenAssignmentDraft,
                     onOpenForoDetail = onOpenForoDetail,
                     knownAssignments = allAssignments,
+                    knownDiscussions = knownDiscussions,
                     courses = uiState.courses,
                     themeStyle = AppThemeStyle.MATERIAL
                 )
