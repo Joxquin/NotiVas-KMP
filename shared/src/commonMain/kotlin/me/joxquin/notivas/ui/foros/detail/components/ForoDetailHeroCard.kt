@@ -62,21 +62,25 @@ fun ForoDetailHeroCard(
                 dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_due_closed)
             } else {
                 val totalHours = diffMs / (1000 * 60 * 60)
-                val days = totalHours / 24
-                val hours = totalHours % 24
+                val today = DateTimeUtil.nowLocalDate()
+                val tomorrow = DateTimeUtil.addDays(today, 1)
+
                 when {
-                    days > 1 -> dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_due_days, days.toInt())
-                    days == 1L -> {
+                    dueComponents.date == tomorrow -> {
                         dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_tomorrow)
                         isUrgent = true
                     }
-                    hours > 0 -> {
-                        dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_hours_format, hours.toInt())
+                    dueComponents.date == today -> {
+                        if (totalHours > 0) {
+                            dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.urgent_due_hours_format, totalHours.toInt())
+                        } else {
+                            dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.bento_foros_soon)
+                        }
                         isUrgent = true
                     }
                     else -> {
-                        dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.bento_foros_soon)
-                        isUrgent = true
+                        val days = maxOf(2, (diffMs / (1000L * 60 * 60 * 24)).toInt())
+                        dueText = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foro_due_days, days)
                     }
                 }
             }

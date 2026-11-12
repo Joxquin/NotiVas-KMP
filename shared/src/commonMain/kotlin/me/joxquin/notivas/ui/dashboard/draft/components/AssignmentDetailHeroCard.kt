@@ -65,13 +65,23 @@ fun AssignmentDetailHeroCard(
                     val totalMinutes = diffMs / (1000 * 60)
                     val hours = totalMinutes / 60
                     val minutes = totalMinutes % 60
-                    val days = hours / 24
                     val timeStr = "${dueComp.hour.toString().padStart(2, '0')}:${dueComp.minute.toString().padStart(2, '0')}"
+                    val today = DateTimeUtil.nowLocalDate()
+                    val tomorrow = DateTimeUtil.addDays(today, 1)
+
                     when {
-                        days > 1 -> "Vence en ${days}d • ${dueComp.date.toIsoDateString()} $timeStr" to false
-                        days == 1L -> "Vence mañana • $timeStr" to true
-                        hours > 0 -> "Vence en ${hours}h ${minutes}m • Hoy $timeStr" to true
-                        else -> "Vence en ${minutes}m • Hoy $timeStr" to true
+                        dueComp.date == today -> {
+                            val duration = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
+                            "Vence en $duration • Hoy $timeStr" to true
+                        }
+                        dueComp.date == tomorrow -> {
+                            val duration = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
+                            "Vence en $duration • Mañana $timeStr" to true
+                        }
+                        else -> {
+                            val days = maxOf(2, (diffMs / (1000L * 60 * 60 * 24)).toInt())
+                            "Vence en ${days}d • ${dueComp.date.toIsoDateString()} $timeStr" to false
+                        }
                     }
                 }
             } else {
