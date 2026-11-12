@@ -85,17 +85,34 @@ import top.yukonga.miuix.kmp.icon.extended.Create
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.glass.GlassIconButton
+import top.yukonga.miuix.kmp.glass.GlassPopupDefaults
 import top.yukonga.miuix.kmp.glass.GlassPopupItem
+import top.yukonga.miuix.kmp.glass.GlassPopupSizing
+import top.yukonga.miuix.kmp.glass.GlassSecondaryPopup
 import top.yukonga.miuix.kmp.glass.GlassTopAppBarDefaults
 import top.yukonga.miuix.kmp.glass.GlassTransformPopup
 import top.yukonga.miuix.kmp.glass.glassPopupAnchor
 import top.yukonga.miuix.kmp.glass.glassPopupAnchorContent
 import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
+import top.yukonga.miuix.kmp.layout.CascadingPopupDefaults
+import me.joxquin.notivas.ui.copilot.components.OPENROUTER_MODELS
+import me.joxquin.notivas.ui.copilot.components.GOOGLE_AI_STUDIO_MODELS
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
+
+private enum class CopilotQuickMenuSubmenu {
+    PROVIDER,
+    MODEL
+}
 
 /**
  * Orquestador UDF declarativo para el Asistente Académico Copilot / Copilot IA.
@@ -203,6 +220,27 @@ fun CopilotScreen(
 
         val backdrop = rememberMiuixBlurBackdrop(withSurfaceBackground = false)
         val menuAnchor = rememberGlassPopupAnchor()
+
+        var activeSubmenu by remember { mutableStateOf<CopilotQuickMenuSubmenu?>(null) }
+        var cachedSubmenu by remember { mutableStateOf<CopilotQuickMenuSubmenu?>(null) }
+        if (activeSubmenu != null) {
+            cachedSubmenu = activeSubmenu
+        }
+        val displayedSubmenu = activeSubmenu ?: cachedSubmenu
+
+        var submenuPresent by remember { mutableStateOf(false) }
+        var providerItemBounds by remember { mutableStateOf(Rect.Zero) }
+        var modelItemBounds by remember { mutableStateOf(Rect.Zero) }
+        var frozenBounds by remember { mutableStateOf(Rect.Zero) }
+        var menuWidth by remember { mutableStateOf(260.dp) }
+        val density = LocalDensity.current
+        val layoutDirection = LocalLayoutDirection.current
+        val arrowTurn = remember(layoutDirection) { CascadingPopupDefaults.arrowRotation(layoutDirection) }
+        val submenuArrow by animateFloatAsState(
+            targetValue = if (activeSubmenu != null) arrowTurn else 0f,
+            animationSpec = CascadingPopupDefaults.arrowSpring(activeSubmenu != null),
+            label = "copilotSubmenuArrow"
+        )
 
         Box(
             modifier = modifier.fillMaxSize()
@@ -355,12 +393,21 @@ fun CopilotScreen(
             }
 
             val currentModelLabel = resolveModelLabel(uiState.provider, uiState.currentModel)
+            val currentProviderLabel = if (uiState.provider == CopilotProvider.OPENROUTER) "OpenRouter" else "Google AI Studio"
 
             GlassTransformPopup(
                 show = showQuickSettingsMenu,
-                onDismissRequest = { showQuickSettingsMenu = false },
+                onDismissRequest = {
+                    showQuickSettingsMenu = false
+                    activeSubmenu = null
+                    submenuPresent = false
+                    cachedSubmenu = null
+                },
                 anchor = menuAnchor,
                 backdrop = backdrop,
+                stacked = activeSubmenu != null,
+                sizing = GlassPopupSizing(minWidth = 260.dp),
+                onMeasured = { menuWidth = with(density) { it.width.toDp() } },
                 anchorContent = {
                     top.yukonga.miuix.kmp.basic.Icon(
                         imageVector = MiuixIcons.Tune,
@@ -372,19 +419,45 @@ fun CopilotScreen(
                 gap = 0.dp,
             ) {
                 GlassPopupItem(
-                    text = "${stringResource(Res.string.copilot_provider_label)}: ${if (uiState.provider == CopilotProvider.OPENROUTER) "OpenRouter" else "Google AI"}",
+                    text = stringResource(Res.string.copilot_provider_label),
+                    summary = currentProviderLabel,
                     icon = Icons.Default.AutoAwesome,
+                    showArrow = true,
+                    arrowRotation = {
+                        if (displayedSubmenu == CopilotQuickMenuSubmenu.PROVIDER) {
+                            submenuArrow * (1f - menuAnchor.secondaryBackProgress)
+                        } else {
+                            0f
+                        }
+                    },
+                    modifier = Modifier.onGloballyPositioned {
+                        if (!submenuPresent) providerItemBounds = it.boundsInRoot()
+                    },
                     onClick = {
-                        showQuickSettingsMenu = false
-                        showProviderDialog = true
+                        frozenBounds = providerItemBounds
+                        submenuPresent = true
+                        activeSubmenu = CopilotQuickMenuSubmenu.PROVIDER
                     }
                 )
                 GlassPopupItem(
-                    text = "${stringResource(Res.string.copilot_model_label)}: $currentModelLabel",
+                    text = stringResource(Res.string.copilot_model_label),
+                    summary = currentModelLabel,
                     icon = Icons.Default.Psychology,
+                    showArrow = true,
+                    arrowRotation = {
+                        if (displayedSubmenu == CopilotQuickMenuSubmenu.MODEL) {
+                            submenuArrow * (1f - menuAnchor.secondaryBackProgress)
+                        } else {
+                            0f
+                        }
+                    },
+                    modifier = Modifier.onGloballyPositioned {
+                        if (!submenuPresent) modelItemBounds = it.boundsInRoot()
+                    },
                     onClick = {
-                        showQuickSettingsMenu = false
-                        showModelDialog = true
+                        frozenBounds = modelItemBounds
+                        submenuPresent = true
+                        activeSubmenu = CopilotQuickMenuSubmenu.MODEL
                     }
                 )
                 GlassPopupItem(
@@ -403,6 +476,91 @@ fun CopilotScreen(
                         onNavigateToSettings()
                     }
                 )
+            }
+
+            GlassSecondaryPopup(
+                show = showQuickSettingsMenu && activeSubmenu != null,
+                onDismissRequest = { activeSubmenu = null },
+                anchorBounds = frozenBounds,
+                backdrop = backdrop,
+                materialAnchor = menuAnchor,
+                sizing = GlassPopupSizing(
+                    minWidth = menuWidth,
+                    maxWidth = menuWidth,
+                ),
+                onDismissFinished = {
+                    submenuPresent = false
+                    cachedSubmenu = null
+                },
+            ) {
+                when (displayedSubmenu) {
+                    CopilotQuickMenuSubmenu.PROVIDER -> {
+                        GlassPopupItem(
+                            text = stringResource(Res.string.copilot_provider_label),
+                            summary = currentProviderLabel,
+                            icon = Icons.Default.AutoAwesome,
+                            showArrow = true,
+                            arrowRotation = { submenuArrow * (1f - menuAnchor.secondaryBackProgress) },
+                            onClick = { activeSubmenu = null }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(
+                                horizontal = GlassPopupDefaults.DividerPaddingHorizontal,
+                                vertical = GlassPopupDefaults.DividerPaddingVertical
+                            ),
+                            thickness = GlassPopupDefaults.DividerThickness
+                        )
+                        GlassPopupItem(
+                            text = "OpenRouter",
+                            selected = uiState.provider == CopilotProvider.OPENROUTER,
+                            onClick = {
+                                viewModel.setProvider(CopilotProvider.OPENROUTER)
+                                activeSubmenu = null
+                            }
+                        )
+                        GlassPopupItem(
+                            text = "Google AI Studio",
+                            selected = uiState.provider == CopilotProvider.GOOGLE_AI_STUDIO,
+                            onClick = {
+                                viewModel.setProvider(CopilotProvider.GOOGLE_AI_STUDIO)
+                                activeSubmenu = null
+                            }
+                        )
+                    }
+                    CopilotQuickMenuSubmenu.MODEL -> {
+                        GlassPopupItem(
+                            text = stringResource(Res.string.copilot_model_label),
+                            summary = currentModelLabel,
+                            icon = Icons.Default.Psychology,
+                            showArrow = true,
+                            arrowRotation = { submenuArrow * (1f - menuAnchor.secondaryBackProgress) },
+                            onClick = { activeSubmenu = null }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(
+                                horizontal = GlassPopupDefaults.DividerPaddingHorizontal,
+                                vertical = GlassPopupDefaults.DividerPaddingVertical
+                            ),
+                            thickness = GlassPopupDefaults.DividerThickness
+                        )
+                        val models = if (uiState.provider == CopilotProvider.OPENROUTER) {
+                            OPENROUTER_MODELS
+                        } else {
+                            GOOGLE_AI_STUDIO_MODELS
+                        }
+                        models.forEach { (modelId, label) ->
+                            GlassPopupItem(
+                                text = label,
+                                selected = uiState.currentModel == modelId,
+                                onClick = {
+                                    viewModel.setModel(modelId)
+                                    activeSubmenu = null
+                                }
+                            )
+                        }
+                    }
+                    null -> {}
+                }
             }
         }
         return
@@ -489,9 +647,22 @@ fun CopilotScreen(
                             expanded = showMaterialSettingsMenu,
                             onDismissRequest = { showMaterialSettingsMenu = false }
                         ) {
+                            val currentModelLabel = resolveModelLabel(uiState.provider, uiState.currentModel)
+                            val currentProviderLabel = if (uiState.provider == CopilotProvider.OPENROUTER) "OpenRouter" else "Google AI Studio"
+
                             DropdownMenuItem(
                                 text = {
-                                    Text("${stringResource(Res.string.copilot_provider_label)}: ${if (uiState.provider == CopilotProvider.OPENROUTER) "OpenRouter" else "Google AI"}")
+                                    Column {
+                                        Text(
+                                            text = stringResource(Res.string.copilot_provider_label),
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                                        )
+                                        Text(
+                                            text = currentProviderLabel,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Default.AutoAwesome, contentDescription = null)
@@ -503,8 +674,17 @@ fun CopilotScreen(
                             )
                             DropdownMenuItem(
                                 text = {
-                                    val currentModelLabel = resolveModelLabel(uiState.provider, uiState.currentModel)
-                                    Text("${stringResource(Res.string.copilot_model_label)}: $currentModelLabel")
+                                    Column {
+                                        Text(
+                                            text = stringResource(Res.string.copilot_model_label),
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                                        )
+                                        Text(
+                                            text = currentModelLabel,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Default.Psychology, contentDescription = null)
