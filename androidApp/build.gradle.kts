@@ -52,6 +52,15 @@ android {
         }
     }
     signingConfigs {
+        getByName("debug") {
+            val keystoreFile = file("debug.keystore")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("DEBUG_KEYSTORE_STORE_PASSWORD") ?: "android"
+                keyAlias = System.getenv("DEBUG_KEYSTORE_KEY_ALIAS") ?: "androiddebugkey"
+                keyPassword = System.getenv("DEBUG_KEYSTORE_KEY_PASSWORD") ?: "android"
+            }
+        }
         create("release") {
             val keystoreFile = file("release.keystore")
             if (keystoreFile.exists()) {
@@ -73,6 +82,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-DEBUG"
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
