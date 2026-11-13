@@ -98,13 +98,6 @@ fun DashboardHeroCarousel(
         if (validScores.isNotEmpty()) validScores.average() else null
     }
 
-    val totalUnreviewedCount = remember(courseStats) {
-        courseStats.sumOf { it.unreviewedAssignmentsCount }
-    }
-    val unreviewedCoursesCount = remember(courseStats) {
-        courseStats.count { it.unreviewedAssignmentsCount > 0 }
-    }
-
     val containerColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow
 
     Column(
@@ -122,8 +115,6 @@ fun DashboardHeroCarousel(
                         PerformanceSlideContent(
                             overallAverage = overallAverage,
                             weeklyDayBlocks = weeklyDayBlocks,
-                            totalUnreviewedCount = totalUnreviewedCount,
-                            unreviewedCoursesCount = unreviewedCoursesCount,
                             onCheckPerformance = onCheckPerformance,
                             isMiuix = isMiuix
                         )
@@ -208,8 +199,6 @@ fun DashboardHeroCarousel(
 private fun PerformanceSlideContent(
     overallAverage: Double?,
     weeklyDayBlocks: List<DayBlockInfo>,
-    totalUnreviewedCount: Int = 0,
-    unreviewedCoursesCount: Int = 0,
     onCheckPerformance: () -> Unit,
     isMiuix: Boolean
 ) {
@@ -319,73 +308,6 @@ private fun PerformanceSlideContent(
                 outlineColor = outlineColor,
                 isMiuix = isMiuix
             )
-        }
-
-        // Resumen Contextual de Tareas Sin Calificar (+7 días)
-        if (totalUnreviewedCount > 0) {
-            val alertBg = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHigh
-            val alertBorder = if (isMiuix) MiuixTheme.colorScheme.dividerLine else MaterialTheme.colorScheme.outlineVariant
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = alertBg,
-                border = androidx.compose.foundation.BorderStroke(0.5.dp, alertBorder),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onCheckPerformance() }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = null,
-                            tint = primaryColor,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(Res.string.dashboard_unreviewed_grades_title),
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = onSurfaceColor
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = stringResource(
-                                Res.string.dashboard_unreviewed_grades_desc,
-                                totalUnreviewedCount,
-                                unreviewedCoursesCount
-                            ),
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                            color = onVariantColor,
-                            lineHeight = 15.sp
-                        )
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (isMiuix) MiuixTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.dashboard_unreviewed_grades_badge),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = primaryColor,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                        )
-                    }
-                }
-            }
         }
 
         // Botón de Acción a Pantalla Completa

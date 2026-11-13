@@ -210,35 +210,6 @@ class PreferencesManager(
         schedulePersist()
     }
 
-    private val _offlineGroupAssignmentIds = MutableStateFlow<Set<Long>>(emptySet())
-    val offlineGroupAssignmentIds: StateFlow<Set<Long>> = _offlineGroupAssignmentIds.asStateFlow()
-    fun getOfflineGroupAssignmentIds(): Set<Long> = _offlineGroupAssignmentIds.value
-
-    suspend fun toggleOfflineGroupAssignment(assignmentId: Long) {
-        val current = _offlineGroupAssignmentIds.value
-        _offlineGroupAssignmentIds.value = if (current.contains(assignmentId)) {
-            current - assignmentId
-        } else {
-            current + assignmentId
-        }
-        schedulePersist()
-    }
-
-    private val _unreviewedSimulatedScores = MutableStateFlow<Map<Long, Float>>(emptyMap())
-    val unreviewedSimulatedScores: StateFlow<Map<Long, Float>> = _unreviewedSimulatedScores.asStateFlow()
-    fun getUnreviewedSimulatedScores(): Map<Long, Float> = _unreviewedSimulatedScores.value
-
-    suspend fun setUnreviewedSimulatedScore(assignmentId: Long, score: Float?) {
-        val current = _unreviewedSimulatedScores.value.toMutableMap()
-        if (score == null) {
-            current.remove(assignmentId)
-        } else {
-            current[assignmentId] = score
-        }
-        _unreviewedSimulatedScores.value = current
-        schedulePersist()
-    }
-
     private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
     val recentSearches: Flow<List<String>> = _recentSearches.asStateFlow()
     fun getRecentSearches(): List<String> = _recentSearches.value
@@ -316,8 +287,6 @@ class PreferencesManager(
             _googleDriveRefreshToken.value = snapshot.googleDriveRefreshToken
             _discardedAssignmentIds.value = snapshot.discardedAssignmentIds
             _recentSearches.value = snapshot.recentSearches
-            _offlineGroupAssignmentIds.value = snapshot.offlineGroupAssignmentIds
-            _unreviewedSimulatedScores.value = snapshot.unreviewedSimulatedScores
             _copilotCustomInstructions.value = snapshot.copilotCustomInstructions
         } catch (_: Exception) {
         } finally {
@@ -375,8 +344,6 @@ class PreferencesManager(
                 googleDriveRefreshToken = _googleDriveRefreshToken.value,
                 discardedAssignmentIds = _discardedAssignmentIds.value,
                 recentSearches = _recentSearches.value,
-                offlineGroupAssignmentIds = _offlineGroupAssignmentIds.value,
-                unreviewedSimulatedScores = _unreviewedSimulatedScores.value,
                 copilotCustomInstructions = _copilotCustomInstructions.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)

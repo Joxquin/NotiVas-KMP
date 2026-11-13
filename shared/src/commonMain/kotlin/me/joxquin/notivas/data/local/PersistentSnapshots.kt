@@ -54,8 +54,6 @@ data class PersistentPreferencesSnapshot(
     val knownForumIds: Set<Long> = emptySet(),
     val hasCompletedInitialSync: Boolean = false,
     val lastSyncTimestamp: Long = 0L,
-    val offlineGroupAssignmentIds: Set<Long> = emptySet(),
-    val unreviewedSimulatedScores: Map<Long, Float> = emptyMap(),
     val autoRenewToken: Boolean = true,
     val tokenExpiresAt: Long = 0L,
     val copilotCustomInstructions: String = ""

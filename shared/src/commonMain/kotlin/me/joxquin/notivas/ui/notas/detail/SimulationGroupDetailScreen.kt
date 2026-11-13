@@ -169,7 +169,7 @@ fun SimulationGroupDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text(text = stringResource(Res.string.unreviewed_dialog_cancel))
+                    Text(text = stringResource(Res.string.cancel))
                 }
             }
         )
@@ -204,7 +204,7 @@ fun SimulationGroupDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { itemToDelete = null }) {
-                    Text(text = stringResource(Res.string.unreviewed_dialog_cancel))
+                    Text(text = stringResource(Res.string.cancel))
                 }
             }
         )

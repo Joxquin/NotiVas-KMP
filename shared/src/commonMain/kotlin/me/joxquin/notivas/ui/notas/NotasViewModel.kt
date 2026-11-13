@@ -60,11 +60,7 @@ data class SimEvaluation(
     val simulatedScore: Float,
     val pointsPossible: Double?,
     val gradedAt: String? = null,
-    val dueAt: String? = null,
-    val daysOverdue: Int? = null,
-    val isUnreviewed: Boolean = false,
-    val isGroupOrOffline: Boolean = false,
-    val hasCustomSimulatedScore: Boolean = false
+    val dueAt: String? = null
 )
 
 enum class RiskLevel {
@@ -81,7 +77,6 @@ data class NotasUiState(
     val courses: List<Course> = emptyList(),
     val selectedCourse: Course? = null,
     val evaluations: List<SimEvaluation> = emptyList(),
-    val unreviewedEvaluations: List<SimEvaluation> = emptyList(),
     val currentAverage: Float = 0f,
     val evaluatedProgressRatio: Float = 0f,
     val projectedFinalGrade: Float = 0f,
@@ -147,35 +142,13 @@ class NotasViewModel(
         } else {
             combine(
                 repository.getAssignmentsForCourse(courseId),
-                repository.getSimulationGroupsWithItems(courseId),
-                preferencesManager.offlineGroupAssignmentIds,
-                preferencesManager.unreviewedSimulatedScores
-            ) { assignments: List<Assignment>, groupsWithItems: List<SimulationGroupWithItems>, offlineGroupIds: Set<Long>, customSimScores: Map<Long, Float> ->
-                val now = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
-                val sevenDaysMillis = 7L * 24L * 60L * 60L * 1000L
-
+                repository.getSimulationGroupsWithItems(courseId)
+            ) { assignments: List<Assignment>, groupsWithItems: List<SimulationGroupWithItems> ->
                 val evals = assignments.map { a ->
                     val isGraded = a.score != null
                     val rawScore = a.score?.toFloat() ?: 0f
                     val maxPoints = (a.pointsPossible ?: 20.0).toFloat().coerceAtLeast(1f)
                     val normalizedScore = (rawScore / maxPoints) * 20f
-
-                    val dueStr = a.dueAt ?: a.lockAt
-                    val dueEpoch = dueStr?.let { me.joxquin.notivas.util.DateTimeUtil.parseIsoToComponents(it)?.epochMillis }
-                    val daysOverdue = if (dueEpoch != null && now > dueEpoch) {
-                        ((now - dueEpoch) / (24L * 60L * 60L * 1000L)).toInt()
-                    } else null
-
-                    val isPointsValid = a.pointsPossible == null || a.pointsPossible > 0.0
-                    val isUnreviewed = !isGraded && dueEpoch != null && (now - dueEpoch >= sevenDaysMillis) && isPointsValid
-                    val isGroupOrOffline = offlineGroupIds.contains(a.id)
-                    val customSim = customSimScores[a.id]
-
-                    val effectiveSimulated = when {
-                        isGraded -> normalizedScore
-                        customSim != null -> customSim
-                        else -> 0f
-                    }
 
                     SimEvaluation(
                         id = a.id,
@@ -183,19 +156,14 @@ class NotasViewModel(
                         weight = 0f,
                         isGraded = isGraded,
                         actualScore = if (isGraded) normalizedScore else null,
-                        simulatedScore = effectiveSimulated,
+                        simulatedScore = if (isGraded) normalizedScore else 0f,
                         pointsPossible = a.pointsPossible,
                         gradedAt = a.gradedAt,
-                        dueAt = a.dueAt,
-                        daysOverdue = daysOverdue,
-                        isUnreviewed = isUnreviewed,
-                        isGroupOrOffline = isGroupOrOffline,
-                        hasCustomSimulatedScore = customSim != null
+                        dueAt = a.dueAt
                     )
                 }
 
                 val graded = evals.filter { it.isGraded }
-                val unreviewedList = evals.filter { it.isUnreviewed }
                 val currentAvg = if (graded.isNotEmpty()) graded.mapNotNull { it.actualScore }.average().toFloat() else 0f
                 val progressRatio = if (evals.isNotEmpty()) graded.size.toFloat() / evals.size.toFloat() else 0f
 
@@ -214,12 +182,7 @@ class NotasViewModel(
                     )
                 }
 
-                // Si hay evaluaciones simuladas manualmente en unreviewed, calcular proyección híbrida
-                val scoredForProjection = evals.filter { it.isGraded || it.hasCustomSimulatedScore }
-                val simulatedProjection = if (scoredForProjection.isNotEmpty()) {
-                    scoredForProjection.map { it.simulatedScore }.average().toFloat()
-                } else currentAvg
-
+                val simulatedProjection = currentAvg
                 val groupSimulatedFinal = if (totalWeight > 0f) (weightedSum / (totalWeight / 100f)) else simulatedProjection
 
                 // Si el curso actual tiene tareas calificadas, actualizamos el latest graded para ser contextual
@@ -232,7 +195,6 @@ class NotasViewModel(
 
                 baseState.copy(
                     evaluations = evals,
-                    unreviewedEvaluations = unreviewedList,
                     currentAverage = currentAvg,
                     evaluatedProgressRatio = progressRatio,
                     projectedFinalGrade = if (groupUiList.isNotEmpty()) groupSimulatedFinal else simulatedProjection,
@@ -250,18 +212,6 @@ class NotasViewModel(
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NotasUiState())
-
-    fun toggleOfflineGroupAssignment(assignmentId: Long) {
-        viewModelScope.launch {
-            preferencesManager.toggleOfflineGroupAssignment(assignmentId)
-        }
-    }
-
-    fun setUnreviewedSimulatedScore(assignmentId: Long, score: Float?) {
-        viewModelScope.launch {
-            preferencesManager.setUnreviewedSimulatedScore(assignmentId, score)
-        }
-    }
 
     fun selectCourse(course: Course) {
         _selectedCourse.value = course

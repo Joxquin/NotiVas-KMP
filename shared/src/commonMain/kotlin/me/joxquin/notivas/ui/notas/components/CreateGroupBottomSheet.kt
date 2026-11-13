@@ -33,7 +33,7 @@ import me.joxquin.notivas.shared.resources.group_create_remaining_weight_format
 import me.joxquin.notivas.shared.resources.group_create_save_btn
 import me.joxquin.notivas.shared.resources.group_create_sheet_title
 import me.joxquin.notivas.shared.resources.group_create_weight_label
-import me.joxquin.notivas.shared.resources.unreviewed_dialog_cancel
+import me.joxquin.notivas.shared.resources.cancel
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
@@ -220,7 +220,7 @@ fun CreateGroupBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 MiuixTextButton(
-                    text = stringResource(Res.string.unreviewed_dialog_cancel),
+                    text = stringResource(Res.string.cancel),
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 )
