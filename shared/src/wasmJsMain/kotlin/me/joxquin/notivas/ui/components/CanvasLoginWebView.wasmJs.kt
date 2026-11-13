@@ -143,6 +143,16 @@ actual fun CanvasLoginWebView(
                             me.joxquin.notivas.data.model.SessionPairingPayload.serializer(),
                             payloadJson
                         )
+                        if (!payload.googleDriveAccessToken.isNullOrBlank()) {
+                            try {
+                                me.joxquin.notivas.di.AppModule.preferencesManager.saveGoogleDriveTokens(
+                                    accessToken = payload.googleDriveAccessToken,
+                                    refreshToken = payload.googleDriveRefreshToken,
+                                    userEmail = payload.googleDriveEmail
+                                )
+                            } catch (_: Exception) { }
+                        }
+
                         if (!payload.accessToken.isNullOrBlank()) {
                             val tokenWithUrl = if (payload.universityUrl.isNotBlank()) {
                                 "access_token=${payload.accessToken}&university_url=${payload.universityUrl}"

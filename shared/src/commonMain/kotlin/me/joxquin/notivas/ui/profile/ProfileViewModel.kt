@@ -369,12 +369,25 @@ class ProfileViewModel(
 
         val resolveData = resolveRes.getOrThrow()
         val authMode = preferencesManager.getAuthMode()
+
+        val driveAccessToken = if (preferencesManager.isGoogleDriveConnected()) {
+            try {
+                me.joxquin.notivas.security.SecureTokenVault(preferencesManager).refreshGoogleDriveAccessToken()
+                    ?: preferencesManager.getGoogleDriveAccessToken()
+            } catch (_: Throwable) {
+                preferencesManager.getGoogleDriveAccessToken()
+            }
+        } else null
+
         val payload = me.joxquin.notivas.data.model.SessionPairingPayload(
             universityUrl = preferencesManager.getUniversityUrl() ?: "https://canvas.utp.edu.pe",
             authMode = authMode,
             accessToken = preferencesManager.getAccessToken(),
             sessionCookies = if (authMode == me.joxquin.notivas.data.model.AuthMode.TOKEN) null else preferencesManager.getSessionCookies(),
-            csrfToken = if (authMode == me.joxquin.notivas.data.model.AuthMode.TOKEN) null else preferencesManager.getCsrfToken()
+            csrfToken = if (authMode == me.joxquin.notivas.data.model.AuthMode.TOKEN) null else preferencesManager.getCsrfToken(),
+            googleDriveAccessToken = driveAccessToken,
+            googleDriveRefreshToken = if (preferencesManager.isGoogleDriveConnected()) preferencesManager.getGoogleDriveRefreshToken() else null,
+            googleDriveEmail = if (preferencesManager.isGoogleDriveConnected()) preferencesManager.getGoogleDriveEmail() else null
         )
 
         val jsonStr = kotlinx.serialization.json.Json.encodeToString(

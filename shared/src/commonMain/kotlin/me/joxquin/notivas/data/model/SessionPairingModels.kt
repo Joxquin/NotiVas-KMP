@@ -8,7 +8,10 @@ data class SessionPairingPayload(
     val authMode: AuthMode,
     val accessToken: String? = null,
     val sessionCookies: String? = null,
-    val csrfToken: String? = null
+    val csrfToken: String? = null,
+    val googleDriveAccessToken: String? = null,
+    val googleDriveRefreshToken: String? = null,
+    val googleDriveEmail: String? = null
 )
 
 @Serializable
