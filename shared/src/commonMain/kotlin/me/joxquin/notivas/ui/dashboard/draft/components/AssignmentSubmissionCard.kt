@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudSync
@@ -175,6 +176,7 @@ fun AssignmentSubmissionCard(
     var isSubmitting by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var successMessage by remember { mutableStateOf<String?>(null) }
+    var showAiReviewSheet by remember { mutableStateOf(false) }
 
     val effectiveAllowedExtensions: List<String> = remember(assignment.allowedExtensions, assignment.description) {
         val fromAssignment = assignment.allowedExtensions?.filter { it.isNotBlank() }?.map { it.removePrefix(".").lowercase() }
@@ -1597,13 +1599,60 @@ fun AssignmentSubmissionCard(
                     }
                 }
 
-                // Botón principal de Entrega
-                val canSubmit = when (selectedTab) {
-                    SubmissionTab.UPLOAD -> selectedDocument != null
-                    SubmissionTab.DRIVE -> isDriveConnected && isDraftActive
-                    SubmissionTab.TEXT -> textBody.isNotBlank()
+                // Botón animado de "Revisar con IA"
+                AnimatedVisibility(
+                    visible = canSubmit && !isSubmitting,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp)
+                            .squircleSurface(
+                                color = MiuixTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                cornerRadius = 14.dp
+                            )
+                            .squircleBorder(
+                                width = 1.dp,
+                                color = MiuixTheme.colorScheme.primary.copy(alpha = 0.25f),
+                                cornerRadius = 14.dp
+                            )
+                            .clickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                showAiReviewSheet = true
+                            }
+                            .padding(vertical = 12.dp, horizontal = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = MiuixTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Column {
+                                MiuixText(
+                                    text = stringResource(Res.string.review_with_ai_button),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MiuixTheme.colorScheme.primary
+                                )
+                                MiuixText(
+                                    text = stringResource(Res.string.review_with_ai_subtitle),
+                                    fontSize = 11.sp,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                )
+                            }
+                        }
+                    }
                 }
 
+                // Botón principal de Entrega
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2678,6 +2727,43 @@ fun AssignmentSubmissionCard(
                     SubmissionTab.TEXT -> textBody.isNotBlank()
                 }
 
+                // Botón animado de "Revisar con IA"
+                AnimatedVisibility(
+                    visible = canSubmit && !isSubmitting,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    OutlinedButton(
+                        onClick = { showAiReviewSheet = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = stringResource(Res.string.review_with_ai_button),
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Text(
+                                text = stringResource(Res.string.review_with_ai_subtitle),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
                 Button(
                     onClick = {
                         if (selectedTab == SubmissionTab.DRIVE && isDriveConnected) {
@@ -2725,6 +2811,22 @@ fun AssignmentSubmissionCard(
         }
     }
 }
+
+    if (showAiReviewSheet) {
+        val draftFileId = if (selectedTab == SubmissionTab.DRIVE && isDriveConnected && isDraftActive) {
+            draftInfo?.driveFileId
+        } else null
+
+        AssignmentPreReviewSheet(
+            show = showAiReviewSheet,
+            assignment = assignment,
+            selectedDocument = if (selectedTab == SubmissionTab.UPLOAD) selectedDocument else null,
+            draftFileId = draftFileId,
+            textBody = if (selectedTab == SubmissionTab.TEXT) textBody else null,
+            themeStyle = themeStyle,
+            onDismissRequest = { showAiReviewSheet = false }
+        )
+    }
 }
 
 private fun resolveViewableUrl(

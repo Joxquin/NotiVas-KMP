@@ -774,4 +774,27 @@
     <string name="token_new_success">Token updated and verified successfully</string>
     <string name="token_new_error">Invalid token or error connecting to Canvas</string>
     <string name="token_copy_clipboard">Token copied to clipboard</string>
+
+    <!-- AI Assignment Pre-Review -->
+    <string name="review_with_ai_button">Review with AI</string>
+    <string name="review_with_ai_subtitle">Evaluate with rubric and readings before submitting</string>
+    <string name="review_sheet_title">Submission Pre-Review</string>
+    <string name="review_scanning_title">Analyzing submission with AI</string>
+    <string name="review_step_rubric">Reading instructions and official rubric...</string>
+    <string name="review_step_modules">Fetching module readings and resources...</string>
+    <string name="review_step_document">Extracting submission content...</string>
+    <string name="review_step_evaluating">Evaluating criteria and academic alignment...</string>
+    <string name="review_score_estimated">Estimated Score</string>
+    <string name="review_tab_rubric">Rubric</string>
+    <string name="review_tab_strengths">Strengths</string>
+    <string name="review_tab_improvements">Improvements</string>
+    <string name="review_tab_module">Module</string>
+    <string name="review_action_reanalyze">Re-analyze</string>
+    <string name="review_action_close">Got it</string>
+    <string name="review_error_no_ai_key">Configure your API Key in Copilot Settings to use AI review.</string>
+    <string name="review_error_failed">Failed to complete review: %1$s</string>
+    <string name="review_strengths_title">Identified Strengths</string>
+    <string name="review_improvements_title">Improvement Recommendations</string>
+    <string name="review_module_alignment_title">Module Readings Alignment</string>
+    <string name="review_no_document">No document or text selected to review.</string>
 </resources>

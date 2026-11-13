@@ -774,4 +774,27 @@
     <string name="token_new_success">Token actualizado y verificado correctamente</string>
     <string name="token_new_error">Token inválido o error al conectar con Canvas</string>
     <string name="token_copy_clipboard">Token copiado al portapapeles</string>
+
+    <!-- Pre-revisión de Tareas con IA -->
+    <string name="review_with_ai_button">Revisar con IA</string>
+    <string name="review_with_ai_subtitle">Evaluar con rúbrica y lecturas antes de entregar</string>
+    <string name="review_sheet_title">Pre-revisión de Entrega</string>
+    <string name="review_scanning_title">Analizando entrega con IA</string>
+    <string name="review_step_rubric">Leyendo consigna y rúbrica oficial...</string>
+    <string name="review_step_modules">Consultando lecturas y recursos del módulo...</string>
+    <string name="review_step_document">Extrayendo contenido de la entrega...</string>
+    <string name="review_step_evaluating">Evaluando criterios y alineación académica...</string>
+    <string name="review_score_estimated">Puntaje Estimado</string>
+    <string name="review_tab_rubric">Rúbrica</string>
+    <string name="review_tab_strengths">Fortalezas</string>
+    <string name="review_tab_improvements">Mejoras</string>
+    <string name="review_tab_module">Módulo</string>
+    <string name="review_action_reanalyze">Volver a analizar</string>
+    <string name="review_action_close">Entendido</string>
+    <string name="review_error_no_ai_key">Configura tu API Key en Ajustes Copilot para usar la revisión con IA.</string>
+    <string name="review_error_failed">No se pudo completar la revisión: %1$s</string>
+    <string name="review_strengths_title">Puntos Fuertes Identificados</string>
+    <string name="review_improvements_title">Recomendaciones de Mejora</string>
+    <string name="review_module_alignment_title">Alineación con Lecturas del Módulo</string>
+    <string name="review_no_document">No hay documento o texto seleccionado para revisar.</string>
 </resources>

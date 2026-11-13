@@ -131,6 +131,7 @@ fun CopilotSettingsSection(
     var showGoogleAiStudioApiKeyDialog by remember { mutableStateOf(false) }
     var showGoogleAiStudioModelDialog by remember { mutableStateOf(false) }
     var showProviderDialog by remember { mutableStateOf(false) }
+    var modelInfoResult by remember { mutableStateOf<me.joxquin.notivas.data.model.CustomModelAnalysisResult?>(null) }
 
     val openRouterModels = remember {
         listOf(
@@ -473,6 +474,23 @@ fun CopilotSettingsSection(
                         val finalModel = if (isCustom) customInput.trim() else selectedOption
                         if (finalModel.isNotBlank()) {
                             onGoogleAiStudioModelChange(finalModel)
+                            if (isCustom) {
+                                val clean = finalModel.lowercase()
+                                val isKnown = clean.startsWith("gemini-")
+                                modelInfoResult = me.joxquin.notivas.data.model.CustomModelAnalysisResult(
+                                    modelId = finalModel,
+                                    name = finalModel,
+                                    contextLength = if (clean.contains("1.5") || clean.contains("2.0") || clean.contains("2.5") || clean.contains("3.0") || clean.contains("3.1") || clean.contains("3.5")) 1000000 else 32768,
+                                    isMultimodal = isKnown,
+                                    supportsFunctionCalling = true,
+                                    status = if (isKnown) me.joxquin.notivas.data.model.ModelCompatibilityStatus.OPTIMAL else me.joxquin.notivas.data.model.ModelCompatibilityStatus.COMPATIBLE,
+                                    message = if (isKnown) {
+                                        "100% Compatible: Modelo Gemini oficial de Google AI Studio con soporte nativo de visión, documentos y 1M+ tokens de contexto."
+                                    } else {
+                                        "Modelo personalizado configurado para Google AI Studio. Asegurate de que el endpoint sea compatible."
+                                    }
+                                )
+                            }
                         }
                         showGoogleAiStudioModelDialog = false
                     },
@@ -577,7 +595,6 @@ fun CopilotSettingsSection(
     }
 
     // Dialog flotante de informacion del modelo
-    var modelInfoResult by remember { mutableStateOf<me.joxquin.notivas.data.model.CustomModelAnalysisResult?>(null) }
     if (modelInfoResult != null) {
         val info = modelInfoResult!!
         val infoContainerColor = when (info.status) {

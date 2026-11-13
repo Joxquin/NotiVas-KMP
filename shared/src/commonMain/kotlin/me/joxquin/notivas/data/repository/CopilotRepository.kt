@@ -467,7 +467,7 @@ class CopilotRepository(
 
         val isChatCapable = isTextInput && isTextOutput
 
-        val (status, msg) = when {
+        val (baseStatus, baseMsg) = when {
             !isChatCapable -> {
                 me.joxquin.notivas.data.model.ModelCompatibilityStatus.INCOMPATIBLE to "Este modelo no es de chat/texto (modalidad: ${modality.ifBlank { "desconocida" }}). No funcionara en NotiVas."
             }
@@ -478,6 +478,20 @@ class CopilotRepository(
                 me.joxquin.notivas.data.model.ModelCompatibilityStatus.COMPATIBLE to "Compatible con chat: Responde preguntas y redacta borradores, pero no soporta herramientas dinamicas de Canvas."
             }
         }
+
+        val extraCapabilities = buildString {
+            if (isMultimodal) {
+                append(" Soporta lectura multimodal de documentos.")
+            } else {
+                append(" Modelo de solo texto (usara extractor local para entregables).")
+            }
+            if (contextLen != null && contextLen < 16384) {
+                append(" Advertencia: Su ventana de contexto (${contextLen} tokens) es reducida para analizar documentos y lecturas extensas de modulos.")
+            }
+        }
+
+        val status = baseStatus
+        val msg = baseMsg + extraCapabilities
 
         return me.joxquin.notivas.data.model.CustomModelAnalysisResult(
             modelId = cleanModel,

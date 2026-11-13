@@ -540,4 +540,30 @@ class GoogleDriveApiService(
         }
         return null
     }
+
+    suspend fun exportFileContentAsText(fileId: String, initialToken: String? = null): String? {
+        var token = getValidAccessToken(initialToken) ?: return null
+        for (attempt in 1..2) {
+            try {
+                val response = httpClient.get(apiUrl("$DRIVE_FILES_API/$fileId/export")) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    parameter("mimeType", "text/plain")
+                }
+                val status = response.status.value
+                if (status in 200..299) {
+                    return response.body<String>()
+                } else if (status == 401 && attempt == 1) {
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    return null
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                return null
+            }
+        }
+        return null
+    }
 }
