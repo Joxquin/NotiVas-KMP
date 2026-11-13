@@ -179,7 +179,7 @@ fun ModuleTemplatePickerSheet(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 4.dp),
+                                    .padding(start = 6.dp, end = 6.dp, top = 14.dp, bottom = 4.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Row(
@@ -220,7 +220,7 @@ fun ModuleTemplatePickerSheet(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    .padding(vertical = 4.dp),
                                 colors = CardDefaults.defaultColors(
                                     color = MiuixTheme.colorScheme.secondaryContainer
                                 )
@@ -271,7 +271,7 @@ fun ModuleTemplatePickerSheet(
                 state = materialListState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {

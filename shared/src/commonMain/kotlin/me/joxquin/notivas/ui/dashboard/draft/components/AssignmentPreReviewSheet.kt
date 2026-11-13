@@ -194,8 +194,7 @@ private fun PreReviewSheetContentMiuix(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = navInsets.calculateBottomPadding() + 16.dp),
+            .padding(bottom = navInsets.calculateBottomPadding() + 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         if (isLoading) {
@@ -306,7 +305,7 @@ private fun ProgressStepRowMiuix(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 3.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -688,7 +687,7 @@ private fun PreReviewSheetContentMaterial(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
             .padding(bottom = navInsets.calculateBottomPadding() + 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
