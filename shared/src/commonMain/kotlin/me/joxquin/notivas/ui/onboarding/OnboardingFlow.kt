@@ -20,6 +20,7 @@ import top.yukonga.miuix.kmp.nav.core.NavDisplay
 import top.yukonga.miuix.kmp.nav.core.NavDisplayEffects
 import top.yukonga.miuix.kmp.nav.core.NavKey
 import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
+import me.joxquin.notivas.getPlatform
 import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
 import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
 
@@ -71,13 +72,19 @@ fun OnboardingFlow(
         }
     }
 
+    val isWeb = remember { getPlatform().name.contains("Web") }
+
     LaunchedEffect(verificationSuccess) {
         when (verificationSuccess) {
             true -> {
-                if (onboardingNavigator.current() == OnboardingRoute.Verifying) {
-                    onboardingNavigator.replace(OnboardingRoute.Permissions)
-                } else if (onboardingNavigator.current() != OnboardingRoute.Permissions && onboardingNavigator.current() != OnboardingRoute.GoogleDrive) {
-                    onboardingNavigator.push(OnboardingRoute.Permissions)
+                if (isWeb) {
+                    onComplete()
+                } else {
+                    if (onboardingNavigator.current() == OnboardingRoute.Verifying) {
+                        onboardingNavigator.replace(OnboardingRoute.Permissions)
+                    } else if (onboardingNavigator.current() != OnboardingRoute.Permissions && onboardingNavigator.current() != OnboardingRoute.GoogleDrive) {
+                        onboardingNavigator.push(OnboardingRoute.Permissions)
+                    }
                 }
             }
             false -> {

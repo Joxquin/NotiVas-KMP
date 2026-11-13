@@ -51,6 +51,7 @@ import me.joxquin.notivas.shared.resources.onboarding_token_dialog_btn_generate
 import me.joxquin.notivas.shared.resources.onboarding_token_dialog_btn_cookies
 import me.joxquin.notivas.ui.components.CanvasLoginWebView
 import me.joxquin.notivas.ui.onboarding.components.OnboardingStepIndicator
+import me.joxquin.notivas.getPlatform
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
@@ -67,6 +68,8 @@ fun OnboardingWebLoginScreen(
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var pendingLoginCredentials by remember { mutableStateOf<Pair<String, String?>?>(null) }
+
+    val isWebPlatform = remember { getPlatform().name.contains("Web") }
 
     val formattedLoginUrl = remember(universityUrl) {
         val clean = universityUrl.trim().trimEnd('/')
@@ -117,7 +120,7 @@ fun OnboardingWebLoginScreen(
                     }
                     OnboardingStepIndicator(
                         currentStep = 2,
-                        totalSteps = 4,
+                        totalSteps = if (isWebPlatform) 2 else 4,
                         modifier = Modifier.padding(end = 16.dp, start = 4.dp)
                     )
                 },
@@ -187,7 +190,12 @@ fun OnboardingWebLoginScreen(
                 CanvasLoginWebView(
                     url = formattedLoginUrl,
                     onLoginSuccess = { cookies, csrfToken ->
-                        pendingLoginCredentials = Pair(cookies, csrfToken)
+                        val isAlreadyToken = cookies.startsWith("access_token=") || cookies.startsWith("Bearer ")
+                        if (isAlreadyToken || isWebPlatform) {
+                            onLoginSuccess(cookies, csrfToken, false)
+                        } else {
+                            pendingLoginCredentials = Pair(cookies, csrfToken)
+                        }
                     },
                     modifier = Modifier.fillMaxSize(),
                     onPageStarted = { isLoading = true },

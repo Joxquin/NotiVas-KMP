@@ -147,8 +147,9 @@ fun OnboardingWelcomeDomainScreen(
         mutableStateOf(if (sub.isNotBlank()) sub else "utp")
     }
 
+    val isWeb = remember { me.joxquin.notivas.getPlatform().name.contains("Web") }
     var showTokenInput by remember(currentToken) {
-        mutableStateOf(currentToken.isNotBlank() || me.joxquin.notivas.getPlatform().name.contains("Web"))
+        mutableStateOf(currentToken.isNotBlank() || isWeb)
     }
     var inputToken by remember(currentToken) { mutableStateOf(currentToken) }
     var isTokenVisible by remember { mutableStateOf(false) }
@@ -358,7 +359,7 @@ fun OnboardingWelcomeDomainScreen(
                         }
                     }
 
-                    OnboardingStepIndicator(currentStep = 1, totalSteps = 4)
+                    OnboardingStepIndicator(currentStep = 1, totalSteps = if (isWeb) 2 else 4)
                 }
 
                 // 2. Contenedor desplazable con seccion colapsable (0% vs 100%) y tarjeta

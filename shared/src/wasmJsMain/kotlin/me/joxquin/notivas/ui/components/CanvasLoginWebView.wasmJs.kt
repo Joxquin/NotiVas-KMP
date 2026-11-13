@@ -143,10 +143,7 @@ actual fun CanvasLoginWebView(
                             me.joxquin.notivas.data.model.SessionPairingPayload.serializer(),
                             payloadJson
                         )
-                        val isTokenAuth = payload.authMode == me.joxquin.notivas.data.model.AuthMode.TOKEN ||
-                                (!payload.accessToken.isNullOrBlank() && payload.sessionCookies.isNullOrBlank())
-
-                        if (isTokenAuth && !payload.accessToken.isNullOrBlank()) {
+                        if (!payload.accessToken.isNullOrBlank()) {
                             val tokenWithUrl = if (payload.universityUrl.isNotBlank()) {
                                 "access_token=${payload.accessToken}&university_url=${payload.universityUrl}"
                             } else {
@@ -161,14 +158,6 @@ actual fun CanvasLoginWebView(
                                 payload.sessionCookies
                             }
                             onLoginSuccess(cookiesWithUrl, payload.csrfToken)
-                            break
-                        } else if (!payload.accessToken.isNullOrBlank()) {
-                            val tokenWithUrl = if (payload.universityUrl.isNotBlank()) {
-                                "access_token=${payload.accessToken}&university_url=${payload.universityUrl}"
-                            } else {
-                                "access_token=${payload.accessToken}"
-                            }
-                            onLoginSuccess(tokenWithUrl, null)
                             break
                         }
                     } catch (e: Exception) {
