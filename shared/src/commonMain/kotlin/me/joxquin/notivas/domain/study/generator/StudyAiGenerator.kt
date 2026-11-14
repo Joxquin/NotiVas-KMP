@@ -75,7 +75,7 @@ class StudyAiGenerator(
 
         return try {
             val response = openRouterApiService.chatCompletion(apiKey, request)
-            val content = response.choices.firstOrNull()?.message?.content.orEmpty()
+            val content = response.choices?.firstOrNull()?.message?.content.orEmpty()
             val sanitized = sanitizeJson(content)
             val parsed = json.decodeFromString<List<GeneratedFlashcardRaw>>(sanitized)
             Result.success(parsed.map {
@@ -136,7 +136,7 @@ class StudyAiGenerator(
 
         return try {
             val response = openRouterApiService.chatCompletion(apiKey, request)
-            val content = response.choices.firstOrNull()?.message?.content.orEmpty()
+            val content = response.choices?.firstOrNull()?.message?.content.orEmpty()
             val sanitized = sanitizeJson(content)
             val parsed = json.decodeFromString<List<GeneratedQuizRaw>>(sanitized)
             Result.success(parsed.mapIndexed { idx, it ->

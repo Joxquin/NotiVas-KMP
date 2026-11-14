@@ -31,6 +31,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.School
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.basic.Scaffold
@@ -303,7 +305,7 @@ fun InicioMiuixContent(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 top.yukonga.miuix.kmp.basic.Icon(
-                                                    imageVector = androidx.compose.material.icons.Icons.Outlined.School,
+                                                    imageVector = Icons.Outlined.School,
                                                     contentDescription = null,
                                                     tint = MiuixTheme.colorScheme.primary,
                                                     modifier = Modifier.size(22.dp)

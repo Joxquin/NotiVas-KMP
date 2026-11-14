@@ -134,6 +134,7 @@ class PreferencesManager(
 
     private val _openRouterApiKey = MutableStateFlow<String?>("")
     val openRouterApiKey: Flow<String?> = _openRouterApiKey.asStateFlow()
+    fun getOpenRouterApiKey(): String? = _openRouterApiKey.value
 
     private val _openRouterModel = MutableStateFlow("google/gemini-2.5-flash")
     val openRouterModel: Flow<String> = _openRouterModel.asStateFlow()
