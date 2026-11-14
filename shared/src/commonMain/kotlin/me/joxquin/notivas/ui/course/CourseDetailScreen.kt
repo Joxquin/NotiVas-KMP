@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -68,6 +69,7 @@ fun CourseDetailScreen(
     onNavigateToAnnouncements: () -> Unit = {},
     onNavigateToAllModules: () -> Unit = {},
     onOpenUrl: (String) -> Unit = {},
+    onNavigateToStudy: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -93,6 +95,16 @@ fun CourseDetailScreen(
                             BackNavigationIcon(onClick = onBack)
                         },
                         actions = {
+                            MiuixTopAppBarAction(
+                                onClick = onNavigateToStudy,
+                                backdrop = blurBackdrop
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = Icons.Outlined.School,
+                                    contentDescription = stringResource(Res.string.study_hub_title),
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
+                            }
                             MiuixTopAppBarAction(
                                 onClick = { viewModel.loadCourseDetail(isRefresh = true) },
                                 backdrop = blurBackdrop
@@ -200,6 +212,13 @@ fun CourseDetailScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = onNavigateToStudy) {
+                            Icon(
+                                imageVector = Icons.Outlined.School,
+                                contentDescription = stringResource(Res.string.study_hub_title),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                         IconButton(onClick = { viewModel.loadCourseDetail(isRefresh = true) }) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,

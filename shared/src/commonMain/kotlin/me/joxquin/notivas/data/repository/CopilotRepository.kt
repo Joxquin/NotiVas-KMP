@@ -39,7 +39,8 @@ class CopilotRepository(
     private val openRouterApiService: OpenRouterApiService,
     private val canvasApiService: CanvasApiService,
     private val localStore: InMemoryLocalStore,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val studyRepository: me.joxquin.notivas.domain.study.repository.StudyRepository? = null
 ) {
     private val promptBuilder = CopilotPromptBuilder()
     private val json = kotlinx.serialization.json.Json {
@@ -53,7 +54,10 @@ class CopilotRepository(
         canvasModulesToolsHandler = CanvasModulesToolsHandler(canvasApiService, localStore, preferencesManager),
         canvasDiscussionsToolsHandler = CanvasDiscussionsToolsHandler(canvasApiService, localStore, preferencesManager),
         simulatorToolsHandler = SimulatorToolsHandler(localStore),
-        googleSearchToolsHandler = GoogleSearchToolsHandler(openRouterApiService.client)
+        googleSearchToolsHandler = GoogleSearchToolsHandler(openRouterApiService.client),
+        canvasStudyToolsHandler = studyRepository?.let {
+            me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasStudyToolsHandler(it)
+        }
     )
 
     suspend fun queryCopilot(

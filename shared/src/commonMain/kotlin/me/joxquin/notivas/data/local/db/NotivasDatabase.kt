@@ -24,6 +24,11 @@ import me.joxquin.notivas.data.local.db.dao.AssignmentDraftDao
 import me.joxquin.notivas.data.local.db.entities.ActivityLogEntity
 import me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity
 
+import me.joxquin.notivas.data.local.db.dao.StudyDao
+import me.joxquin.notivas.data.local.db.entities.StudyDeckEntity
+import me.joxquin.notivas.data.local.db.entities.FlashcardEntity
+import me.joxquin.notivas.data.local.db.entities.QuizHistoryEntity
+
 @Database(
     entities = [
         CourseEntity::class,
@@ -34,9 +39,12 @@ import me.joxquin.notivas.data.local.db.entities.AssignmentDraftEntity
         CopilotMessageEntity::class,
         SimulationGroupEntity::class,
         SimulationItemEntity::class,
-        PlannerItemEntity::class
+        PlannerItemEntity::class,
+        StudyDeckEntity::class,
+        FlashcardEntity::class,
+        QuizHistoryEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 @ColumnTypeConverters(RoomConverters::class)
@@ -49,6 +57,7 @@ abstract class NotivasDatabase : RoomDatabase() {
     abstract fun copilotChatDao(): CopilotChatDao
     abstract fun simulationDao(): SimulationDao
     abstract fun plannerDao(): PlannerDao
+    abstract fun studyDao(): StudyDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")

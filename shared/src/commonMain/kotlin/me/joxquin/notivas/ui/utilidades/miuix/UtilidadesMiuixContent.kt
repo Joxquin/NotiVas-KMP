@@ -44,6 +44,9 @@ fun UtilidadesMiuixContent(
     onOpenForos: () -> Unit = {},
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenArchive: () -> Unit = {},
+    onOpenStudyHub: () -> Unit = {},
+    studyDueCount: Int = 0,
+    studyTotalCount: Int = 0,
     onOpenTuneSettings: () -> Unit = {},
     onOpenCatalogImport: () -> Unit = {},
     onImportJsonClick: () -> Unit = {},
@@ -111,6 +114,14 @@ fun UtilidadesMiuixContent(
                     )
                 }
 
+                // ─── CARD 2: Estudio Activo & Tarjetas FSRS ──────────────
+                item {
+                    StudyBentoCard(
+                        dueCardsCount = studyDueCount,
+                        totalCardsCount = studyTotalCount,
+                        onClick = onOpenStudyHub
+                    )
+                }
 
                 // ─── CARD 3: Foros de Discusión ─────────────────────────
                 item {

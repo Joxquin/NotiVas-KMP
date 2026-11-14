@@ -781,3 +781,124 @@ fun ArchiveBentoCard(
         }
     }
 }
+
+// ─── CARD: Estudio Activo & Tarjetas FSRS ───────────────────────────────────
+@Composable
+fun StudyBentoCard(
+    dueCardsCount: Int = 0,
+    totalCardsCount: Int = 0,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+        insideMargin = PaddingValues(16.dp),
+        pressFeedbackType = if (onClick != null) PressFeedbackType.Sink else PressFeedbackType.None,
+        onClick = onClick
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .squircleSurface(
+                                color = if (dueCardsCount > 0) MiuixTheme.colorScheme.primary.copy(alpha = 0.12f) else MiuixTheme.colorScheme.surfaceContainerHigh,
+                                cornerRadius = 10.dp
+                            )
+                            .squircleBorder(
+                                width = 0.5.dp,
+                                color = if (dueCardsCount > 0) MiuixTheme.colorScheme.primary.copy(alpha = 0.3f) else MiuixTheme.colorScheme.dividerLine,
+                                cornerRadius = 10.dp
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Psychology,
+                            contentDescription = null,
+                            tint = if (dueCardsCount > 0) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = stringResource(Res.string.study_bento_title),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MiuixTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(Res.string.study_bento_subtitle),
+                            fontSize = 11.sp,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .squircleSurface(
+                            color = if (dueCardsCount > 0) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.surfaceContainerHigh,
+                            cornerRadius = 8.dp
+                        )
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = if (dueCardsCount > 0) {
+                            stringResource(Res.string.study_due_cards_badge, dueCardsCount)
+                        } else {
+                            stringResource(Res.string.study_due_cards_zero)
+                        },
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (dueCardsCount > 0) MiuixTheme.colorScheme.onPrimary else MiuixTheme.colorScheme.onSurfaceVariantSummary
+                    )
+                }
+            }
+
+            if (totalCardsCount > 0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .squircleSurface(
+                            color = MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+                            cornerRadius = 8.dp
+                        )
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(Res.string.study_action_practice_now),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MiuixTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "$totalCardsCount tarjetas",
+                        fontSize = 10.sp,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                    )
+                }
+            }
+        }
+    }
+}

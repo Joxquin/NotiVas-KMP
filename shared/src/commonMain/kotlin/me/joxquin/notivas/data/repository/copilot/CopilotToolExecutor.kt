@@ -22,7 +22,8 @@ class CopilotToolExecutor(
     canvasModulesToolsHandler: CanvasModulesToolsHandler,
     canvasDiscussionsToolsHandler: CanvasDiscussionsToolsHandler,
     simulatorToolsHandler: SimulatorToolsHandler,
-    googleSearchToolsHandler: GoogleSearchToolsHandler
+    googleSearchToolsHandler: GoogleSearchToolsHandler,
+    canvasStudyToolsHandler: me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasStudyToolsHandler? = null
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -30,12 +31,13 @@ class CopilotToolExecutor(
         encodeDefaults = true
     }
 
-    private val handlers: List<CopilotToolHandler> = listOf(
+    private val handlers: List<CopilotToolHandler> = listOfNotNull(
         canvasAcademicToolsHandler,
         canvasModulesToolsHandler,
         canvasDiscussionsToolsHandler,
         simulatorToolsHandler,
-        googleSearchToolsHandler
+        googleSearchToolsHandler,
+        canvasStudyToolsHandler
     )
 
     val tools: List<OpenRouterTool> = handlers.flatMap { it.supportedTools }

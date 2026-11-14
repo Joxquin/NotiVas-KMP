@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -62,6 +63,7 @@ import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.MiuixTopAppBarAction
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
@@ -88,6 +90,7 @@ fun CourseModulesScreen(
     onNavigateToAssignmentDraft: (Long, String) -> Unit = { _, _ -> },
     onNavigateToForoDetail: (Long) -> Unit = {},
     onOpenUrl: (String) -> Unit = {},
+    onNavigateToStudy: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -112,6 +115,18 @@ fun CourseModulesScreen(
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
                             BackNavigationIcon(onClick = onBack)
+                        },
+                        actions = {
+                            MiuixTopAppBarAction(
+                                onClick = onNavigateToStudy,
+                                backdrop = blurBackdrop
+                            ) {
+                                top.yukonga.miuix.kmp.basic.Icon(
+                                    imageVector = Icons.Outlined.School,
+                                    contentDescription = stringResource(Res.string.study_hub_title),
+                                    tint = MiuixTheme.colorScheme.onBackground
+                                )
+                            }
                         }
                     )
                 }
@@ -211,6 +226,15 @@ fun CourseModulesScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Atrás",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = onNavigateToStudy) {
+                            Icon(
+                                imageVector = Icons.Outlined.School,
+                                contentDescription = stringResource(Res.string.study_hub_title),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }

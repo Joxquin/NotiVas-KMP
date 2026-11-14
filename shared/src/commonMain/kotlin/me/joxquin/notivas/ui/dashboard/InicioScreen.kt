@@ -61,6 +61,8 @@ fun InicioScreen(
     onNavigateToCourseProgreso: (me.joxquin.notivas.data.model.Course) -> Unit = {},
     onNavigateToCourseDetail: ((me.joxquin.notivas.data.model.Course) -> Unit)? = null,
     onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
+    onOpenStudyHub: () -> Unit = onNavigateToUtilidades,
+    studyDueCount: Int = 0,
     isEntranceTriggered: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -83,6 +85,8 @@ fun InicioScreen(
             onNavigateToAcademicPerformance = onNavigateToAcademicPerformance,
             onOpenAssignmentDraft = onOpenAssignmentDraft,
             onNavigateToForoDetail = onNavigateToForoDetail,
+            onOpenStudyHub = onOpenStudyHub,
+            studyDueCount = studyDueCount,
             isEntranceTriggered = isEntranceTriggered,
             modifier = modifier
         )
@@ -255,6 +259,59 @@ fun InicioScreen(
                             themeStyle = AppThemeStyle.MATERIAL,
                             isVisible = searchOverlayAnimStatus.isCollapsed() && !isSearchExpanded
                         )
+                    }
+                }
+
+                if (studyDueCount > 0) {
+                    item {
+                        androidx.compose.material3.Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenStudyHub() },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = androidx.compose.material3.CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    androidx.compose.material3.Icon(
+                                        imageVector = androidx.compose.material.icons.Icons.Outlined.Psychology,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = stringResource(Res.string.study_today_banner_title),
+                                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = stringResource(Res.string.study_today_banner_desc, studyDueCount),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                androidx.compose.material3.Button(
+                                    onClick = onOpenStudyHub
+                                ) {
+                                    Text(stringResource(Res.string.study_action_practice_now), fontSize = 11.sp)
+                                }
+                            }
+                        }
                     }
                 }
 

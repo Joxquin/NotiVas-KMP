@@ -91,12 +91,33 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        suspend fun safeExec(sql: String) {
+            try {
+                connection.execSQL(sql)
+            } catch (_: Throwable) {}
+        }
+
+        safeExec("CREATE TABLE IF NOT EXISTS `study_decks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `course_id` INTEGER, `course_name` TEXT, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `created_at_timestamp` INTEGER NOT NULL, `last_reviewed_timestamp` INTEGER, FOREIGN KEY(`course_id`) REFERENCES `courses`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL)")
+        safeExec("CREATE INDEX IF NOT EXISTS `index_study_decks_course_id` ON `study_decks` (`course_id`)")
+
+        safeExec("CREATE TABLE IF NOT EXISTS `flashcards` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `deck_id` INTEGER NOT NULL, `front` TEXT NOT NULL, `back` TEXT NOT NULL, `hint` TEXT, `topic` TEXT, `phase` TEXT NOT NULL, `due_epoch_ms` INTEGER NOT NULL, `stability` REAL NOT NULL, `difficulty` REAL NOT NULL, `reps` INTEGER NOT NULL, `lapses` INTEGER NOT NULL, `last_review_epoch_ms` INTEGER, `step` INTEGER NOT NULL, FOREIGN KEY(`deck_id`) REFERENCES `study_decks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        safeExec("CREATE INDEX IF NOT EXISTS `index_flashcards_deck_id` ON `flashcards` (`deck_id`)")
+        safeExec("CREATE INDEX IF NOT EXISTS `index_flashcards_due_epoch_ms` ON `flashcards` (`due_epoch_ms`)")
+
+        safeExec("CREATE TABLE IF NOT EXISTS `quiz_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `deck_id` INTEGER NOT NULL, `total_questions` INTEGER NOT NULL, `correct_answers` INTEGER NOT NULL, `score_percentage` REAL NOT NULL, `duration_seconds` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, FOREIGN KEY(`deck_id`) REFERENCES `study_decks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        safeExec("CREATE INDEX IF NOT EXISTS `index_quiz_history_deck_id` ON `quiz_history` (`deck_id`)")
+        safeExec("CREATE INDEX IF NOT EXISTS `index_quiz_history_timestamp` ON `quiz_history` (`timestamp`)")
+    }
+}
+
 fun createRoomDatabase(
     builder: RoomDatabase.Builder<NotivasDatabase> = getDatabaseBuilder()
 ): NotivasDatabase {
     return builder
         .setQueryCoroutineContext(AppDispatchers.IO)
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
         .fallbackToDestructiveMigration(dropAllTables = true)
         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()

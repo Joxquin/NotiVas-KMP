@@ -237,6 +237,12 @@ fun MainAppShell(
     val activityViewModel = remember {
         me.joxquin.notivas.ui.activity.ActivityViewModel(canvasRepository)
     }
+    val studyViewModel = remember {
+        me.joxquin.notivas.ui.study.StudyViewModel(
+            studyRepository = me.joxquin.notivas.di.AppModule.studyRepository,
+            studyAiGenerator = me.joxquin.notivas.di.AppModule.studyAiGenerator
+        )
+    }
 
     val updateRepository = remember { UpdateRepository() }
     var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
@@ -539,6 +545,11 @@ fun MainAppShell(
                                             onOpenArchive = {
                                                 miuixNavigator.push(MiuixRoute.TaskHistoryArchive)
                                             },
+                                            onOpenStudyHub = {
+                                                miuixNavigator.push(MiuixRoute.StudyHub)
+                                            },
+                                            studyDueCount = studyViewModel.overviewStats.collectAsState().value.dueTodayCount,
+                                            studyTotalCount = studyViewModel.overviewStats.collectAsState().value.totalCards,
                                             onOpenAssignmentDetail = { assignment ->
                                                 val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
                                                 val assignmentUi = me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
@@ -902,6 +913,9 @@ fun MainAppShell(
                             try {
                                 uriHandler.openUri(url)
                             } catch (_: Exception) {}
+                        },
+                        onNavigateToStudy = {
+                            miuixNavigator.push(MiuixRoute.StudyHub)
                         }
                     )
                 }
@@ -946,6 +960,9 @@ fun MainAppShell(
                             try {
                                 uriHandler.openUri(url)
                             } catch (_: Exception) {}
+                        },
+                        onNavigateToStudy = {
+                            miuixNavigator.push(MiuixRoute.StudyHub)
                         }
                     )
                 }
@@ -1071,6 +1088,34 @@ fun MainAppShell(
 
                 entry<MiuixRoute.SettingsAbout>(swipeDismiss = swipeBackDirection) {
                     me.joxquin.notivas.ui.ajustes.subscreens.AjustesAboutScreen(
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.StudyHub>(swipeDismiss = swipeBackDirection) {
+                    me.joxquin.notivas.ui.study.StudyHubScreen(
+                        viewModel = studyViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() },
+                        onOpenDeckSession = { deckId -> miuixNavigator.push(MiuixRoute.FlashcardSession(deckId)) },
+                        onStartQuizSession = { deckId -> miuixNavigator.push(MiuixRoute.QuizSession(deckId)) }
+                    )
+                }
+
+                entry<MiuixRoute.FlashcardSession>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.FlashcardSession ->
+                    me.joxquin.notivas.ui.study.FlashcardSessionScreen(
+                        deckId = route.deckId,
+                        viewModel = studyViewModel,
+                        themeStyle = AppThemeStyle.MIUIX,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.QuizSession>(swipeDismiss = swipeBackDirection) { route: MiuixRoute.QuizSession ->
+                    me.joxquin.notivas.ui.study.QuizSessionScreen(
+                        deckId = route.deckId,
+                        viewModel = studyViewModel,
                         themeStyle = AppThemeStyle.MIUIX,
                         onBack = { handleMiuixBack() }
                     )
@@ -1302,6 +1347,11 @@ fun MainAppShell(
                                             onOpenArchive = {
                                                 materialNavigator.push(MiuixRoute.TaskHistoryArchive)
                                             },
+                                            onOpenStudyHub = {
+                                                materialNavigator.push(MiuixRoute.StudyHub)
+                                            },
+                                            studyDueCount = studyViewModel.overviewStats.collectAsState().value.dueTodayCount,
+                                            studyTotalCount = studyViewModel.overviewStats.collectAsState().value.totalCards,
                                             onOpenAssignmentDetail = { assignment ->
                                                 val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
                                                 val assignmentUi = me.joxquin.notivas.ui.dashboard.AssignmentUiModel(
@@ -1631,6 +1681,9 @@ fun MainAppShell(
                             try {
                                 uriHandler.openUri(url)
                             } catch (_: Exception) {}
+                        },
+                        onNavigateToStudy = {
+                            materialNavigator.push(MiuixRoute.StudyHub)
                         }
                     )
                 }
@@ -1675,6 +1728,9 @@ fun MainAppShell(
                             try {
                                 uriHandler.openUri(url)
                             } catch (_: Exception) {}
+                        },
+                        onNavigateToStudy = {
+                            materialNavigator.push(MiuixRoute.StudyHub)
                         }
                     )
                 }
@@ -1800,6 +1856,34 @@ fun MainAppShell(
 
                 entry<MiuixRoute.SettingsAbout>(swipeDismiss = materialSwipeBackDirection) {
                     me.joxquin.notivas.ui.ajustes.subscreens.AjustesAboutScreen(
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.StudyHub>(swipeDismiss = materialSwipeBackDirection) {
+                    me.joxquin.notivas.ui.study.StudyHubScreen(
+                        viewModel = studyViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() },
+                        onOpenDeckSession = { deckId -> materialNavigator.push(MiuixRoute.FlashcardSession(deckId)) },
+                        onStartQuizSession = { deckId -> materialNavigator.push(MiuixRoute.QuizSession(deckId)) }
+                    )
+                }
+
+                entry<MiuixRoute.FlashcardSession>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.FlashcardSession ->
+                    me.joxquin.notivas.ui.study.FlashcardSessionScreen(
+                        deckId = route.deckId,
+                        viewModel = studyViewModel,
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.QuizSession>(swipeDismiss = materialSwipeBackDirection) { route: MiuixRoute.QuizSession ->
+                    me.joxquin.notivas.ui.study.QuizSessionScreen(
+                        deckId = route.deckId,
+                        viewModel = studyViewModel,
                         themeStyle = AppThemeStyle.MATERIAL,
                         onBack = { handleMaterialBack() }
                     )

@@ -28,16 +28,25 @@ object AppModule {
     val copilotChatDao by lazy { database.copilotChatDao() }
     val simulationDao by lazy { database.simulationDao() }
     val plannerDao by lazy { database.plannerDao() }
+    val studyDao by lazy { database.studyDao() }
     
     val canvasApiService: CanvasApiService by lazy { CanvasApiService(httpClient) }
     val openRouterApiService: OpenRouterApiService by lazy { OpenRouterApiService(httpClient) }
     
+    val studyRepository: me.joxquin.notivas.domain.study.repository.StudyRepository by lazy {
+        me.joxquin.notivas.domain.study.repository.StudyRepository(studyDao)
+    }
+
+    val studyAiGenerator: me.joxquin.notivas.domain.study.generator.StudyAiGenerator by lazy {
+        me.joxquin.notivas.domain.study.generator.StudyAiGenerator(openRouterApiService, preferencesManager)
+    }
+
     val canvasRepository: CanvasRepository by lazy {
         CanvasRepository(canvasApiService, localStore, preferencesManager)
     }
     
     val copilotRepository: CopilotRepository by lazy {
-        CopilotRepository(openRouterApiService, canvasApiService, localStore, preferencesManager)
+        CopilotRepository(openRouterApiService, canvasApiService, localStore, preferencesManager, studyRepository)
     }
     
     val copilotChatRepository: CopilotChatRepository by lazy {

@@ -67,6 +67,9 @@ fun UtilidadesMaterialContent(
     onOpenForos: () -> Unit = {},
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenArchive: () -> Unit = {},
+    onOpenStudyHub: () -> Unit = {},
+    studyDueCount: Int = 0,
+    studyTotalCount: Int = 0,
     onOpenTuneSettings: () -> Unit = {},
     onOpenCatalogImport: () -> Unit = {},
     onImportJsonClick: () -> Unit = {},
@@ -291,6 +294,15 @@ fun UtilidadesMaterialContent(
                 )
             }
 
+            // ─── CARD 2: Estudio Activo & Tarjetas FSRS ───────────────────────
+            item {
+                StudyMaterialCard(
+                    dueCardsCount = studyDueCount,
+                    totalCardsCount = studyTotalCount,
+                    onClick = onOpenStudyHub,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
 
             // ─── CARD 3: Foros de Discusión ─────────────────────────────────
             item {

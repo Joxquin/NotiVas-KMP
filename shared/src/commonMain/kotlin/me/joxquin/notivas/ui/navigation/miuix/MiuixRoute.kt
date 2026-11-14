@@ -69,4 +69,13 @@ sealed interface MiuixRoute : NavKey {
 
     @Serializable
     data object SettingsAbout : MiuixRoute
+
+    @Serializable
+    data object StudyHub : MiuixRoute
+
+    @Serializable
+    data class FlashcardSession(val deckId: Long) : MiuixRoute
+
+    @Serializable
+    data class QuizSession(val deckId: Long) : MiuixRoute
 }

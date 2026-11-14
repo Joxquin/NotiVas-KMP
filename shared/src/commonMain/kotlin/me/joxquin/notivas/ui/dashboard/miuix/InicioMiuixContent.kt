@@ -89,6 +89,8 @@ fun InicioMiuixContent(
     onNavigateToAcademicPerformance: () -> Unit = onNavigateToUtilidades,
     onOpenAssignmentDraft: ((me.joxquin.notivas.ui.dashboard.AssignmentUiModel) -> Unit)? = null,
     onNavigateToForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
+    onOpenStudyHub: () -> Unit = onNavigateToUtilidades,
+    studyDueCount: Int = 0,
     isEntranceTriggered: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -273,6 +275,60 @@ fun InicioMiuixContent(
                                         onReconnect = { viewModel.openQuickRelogin() },
                                         themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
                                     )
+                                }
+                            }
+                        }
+
+                        if (studyDueCount > 0) {
+                            item {
+                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                                    top.yukonga.miuix.kmp.basic.Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = top.yukonga.miuix.kmp.basic.CardDefaults.defaultColors(
+                                            color = MiuixTheme.colorScheme.surfaceContainer
+                                        ),
+                                        insideMargin = PaddingValues(14.dp),
+                                        pressFeedbackType = top.yukonga.miuix.kmp.utils.PressFeedbackType.Sink,
+                                        onClick = onOpenStudyHub
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.weight(1f),
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                top.yukonga.miuix.kmp.basic.Icon(
+                                                    imageVector = androidx.compose.material.icons.Icons.Outlined.Psychology,
+                                                    contentDescription = null,
+                                                    tint = MiuixTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                                Column {
+                                                    top.yukonga.miuix.kmp.basic.Text(
+                                                        text = stringResource(Res.string.study_today_banner_title),
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MiuixTheme.colorScheme.onSurface
+                                                    )
+                                                    top.yukonga.miuix.kmp.basic.Text(
+                                                        text = stringResource(Res.string.study_today_banner_desc, studyDueCount),
+                                                        fontSize = 11.sp,
+                                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                                    )
+                                                }
+                                            }
+
+                                            top.yukonga.miuix.kmp.basic.TextButton(
+                                                text = stringResource(Res.string.study_action_practice_now),
+                                                onClick = onOpenStudyHub,
+                                                colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.textButtonColorsPrimary()
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
