@@ -1,5 +1,6 @@
 package me.joxquin.notivas.data.repository.copilot.tools.handlers
 
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -64,8 +65,7 @@ class CanvasStudyToolsHandler(
         return when (toolName) {
             "list_study_decks" -> {
                 try {
-                    val decksFlow = studyRepository.observeAllDecks()
-                    val decks = kotlinx.coroutines.flow.first(decksFlow)
+                    val decks = studyRepository.observeAllDecks().first()
                     val simplified = decks.map {
                         mapOf(
                             "id" to it.id.toString(),

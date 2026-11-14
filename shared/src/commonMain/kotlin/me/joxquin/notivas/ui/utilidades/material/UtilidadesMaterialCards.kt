@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.outlined.Grading
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -742,7 +743,7 @@ fun StudyMaterialCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Psychology,
+                            imageVector = Icons.Outlined.School,
                             contentDescription = null,
                             tint = if (dueCardsCount > 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp)

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -828,7 +829,7 @@ fun StudyBentoCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Psychology,
+                            imageVector = Icons.Outlined.School,
                             contentDescription = null,
                             tint = if (dueCardsCount > 0) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
                             modifier = Modifier.size(20.dp)
