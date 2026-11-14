@@ -1,13 +1,21 @@
 package me.joxquin.notivas.domain.study.generator
 
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import me.joxquin.notivas.data.local.CopilotProvider
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.model.OpenRouterChatRequest
 import me.joxquin.notivas.data.model.OpenRouterMessage
 import me.joxquin.notivas.data.remote.OpenRouterApiService
 import me.joxquin.notivas.domain.study.model.QuizQuestion
 import me.joxquin.notivas.domain.study.repository.FlashcardInput
+
+private data class ResolvedAiConfig(
+    val apiKey: String,
+    val model: String,
+    val customBaseUrl: String?
+)
 
 @Serializable
 private data class GeneratedFlashcardRaw(
@@ -36,14 +44,39 @@ class StudyAiGenerator(
         coerceInputValues = true
     }
 
+    private suspend fun resolveAiConfig(): Result<ResolvedAiConfig> {
+        val provider = preferencesManager.copilotProvider.first()
+        val googleKey = preferencesManager.googleAiStudioApiKey.first()?.trim()
+        val openRouterKey = preferencesManager.openRouterApiKey.first()?.trim()
+
+        return when {
+            provider == CopilotProvider.GOOGLE_AI_STUDIO && !googleKey.isNullOrBlank() -> {
+                val model = preferencesManager.googleAiStudioModel.first().ifBlank { "gemini-2.5-flash" }
+                Result.success(ResolvedAiConfig(googleKey, model, "https://generativelanguage.googleapis.com/v1beta/openai"))
+            }
+            provider == CopilotProvider.OPENROUTER && !openRouterKey.isNullOrBlank() -> {
+                val model = preferencesManager.openRouterModel.first().ifBlank { "google/gemini-2.5-flash" }
+                Result.success(ResolvedAiConfig(openRouterKey, model, null))
+            }
+            !googleKey.isNullOrBlank() -> {
+                val model = preferencesManager.googleAiStudioModel.first().ifBlank { "gemini-2.5-flash" }
+                Result.success(ResolvedAiConfig(googleKey, model, "https://generativelanguage.googleapis.com/v1beta/openai"))
+            }
+            !openRouterKey.isNullOrBlank() -> {
+                val model = preferencesManager.openRouterModel.first().ifBlank { "google/gemini-2.5-flash" }
+                Result.success(ResolvedAiConfig(openRouterKey, model, null))
+            }
+            else -> {
+                Result.failure(IllegalStateException("No hay clave de IA configurada. Ve a Ajustes > Copilot para agregar tu API Key de Google AI Studio u OpenRouter."))
+            }
+        }
+    }
+
     suspend fun generateFlashcards(
         topicOrContext: String,
         count: Int = 6
     ): Result<List<FlashcardInput>> {
-        val apiKey = preferencesManager.getOpenRouterApiKey()
-        if (apiKey.isNullOrBlank()) {
-            return Result.failure(IllegalStateException("No hay clave de IA configurada"))
-        }
+        val config = resolveAiConfig().getOrElse { return Result.failure(it) }
 
         val prompt = """
             Eres un profesor universitario experto. Tu objetivo es generar exactamente $count tarjetas de estudio (flashcards)
@@ -65,7 +98,7 @@ class StudyAiGenerator(
         """.trimIndent()
 
         val request = OpenRouterChatRequest(
-            model = preferencesManager.getOpenRouterModel().ifBlank { "google/gemini-2.5-flash" },
+            model = config.model,
             messages = listOf(
                 OpenRouterMessage(role = "system", content = "Eres un generador pedagógico de tarjetas de estudio. Responde estrictamente en JSON."),
                 OpenRouterMessage(role = "user", content = prompt)
@@ -74,7 +107,7 @@ class StudyAiGenerator(
         )
 
         return try {
-            val response = openRouterApiService.chatCompletion(apiKey, request)
+            val response = openRouterApiService.chatCompletion(config.apiKey, request, config.customBaseUrl)
             val content = response.choices?.firstOrNull()?.message?.content.orEmpty()
             val sanitized = sanitizeJson(content)
             val parsed = json.decodeFromString<List<GeneratedFlashcardRaw>>(sanitized)
@@ -95,10 +128,7 @@ class StudyAiGenerator(
         topicOrContext: String,
         questionCount: Int = 5
     ): Result<List<QuizQuestion>> {
-        val apiKey = preferencesManager.getOpenRouterApiKey()
-        if (apiKey.isNullOrBlank()) {
-            return Result.failure(IllegalStateException("No hay clave de IA configurada"))
-        }
+        val config = resolveAiConfig().getOrElse { return Result.failure(it) }
 
         val prompt = """
             Eres un evaluador académico riguroso. Crea un simulacro de examen con $questionCount preguntas de opción múltiple
@@ -126,7 +156,7 @@ class StudyAiGenerator(
         """.trimIndent()
 
         val request = OpenRouterChatRequest(
-            model = preferencesManager.getOpenRouterModel().ifBlank { "google/gemini-2.5-flash" },
+            model = config.model,
             messages = listOf(
                 OpenRouterMessage(role = "system", content = "Eres un creador de simulacros de examen académicos. Responde estrictamente en JSON."),
                 OpenRouterMessage(role = "user", content = prompt)
@@ -135,7 +165,7 @@ class StudyAiGenerator(
         )
 
         return try {
-            val response = openRouterApiService.chatCompletion(apiKey, request)
+            val response = openRouterApiService.chatCompletion(config.apiKey, request, config.customBaseUrl)
             val content = response.choices?.firstOrNull()?.message?.content.orEmpty()
             val sanitized = sanitizeJson(content)
             val parsed = json.decodeFromString<List<GeneratedQuizRaw>>(sanitized)

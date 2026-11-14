@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -86,6 +87,7 @@ fun StudyHubScreen(
     val decks by viewModel.decks.collectAsState()
     val overviewStats by viewModel.overviewStats.collectAsState()
     val isGenerating by viewModel.isGenerating.collectAsState()
+    val generationMessage by viewModel.generationMessage.collectAsState()
 
     var showCreateDeckSheet by remember { mutableStateOf(false) }
     var showAiGenerateSheet by remember { mutableStateOf(false) }
@@ -332,7 +334,12 @@ fun StudyHubScreen(
     if (showAiGenerateSheet) {
         WindowBottomSheet(
             show = showAiGenerateSheet,
-            onDismissRequest = { if (!isGenerating) showAiGenerateSheet = false },
+            onDismissRequest = {
+                if (!isGenerating) {
+                    showAiGenerateSheet = false
+                    viewModel.clearGenerationMessage()
+                }
+            },
             title = stringResource(Res.string.study_ai_generate_title)
         ) {
             Column(
@@ -343,16 +350,38 @@ fun StudyHubScreen(
             ) {
                 TextField(
                     value = aiTopicText,
-                    onValueChange = { aiTopicText = it },
+                    onValueChange = {
+                        aiTopicText = it
+                        if (generationMessage != null) {
+                            viewModel.clearGenerationMessage()
+                        }
+                    },
                     label = stringResource(Res.string.study_ai_prompt_hint),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 if (isGenerating) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MiuixTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = stringResource(Res.string.study_ai_generating),
+                            fontSize = 12.sp,
+                            color = MiuixTheme.colorScheme.primary
+                        )
+                    }
+                } else if (!generationMessage.isNullOrBlank()) {
                     Text(
-                        text = stringResource(Res.string.study_ai_generating),
+                        text = generationMessage.orEmpty(),
                         fontSize = 12.sp,
-                        color = MiuixTheme.colorScheme.primary,
+                        color = MiuixTheme.colorScheme.error,
                         modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }

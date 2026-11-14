@@ -43,6 +43,10 @@ class StudyViewModel(
     private val _generationMessage = MutableStateFlow<String?>(null)
     val generationMessage: StateFlow<String?> = _generationMessage.asStateFlow()
 
+    fun clearGenerationMessage() {
+        _generationMessage.value = null
+    }
+
     fun createDeck(
         title: String,
         description: String = "",
