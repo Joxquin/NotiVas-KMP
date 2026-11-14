@@ -78,6 +78,7 @@ class CanvasStudyToolsHandler(
                         resultJson = json.encodeToString(simplified),
                         source = CopilotSource(
                             title = "Mazos de Estudio FSRS",
+                            detail = "Colección de flashcards para repaso espaciado",
                             url = "#utilidades/study"
                         )
                     )

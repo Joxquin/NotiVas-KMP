@@ -286,6 +286,7 @@ fun StudyHubScreen(
     // Sheet: Crear Mazo Manual
     if (showCreateDeckSheet) {
         WindowBottomSheet(
+            show = showCreateDeckSheet,
             onDismissRequest = { showCreateDeckSheet = false },
             title = stringResource(Res.string.study_action_new_deck)
         ) {
@@ -330,6 +331,7 @@ fun StudyHubScreen(
     // Sheet: Generar con IA
     if (showAiGenerateSheet) {
         WindowBottomSheet(
+            show = showAiGenerateSheet,
             onDismissRequest = { if (!isGenerating) showAiGenerateSheet = false },
             title = stringResource(Res.string.study_ai_generate_title)
         ) {

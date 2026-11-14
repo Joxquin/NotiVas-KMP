@@ -303,7 +303,7 @@ fun InicioMiuixContent(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 top.yukonga.miuix.kmp.basic.Icon(
-                                                    imageVector = androidx.compose.material.icons.Icons.Outlined.Psychology,
+                                                    imageVector = androidx.compose.material.icons.Icons.Outlined.School,
                                                     contentDescription = null,
                                                     tint = MiuixTheme.colorScheme.primary,
                                                     modifier = Modifier.size(22.dp)
