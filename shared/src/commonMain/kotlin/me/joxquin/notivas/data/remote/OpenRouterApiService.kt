@@ -35,10 +35,18 @@ class OpenRouterApiService(
         private fun stripNulls(element: JsonElement): JsonElement {
             return when (element) {
                 is JsonObject -> {
-                    val filteredMap = element.mapNotNull { (key, value) ->
-                        if (value is JsonNull) null
-                        else key to stripNulls(value)
-                    }.toMap()
+                    val hasParts = element.containsKey("content_parts") && element["content_parts"] !is JsonNull
+                    val filteredMap = mutableMapOf<String, JsonElement>()
+                    for ((key, value) in element) {
+                        if (value is JsonNull) continue
+                        if (key == "content_parts") {
+                            filteredMap["content"] = stripNulls(value)
+                        } else if (key == "content" && hasParts) {
+                            continue
+                        } else {
+                            filteredMap[key] = stripNulls(value)
+                        }
+                    }
                     JsonObject(filteredMap)
                 }
                 is JsonArray -> {

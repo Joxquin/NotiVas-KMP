@@ -2,6 +2,7 @@ package me.joxquin.notivas.domain.review
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import me.joxquin.notivas.util.SelectedDocument
 
 @Serializable
 data class CriterionEvaluation(
@@ -25,12 +26,30 @@ data class AssignmentPreReviewReport(
     val rawMarkdown: String = ""
 )
 
+enum class ReviewMode {
+    QUICK,
+    EXHAUSTIVE,
+    CUSTOM
+}
+
+data class ReviewOptions(
+    val mode: ReviewMode = ReviewMode.QUICK,
+    val checkInstructions: Boolean = true,
+    val checkRubric: Boolean = true,
+    val checkModules: Boolean = true,
+    val deepModuleScan: Boolean = false,
+    val inspectImages: Boolean = false,
+    val referenceDocument: SelectedDocument? = null
+)
+
 enum class ReviewProgressStep {
     IDLE,
     READING_RUBRIC,
     FETCHING_MODULES,
+    DOWNLOADING_MODULE_RESOURCES,
     EXTRACTING_DOCUMENT,
     EVALUATING,
     COMPLETED,
     ERROR
 }
+

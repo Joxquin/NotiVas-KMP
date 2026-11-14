@@ -13,10 +13,16 @@ import me.joxquin.notivas.data.local.CopilotProvider
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.OpenRouterChatRequest
+import me.joxquin.notivas.data.model.OpenRouterContentPart
+import me.joxquin.notivas.data.model.OpenRouterImageContent
 import me.joxquin.notivas.data.model.OpenRouterMessage
 import me.joxquin.notivas.data.remote.CanvasApiService
 import me.joxquin.notivas.data.remote.GoogleDriveApiService
 import me.joxquin.notivas.data.remote.OpenRouterApiService
+import me.joxquin.notivas.security.SecureTokenVault
+import me.joxquin.notivas.util.ExtractedDocumentImage
+import me.joxquin.notivas.util.PlatformDocumentImageExtractor
+import me.joxquin.notivas.util.PlatformDocumentTextExtractor
 import me.joxquin.notivas.util.SelectedDocument
 import me.joxquin.notivas.util.resolveApiUrl
 
@@ -26,7 +32,8 @@ class AssignmentReviewUseCase(
     private val preferencesManager: PreferencesManager,
     private val googleDriveApiService: GoogleDriveApiService = GoogleDriveApiService(
         httpClient = openRouterApiService.client,
-        preferencesManager = preferencesManager
+        preferencesManager = preferencesManager,
+        tokenRefresher = { SecureTokenVault(preferencesManager).refreshGoogleDriveAccessToken() }
     )
 ) {
 
@@ -35,23 +42,44 @@ class AssignmentReviewUseCase(
         selectedDocument: SelectedDocument? = null,
         draftFileId: String? = null,
         textBody: String? = null,
+        options: ReviewOptions = ReviewOptions(),
         onProgress: (ReviewProgressStep, String) -> Unit = { _, _ -> }
     ): Result<AssignmentPreReviewReport> = withContext(Dispatchers.Default) {
         try {
             // 1. Lectura de consigna y rúbrica
             onProgress(ReviewProgressStep.READING_RUBRIC, "Leyendo consigna y rúbrica oficial...")
-            val rawInstructions = cleanHtml(assignment.description.orEmpty())
+            val rawInstructions = if (options.checkInstructions) cleanHtml(assignment.description.orEmpty()) else ""
             val maxPoints = assignment.pointsPossible ?: 20.0
 
             // 2. Consulta de lecturas y documentos del módulo de Canvas
-            onProgress(ReviewProgressStep.FETCHING_MODULES, "Consultando lecturas y recursos del módulo...")
-            val moduleContext = fetchModuleContext(assignment)
+            val moduleContext = if (options.checkModules) {
+                onProgress(ReviewProgressStep.FETCHING_MODULES, "Consultando lecturas y recursos del módulo...")
+                fetchModuleContext(
+                    assignment = assignment,
+                    deepScan = options.deepModuleScan || options.mode == ReviewMode.EXHAUSTIVE,
+                    onDeepProgress = { onProgress(ReviewProgressStep.DOWNLOADING_MODULE_RESOURCES, it) }
+                )
+            } else {
+                "Módulos no solicitados en esta evaluación."
+            }
 
-            // 3. Extracción de contenido del entregable
+            // 3. Extracción de contenido del entregable y documento de referencia
             onProgress(ReviewProgressStep.EXTRACTING_DOCUMENT, "Extrayendo contenido de la entrega...")
             val documentContent = extractSubmissionContent(selectedDocument, draftFileId, textBody)
             if (documentContent.isBlank()) {
                 return@withContext Result.failure(IllegalStateException("No se pudo extraer contenido del documento o borrador para revisar."))
+            }
+            val referenceContent = options.referenceDocument?.let {
+                extractTextFromDocument(it).take(3000)
+            }.orEmpty()
+
+            // 3.1. Extracción de evidencias visuales para visión multimodal en revisión exhaustiva
+            val checkImages = options.inspectImages || options.mode == ReviewMode.EXHAUSTIVE
+            val visualImages = if (checkImages && selectedDocument != null) {
+                onProgress(ReviewProgressStep.EXTRACTING_DOCUMENT, "Extrayendo evidencias visuales para visión multimodal...")
+                PlatformDocumentImageExtractor.extractImages(selectedDocument.bytes, selectedDocument.name, maxImages = 4)
+            } else {
+                emptyList()
             }
 
             // 4. Preparación de IA y Evaluación
@@ -77,14 +105,30 @@ class AssignmentReviewUseCase(
                 customBaseUrl = null
             }
 
-            val systemPrompt = buildSystemPrompt(maxPoints)
-            val userPrompt = buildUserPrompt(assignment, rawInstructions, maxPoints, moduleContext, documentContent)
+            val systemPrompt = buildSystemPrompt(maxPoints, options, hasVisualImages = visualImages.isNotEmpty())
+            val userPrompt = buildUserPrompt(assignment, rawInstructions, maxPoints, moduleContext, documentContent, referenceContent, options, visualImages.size)
+
+            val userMessage = if (visualImages.isNotEmpty()) {
+                val parts = mutableListOf<OpenRouterContentPart>()
+                parts.add(OpenRouterContentPart(type = "text", text = userPrompt))
+                for (img in visualImages) {
+                    parts.add(
+                        OpenRouterContentPart(
+                            type = "image_url",
+                            imageUrl = OpenRouterImageContent(url = "data:${img.mimeType};base64,${img.base64Data}")
+                        )
+                    )
+                }
+                OpenRouterMessage(role = "user", contentParts = parts)
+            } else {
+                OpenRouterMessage(role = "user", content = userPrompt)
+            }
 
             val chatRequest = OpenRouterChatRequest(
                 model = model,
                 messages = listOf(
                     OpenRouterMessage(role = "system", content = systemPrompt),
-                    OpenRouterMessage(role = "user", content = userPrompt)
+                    userMessage
                 ),
                 temperature = 0.2
             )
@@ -104,7 +148,11 @@ class AssignmentReviewUseCase(
         }
     }
 
-    private suspend fun fetchModuleContext(assignment: Assignment): String {
+    private suspend fun fetchModuleContext(
+        assignment: Assignment,
+        deepScan: Boolean = false,
+        onDeepProgress: (String) -> Unit = {}
+    ): String {
         return try {
             val authCred = preferencesManager.getAuthCredential()
             val baseUrl = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
@@ -130,6 +178,7 @@ class AssignmentReviewUseCase(
             sb.appendLine("Recursos y lecturas asociadas:")
 
             val moduleItems = targetModule.items.orEmpty()
+            var downloadedCount = 0
             for (item in moduleItems.take(8)) {
                 sb.appendLine("- [${item.type}] ${item.title}")
                 if (item.type.equals("Page", ignoreCase = true) && !item.pageUrl.isNullOrBlank()) {
@@ -138,6 +187,29 @@ class AssignmentReviewUseCase(
                         val pageSnippet = cleanHtml(page.body.orEmpty()).take(400)
                         if (pageSnippet.isNotBlank()) {
                             sb.appendLine("  Contenido clave de la página: $pageSnippet...")
+                        }
+                    } catch (_: Exception) { }
+                } else if (deepScan && item.type.equals("File", ignoreCase = true) && item.contentId != null && downloadedCount < 2) {
+                    try {
+                        onDeepProgress("Descargando lectura: ${item.title}...")
+                        val fileDetail = canvasApiService.getFileDetails(baseUrl, token, assignment.courseId, item.contentId)
+                        val downloadUrl = fileDetail.url ?: fileDetail.publicUrl
+                        if (!downloadUrl.isNullOrBlank()) {
+                            val bytes = canvasApiService.downloadFileBytes(downloadUrl, token)
+                            if (bytes != null && bytes.isNotEmpty()) {
+                                downloadedCount++
+                                val fileText = extractTextFromDocument(
+                                    SelectedDocument(
+                                        name = fileDetail.filename ?: item.title,
+                                        sizeBytes = bytes.size.toLong(),
+                                        mimeType = fileDetail.contentType.orEmpty(),
+                                        bytes = bytes
+                                    )
+                                ).take(1200)
+                                if (fileText.isNotBlank()) {
+                                    sb.appendLine("  Contenido extraído del documento adjunto: $fileText...")
+                                }
+                            }
                         }
                     } catch (_: Exception) { }
                 }
@@ -172,70 +244,20 @@ class AssignmentReviewUseCase(
     }
 
     private fun extractTextFromDocument(doc: SelectedDocument): String {
-        val nameLower = doc.name.lowercase()
-        return when {
-            nameLower.endsWith(".txt") || nameLower.endsWith(".md") ||
-            nameLower.endsWith(".json") || nameLower.endsWith(".csv") ||
-            nameLower.endsWith(".html") || nameLower.endsWith(".xml") ||
-            nameLower.endsWith(".kt") || nameLower.endsWith(".java") ||
-            nameLower.endsWith(".py") || nameLower.endsWith(".js") -> {
-                try {
-                    doc.bytes.decodeToString()
-                } catch (_: Exception) {
-                    "Archivo de texto: ${doc.name} (${doc.sizeBytes} bytes)"
-                }
-            }
-            nameLower.endsWith(".docx") -> {
-                extractTextFromDocxZip(doc.bytes)
-            }
-            nameLower.endsWith(".pdf") -> {
-                extractReadableAsciiFromPdf(doc.bytes)
-            }
-            else -> {
-                "Archivo adjunto: ${doc.name} (${doc.mimeType}, ${doc.sizeBytes} bytes)"
-            }
-        }
+        return PlatformDocumentTextExtractor.extractText(doc.bytes, doc.name)
     }
 
-    private fun extractTextFromDocxZip(bytes: ByteArray): String {
-        return try {
-            // Un archivo DOCX es un ZIP que contiene 'word/document.xml' con tags <w:t>...</w:t>
-            val rawString = bytes.decodeToString()
-            val textRegex = Regex("""<w:t[^>]*>([^<]+)</w:t>""")
-            val matches = textRegex.findAll(rawString).map { it.groupValues[1] }.toList()
-            if (matches.isNotEmpty()) {
-                matches.joinToString(" ")
-            } else {
-                "Documento DOCX detectado (${bytes.size} bytes). Extracción preliminar de texto no disponible."
-            }
-        } catch (_: Exception) {
-            "Documento DOCX (${bytes.size} bytes)."
-        }
-    }
-
-    private fun extractReadableAsciiFromPdf(bytes: ByteArray): String {
-        return try {
-            val text = bytes.decodeToString()
-            val streamRegex = Regex("""\(([^)]{2,})\)""")
-            val matches = streamRegex.findAll(text).map { it.groupValues[1] }.take(250).toList()
-            if (matches.isNotEmpty()) {
-                matches.joinToString(" ")
-            } else {
-                "Documento PDF (${bytes.size} bytes)."
-            }
-        } catch (_: Exception) {
-            "Documento PDF (${bytes.size} bytes)."
-        }
-    }
-
-    private fun buildSystemPrompt(maxPoints: Double): String {
+    private fun buildSystemPrompt(maxPoints: Double, options: ReviewOptions, hasVisualImages: Boolean): String {
+        val checkImages = options.inspectImages || options.mode == ReviewMode.EXHAUSTIVE
         return """
             Eres un Evaluador Docente Universitario Oficial y Riguroso.
             Tu función es pre-revisar la entrega de un estudiante antes de que sea enviada a Canvas LMS.
             Debes contrastar el trabajo presentado estrictamente contra:
-            1. La consigna oficial del entregable.
-            2. La rúbrica de evaluación oficial (escala máxima: $maxPoints puntos).
-            3. Las lecturas, temas y recursos del módulo de Canvas para validar que el contenido aplique la teoría enseñada.
+            ${if (options.checkInstructions) "1. La consigna oficial del entregable." else "1. Cumplimiento general de objetivos."}
+            ${if (options.checkRubric) "2. La rúbrica de evaluación oficial (escala máxima: $maxPoints puntos)." else "2. Estándares de calidad académica."}
+            ${if (options.checkModules) "3. Las lecturas, temas y recursos del módulo de Canvas para validar que el contenido aplique la teoría enseñada." else "3. Coherencia temática universitaria."}
+            ${if (checkImages && hasVisualImages) "4. Inspección visual y multimodal de capturas, páginas y diagramas adjuntos en el mensaje para corroborar evidencia gráfica real." else if (checkImages) "4. Calidad, presencia y pertinencia de figuras, diagramas o imágenes incluidos para respaldar los argumentos." else ""}
+            ${if (options.referenceDocument != null) "5. Documento de referencia adicional adjuntado como estándar complementario." else ""}
 
             IMPORTANTE: Tu respuesta DEBE incluir obligatoriamente dos secciones:
             1. Un bloque estructurado para que el sistema procese el reporte.
@@ -266,25 +288,47 @@ class AssignmentReviewUseCase(
         instructions: String,
         maxPoints: Double,
         moduleContext: String,
-        documentContent: String
+        documentContent: String,
+        referenceContent: String,
+        options: ReviewOptions,
+        visualImagesCount: Int
     ): String {
-        return """
-            DATOS DE LA TAREA:
-            - Título: ${assignment.name}
-            - Puntaje máximo: $maxPoints
-            - Fecha límite: ${assignment.dueAt ?: "No especificada"}
-
-            CONSIGNA OFICIAL DEL ENTREGABLE:
-            ${instructions.ifBlank { "Sin descripción detallada en Canvas LMS." }}
-
-            CONTEXTO DEL MÓDULO DEL CURSO:
-            $moduleContext
-
-            CONTENIDO PRESENTADO POR EL ESTUDIANTE:
-            $documentContent
-
-            Evalúa la entrega siguiendo estrictamente las instrucciones del sistema y genera el reporte.
-        """.trimIndent()
+        val checkImages = options.inspectImages || options.mode == ReviewMode.EXHAUSTIVE
+        return buildString {
+            appendLine("DATOS DE LA TAREA:")
+            appendLine("- Título: ${assignment.name}")
+            appendLine("- Puntaje máximo: $maxPoints")
+            appendLine("- Fecha límite: ${assignment.dueAt ?: "No especificada"}")
+            appendLine()
+            if (options.checkInstructions && instructions.isNotBlank()) {
+                appendLine("CONSIGNA OFICIAL DEL ENTREGABLE:")
+                appendLine(instructions)
+                appendLine()
+            }
+            if (options.checkModules && moduleContext.isNotBlank()) {
+                appendLine("CONTEXTO DEL MÓDULO DEL CURSO:")
+                appendLine(moduleContext)
+                appendLine()
+            }
+            if (referenceContent.isNotBlank()) {
+                appendLine("DOCUMENTO DE REFERENCIA EXTRA (Aportado por el estudiante):")
+                appendLine(referenceContent)
+                appendLine()
+            }
+            if (checkImages) {
+                appendLine("ENFOQUE VISUAL Y DE DIAGRAMAS:")
+                if (visualImagesCount > 0) {
+                    appendLine("Se adjuntan $visualImagesCount imagen(es)/página(s) representativas del documento entregado. Examínalas visualmente para validar capturas de pantalla, esquemas, código fuente y ejecución de pruebas.")
+                } else {
+                    appendLine("Analiza rigurosamente si el trabajo incluye diagramas, figuras o gráficos que apoyen la explicación y califica su pertinencia.")
+                }
+                appendLine()
+            }
+            appendLine("CONTENIDO DE TEXTO PRESENTADO POR EL ESTUDIANTE:")
+            appendLine(documentContent)
+            appendLine()
+            appendLine("Evalúa la entrega siguiendo estrictamente las instrucciones del sistema y genera el reporte.")
+        }
     }
 
     private fun parseReviewReport(reply: String, maxPoints: Double): AssignmentPreReviewReport {

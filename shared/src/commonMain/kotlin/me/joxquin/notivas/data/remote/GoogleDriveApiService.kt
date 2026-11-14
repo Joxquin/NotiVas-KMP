@@ -542,26 +542,63 @@ class GoogleDriveApiService(
     }
 
     suspend fun exportFileContentAsText(fileId: String, initialToken: String? = null): String? {
-        var token = getValidAccessToken(initialToken) ?: return null
+        var token = getValidAccessToken(initialToken)
+        if (token.isNullOrBlank()) {
+            println("[GoogleDriveApiService] exportFileContentAsText: token inicial no disponible, forzando refresh...")
+            token = getValidAccessToken(null, forceRefresh = true) ?: run {
+                println("[GoogleDriveApiService] exportFileContentAsText: no se pudo obtener token valido")
+                return null
+            }
+        }
+
         for (attempt in 1..2) {
             try {
+                // 1. Intentar files.export (para Google Docs nativos)
                 val response = httpClient.get(apiUrl("$DRIVE_FILES_API/$fileId/export")) {
                     header(HttpHeaders.Authorization, "Bearer $token")
                     parameter("mimeType", "text/plain")
                 }
                 val status = response.status.value
                 if (status in 200..299) {
-                    return response.body<String>()
+                    val text = response.body<String>()
+                    if (text.isNotBlank()) return text
                 } else if (status == 401 && attempt == 1) {
+                    println("[GoogleDriveApiService] exportFileContentAsText: 401 en files.export, refrescando token...")
                     token = getValidAccessToken(null, forceRefresh = true) ?: return null
                     continue
                 } else {
-                    return null
+                    println("[GoogleDriveApiService] exportFileContentAsText: files.export respondio con HTTP $status, probando files.get(alt=media)...")
+                }
+
+                // 2. Fallback: descarga directa binaria si el archivo no es un Google Doc nativo
+                val mediaResponse = httpClient.get(apiUrl("$DRIVE_FILES_API/$fileId")) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    parameter("alt", "media")
+                    parameter("supportsAllDrives", true)
+                }
+                val mediaStatus = mediaResponse.status.value
+                if (mediaStatus in 200..299) {
+                    val bytes = mediaResponse.body<ByteArray>()
+                    if (bytes.isNotEmpty()) {
+                        val text = try {
+                            bytes.decodeToString()
+                        } catch (_: Exception) { null }
+                        if (!text.isNullOrBlank()) return text
+                    }
+                } else if (mediaStatus == 401 && attempt == 1) {
+                    println("[GoogleDriveApiService] exportFileContentAsText: 401 en alt=media, refrescando token...")
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    println("[GoogleDriveApiService] exportFileContentAsText: alt=media respondio con HTTP $mediaStatus")
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Throwable) {
-                return null
+            } catch (e: Throwable) {
+                println("[GoogleDriveApiService] exportFileContentAsText excepcion intento $attempt: ${e.message}")
+                if (attempt == 1) {
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                }
             }
         }
         return null

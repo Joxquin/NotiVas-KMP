@@ -1599,9 +1599,15 @@ fun AssignmentSubmissionCard(
                     }
                 }
 
+                val hasContentToReview = when (selectedTab) {
+                    SubmissionTab.UPLOAD -> selectedDocument != null
+                    SubmissionTab.DRIVE -> isDriveConnected && isDraftActive && !draftInfo?.driveFileId.isNullOrBlank()
+                    SubmissionTab.TEXT -> textBody.isNotBlank()
+                }
+
                 // Botón animado de "Revisar con IA"
                 AnimatedVisibility(
-                    visible = canSubmit && !isSubmitting,
+                    visible = canSubmit && !isSubmitting && hasContentToReview,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -2727,9 +2733,15 @@ fun AssignmentSubmissionCard(
                     SubmissionTab.TEXT -> textBody.isNotBlank()
                 }
 
+                val hasContentToReview = when (selectedTab) {
+                    SubmissionTab.UPLOAD -> selectedDocument != null
+                    SubmissionTab.DRIVE -> isDriveConnected && isDraftActive && !draftInfo?.driveFileId.isNullOrBlank()
+                    SubmissionTab.TEXT -> textBody.isNotBlank()
+                }
+
                 // Botón animado de "Revisar con IA"
                 AnimatedVisibility(
-                    visible = canSubmit && !isSubmitting,
+                    visible = canSubmit && !isSubmitting && hasContentToReview,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -2812,21 +2824,19 @@ fun AssignmentSubmissionCard(
     }
 }
 
-    if (showAiReviewSheet) {
-        val draftFileId = if (selectedTab == SubmissionTab.DRIVE && isDriveConnected && isDraftActive) {
-            draftInfo?.driveFileId
-        } else null
+    val draftFileId = if (selectedTab == SubmissionTab.DRIVE && isDriveConnected && isDraftActive) {
+        draftInfo?.driveFileId
+    } else null
 
-        AssignmentPreReviewSheet(
-            show = showAiReviewSheet,
-            assignment = assignment,
-            selectedDocument = if (selectedTab == SubmissionTab.UPLOAD) selectedDocument else null,
-            draftFileId = draftFileId,
-            textBody = if (selectedTab == SubmissionTab.TEXT) textBody else null,
-            themeStyle = themeStyle,
-            onDismissRequest = { showAiReviewSheet = false }
-        )
-    }
+    AssignmentPreReviewSheet(
+        show = showAiReviewSheet,
+        assignment = assignment,
+        selectedDocument = if (selectedTab == SubmissionTab.UPLOAD) selectedDocument else null,
+        draftFileId = draftFileId,
+        textBody = if (selectedTab == SubmissionTab.TEXT) textBody else null,
+        themeStyle = themeStyle,
+        onDismissRequest = { showAiReviewSheet = false }
+    )
 }
 
 private fun resolveViewableUrl(

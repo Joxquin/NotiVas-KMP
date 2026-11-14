@@ -59,11 +59,20 @@ object AppModule {
         me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase()
     }
 
+    val googleDriveApiService: me.joxquin.notivas.data.remote.GoogleDriveApiService by lazy {
+        me.joxquin.notivas.data.remote.GoogleDriveApiService(
+            httpClient = httpClient,
+            preferencesManager = preferencesManager,
+            tokenRefresher = { secureTokenVault.refreshGoogleDriveAccessToken() }
+        )
+    }
+
     val assignmentReviewUseCase: me.joxquin.notivas.domain.review.AssignmentReviewUseCase by lazy {
         me.joxquin.notivas.domain.review.AssignmentReviewUseCase(
             canvasApiService = canvasApiService,
             openRouterApiService = openRouterApiService,
-            preferencesManager = preferencesManager
+            preferencesManager = preferencesManager,
+            googleDriveApiService = googleDriveApiService
         )
     }
 }

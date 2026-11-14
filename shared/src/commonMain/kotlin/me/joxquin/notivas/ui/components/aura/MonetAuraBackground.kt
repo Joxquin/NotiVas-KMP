@@ -332,13 +332,11 @@ private data class MonetAuraModifierElement(
 }
 
 @Composable
-fun MonetAuraBackground(
+fun Modifier.monetAuraBackground(
     alpha: Float,
-    isTransitioning: Boolean = false,
-    modifier: Modifier = Modifier,
     surfaceColor: Color = Color.Unspecified,
-    content: @Composable BoxScope.() -> Unit = {}
-) {
+    isTransitioning: Boolean = false
+): Modifier {
     val shaderSupported = remember { isRuntimeShaderSupported() }
     val colorScheme = MaterialTheme.colorScheme
     val surface = if (surfaceColor != Color.Unspecified) surfaceColor else colorScheme.surface
@@ -365,37 +363,31 @@ fun MonetAuraBackground(
             label = "fallback_y"
         )
 
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .drawBehind {
-                    drawRect(surface)
-                    if (alpha > 0.001f) {
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    colorScheme.primary.copy(alpha = 0.35f * alpha),
-                                    Color.Transparent
-                                ),
-                                center = Offset(size.width * animX, size.height * animY),
-                                radius = size.minDimension * 0.75f
-                            )
-                        )
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    colorScheme.tertiary.copy(alpha = 0.30f * alpha),
-                                    Color.Transparent
-                                ),
-                                center = Offset(size.width * (1f - animX), size.height * (1f - animY)),
-                                radius = size.minDimension * 0.85f
-                            )
-                        )
-                    }
-                },
-            content = content
-        )
-        return
+        return this.drawBehind {
+            drawRect(surface)
+            if (alpha > 0.001f) {
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            colorScheme.primary.copy(alpha = 0.35f * alpha),
+                            Color.Transparent
+                        ),
+                        center = Offset(size.width * animX, size.height * animY),
+                        radius = size.minDimension * 0.75f
+                    )
+                )
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            colorScheme.tertiary.copy(alpha = 0.30f * alpha),
+                            Color.Transparent
+                        ),
+                        center = Offset(size.width * (1f - animX), size.height * (1f - animY)),
+                        radius = size.minDimension * 0.85f
+                    )
+                )
+            }
+        }
     }
 
     val painter = remember { MonetAuraPainter() }
@@ -437,29 +429,36 @@ fun MonetAuraBackground(
         }
     }
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        Spacer(
-            modifier = Modifier
-                .fillMaxSize(0.5f)
-                .graphicsLayer {
-                    scaleX = 2f
-                    scaleY = 2f
-                    transformOrigin = TransformOrigin(0f, 0f)
-                }
-                .then(
-                    MonetAuraModifierElement(
-                        painter = painter,
-                        preset = preset,
-                        surface = surface,
-                        isTransitioning = isTransitioning,
-                        alpha = { alpha },
-                        colorStage = { colorStage.value }
-                    )
-                )
+    return this.then(
+        MonetAuraModifierElement(
+            painter = painter,
+            preset = preset,
+            surface = surface,
+            isTransitioning = isTransitioning,
+            alpha = { alpha },
+            colorStage = { colorStage.value }
         )
-        content()
-    }
+    )
 }
+
+@Composable
+fun MonetAuraBackground(
+    alpha: Float,
+    isTransitioning: Boolean = false,
+    modifier: Modifier = Modifier,
+    surfaceColor: Color = Color.Unspecified,
+    content: @Composable BoxScope.() -> Unit = {}
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .monetAuraBackground(
+                alpha = alpha,
+                surfaceColor = surfaceColor,
+                isTransitioning = isTransitioning
+            ),
+        content = content
+    )
+}
+
 

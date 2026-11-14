@@ -21,9 +21,22 @@ data class OpenRouterReasoning(
 )
 
 @Serializable
+data class OpenRouterImageContent(
+    @SerialName("url") val url: String
+)
+
+@Serializable
+data class OpenRouterContentPart(
+    @SerialName("type") val type: String,
+    @SerialName("text") val text: String? = null,
+    @SerialName("image_url") val imageUrl: OpenRouterImageContent? = null
+)
+
+@Serializable
 data class OpenRouterMessage(
     @SerialName("role") val role: String,
     @SerialName("content") val content: String? = null,
+    @SerialName("content_parts") val contentParts: List<OpenRouterContentPart>? = null,
     @SerialName("name") val name: String? = null,
     @SerialName("tool_call_id") val toolCallId: String? = null,
     @SerialName("tool_calls") val toolCalls: List<OpenRouterToolCall>? = null
