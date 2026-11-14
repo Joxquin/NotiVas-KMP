@@ -41,7 +41,7 @@ class StudyAiGenerator(
         count: Int = 6
     ): Result<List<FlashcardInput>> {
         val apiKey = preferencesManager.getOpenRouterApiKey()
-        if (apiKey.isBlank()) {
+        if (apiKey.isNullOrBlank()) {
             return Result.failure(IllegalStateException("No hay clave de IA configurada"))
         }
 
@@ -96,7 +96,7 @@ class StudyAiGenerator(
         questionCount: Int = 5
     ): Result<List<QuizQuestion>> {
         val apiKey = preferencesManager.getOpenRouterApiKey()
-        if (apiKey.isBlank()) {
+        if (apiKey.isNullOrBlank()) {
             return Result.failure(IllegalStateException("No hay clave de IA configurada"))
         }
 
