@@ -26,7 +26,6 @@
 
     <!-- Settings / Ajustes -->
     <string name="settings_title">Ajustes &amp; Perfil</string>
-    <string name="settings_subtitle">Gestión de cuenta Canvas LMS y preferencias del sistema</string>
     
     <!-- Language Settings -->
     <string name="settings_language_section_title">IDIOMA Y REGIÓN</string>

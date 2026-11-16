@@ -26,7 +26,6 @@
 
     <!-- Settings / Ajustes -->
     <string name="settings_title">Settings &amp; Profile</string>
-    <string name="settings_subtitle">Canvas LMS account management and system preferences</string>
     
     <!-- Language Settings -->
     <string name="settings_language_section_title">LANGUAGE &amp; REGION</string>

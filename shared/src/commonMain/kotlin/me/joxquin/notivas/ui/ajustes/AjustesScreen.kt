@@ -84,7 +84,6 @@ import me.joxquin.notivas.shared.resources.settings_category_drive
 import me.joxquin.notivas.shared.resources.settings_category_drive_desc
 import me.joxquin.notivas.shared.resources.settings_category_notifications
 import me.joxquin.notivas.shared.resources.settings_category_notifications_desc
-import me.joxquin.notivas.shared.resources.settings_subtitle
 import me.joxquin.notivas.shared.resources.settings_title
 import me.joxquin.notivas.shared.resources.settings_token_subtitle
 import me.joxquin.notivas.shared.resources.settings_token_summary_token
@@ -131,12 +130,6 @@ fun AjustesHeaderSection(
                 fontSize = 26.sp
             ),
             color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = stringResource(Res.string.settings_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -263,7 +256,6 @@ fun AjustesScreen(
                 ) {
                     MiuixPageTopAppBar(
                         title = stringResource(Res.string.settings_title),
-                        subtitle = stringResource(Res.string.settings_subtitle),
                         scrollBehavior = scrollBehavior,
                         actions = {
                             GlassIconButton(
