@@ -40,7 +40,7 @@ import top.yukonga.miuix.kmp.glass.GlassNavigationBar
 import top.yukonga.miuix.kmp.glass.GlassNavigationBarDefaults
 import top.yukonga.miuix.kmp.glass.GlassNavigationItem
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.glass.Book
+import top.yukonga.miuix.kmp.icon.glass.BookOutline
 import top.yukonga.miuix.kmp.icon.glass.Search
 import top.yukonga.miuix.kmp.material.GlassShadows
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -126,7 +126,11 @@ fun FloatingNavigationBar(
 
     val navigationBarBottom = WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)
         .asPaddingValues().calculateBottomPadding()
-    val bottomMargin = if (navigationBarBottom != 0.dp) 16.dp + navigationBarBottom else 32.dp
+    val bottomMargin = when {
+        navigationBarBottom <= 16.dp -> 28.dp
+        navigationBarBottom >= 28.dp -> navigationBarBottom
+        else -> 12.dp + navigationBarBottom
+    }
 
     val hasTrailingAction = (currentDestination == MainDestination.Inicio && onSearchClick != null) ||
             (currentDestination == MainDestination.Copilot && onHistoryClick != null)
@@ -197,7 +201,7 @@ fun FloatingNavigationBar(
                             shadow = GlassShadows.Float,
                         ) {
                             Icon(
-                                imageVector = MiuixIcons.Glass.Book,
+                                imageVector = MiuixIcons.Glass.BookOutline,
                                 contentDescription = stringResource(Res.string.copilot_history_title),
                                 modifier = Modifier.size(28.dp),
                                 tint = MiuixTheme.colorScheme.onSurface,

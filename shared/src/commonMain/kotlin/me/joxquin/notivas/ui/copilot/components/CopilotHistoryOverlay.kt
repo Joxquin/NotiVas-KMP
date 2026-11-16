@@ -101,7 +101,7 @@ import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.glass.Book
+import top.yukonga.miuix.kmp.icon.glass.BookOutline
 import top.yukonga.miuix.kmp.icon.glass.Close as GlassClose
 import top.yukonga.miuix.kmp.icon.glass.Search as GlassSearch
 import top.yukonga.miuix.kmp.squircle.squircleBorder
@@ -551,7 +551,7 @@ fun CopilotHistoryOverlay(
                             ) {
                                 if (themeStyle == AppThemeStyle.MIUIX) {
                                     MiuixIcon(
-                                        imageVector = MiuixIcons.Glass.Book,
+                                        imageVector = MiuixIcons.Glass.BookOutline,
                                         contentDescription = null,
                                         tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                         modifier = Modifier.size(64.dp)
