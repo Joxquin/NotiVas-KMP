@@ -595,6 +595,11 @@
     <string name="search_no_results">No se encontraron resultados para \"%1$s\"</string>
     <string name="search_ask_copilot_format">Preguntar a Copilot IA sobre \"%1$s\"</string>
     <string name="search_quick_suggestions">Sugerencias y accesos directos</string>
+    <string name="search_copilot_card_title">Consultar con Copilot IA</string>
+    <string name="search_copilot_card_subtitle">Pregunta sobre entregas, fechas límite o syllabus</string>
+    <string name="search_filter_pending_tasks">Tareas pendientes</string>
+    <string name="search_filter_term_courses">Cursos del ciclo</string>
+    <string name="search_filter_labs">Laboratorios</string>
 
     <!-- Course Detail Screen (Stitch Redesign) -->
     <string name="course_detail_screen_title">Detalle del Curso</string>

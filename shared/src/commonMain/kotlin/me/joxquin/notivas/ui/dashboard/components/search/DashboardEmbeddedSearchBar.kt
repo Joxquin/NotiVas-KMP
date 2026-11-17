@@ -529,7 +529,7 @@ fun DashboardAnimatedSearchOverlay(
             ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp)
+                    contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 120.dp)
                 ) {
                     if (query.isBlank()) {
                         item {

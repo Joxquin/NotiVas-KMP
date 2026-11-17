@@ -38,6 +38,11 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.search_clear_history
+import me.joxquin.notivas.shared.resources.search_copilot_card_subtitle
+import me.joxquin.notivas.shared.resources.search_copilot_card_title
+import me.joxquin.notivas.shared.resources.search_filter_labs
+import me.joxquin.notivas.shared.resources.search_filter_pending_tasks
+import me.joxquin.notivas.shared.resources.search_filter_term_courses
 import me.joxquin.notivas.shared.resources.search_quick_suggestions
 import me.joxquin.notivas.shared.resources.search_recent_title
 import org.jetbrains.compose.resources.stringResource
@@ -68,7 +73,7 @@ fun SearchHistorySection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // ─── 1. Búsquedas Recientes ─────────────────────────────────────────
@@ -152,12 +157,12 @@ fun SearchHistorySection(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Consultar con Copilot IA",
+                            text = stringResource(Res.string.search_copilot_card_title),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = onSurfaceColor
                         )
                         Text(
-                            text = "Pregunta sobre entregas, fechas límite o syllabus",
+                            text = stringResource(Res.string.search_copilot_card_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = onVariantColor
                         )
@@ -193,12 +198,12 @@ fun SearchHistorySection(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Consultar con Copilot IA",
+                            text = stringResource(Res.string.search_copilot_card_title),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = onSurfaceColor
                         )
                         Text(
-                            text = "Pregunta sobre entregas, fechas límite o syllabus",
+                            text = stringResource(Res.string.search_copilot_card_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = onVariantColor
                         )
@@ -228,19 +233,19 @@ fun SearchHistorySection(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 QuickFilterChip(
-                    label = "Tareas pendientes",
+                    label = stringResource(Res.string.search_filter_pending_tasks),
                     icon = Icons.Outlined.Assignment,
                     isMiuix = isMiuix,
                     onClick = { onSelectQuery("tarea") }
                 )
                 QuickFilterChip(
-                    label = "Cursos del ciclo",
+                    label = stringResource(Res.string.search_filter_term_courses),
                     icon = Icons.Outlined.School,
                     isMiuix = isMiuix,
                     onClick = { onSelectQuery("curso") }
                 )
                 QuickFilterChip(
-                    label = "Laboratorios",
+                    label = stringResource(Res.string.search_filter_labs),
                     icon = Icons.Outlined.Assignment,
                     isMiuix = isMiuix,
                     onClick = { onSelectQuery("laboratorio") }
