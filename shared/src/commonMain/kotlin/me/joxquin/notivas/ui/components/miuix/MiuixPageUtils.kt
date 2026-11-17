@@ -13,34 +13,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.ui.layout.layout
-import kotlin.math.roundToInt
-import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
-import top.yukonga.miuix.kmp.basic.SmallTopAppBar
-import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.basic.TopAppBarDefaults
 import top.yukonga.miuix.kmp.glass.GlassTopAppBar
-import top.yukonga.miuix.kmp.glass.GlassTopAppBarDefaults
 import top.yukonga.miuix.kmp.glass.GlassIconButton
-import top.yukonga.miuix.kmp.blur.BlendColorEntry
-import top.yukonga.miuix.kmp.blur.BlurColors
-import top.yukonga.miuix.kmp.blur.BlurDefaults
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.ProgressiveBlur
-import top.yukonga.miuix.kmp.material.isRuntimeShaderSupported
-import top.yukonga.miuix.kmp.blur.progressiveTextureBlur
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
-import top.yukonga.miuix.kmp.blur.textureBlur
+import top.yukonga.miuix.kmp.material.isRuntimeShaderSupported
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -126,17 +108,10 @@ fun MiuixBlurredBar(
     }
 }
 
-@Composable
-private fun miuixBarBlurColors(progressive: Boolean = false): BlurColors = BlurDefaults.blurColors(
-    blendColors = listOf(
-        BlendColorEntry(color = MiuixTheme.colorScheme.surface.copy(if (progressive) 0.3f else 0.85f)),
-    ),
-)
-
 /**
  * TopAppBar canónico para pantallas Miuix, basado en GlassTopAppBar oficial de HyperOS
- * con soporte para modo contraído (SmallTopAppBar) o expandido, desenfoque progresivo
- * reactivo al MiuixScrollBehavior y botones glass.
+ * con soporte para modo contraído fijo (expandable = false) o expandido dinámico,
+ * desenfoque progresivo reactivo al MiuixScrollBehavior y botones glass.
  */
 @Composable
 fun MiuixPageTopAppBar(
@@ -156,71 +131,28 @@ fun MiuixPageTopAppBar(
     bottomContent: @Composable () -> Unit = {},
     collapsed: Boolean = false,
 ) {
-    val contentScrolled by remember(scrollBehavior, isContentScrolled) {
-        derivedStateOf { isContentScrolled ?: (scrollBehavior?.state?.let { it.contentOffset < 0f } ?: false) }
-    }
-
-    if (collapsed) {
-        val topInsets = WindowInsets.statusBars
-        val rawBackdrop = backdrop?.takeIf { isRuntimeShaderSupported() }
-        val blurColors = BlurDefaults.blurColors(
-            blendColors = listOf(BlendColorEntry(MiuixTheme.colorScheme.surface.copy(alpha = 0.3f))),
-        )
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-            if (progressiveBlur && rawBackdrop != null) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .layout { measurable, constraints ->
-                            val barHeight = topInsets.getTop(this) + TopAppBarDefaults.CollapsedHeight.toPx()
-                            val height = ((barHeight + 20.dp.toPx()) * 1.2f).roundToInt()
-                            val placeable = measurable.measure(constraints.copy(minHeight = height, maxHeight = height))
-                            layout(constraints.maxWidth, constraints.maxHeight) { placeable.placeRelative(0, 0) }
-                        }
-                        .graphicsLayer {
-                            val ramp = scrollBehavior?.let {
-                                (-it.state.contentOffset / GlassTopAppBarDefaults.ProgressiveBlurRampDistance.toPx()).coerceIn(0f, 1f)
-                            } ?: (if (contentScrolled) 1f else 0f)
-                            this.alpha = ramp * backgroundAlpha().coerceIn(0f, 1f)
-                        }
-                        .progressiveTextureBlur(
-                            backdrop = rawBackdrop,
-                            shape = RectangleShape,
-                            gradient = ProgressiveBlur.Top.copy(curve = 0.5f),
-                            blurRadius = GlassTopAppBarDefaults.ProgressiveBlurRadius.value,
-                            colors = blurColors,
-                        )
-                )
-            }
-            SmallTopAppBar(
-                title = title,
-                subtitle = subtitle,
-                color = color,
-                scrollBehavior = scrollBehavior,
-                navigationIcon = navigationIcon,
-                actions = actions,
-                bottomContent = bottomContent,
-                modifier = contentModifier,
-            )
+    val contentScrolled by remember(scrollBehavior, isContentScrolled, collapsed) {
+        derivedStateOf {
+            isContentScrolled ?: if (collapsed) true else (scrollBehavior?.state?.let { it.contentOffset < 0f } ?: false)
         }
-    } else {
-        GlassTopAppBar(
-            title = title,
-            largeTitle = largeTitle,
-            subtitle = subtitle,
-            contentModifier = contentModifier,
-            titleAlpha = titleAlpha,
-            backgroundAlpha = backgroundAlpha,
-            scrollBehavior = scrollBehavior,
-            backdrop = backdrop,
-            progressiveBlur = progressiveBlur && backdrop != null,
-            isContentScrolled = contentScrolled,
-            navigationIcon = navigationIcon,
-            actions = actions,
-            bottomContent = bottomContent,
-        )
     }
+
+    GlassTopAppBar(
+        title = title,
+        largeTitle = largeTitle,
+        subtitle = subtitle,
+        contentModifier = contentModifier,
+        titleAlpha = titleAlpha,
+        backgroundAlpha = backgroundAlpha,
+        scrollBehavior = if (collapsed) null else scrollBehavior,
+        backdrop = backdrop,
+        progressiveBlur = progressiveBlur && backdrop != null,
+        isContentScrolled = contentScrolled,
+        expandable = !collapsed,
+        navigationIcon = navigationIcon,
+        actions = actions,
+        bottomContent = bottomContent,
+    )
 }
 
 /**
