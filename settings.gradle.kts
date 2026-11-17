@@ -1,4 +1,4 @@
-rootProject.name = "NotiVas-KMP"
+rootProject.name = "NotiVas"
 
 pluginManagement {
     repositories {

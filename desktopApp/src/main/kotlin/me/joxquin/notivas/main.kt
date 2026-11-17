@@ -7,7 +7,7 @@ import androidx.compose.ui.window.application
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "NotiVas-KMP",
+        title = "NotiVas",
         icon = painterResource("icon.png")
     ) {
         App()
