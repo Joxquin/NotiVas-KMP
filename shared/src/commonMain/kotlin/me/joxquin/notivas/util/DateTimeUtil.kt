@@ -28,6 +28,7 @@ data class DateTimeComponents(
 expect object DateTimeUtil {
     fun nowEpochMillis(): Long
     fun nowLocalDate(): DateComponents
+    fun nowLocalHour(): Int
     fun parseIsoToComponents(isoString: String): DateTimeComponents?
     fun addDays(date: DateComponents, days: Int): DateComponents
     fun dayOfWeek(date: DateComponents): Int // 1 = Lunes, 7 = Domingo

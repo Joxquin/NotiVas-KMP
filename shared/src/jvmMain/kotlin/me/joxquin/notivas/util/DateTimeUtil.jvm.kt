@@ -3,6 +3,7 @@ package me.joxquin.notivas.util
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -15,6 +16,8 @@ actual object DateTimeUtil {
         val now = LocalDate.now(ZoneId.systemDefault())
         return DateComponents(now.year, now.monthValue, now.dayOfMonth)
     }
+
+    actual fun nowLocalHour(): Int = LocalTime.now(ZoneId.systemDefault()).hour
 
     actual fun parseIsoToComponents(isoString: String): DateTimeComponents? {
         return try {

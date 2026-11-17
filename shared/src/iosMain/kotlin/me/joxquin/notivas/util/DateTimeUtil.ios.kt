@@ -2,6 +2,7 @@ package me.joxquin.notivas.util
 
 import platform.Foundation.NSCalendar
 import platform.Foundation.NSCalendarUnitDay
+import platform.Foundation.NSCalendarUnitHour
 import platform.Foundation.NSCalendarUnitMonth
 import platform.Foundation.NSCalendarUnitYear
 import platform.Foundation.NSDate
@@ -27,6 +28,15 @@ actual object DateTimeUtil {
             month = components.month.toInt(),
             day = components.day.toInt()
         )
+    }
+
+    actual fun nowLocalHour(): Int {
+        val calendar = NSCalendar.currentCalendar
+        val components = calendar.components(
+            NSCalendarUnitHour,
+            fromDate = NSDate()
+        )
+        return components.hour.toInt()
     }
 
     actual fun parseIsoToComponents(isoString: String): DateTimeComponents? {

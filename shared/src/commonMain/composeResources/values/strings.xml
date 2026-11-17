@@ -302,6 +302,17 @@
     <!-- Additional Dashboard & Miuix Strings -->
     <string name="dashboard_welcome">Welcome, %1$s</string>
     <string name="dashboard_academic_title">Academic Dashboard &amp; Canvas Tracking</string>
+    <string name="greeting_morning">Good morning, %1$s</string>
+    <string name="greeting_afternoon">Good afternoon, %1$s</string>
+    <string name="greeting_evening">Good evening, %1$s</string>
+    <string name="greeting_default_student">Student</string>
+    <string name="dashboard_dynamic_subtitle_1">Are you forgetting something?</string>
+    <string name="dashboard_dynamic_subtitle_2">Let\'s check your pending tasks</string>
+    <string name="dashboard_dynamic_subtitle_3">Ready to get things done today?</string>
+    <string name="dashboard_dynamic_subtitle_4">One step at a time toward your goals</string>
+    <string name="dashboard_dynamic_subtitle_5">Is everything up to date on Canvas?</string>
+    <string name="dashboard_dynamic_subtitle_6">Plan your day and stay in control</string>
+    <string name="dashboard_dynamic_subtitle_7">A great time to review deadlines</string>
     <string name="dashboard_this_week">This week</string>
     <string name="unconfigured_banner_title">Formula Settings</string>
     <string name="unconfigured_banner_desc_single">1 course without weighting or groups</string>

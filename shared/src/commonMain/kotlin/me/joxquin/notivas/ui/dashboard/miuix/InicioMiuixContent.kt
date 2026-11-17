@@ -52,10 +52,12 @@ import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseRowItem
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
 import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
+import top.yukonga.miuix.kmp.basic.TopAppBarDefaults
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.layout
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
@@ -148,7 +150,8 @@ fun InicioMiuixContent(
 
     val backdrop = rememberMiuixBlurBackdrop()
     val scrollBehavior = MiuixScrollBehavior()
-    val studentName = userProfile?.name?.substringBefore(" ") ?: "Estudiante"
+    val defaultStudent = stringResource(Res.string.greeting_default_student)
+    val studentFirstName = userProfile?.name?.trim()?.substringBefore(" ")?.takeIf { it.isNotBlank() } ?: defaultStudent
 
     Box(
         modifier = modifier
@@ -163,7 +166,7 @@ fun InicioMiuixContent(
                 ) {
                     MiuixPageTopAppBar(
                         title = stringResource(Res.string.app_name),
-                        largeTitle = stringResource(Res.string.dashboard_welcome, studentName.uppercase()),
+                        largeTitle = stringResource(viewModel.dynamicGreetingRes, studentFirstName),
                         subtitle = "",
                         isContentScrolled = contentUnderTopBar,
                         contentModifier = Modifier.glassSearchBarTransition(isSearchExpanded, barAlpha = { searchBarAlpha.value }),
@@ -201,12 +204,21 @@ fun InicioMiuixContent(
                             val collapsedFraction = scrollBehavior.state.collapsedFraction
                             val largeTitleFade = (collapsedFraction * 3f).coerceIn(0f, 1f)
                             val subtitleAlpha = (1f - largeTitleFade) * (if (isSearchExpanded) 0f else 1f)
-                            val blurRadiusPx = with(LocalDensity.current) { 8.dp.toPx() } * largeTitleFade
+                            val blurRadiusPx = with(LocalDensity.current) { 12.dp.toPx() } * largeTitleFade
 
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
+                                    .padding(horizontal = TopAppBarDefaults.TitlePadding)
+                                    .layout { measurable, constraints ->
+                                        val placeable = measurable.measure(constraints)
+                                        val h = if (subtitleAlpha > 0f) placeable.height else 0
+                                        layout(placeable.width, h) {
+                                            if (subtitleAlpha > 0f) {
+                                                placeable.placeRelative(0, 0)
+                                            }
+                                        }
+                                    }
                                     .graphicsLayer {
                                         alpha = subtitleAlpha
                                         if (blurRadiusPx > 0.1f) {
@@ -215,7 +227,7 @@ fun InicioMiuixContent(
                                     }
                             ) {
                                 MiuixText(
-                                    text = stringResource(Res.string.dashboard_academic_title),
+                                    text = stringResource(viewModel.dynamicSubtitleRes),
                                     style = MiuixTheme.textStyles.body2,
                                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                 )

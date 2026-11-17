@@ -19,6 +19,10 @@ private external fun jsGetMonth(): Int
 private external fun jsGetDate(): Int
 
 @OptIn(ExperimentalWasmJsInterop::class)
+@JsFun("() => new Date().getHours()")
+private external fun jsGetHours(): Int
+
+@OptIn(ExperimentalWasmJsInterop::class)
 @JsFun("(iso) => Date.parse(iso)")
 private external fun jsParseDate(iso: String): Double
 
@@ -56,6 +60,8 @@ actual object DateTimeUtil {
     actual fun nowLocalDate(): DateComponents {
         return DateComponents(jsGetYear(), jsGetMonth(), jsGetDate())
     }
+
+    actual fun nowLocalHour(): Int = jsGetHours()
 
     actual fun parseIsoToComponents(isoString: String): DateTimeComponents? {
         val epoch = jsParseDate(isoString)

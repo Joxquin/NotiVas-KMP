@@ -207,29 +207,30 @@ fun InicioScreen(
                 ) {
                     // ─── 0. Header de Bienvenida (Welcome, Salung) ───────────────────
                     item {
-                        val studentName = userProfile?.name ?: "Estudiante"
+                        val defaultStudent = stringResource(Res.string.greeting_default_student)
+                        val studentFirstName = userProfile?.name?.trim()?.substringBefore(" ")?.takeIf { it.isNotBlank() } ?: defaultStudent
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 4.dp)
                                 .staggeredEntrance(index = 0, trigger = isEntranceTriggered)
                         ) {
-                        Text(
-                            text = "Bienvenido, ${studentName.substringBefore(" ")}",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 26.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = stringResource(Res.string.dashboard_academic_title),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                            Text(
+                                text = stringResource(viewModel.dynamicGreetingRes, studentFirstName),
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 26.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = stringResource(viewModel.dynamicSubtitleRes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                }
 
                 if (isSessionExpired) {
                     item {

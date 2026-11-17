@@ -302,6 +302,17 @@
     <!-- Additional Dashboard & Miuix Strings -->
     <string name="dashboard_welcome">Bienvenido, %1$s</string>
     <string name="dashboard_academic_title">Dashboard Académico y Seguimiento Canvas</string>
+    <string name="greeting_morning">Buenos días, %1$s</string>
+    <string name="greeting_afternoon">Buenas tardes, %1$s</string>
+    <string name="greeting_evening">Buenas noches, %1$s</string>
+    <string name="greeting_default_student">Estudiante</string>
+    <string name="dashboard_dynamic_subtitle_1">¿No se te está olvidando algo?</string>
+    <string name="dashboard_dynamic_subtitle_2">Revisemos tus tareas pendientes</string>
+    <string name="dashboard_dynamic_subtitle_3">¿Listo para avanzar hoy?</string>
+    <string name="dashboard_dynamic_subtitle_4">Un paso a la vez hacia tus metas</string>
+    <string name="dashboard_dynamic_subtitle_5">¿Todo al día con Canvas?</string>
+    <string name="dashboard_dynamic_subtitle_6">Organiza tu día y mantén el control</string>
+    <string name="dashboard_dynamic_subtitle_7">Un buen momento para repasar entregas</string>
     <string name="dashboard_this_week">Esta semana</string>
     <string name="unconfigured_banner_title">Configuración de Fórmulas</string>
     <string name="unconfigured_banner_desc_single">1 curso sin grupos ni pesos definidos</string>

@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.StringResource
+import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.ui.components.miuix.SearchStatus
 import me.joxquin.notivas.data.local.db.dao.SimulationDao
@@ -96,6 +98,23 @@ class DashboardViewModel(
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.SYNCING)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
+
+    val dynamicGreetingRes: StringResource
+        get() = when (DateTimeUtil.nowLocalHour()) {
+            in 5..11 -> Res.string.greeting_morning
+            in 12..18 -> Res.string.greeting_afternoon
+            else -> Res.string.greeting_evening
+        }
+
+    val dynamicSubtitleRes: StringResource = listOf(
+        Res.string.dashboard_dynamic_subtitle_1,
+        Res.string.dashboard_dynamic_subtitle_2,
+        Res.string.dashboard_dynamic_subtitle_3,
+        Res.string.dashboard_dynamic_subtitle_4,
+        Res.string.dashboard_dynamic_subtitle_5,
+        Res.string.dashboard_dynamic_subtitle_6,
+        Res.string.dashboard_dynamic_subtitle_7,
+    ).random()
 
     val isSessionExpired: StateFlow<Boolean> = preferencesManager.isSessionExpired
     private val _showQuickRelogin = MutableStateFlow(false)
