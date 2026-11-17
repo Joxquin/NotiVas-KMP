@@ -3,6 +3,8 @@ package me.joxquin.notivas.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -1138,10 +1140,21 @@ class DashboardViewModel(
         }
     }
 
+    private var syncJob: Job? = null
+
     fun refreshData() {
+        if (_isRefreshing.value) return
+        _isRefreshing.value = true
+        _syncStatus.value = SyncStatus.SYNCING
+
         viewModelScope.launch {
-            _isRefreshing.value = true
-            _syncStatus.value = SyncStatus.SYNCING
+            delay(1200)
+            _isRefreshing.value = false
+        }
+
+        if (syncJob?.isActive == true) return
+
+        syncJob = viewModelScope.launch {
             try {
                 repository.fetchAndSaveData()
                 repository.getProfile(forceRefresh = true)
