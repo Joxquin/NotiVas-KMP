@@ -49,7 +49,10 @@ object AppModule {
 
     val tecsupToolsHandler: me.joxquin.notivas.data.repository.copilot.tools.handlers.TecsupToolsHandler by lazy {
         me.joxquin.notivas.data.repository.copilot.tools.handlers.TecsupToolsHandler(
-            toolsProvider = me.joxquin.notivas.plugins.tecsup.copilot.TecsupToolsProvider(tecsupApiClient)
+            toolsProvider = me.joxquin.notivas.plugins.tecsup.copilot.TecsupToolsProvider(
+                apiClient = tecsupApiClient,
+                sessionManager = tecsupSessionManager
+            )
         )
     }
     

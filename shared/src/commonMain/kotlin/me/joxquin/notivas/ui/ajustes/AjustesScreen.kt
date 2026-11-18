@@ -84,6 +84,8 @@ import me.joxquin.notivas.shared.resources.settings_category_drive
 import me.joxquin.notivas.shared.resources.settings_category_drive_desc
 import me.joxquin.notivas.shared.resources.settings_category_notifications
 import me.joxquin.notivas.shared.resources.settings_category_notifications_desc
+import me.joxquin.notivas.shared.resources.settings_category_plugins
+import me.joxquin.notivas.shared.resources.settings_category_plugins_desc
 import me.joxquin.notivas.shared.resources.settings_title
 import me.joxquin.notivas.shared.resources.settings_token_subtitle
 import me.joxquin.notivas.shared.resources.settings_token_summary_token
