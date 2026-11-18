@@ -118,6 +118,10 @@ fun AjustesPluginsScreen(
 
     LaunchedEffect(sessionState) {
         if (sessionState is TecsupSessionState.Connected) {
+            val connected = sessionState as TecsupSessionState.Connected
+            if (connected.user != null) {
+                user = connected.user
+            }
             isLoadingUser = true
             apiClient.fetchUserInfo().onSuccess {
                 user = it
