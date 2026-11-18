@@ -840,4 +840,14 @@
     <string name="review_action_start">Iniciar revisión</string>
     <string name="review_action_new_review">Nueva revisión</string>
     <string name="review_step_downloading_modules">Descargando y analizando lecturas del módulo...</string>
+
+    <!-- Tecsup Integration Plugin -->
+    <string name="tecsup_integration_title">Integración Tecsup</string>
+    <string name="tecsup_integration_desc">Sincroniza notas oficiales, horario y asistencias desde u-planner</string>
+    <string name="tecsup_onboarding_prompt">Detectamos tu campus de Tecsup. ¿Deseas activar el plugin oficial de Tecsup?</string>
+    <string name="tecsup_onboarding_enable">Activar Tecsup</string>
+    <string name="tecsup_onboarding_later">Quizás más tarde</string>
+    <string name="tecsup_session_active">Conectado</string>
+    <string name="tecsup_session_expired">Sesión expirada</string>
+    <string name="tecsup_action_reconnect">Reconectar</string>
 </resources>
