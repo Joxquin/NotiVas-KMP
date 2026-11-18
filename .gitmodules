@@ -1,0 +1,3 @@
+[submodule "plugins/tecsup"]
+	path = plugins/tecsup
+	url = https://github.com/Joxquin/notivas-plugin-tecsup.git

@@ -103,6 +103,7 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
+            implementation(project(":plugins:tecsup"))
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
