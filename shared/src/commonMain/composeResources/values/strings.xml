@@ -872,4 +872,5 @@
     <string name="plugin_tecsup_dialog_manual_desc">Paste your Bearer access token obtained from u-planner / Tecsup here.</string>
     <string name="plugin_tecsup_dialog_manual_label">Bearer Token</string>
     <string name="plugin_tecsup_auth_webview_title">Tecsup u-planner Login</string>
+    <string name="confirm">Confirm</string>
 </resources>

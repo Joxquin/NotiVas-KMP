@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
@@ -594,7 +595,7 @@ fun AjustesScreen(
                     MaterialCategoryCard(
                         title = stringResource(Res.string.settings_category_plugins),
                         subtitle = stringResource(Res.string.settings_category_plugins_desc),
-                        icon = androidx.compose.material.icons.outlined.Extension,
+                        icon = Icons.Default.School,
                         onClick = onNavigateToPlugins
                     )
 

@@ -611,7 +611,7 @@ fun AjustesPluginsScreen(
                             .weight(1f)
                     ) {
                         TecsupAuthWebView(
-                            authUrl = TecsupEndpoints.LOGIN_AZURE_URL,
+                            authUrl = TecsupEndpoints.LOGIN_URL,
                             onTokenReceived = { token ->
                                 scope.launch {
                                     sessionManager.saveToken(token)
