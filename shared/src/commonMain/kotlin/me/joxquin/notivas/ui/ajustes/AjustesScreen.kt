@@ -148,6 +148,7 @@ fun AjustesScreen(
     onNavigateToCopilot: () -> Unit = {},
     onNavigateToDrive: () -> Unit = {},
     onNavigateToToken: () -> Unit = {},
+    onNavigateToPlugins: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     modifier: Modifier = Modifier,
     lazyListState: LazyListState = rememberLazyListState()
@@ -379,6 +380,12 @@ fun AjustesScreen(
                             )
 
                             ArrowPreference(
+                                title = stringResource(Res.string.settings_category_plugins),
+                                summary = stringResource(Res.string.settings_category_plugins_desc),
+                                onClick = onNavigateToPlugins
+                            )
+
+                            ArrowPreference(
                                 title = stringResource(Res.string.settings_category_about),
                                 summary = stringResource(Res.string.settings_category_about_desc),
                                 onClick = onNavigateToAbout
@@ -580,6 +587,13 @@ fun AjustesScreen(
                         subtitle = tokenSummary,
                         icon = Icons.Default.Key,
                         onClick = onNavigateToToken
+                    )
+
+                    MaterialCategoryCard(
+                        title = stringResource(Res.string.settings_category_plugins),
+                        subtitle = stringResource(Res.string.settings_category_plugins_desc),
+                        icon = androidx.compose.material.icons.outlined.Extension,
+                        onClick = onNavigateToPlugins
                     )
 
                     MaterialCategoryCard(

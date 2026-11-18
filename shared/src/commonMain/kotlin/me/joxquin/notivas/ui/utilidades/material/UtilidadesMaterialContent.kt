@@ -72,6 +72,9 @@ fun UtilidadesMaterialContent(
     onImportJsonClick: () -> Unit = {},
     onExportJsonClick: () -> Unit = {},
     onResetGroups: () -> Unit = {},
+    isTecsupEnabled: Boolean = false,
+    tecsupSessionManager: me.joxquin.notivas.plugins.tecsup.session.TecsupSessionManager? = null,
+    onOpenTecsup: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
@@ -291,6 +294,17 @@ fun UtilidadesMaterialContent(
                 )
             }
 
+            if (isTecsupEnabled && tecsupSessionManager != null) {
+                val tecsupSessionState by tecsupSessionManager.sessionState.collectAsState()
+                item {
+                    me.joxquin.notivas.plugins.tecsup.ui.TecsupCard(
+                        themeMode = me.joxquin.notivas.plugins.tecsup.ui.PluginThemeMode.MATERIAL,
+                        sessionState = tecsupSessionState,
+                        onClick = onOpenTecsup,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
 
             // ─── CARD 3: Foros de Discusión ─────────────────────────────────
             item {

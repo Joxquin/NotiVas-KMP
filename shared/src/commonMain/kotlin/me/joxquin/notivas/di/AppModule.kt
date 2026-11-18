@@ -35,9 +35,32 @@ object AppModule {
     val canvasRepository: CanvasRepository by lazy {
         CanvasRepository(canvasApiService, localStore, preferencesManager)
     }
+
+    val tecsupSessionManager: me.joxquin.notivas.plugins.tecsup.session.TecsupSessionManager by lazy {
+        me.joxquin.notivas.plugins.tecsup.session.TecsupSessionManager(
+            tokenStorage = { token -> preferencesManager.setTecsupToken(token) },
+            initialToken = preferencesManager.getTecsupToken()
+        )
+    }
+
+    val tecsupApiClient: me.joxquin.notivas.plugins.tecsup.api.TecsupApiClient by lazy {
+        me.joxquin.notivas.plugins.tecsup.api.TecsupApiClient(sessionManager = tecsupSessionManager)
+    }
+
+    val tecsupToolsHandler: me.joxquin.notivas.data.repository.copilot.tools.handlers.TecsupToolsHandler by lazy {
+        me.joxquin.notivas.data.repository.copilot.tools.handlers.TecsupToolsHandler(
+            toolsProvider = me.joxquin.notivas.plugins.tecsup.copilot.TecsupToolsProvider(tecsupApiClient)
+        )
+    }
     
     val copilotRepository: CopilotRepository by lazy {
-        CopilotRepository(openRouterApiService, canvasApiService, localStore, preferencesManager)
+        CopilotRepository(
+            openRouterApiService,
+            canvasApiService,
+            localStore,
+            preferencesManager,
+            tecsupToolsHandler = tecsupToolsHandler
+        )
     }
     
     val copilotChatRepository: CopilotChatRepository by lazy {

@@ -850,4 +850,26 @@
     <string name="tecsup_session_active">Connected</string>
     <string name="tecsup_session_expired">Session expired</string>
     <string name="tecsup_action_reconnect">Reconnect</string>
+
+    <!-- Plugins and Integrations -->
+    <string name="settings_category_plugins">Plugins &amp; Integrations</string>
+    <string name="settings_category_plugins_desc">Institutional extensions and external data sources</string>
+    <string name="plugins_title">Plugins &amp; Integrations</string>
+    <string name="plugins_subtitle">Available services and extensions</string>
+    <string name="plugins_available_section">AVAILABLE</string>
+    <string name="plugins_active_badge">Active</string>
+    <string name="plugins_inactive_badge">Inactive</string>
+    <string name="plugin_tecsup_title">Tecsup Academic</string>
+    <string name="plugin_tecsup_description">Access official grades, schedules, and attendance directly from u-planner v3 with Copilot support.</string>
+    <string name="plugin_tecsup_session_connected">Connected</string>
+    <string name="plugin_tecsup_session_disconnected">Not connected</string>
+    <string name="plugin_tecsup_action_login">Log in</string>
+    <string name="plugin_tecsup_action_manual_token">Enter token manually</string>
+    <string name="plugin_tecsup_action_logout">Log out</string>
+    <string name="plugin_tecsup_action_open_panel">Open academic panel</string>
+    <string name="plugin_tecsup_config_section">Plugin settings</string>
+    <string name="plugin_tecsup_dialog_manual_title">u-planner Access Token</string>
+    <string name="plugin_tecsup_dialog_manual_desc">Paste your Bearer access token obtained from u-planner / Tecsup here.</string>
+    <string name="plugin_tecsup_dialog_manual_label">Bearer Token</string>
+    <string name="plugin_tecsup_auth_webview_title">Tecsup u-planner Login</string>
 </resources>

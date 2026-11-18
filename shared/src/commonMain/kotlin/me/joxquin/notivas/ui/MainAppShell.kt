@@ -231,6 +231,7 @@ fun MainAppShell(
     val profileViewModel = remember {
         ProfileViewModel(canvasRepository, copilotRepository, preferencesManager)
     }
+    val profileUiState by profileViewModel.uiState.collectAsState()
     val archiveViewModel = remember {
         me.joxquin.notivas.ui.utilidades.archive.ArchiveViewModel(canvasRepository, preferencesManager)
     }
@@ -552,6 +553,9 @@ fun MainAppShell(
                                                 miuixNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
                                             },
                                             onOpenTuneSettings = { showUtilidadesTuneSheet = true },
+                                            isTecsupEnabled = profileUiState.isTecsupPluginEnabled,
+                                            tecsupSessionManager = me.joxquin.notivas.di.AppModule.tecsupSessionManager,
+                                            onOpenTecsup = { miuixNavigator.push(MiuixRoute.TecsupPluginDetail) },
                                             onBack = {},
                                             themeStyle = AppThemeStyle.MIUIX,
                                             lazyListState = utilidadesListState
@@ -615,6 +619,9 @@ fun MainAppShell(
                                             },
                                             onNavigateToToken = {
                                                 miuixNavigator.push(MiuixRoute.SettingsToken)
+                                            },
+                                            onNavigateToPlugins = {
+                                                miuixNavigator.push(MiuixRoute.SettingsPlugins)
                                             },
                                             onNavigateToAbout = {
                                                 miuixNavigator.push(MiuixRoute.SettingsAbout)
@@ -1075,6 +1082,26 @@ fun MainAppShell(
                         onBack = { handleMiuixBack() }
                     )
                 }
+
+                entry<MiuixRoute.SettingsPlugins>(swipeDismiss = swipeBackDirection) {
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesPluginsScreen(
+                        themeStyle = AppThemeStyle.MIUIX,
+                        isTecsupEnabled = profileUiState.isTecsupPluginEnabled,
+                        onTecsupEnabledChange = { profileViewModel.setTecsupPluginEnabled(it) },
+                        sessionManager = me.joxquin.notivas.di.AppModule.tecsupSessionManager,
+                        apiClient = me.joxquin.notivas.di.AppModule.tecsupApiClient,
+                        onNavigateToTecsupDetail = { miuixNavigator.push(MiuixRoute.TecsupPluginDetail) },
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.TecsupPluginDetail>(swipeDismiss = swipeBackDirection) {
+                    me.joxquin.notivas.plugins.tecsup.ui.TecsupDetailScreen(
+                        apiClient = me.joxquin.notivas.di.AppModule.tecsupApiClient,
+                        sessionManager = me.joxquin.notivas.di.AppModule.tecsupSessionManager,
+                        onBack = { handleMiuixBack() }
+                    )
+                }
             }
 
             SnackbarHost(
@@ -1319,6 +1346,9 @@ fun MainAppShell(
                                             onImportJsonClick = { filePicker.launchFilePicker() },
                                             onExportJsonClick = { filePicker.launchFileCreator("notivas_ponderacion.json") },
                                             onResetGroups = { notasViewModel.resetAllSimulationGroups() },
+                                            isTecsupEnabled = profileUiState.isTecsupPluginEnabled,
+                                            tecsupSessionManager = me.joxquin.notivas.di.AppModule.tecsupSessionManager,
+                                            onOpenTecsup = { materialNavigator.push(MiuixRoute.TecsupPluginDetail) },
                                             onBack = { handleMaterialBack() },
                                             themeStyle = AppThemeStyle.MATERIAL,
                                             lazyListState = utilidadesListState
@@ -1381,6 +1411,9 @@ fun MainAppShell(
                                             },
                                             onNavigateToToken = {
                                                 materialNavigator.push(MiuixRoute.SettingsToken)
+                                            },
+                                            onNavigateToPlugins = {
+                                                materialNavigator.push(MiuixRoute.SettingsPlugins)
                                             },
                                             onNavigateToAbout = {
                                                 materialNavigator.push(MiuixRoute.SettingsAbout)
@@ -1801,6 +1834,26 @@ fun MainAppShell(
                 entry<MiuixRoute.SettingsAbout>(swipeDismiss = materialSwipeBackDirection) {
                     me.joxquin.notivas.ui.ajustes.subscreens.AjustesAboutScreen(
                         themeStyle = AppThemeStyle.MATERIAL,
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsPlugins>(swipeDismiss = materialSwipeBackDirection) {
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesPluginsScreen(
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        isTecsupEnabled = profileUiState.isTecsupPluginEnabled,
+                        onTecsupEnabledChange = { profileViewModel.setTecsupPluginEnabled(it) },
+                        sessionManager = me.joxquin.notivas.di.AppModule.tecsupSessionManager,
+                        apiClient = me.joxquin.notivas.di.AppModule.tecsupApiClient,
+                        onNavigateToTecsupDetail = { materialNavigator.push(MiuixRoute.TecsupPluginDetail) },
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.TecsupPluginDetail>(swipeDismiss = materialSwipeBackDirection) {
+                    me.joxquin.notivas.plugins.tecsup.ui.TecsupDetailScreen(
+                        apiClient = me.joxquin.notivas.di.AppModule.tecsupApiClient,
+                        sessionManager = me.joxquin.notivas.di.AppModule.tecsupSessionManager,
                         onBack = { handleMaterialBack() }
                     )
                 }

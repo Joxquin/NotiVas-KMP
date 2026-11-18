@@ -183,6 +183,14 @@ class PreferencesManager(
     val googleDriveLastSyncTimestamp: Flow<Long> = _googleDriveLastSyncTimestamp.asStateFlow()
     fun getGoogleDriveLastSyncTimestamp(): Long = _googleDriveLastSyncTimestamp.value
 
+    private val _isTecsupPluginEnabled = MutableStateFlow(false)
+    val isTecsupPluginEnabled: Flow<Boolean> = _isTecsupPluginEnabled.asStateFlow()
+    fun getIsTecsupPluginEnabled(): Boolean = _isTecsupPluginEnabled.value
+
+    private val _tecsupToken = MutableStateFlow<String?>(null)
+    val tecsupToken: Flow<String?> = _tecsupToken.asStateFlow()
+    fun getTecsupToken(): String? = _tecsupToken.value
+
     private val _googleDriveAccessToken = MutableStateFlow<String?>(null)
     val googleDriveAccessToken: Flow<String?> = _googleDriveAccessToken.asStateFlow()
     fun getGoogleDriveAccessToken(): String? = _googleDriveAccessToken.value
@@ -288,6 +296,8 @@ class PreferencesManager(
             _discardedAssignmentIds.value = snapshot.discardedAssignmentIds
             _recentSearches.value = snapshot.recentSearches
             _copilotCustomInstructions.value = snapshot.copilotCustomInstructions
+            _isTecsupPluginEnabled.value = snapshot.isTecsupPluginEnabled
+            _tecsupToken.value = snapshot.tecsupToken
         } catch (_: Exception) {
         } finally {
             _isLoaded.value = true
@@ -344,7 +354,9 @@ class PreferencesManager(
                 googleDriveRefreshToken = _googleDriveRefreshToken.value,
                 discardedAssignmentIds = _discardedAssignmentIds.value,
                 recentSearches = _recentSearches.value,
-                copilotCustomInstructions = _copilotCustomInstructions.value
+                copilotCustomInstructions = _copilotCustomInstructions.value,
+                isTecsupPluginEnabled = _isTecsupPluginEnabled.value,
+                tecsupToken = _tecsupToken.value
             )
             val jsonString = json.encodeToString(PersistentPreferencesSnapshot.serializer(), snapshot)
             PlatformFileSystem.writeString(prefsFile, jsonString)
@@ -543,6 +555,16 @@ class PreferencesManager(
     suspend fun dismissUnconfiguredCoursesBannerFor7Days() {
         val sevenDaysMs = 7L * 24L * 60L * 60L * 1000L
         _unconfiguredCoursesBannerDismissedUntil.value = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + sevenDaysMs
+        schedulePersist()
+    }
+
+    suspend fun setTecsupPluginEnabled(enabled: Boolean) {
+        _isTecsupPluginEnabled.value = enabled
+        schedulePersist()
+    }
+
+    suspend fun setTecsupToken(token: String?) {
+        _tecsupToken.value = token
         schedulePersist()
     }
 

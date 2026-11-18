@@ -56,6 +56,8 @@ data class PersistentPreferencesSnapshot(
     val lastSyncTimestamp: Long = 0L,
     val autoRenewToken: Boolean = true,
     val tokenExpiresAt: Long = 0L,
-    val copilotCustomInstructions: String = ""
+    val copilotCustomInstructions: String = "",
+    val isTecsupPluginEnabled: Boolean = false,
+    val tecsupToken: String? = null
 )
 

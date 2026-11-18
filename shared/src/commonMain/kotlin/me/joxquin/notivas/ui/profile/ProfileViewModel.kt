@@ -55,7 +55,9 @@ data class ProfileUiState(
     val autoRenewToken: Boolean = true,
     val tokenExpiresAt: Long = 0L,
     val isGeneratingToken: Boolean = false,
-    val isUpdatingToken: Boolean = false
+    val isUpdatingToken: Boolean = false,
+    val isTecsupPluginEnabled: Boolean = false,
+    val tecsupToken: String? = null
 )
 
 class ProfileViewModel(
@@ -159,7 +161,9 @@ class ProfileViewModel(
         preferencesManager.autoRenewToken,
         preferencesManager.tokenExpiresAt,
         _isGeneratingToken,
-        _isUpdatingToken
+        _isUpdatingToken,
+        preferencesManager.isTecsupPluginEnabled,
+        preferencesManager.tecsupToken
     ) { args: Array<Any?> ->
         val url = args[1] as String?
         val host = if (url.isNullOrBlank()) "Canvas LMS" else {
@@ -201,9 +205,23 @@ class ProfileViewModel(
             autoRenewToken = args[30] as Boolean,
             tokenExpiresAt = args[31] as Long,
             isGeneratingToken = args[32] as Boolean,
-            isUpdatingToken = args[33] as Boolean
+            isUpdatingToken = args[33] as Boolean,
+            isTecsupPluginEnabled = args[34] as Boolean,
+            tecsupToken = args[35] as String?
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileUiState())
+
+    fun setTecsupPluginEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesManager.setTecsupPluginEnabled(enabled)
+        }
+    }
+
+    fun setTecsupToken(token: String?) {
+        viewModelScope.launch {
+            preferencesManager.setTecsupToken(token)
+        }
+    }
 
     fun saveGoogleDriveAuth(accessToken: String, refreshToken: String?, email: String?) {
         viewModelScope.launch {

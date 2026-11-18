@@ -54,6 +54,9 @@ fun UtilidadesScreen(
     onImportJsonClick: () -> Unit = {},
     onExportJsonClick: () -> Unit = {},
     onResetGroups: () -> Unit = {},
+    isTecsupEnabled: Boolean = false,
+    tecsupSessionManager: me.joxquin.notivas.plugins.tecsup.session.TecsupSessionManager? = null,
+    onOpenTecsup: () -> Unit = {},
     onBack: () -> Unit = {},
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     lazyListState: LazyListState = rememberLazyListState(),
@@ -190,6 +193,9 @@ fun UtilidadesScreen(
                         onOpenForoDetail = handleOpenForoDetail,
                         onOpenArchive = onOpenArchive,
                         onOpenTuneSettings = onOpenTuneSettings,
+                        isTecsupEnabled = isTecsupEnabled,
+                        tecsupSessionManager = tecsupSessionManager,
+                        onOpenTecsup = onOpenTecsup,
                         lazyListState = lazyListState
                     )
                 } else {
@@ -205,6 +211,9 @@ fun UtilidadesScreen(
                         onImportJsonClick = onImportJsonClick,
                         onExportJsonClick = onExportJsonClick,
                         onResetGroups = onResetGroups,
+                        isTecsupEnabled = isTecsupEnabled,
+                        tecsupSessionManager = tecsupSessionManager,
+                        onOpenTecsup = onOpenTecsup,
                         lazyListState = lazyListState
                     )
                 }
