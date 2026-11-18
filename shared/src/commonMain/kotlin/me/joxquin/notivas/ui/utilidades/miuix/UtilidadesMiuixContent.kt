@@ -115,8 +115,8 @@ fun UtilidadesMiuixContent(
                 }
 
                 if (isTecsupEnabled && tecsupSessionManager != null) {
-                    val tecsupSessionState by tecsupSessionManager.sessionState.collectAsState()
                     item {
+                        val tecsupSessionState by tecsupSessionManager.sessionState.collectAsState()
                         me.joxquin.notivas.plugins.tecsup.ui.TecsupCard(
                             themeMode = me.joxquin.notivas.plugins.tecsup.ui.PluginThemeMode.MIUIX,
                             sessionState = tecsupSessionState,
