@@ -79,6 +79,7 @@ class TecsupToolsHandler(
             resultJson = resultJson,
             source = CopilotSource(
                 title = "Tecsup u-planner",
+                detail = "Datos institucionales sincronizados",
                 url = "https://tecsup-api.u-planner.com"
             )
         )
