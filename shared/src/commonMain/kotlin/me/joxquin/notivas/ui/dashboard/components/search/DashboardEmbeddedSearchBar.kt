@@ -52,6 +52,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -242,14 +247,67 @@ fun DashboardAnimatedSearchOverlay(
     courseStats: List<CourseStat>,
     assignments: List<AssignmentUiModel>,
     discussions: List<me.joxquin.notivas.data.model.CanvasDiscussionTopic> = emptyList(),
+    materials: List<me.joxquin.notivas.data.model.CourseMaterialSearchItem> = emptyList(),
     onCourseClick: (Course) -> Unit,
     onAssignmentClick: (AssignmentUiModel) -> Unit,
     onForumClick: (me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit = {},
+    onMaterialClick: ((me.joxquin.notivas.data.model.CourseMaterialSearchItem) -> Unit)? = null,
     onAskAi: (String) -> Unit,
     themeStyle: AppThemeStyle,
     onAnimStatusChange: (SearchAnimStatus) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var debouncedQuery by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+
+    LaunchedEffect(query) {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) {
+            debouncedQuery = ""
+            isSearching = false
+        } else {
+            isSearching = true
+            delay(250)
+            debouncedQuery = trimmed
+            isSearching = false
+        }
+    }
+
+    val lazyListState = rememberLazyListState()
+    var visibleLimit by remember(debouncedQuery) { mutableIntStateOf(15) }
+    var loadingMore by remember { mutableStateOf(false) }
+
+    val totalMatchingCount = remember(debouncedQuery, courses, assignments, discussions, materials) {
+        val q = debouncedQuery.trim()
+        if (q.isEmpty()) 0 else {
+            courses.count { it.name.contains(q, true) || it.courseCode?.contains(q, true) == true } +
+            assignments.count { it.assignment.name.contains(q, true) || it.courseName.contains(q, true) } +
+            discussions.count { it.title.contains(q, true) || it.courseName?.contains(q, true) == true } +
+            materials.count { it.item.title.contains(q, true) || it.courseName.contains(q, true) }
+        }
+    }
+
+    val hasMore = visibleLimit < totalMatchingCount
+
+    LaunchedEffect(lazyListState, hasMore) {
+        if (!hasMore) return@LaunchedEffect
+        snapshotFlow {
+            val layoutInfo = lazyListState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            totalItems to lastVisible
+        }
+            .distinctUntilChanged()
+            .collect { (total, lastVisible) ->
+                if (hasMore && !loadingMore && lastVisible >= total - 3) {
+                    loadingMore = true
+                    delay(120)
+                    visibleLimit += 15
+                    loadingMore = false
+                }
+            }
+    }
+
     var animStatus by remember { mutableStateOf(if (isExpanded) SearchAnimStatus.EXPANDED else SearchAnimStatus.COLLAPSED) }
 
     LaunchedEffect(animStatus) {
@@ -269,6 +327,7 @@ fun DashboardAnimatedSearchOverlay(
     }
 
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
+    val searchColors = rememberSearchResultColors(themeStyle)
     val focusRequester = remember { FocusRequester() }
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
@@ -503,16 +562,28 @@ fun DashboardAnimatedSearchOverlay(
                             )
 
                             if (query.isNotEmpty()) {
-                                IconButton(
-                                    onClick = { onQueryChange("") },
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Limpiar",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                if (isSearching) {
+                                    Box(
+                                        modifier = Modifier.size(28.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                } else {
+                                    IconButton(
+                                        onClick = { onQueryChange("") },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Limpiar",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -528,11 +599,12 @@ fun DashboardAnimatedSearchOverlay(
                 modifier = Modifier.fillMaxSize()
             ) {
                 LazyColumn(
+                    state = lazyListState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 120.dp)
                 ) {
                     if (query.isBlank()) {
-                        item {
+                        item(key = "search_history") {
                             SearchHistorySection(
                                 recentSearches = recentSearches,
                                 onSelectQuery = { selectedTerm ->
@@ -546,36 +618,45 @@ fun DashboardAnimatedSearchOverlay(
                             )
                         }
                     } else {
-                        item {
-                            SearchLiveResultsSection(
-                                query = query,
-                                courses = courses,
-                                courseStats = courseStats,
-                                assignments = assignments,
-                                discussions = discussions,
-                                onCourseClick = { course ->
-                                    onSearchCommit(course.name)
-                                    animStatus = SearchAnimStatus.COLLAPSING
-                                    onCourseClick(course)
-                                },
-                                onAssignmentClick = { uiModel ->
-                                    onSearchCommit(uiModel.assignment.name)
-                                    animStatus = SearchAnimStatus.COLLAPSING
-                                    onAssignmentClick(uiModel)
-                                },
-                                onForumClick = { topic ->
-                                    onSearchCommit(topic.title)
-                                    animStatus = SearchAnimStatus.COLLAPSING
-                                    onForumClick(topic)
-                                },
-                                onAskCopilot = { prompt ->
-                                    onSearchCommit(prompt)
-                                    animStatus = SearchAnimStatus.COLLAPSING
-                                    onAskAi(prompt)
-                                },
-                                themeStyle = themeStyle
-                            )
-                        }
+                        searchLiveResultItems(
+                            query = debouncedQuery,
+                            courses = courses,
+                            courseStats = courseStats,
+                            assignments = assignments,
+                            discussions = discussions,
+                            materials = materials,
+                            isSearching = isSearching,
+                            visibleLimit = visibleLimit,
+                            hasMore = hasMore,
+                            loadingMore = loadingMore,
+                            colors = searchColors,
+                            onCourseClick = { course ->
+                                onSearchCommit(course.name)
+                                collapseSearch()
+                                onCourseClick(course)
+                            },
+                            onAssignmentClick = { uiModel ->
+                                onSearchCommit(uiModel.assignment.name)
+                                collapseSearch()
+                                onAssignmentClick(uiModel)
+                            },
+                            onForumClick = { topic ->
+                                onSearchCommit(topic.title)
+                                collapseSearch()
+                                onForumClick(topic)
+                            },
+                            onMaterialClick = { material ->
+                                onSearchCommit(material.item.title)
+                                collapseSearch()
+                                onMaterialClick?.invoke(material)
+                            },
+                            onAskCopilot = { prompt ->
+                                onSearchCommit(prompt)
+                                collapseSearch()
+                                onAskAi(prompt)
+                            },
+                            themeStyle = themeStyle
+                        )
                     }
                 }
             }

@@ -92,6 +92,13 @@ data class CanvasModuleItem(
     @SerialName("locked_for_user") val lockedForUser: Boolean? = null
 )
 
+data class CourseMaterialSearchItem(
+    val courseId: Long,
+    val courseName: String,
+    val moduleName: String,
+    val item: CanvasModuleItem
+)
+
 @Serializable
 data class CanvasPageDetail(
     @SerialName("url") val url: String? = null,

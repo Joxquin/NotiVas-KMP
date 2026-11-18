@@ -211,7 +211,7 @@
     <string name="copilot_custom_instructions_desc">Personaliza el tono, estilo y reglas para las respuestas de la IA.</string>
     <string name="copilot_custom_instructions_placeholder">Ej: Responde en formato académico con viñetas, sé breve y conciso...</string>
     <string name="copilot_history_search_placeholder">Buscar en el historial...</string>
-    <string name="copilot_history_no_results">No se encontraron consultas para \"%1$s\"</string>
+    <string name="copilot_history_no_results">No se encontraron consultas para “%1$s”</string>
     <string name="copilot_history_empty_hint">Inicia una nueva conversación para comenzar a registrar tu historial.</string>
 
     <!-- Onboarding -->
@@ -592,14 +592,17 @@
     <string name="search_filter_courses">Cursos</string>
     <string name="search_filter_assignments">Tareas</string>
     <string name="search_filter_forums">Foros</string>
-    <string name="search_no_results">No se encontraron resultados para \"%1$s\"</string>
-    <string name="search_ask_copilot_format">Preguntar a Copilot IA sobre \"%1$s\"</string>
+    <string name="search_no_results">No se encontraron resultados para “%1$s”</string>
+    <string name="search_ask_copilot_format">Preguntar a Copilot IA sobre “%1$s”</string>
     <string name="search_quick_suggestions">Sugerencias y accesos directos</string>
     <string name="search_copilot_card_title">Consultar con Copilot IA</string>
     <string name="search_copilot_card_subtitle">Pregunta sobre entregas, fechas límite o syllabus</string>
     <string name="search_filter_pending_tasks">Tareas pendientes</string>
     <string name="search_filter_term_courses">Cursos del ciclo</string>
     <string name="search_filter_labs">Laboratorios</string>
+    <string name="search_filter_materials">Materiales y módulos</string>
+    <string name="search_quick_filter_forums">Foros</string>
+    <string name="search_quick_filter_materials">Material de clase</string>
 
     <!-- Course Detail Screen (Stitch Redesign) -->
     <string name="course_detail_screen_title">Detalle del Curso</string>
@@ -746,11 +749,11 @@
     <string name="group_detail_items_header">Entregables y Evaluaciones</string>
     <string name="group_detail_add_item">Añadir entregable</string>
     <string name="group_dialog_delete_title">¿Eliminar grupo de evaluación?</string>
-    <string name="group_dialog_delete_message">Se eliminará el grupo \"%1$s\" y todas sus notas simuladas asociadas. Esta acción no se puede deshacer.</string>
+    <string name="group_dialog_delete_message">Se eliminará el grupo “%1$s” y todas sus notas simuladas asociadas. Esta acción no se puede deshacer.</string>
     <string name="group_dialog_delete_confirm">Eliminar grupo</string>
     <string name="group_item_simulated_label">Nota simulada</string>
     <string name="group_item_delete_confirm_title">¿Eliminar entregable?</string>
-    <string name="group_item_delete_confirm_message">¿Deseas eliminar \"%1$s\" de este grupo?</string>
+    <string name="group_item_delete_confirm_message">¿Deseas eliminar “%1$s” de este grupo?</string>
     <string name="group_item_linked_canvas">Vinculado a Canvas LMS</string>
     <string name="group_create_sheet_title">Nuevo Grupo de Evaluación</string>
     <string name="group_create_name_label">Nombre del grupo (ej. Laboratorios)</string>

@@ -1097,6 +1097,38 @@ class CanvasRepository(
         }
     }
 
+    suspend fun getCourseMaterialsForCourses(): List<me.joxquin.notivas.data.model.CourseMaterialSearchItem> = withContext(AppDispatchers.IO) {
+        val courses = localStore.getAllCourses().first()
+        coroutineScope {
+            courses.map { course ->
+                async {
+                    try {
+                        val modules = fetchCourseModules(course.id)
+                        val materials = mutableListOf<me.joxquin.notivas.data.model.CourseMaterialSearchItem>()
+                        for (module in modules) {
+                            val items = module.items ?: emptyList()
+                            for (item in items) {
+                                materials.add(
+                                    me.joxquin.notivas.data.model.CourseMaterialSearchItem(
+                                        courseId = course.id,
+                                        courseName = course.name,
+                                        moduleName = module.name,
+                                        item = item
+                                    )
+                                )
+                            }
+                        }
+                        materials
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Throwable) {
+                        emptyList()
+                    }
+                }
+            }.awaitAll().flatten()
+        }
+    }
+
     suspend fun getDiscussionTopic(courseId: Long, topicId: Long): me.joxquin.notivas.data.model.CanvasDiscussionTopic? = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext null
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext null

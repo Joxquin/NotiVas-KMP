@@ -18,8 +18,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,6 +45,8 @@ import me.joxquin.notivas.shared.resources.search_copilot_card_title
 import me.joxquin.notivas.shared.resources.search_filter_labs
 import me.joxquin.notivas.shared.resources.search_filter_pending_tasks
 import me.joxquin.notivas.shared.resources.search_filter_term_courses
+import me.joxquin.notivas.shared.resources.search_quick_filter_forums
+import me.joxquin.notivas.shared.resources.search_quick_filter_materials
 import me.joxquin.notivas.shared.resources.search_quick_suggestions
 import me.joxquin.notivas.shared.resources.search_recent_title
 import org.jetbrains.compose.resources.stringResource
@@ -243,6 +247,18 @@ fun SearchHistorySection(
                     icon = Icons.Outlined.School,
                     isMiuix = isMiuix,
                     onClick = { onSelectQuery("curso") }
+                )
+                QuickFilterChip(
+                    label = stringResource(Res.string.search_quick_filter_forums),
+                    icon = Icons.Default.Forum,
+                    isMiuix = isMiuix,
+                    onClick = { onSelectQuery("foro") }
+                )
+                QuickFilterChip(
+                    label = stringResource(Res.string.search_quick_filter_materials),
+                    icon = Icons.Outlined.Description,
+                    isMiuix = isMiuix,
+                    onClick = { onSelectQuery("semana") }
                 )
                 QuickFilterChip(
                     label = stringResource(Res.string.search_filter_labs),

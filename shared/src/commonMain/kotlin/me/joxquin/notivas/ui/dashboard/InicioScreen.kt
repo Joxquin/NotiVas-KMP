@@ -118,15 +118,6 @@ fun InicioScreen(
         }
     }
 
-    // Filtrar cursos si hay búsqueda activa
-    val filteredCourses = androidx.compose.runtime.remember(courses, searchQuery) {
-        if (searchQuery.isBlank()) courses
-        else courses.filter {
-            it.name.contains(searchQuery, ignoreCase = true) ||
-                    (it.courseCode?.contains(searchQuery, ignoreCase = true) == true)
-        }
-    }
-
     var selectedAssignmentForSubmenu by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf<AssignmentUiModel?>(null)
     }
@@ -138,6 +129,7 @@ fun InicioScreen(
     }
 
     val recentSearches by viewModel.recentSearches.collectAsState()
+    val courseMaterials by viewModel.courseMaterials.collectAsState()
     val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
     val searchStatus by viewModel.searchStatus.collectAsState()
     var searchOffsetY by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(140.dp) }
@@ -302,18 +294,18 @@ fun InicioScreen(
                 }
 
                 // ─── 4. Cursos Activos: Grid Rediseñado de Cursos (Virtualizado) ───
-                if (filteredCourses.isNotEmpty()) {
+                if (courses.isNotEmpty()) {
                     item {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .staggeredEntrance(index = 4, trigger = isEntranceTriggered)
                         ) {
-                            MaterialCourseHeader(totalCourses = filteredCourses.size)
+                            MaterialCourseHeader(totalCourses = courses.size)
                         }
                     }
 
-                    val coursePairs = filteredCourses.chunked(2)
+                    val coursePairs = courses.chunked(2)
                     itemsIndexed(
                         items = coursePairs,
                         key = { _, pair -> "material_course_pair_${pair.map { it.id }.joinToString("_")}" }
@@ -339,7 +331,12 @@ fun InicioScreen(
         // Vista Incrustada de Búsqueda con Animación Ease Continua (por encima de Scaffold)
         me.joxquin.notivas.ui.dashboard.components.search.DashboardAnimatedSearchOverlay(
             isExpanded = isSearchExpanded,
-            onExpandedChange = { viewModel.setSearchExpanded(it) },
+            onExpandedChange = { expanded ->
+                if (!expanded) {
+                    searchQuery = ""
+                }
+                viewModel.setSearchExpanded(expanded)
+            },
             initialOffsetY = searchOffsetY,
             query = searchQuery,
             onQueryChange = { searchQuery = it },
@@ -351,6 +348,7 @@ fun InicioScreen(
             courseStats = courseStats,
             assignments = allAssignments,
             discussions = discussions,
+            materials = courseMaterials,
             onCourseClick = handleCourseClick,
             onAssignmentClick = { selectedAssignmentForSubmenu = it },
             onForumClick = { onNavigateToForoDetail?.invoke(it) },

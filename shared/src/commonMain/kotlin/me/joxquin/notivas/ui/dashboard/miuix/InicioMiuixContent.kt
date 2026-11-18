@@ -129,19 +129,12 @@ fun InicioMiuixContent(
         }
     }
 
-    val filteredCourses = androidx.compose.runtime.remember(courses, searchQuery) {
-        if (searchQuery.isBlank()) courses
-        else courses.filter {
-            it.name.contains(searchQuery, ignoreCase = true) ||
-                    (it.courseCode?.contains(searchQuery, ignoreCase = true) == true)
-        }
-    }
-
     var selectedAssignmentForSubmenu by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf<me.joxquin.notivas.ui.dashboard.AssignmentUiModel?>(null)
     }
 
     val recentSearches by viewModel.recentSearches.collectAsState()
+    val courseMaterials by viewModel.courseMaterials.collectAsState()
     val isSearchExpanded by viewModel.isSearchExpanded.collectAsState()
     val searchBarAlpha = rememberGlassSearchBarAlpha(isSearchExpanded)
     val contentUnderTopBar by remember(listState) {
@@ -334,7 +327,7 @@ fun InicioMiuixContent(
                         }
 
                         // 3. Courses Summary List (Grid de 2 columnas de cursos estilo MIUIX virtualizado)
-                        if (filteredCourses.isNotEmpty()) {
+                        if (courses.isNotEmpty()) {
                             item {
                                 Box(
                                     modifier = Modifier
@@ -342,11 +335,11 @@ fun InicioMiuixContent(
                                         .padding(horizontal = 16.dp)
                                         .staggeredEntrance(index = 3, trigger = isEntranceTriggered)
                                 ) {
-                                    MiuixCourseHeader(totalCourses = filteredCourses.size)
+                                    MiuixCourseHeader(totalCourses = courses.size)
                                 }
                             }
 
-                            val coursePairs = filteredCourses.chunked(2)
+                            val coursePairs = courses.chunked(2)
                             itemsIndexed(
                                 items = coursePairs,
                                 key = { _, pair -> "miuix_course_pair_${pair.map { it.id }.joinToString("_")}" }
@@ -382,7 +375,10 @@ fun InicioMiuixContent(
         // Vista Incrustada de Búsqueda HyperOS (GlassSearchOverlay)
         me.joxquin.notivas.ui.dashboard.components.search.GlassSearchOverlay(
             expanded = isSearchExpanded,
-            onDismissRequest = { viewModel.setSearchExpanded(false) },
+            onDismissRequest = {
+                searchQuery = ""
+                viewModel.setSearchExpanded(false)
+            },
             query = searchQuery,
             onQueryChange = { searchQuery = it },
             onSearchCommit = { viewModel.addRecentSearch(it) },
@@ -393,6 +389,7 @@ fun InicioMiuixContent(
             courseStats = courseStats,
             assignments = allAssignments,
             discussions = discussions,
+            materials = courseMaterials,
             onCourseClick = handleCourseClick,
             onAssignmentClick = { selectedAssignmentForSubmenu = it },
             onForumClick = { onNavigateToForoDetail?.invoke(it) },

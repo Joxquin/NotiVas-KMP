@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -38,7 +39,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import me.joxquin.notivas.data.model.CourseMaterialSearchItem
+import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -125,12 +134,71 @@ fun GlassSearchOverlay(
     courseStats: List<CourseStat>,
     assignments: List<AssignmentUiModel>,
     discussions: List<CanvasDiscussionTopic> = emptyList(),
+    materials: List<CourseMaterialSearchItem> = emptyList(),
     onCourseClick: (Course) -> Unit,
     onAssignmentClick: (AssignmentUiModel) -> Unit,
     onForumClick: (CanvasDiscussionTopic) -> Unit = {},
+    onMaterialClick: ((CourseMaterialSearchItem) -> Unit)? = null,
     onAskAi: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var debouncedQuery by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+
+    LaunchedEffect(query) {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) {
+            debouncedQuery = ""
+            isSearching = false
+        } else {
+            isSearching = true
+            delay(250)
+            debouncedQuery = trimmed
+            isSearching = false
+        }
+    }
+
+    val lazyListState = rememberLazyListState()
+    var visibleLimit by remember(debouncedQuery) { mutableIntStateOf(15) }
+    var loadingMore by remember { mutableStateOf(false) }
+
+    val totalMatchingCount = remember(debouncedQuery, courses, assignments, discussions, materials) {
+        val q = debouncedQuery.trim()
+        if (q.isEmpty()) 0 else {
+            courses.count { it.name.contains(q, true) || it.courseCode?.contains(q, true) == true } +
+            assignments.count { it.assignment.name.contains(q, true) || it.courseName.contains(q, true) } +
+            discussions.count { it.title.contains(q, true) || it.courseName?.contains(q, true) == true } +
+            materials.count { it.item.title.contains(q, true) || it.courseName.contains(q, true) }
+        }
+    }
+
+    val hasMore = visibleLimit < totalMatchingCount
+
+    LaunchedEffect(lazyListState, hasMore) {
+        if (!hasMore) return@LaunchedEffect
+        snapshotFlow {
+            val layoutInfo = lazyListState.layoutInfo
+            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            lastVisible >= 0 && lastVisible >= layoutInfo.totalItemsCount - 3
+        }
+            .distinctUntilChanged()
+            .collect { nearEnd ->
+                if (nearEnd && !loadingMore && hasMore) {
+                    loadingMore = true
+                    delay(150)
+                    visibleLimit += 15
+                    loadingMore = false
+                }
+            }
+    }
+
+    val handleDismiss = {
+        onQueryChange("")
+        onDismissRequest()
+    }
+
+    val searchColors = rememberSearchResultColors(AppThemeStyle.MIUIX)
+
     val transition = updateTransition(expanded, label = "glassSearch")
     val progress = transition.animateFloat(
         transitionSpec = { tween(400, easing = SearchModeEasing) },
@@ -264,19 +332,31 @@ fun GlassSearchOverlay(
                                 field()
                             }
                             if (query.isNotEmpty()) {
-                                IconButton(
-                                    onClick = {
-                                        onQueryChange("")
-                                        focusRequester.requestFocus()
-                                    },
-                                    modifier = Modifier.size(24.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = MiuixIcons.Glass.Close,
-                                        contentDescription = "Limpiar",
-                                        modifier = Modifier.size(18.dp),
-                                        tint = colors.onSurfaceVariantSummary,
-                                    )
+                                if (isSearching) {
+                                    Box(
+                                        modifier = Modifier.size(24.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        InfiniteProgressIndicator(
+                                            color = colors.primary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                } else {
+                                    IconButton(
+                                        onClick = {
+                                            onQueryChange("")
+                                            focusRequester.requestFocus()
+                                        },
+                                        modifier = Modifier.size(24.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = MiuixIcons.Glass.Close,
+                                            contentDescription = "Limpiar",
+                                            modifier = Modifier.size(18.dp),
+                                            tint = colors.onSurfaceVariantSummary,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -298,7 +378,7 @@ fun GlassSearchOverlay(
                         },
                 ) {
                     IconButton(
-                        onClick = onDismissRequest,
+                        onClick = handleDismiss,
                         enabled = expanded,
                         modifier = Modifier
                             .size(44.dp)
@@ -324,6 +404,7 @@ fun GlassSearchOverlay(
                     },
             ) {
                 LazyColumn(
+                    state = lazyListState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 ) {
@@ -344,32 +425,41 @@ fun GlassSearchOverlay(
                             )
                         }
                     } else {
-                        item(key = "search_live_results") {
-                            SearchLiveResultsSection(
-                                query = query,
-                                courses = courses,
-                                courseStats = courseStats,
-                                assignments = assignments,
-                                discussions = discussions,
-                                onCourseClick = { course ->
-                                    onSearchCommit(query)
-                                    onDismissRequest()
-                                    onCourseClick(course)
-                                },
-                                onAssignmentClick = { assignment ->
-                                    onSearchCommit(query)
-                                    onDismissRequest()
-                                    onAssignmentClick(assignment)
-                                },
-                                onForumClick = { forum ->
-                                    onSearchCommit(query)
-                                    onDismissRequest()
-                                    onForumClick(forum)
-                                },
-                                onAskCopilot = { onAskAi(query) },
-                                themeStyle = AppThemeStyle.MIUIX,
-                            )
-                        }
+                        searchLiveResultItems(
+                            query = debouncedQuery,
+                            courses = courses,
+                            courseStats = courseStats,
+                            assignments = assignments,
+                            discussions = discussions,
+                            materials = materials,
+                            isSearching = isSearching || (query.isNotBlank() && debouncedQuery.isEmpty()),
+                            visibleLimit = visibleLimit,
+                            hasMore = hasMore,
+                            loadingMore = loadingMore,
+                            colors = searchColors,
+                            onCourseClick = { course ->
+                                onSearchCommit(query)
+                                handleDismiss()
+                                onCourseClick(course)
+                            },
+                            onAssignmentClick = { assignment ->
+                                onSearchCommit(query)
+                                handleDismiss()
+                                onAssignmentClick(assignment)
+                            },
+                            onForumClick = { forum ->
+                                onSearchCommit(query)
+                                handleDismiss()
+                                onForumClick(forum)
+                            },
+                            onMaterialClick = { material ->
+                                onSearchCommit(query)
+                                handleDismiss()
+                                onMaterialClick?.invoke(material)
+                            },
+                            onAskCopilot = { onAskAi(query) },
+                            themeStyle = AppThemeStyle.MIUIX,
+                        )
                     }
                 }
             }

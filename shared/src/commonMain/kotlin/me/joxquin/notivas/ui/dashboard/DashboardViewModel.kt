@@ -178,6 +178,9 @@ class DashboardViewModel(
     private val _discussions = MutableStateFlow<List<me.joxquin.notivas.data.model.CanvasDiscussionTopic>>(emptyList())
     val discussions: StateFlow<List<me.joxquin.notivas.data.model.CanvasDiscussionTopic>> = _discussions.asStateFlow()
 
+    private val _courseMaterials = MutableStateFlow<List<me.joxquin.notivas.data.model.CourseMaterialSearchItem>>(emptyList())
+    val courseMaterials: StateFlow<List<me.joxquin.notivas.data.model.CourseMaterialSearchItem>> = _courseMaterials.asStateFlow()
+
     fun setSearchOffsetY(offsetY: Dp) {
         _searchOffsetY.value = offsetY
     }
@@ -1136,6 +1139,14 @@ class DashboardViewModel(
             try {
                 val topics = repository.getDiscussionsForCourses()
                 _discussions.value = topics
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {}
+        }
+        viewModelScope.launch {
+            try {
+                val materials = repository.getCourseMaterialsForCourses()
+                _courseMaterials.value = materials
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Throwable) {}

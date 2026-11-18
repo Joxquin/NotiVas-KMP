@@ -211,7 +211,7 @@
     <string name="copilot_custom_instructions_desc">Customize tone, style and rules for AI responses.</string>
     <string name="copilot_custom_instructions_placeholder">E.g. Reply in academic format with bullet points, be concise...</string>
     <string name="copilot_history_search_placeholder">Search history...</string>
-    <string name="copilot_history_no_results">No queries found for \"%1$s\"</string>
+    <string name="copilot_history_no_results">No queries found for “%1$s”</string>
     <string name="copilot_history_empty_hint">Start a new conversation to begin recording your history.</string>
 
     <!-- Onboarding -->
@@ -592,14 +592,17 @@
     <string name="search_filter_courses">Courses</string>
     <string name="search_filter_assignments">Assignments</string>
     <string name="search_filter_forums">Forums</string>
-    <string name="search_no_results">No results found for \"%1$s\"</string>
-    <string name="search_ask_copilot_format">Ask Copilot AI about \"%1$s\"</string>
+    <string name="search_no_results">No results found for “%1$s”</string>
+    <string name="search_ask_copilot_format">Ask Copilot AI about “%1$s”</string>
     <string name="search_quick_suggestions">Suggestions &amp; shortcuts</string>
     <string name="search_copilot_card_title">Ask Copilot AI</string>
     <string name="search_copilot_card_subtitle">Ask about assignments, deadlines or syllabus</string>
     <string name="search_filter_pending_tasks">Pending tasks</string>
     <string name="search_filter_term_courses">Semester courses</string>
     <string name="search_filter_labs">Laboratories</string>
+    <string name="search_filter_materials">Materials &amp; Modules</string>
+    <string name="search_quick_filter_forums">Forums</string>
+    <string name="search_quick_filter_materials">Class materials</string>
 
     <!-- Course Detail Screen (Stitch Redesign) -->
     <string name="course_detail_screen_title">Course Detail</string>
@@ -746,11 +749,11 @@
     <string name="group_detail_items_header">Deliverables and Assessments</string>
     <string name="group_detail_add_item">Add deliverable</string>
     <string name="group_dialog_delete_title">Delete evaluation group?</string>
-    <string name="group_dialog_delete_message">Group \"%1$s\" and all associated simulated grades will be permanently deleted. This action cannot be undone.</string>
+    <string name="group_dialog_delete_message">Group “%1$s” and all associated simulated grades will be permanently deleted. This action cannot be undone.</string>
     <string name="group_dialog_delete_confirm">Delete group</string>
     <string name="group_item_simulated_label">Simulated score</string>
     <string name="group_item_delete_confirm_title">Delete deliverable?</string>
-    <string name="group_item_delete_confirm_message">Do you want to delete \"%1$s\" from this group?</string>
+    <string name="group_item_delete_confirm_message">Do you want to delete “%1$s” from this group?</string>
     <string name="group_item_linked_canvas">Linked to Canvas LMS</string>
     <string name="group_create_sheet_title">New Evaluation Group</string>
     <string name="group_create_name_label">Group name (e.g. Labs)</string>
