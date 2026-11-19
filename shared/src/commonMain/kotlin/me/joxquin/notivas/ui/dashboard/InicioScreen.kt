@@ -32,6 +32,7 @@ import me.joxquin.notivas.ui.dashboard.components.MaterialCourseRowItem
 import me.joxquin.notivas.ui.dashboard.components.GreetingSection
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
 import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
+import me.joxquin.notivas.ui.dashboard.components.formatTokenExpiryDate
 import me.joxquin.notivas.ui.dashboard.components.InicioQuickActionsFab
 import me.joxquin.notivas.ui.dashboard.components.InicioTopAppBar
 import me.joxquin.notivas.ui.dashboard.components.SelectedDateAssignmentsSection
@@ -100,6 +101,7 @@ fun InicioScreen(
     val institutionName by viewModel.institutionName.collectAsState()
     val discussions by viewModel.discussions.collectAsState()
     val isSessionExpired by viewModel.isSessionExpired.collectAsState()
+    val tokenExpiryWarningAt by viewModel.tokenExpiryWarningAt.collectAsState()
     val showQuickRelogin by viewModel.showQuickRelogin.collectAsState()
     val universityUrl by viewModel.universityUrl.collectAsState()
 
@@ -230,6 +232,17 @@ fun InicioScreen(
                             onReconnect = { viewModel.openQuickRelogin() },
                             themeStyle = AppThemeStyle.MATERIAL
                         )
+                    }
+                } else {
+                    tokenExpiryWarningAt?.let { expiresAt ->
+                        item {
+                            SessionExpiredBanner(
+                                onReconnect = { viewModel.openQuickRelogin() },
+                                themeStyle = AppThemeStyle.MATERIAL,
+                                title = stringResource(Res.string.token_expiring_banner_title),
+                                description = stringResource(Res.string.token_expiring_banner_desc, formatTokenExpiryDate(expiresAt))
+                            )
+                        }
                     }
                 }
 

@@ -23,7 +23,13 @@ import me.joxquin.notivas.data.model.SimulationGroupWithItems
 import me.joxquin.notivas.data.model.SimulationItem
 import me.joxquin.notivas.data.model.SubmissionDetails
 import me.joxquin.notivas.data.model.UserProfile
+import me.joxquin.notivas.data.remote.AccessTokenPolicy
 import me.joxquin.notivas.data.remote.CanvasApiService
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+/** Resultado de [CanvasRepository.renewTokenIfNeeded]. */
+enum class TokenRenewalResult { NOT_NEEDED, RENEWED, DISABLED, FAILED }
 
 /**
  * Repositorio centralizado para Canvas LMS en Kotlin Multiplatform.
@@ -34,6 +40,15 @@ class CanvasRepository(
     private val localStore: InMemoryLocalStore,
     private val preferencesManager: PreferencesManager
 ) {
+    // Evita que la app abierta y el worker de fondo pidan dos tokens nuevos a la vez.
+    private val tokenRenewalMutex = Mutex()
+
+    // Último refresco remoto del perfil (ver getProfile).
+    private var lastProfileRefreshAt = 0L
+    private companion object {
+        const val PROFILE_REFRESH_INTERVAL_MS = 60_000L
+    }
+
     val userProfile: Flow<UserProfile?> = localStore.userProfile
     fun getUserProfileOnce(): UserProfile? = localStore.getUserProfileOnce()
     val allCourses: Flow<List<Course>> = localStore.getAllCourses()
@@ -881,15 +896,45 @@ class CanvasRepository(
             val cookies = preferencesManager.getSessionCookies() ?: return@withContext false
             val csrf = preferencesManager.getCsrfToken()
             val url = preferencesManager.universityUrl.first() ?: return@withContext false
-            val token = apiService.generateStudentAccessToken(url, cookies, csrf)
-            if (!token.isNullOrBlank()) {
-                val expiresAt = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + (28L * 24 * 60 * 60 * 1000)
-                preferencesManager.saveAccessToken(token, expiresAt)
+            val generated = apiService.generateStudentAccessToken(url, cookies, csrf)
+            if (generated != null) {
+                preferencesManager.saveAccessToken(generated.token, generated.expiresAtMillis)
                 println("[CanvasRepository] Migración exitosa de COOKIE_SESSION a BearerToken permanente")
                 return@withContext true
             }
         }
         false
+    }
+
+    /**
+     * Si el token Bearer vence en menos de [AccessTokenPolicy.RENEW_WINDOW_MS] y la autorrenovación
+     * está activa, pide a Canvas un token nuevo con el vigente. El token actual no se invalida, así
+     * que un rechazo de Canvas no deja al usuario sin sesión: Inicio muestra el aviso para reconectar.
+     */
+    suspend fun renewTokenIfNeeded(): TokenRenewalResult = withContext(AppDispatchers.IO) {
+        tokenRenewalMutex.withLock {
+            val now = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+            val expiresAt = preferencesManager.getTokenExpiresAt()
+            if (!AccessTokenPolicy.needsRenewal(now, expiresAt, preferencesManager.getAuthMode())) {
+                return@withLock TokenRenewalResult.NOT_NEEDED
+            }
+            if (!preferencesManager.getAutoRenewToken()) {
+                return@withLock TokenRenewalResult.DISABLED
+            }
+            val token = preferencesManager.getAccessToken()
+            val url = preferencesManager.universityUrl.first()
+            if (token.isNullOrBlank() || url.isNullOrBlank()) {
+                return@withLock TokenRenewalResult.FAILED
+            }
+            val renewed = apiService.createAccessTokenWithBearer(url, token)
+            if (renewed == null) {
+                println("[CanvasRepository] Canvas no permitió renovar el token; se pedirá reconectar antes del vencimiento")
+                return@withLock TokenRenewalResult.FAILED
+            }
+            preferencesManager.saveAccessToken(renewed.token, renewed.expiresAtMillis)
+            println("[CanvasRepository] Token de Canvas renovado")
+            TokenRenewalResult.RENEWED
+        }
     }
 
     suspend fun createStudentTokenFromSession(): Result<String> = withContext(AppDispatchers.IO) {
@@ -899,11 +944,10 @@ class CanvasRepository(
             val csrf = preferencesManager.getCsrfToken()
             val url = preferencesManager.universityUrl.first()
                 ?: return@withContext Result.failure(IllegalStateException("No hay URL configurada"))
-            val token = apiService.generateStudentAccessToken(url, cookies, csrf)
-            if (!token.isNullOrBlank()) {
-                val expiresAt = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + (28L * 24 * 60 * 60 * 1000)
-                preferencesManager.saveAccessToken(token, expiresAt)
-                Result.success(token)
+            val generated = apiService.generateStudentAccessToken(url, cookies, csrf)
+            if (generated != null) {
+                preferencesManager.saveAccessToken(generated.token, generated.expiresAtMillis)
+                Result.success(generated.token)
             } else {
                 Result.failure(Exception("No se pudo generar el token desde la sesión web"))
             }
@@ -991,9 +1035,10 @@ class CanvasRepository(
                 null
             }
 
-            if (!studentToken.isNullOrBlank()) {
+            if (studentToken != null) {
                 println("[CanvasRepository] Token de estudiante autogenerado con autorización del usuario. Guardando BearerToken.")
-                preferencesManager.saveAccessToken(studentToken)
+                // Se guarda el vencimiento para que Ajustes lo muestre y la renovación sepa cuándo actuar.
+                preferencesManager.saveAccessToken(studentToken.token, studentToken.expiresAtMillis)
             } else {
                 println("[CanvasRepository] Guardando SessionCookies como método de autenticación.")
                 preferencesManager.saveSessionCookies(credentialString, csrfToken)

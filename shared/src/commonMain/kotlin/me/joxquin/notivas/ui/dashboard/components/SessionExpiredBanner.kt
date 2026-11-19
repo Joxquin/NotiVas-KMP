@@ -37,13 +37,19 @@ import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.util.DateTimeUtil
 
 @Composable
 fun SessionExpiredBanner(
     onReconnect: () -> Unit,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    description: String? = null
 ) {
+    // Por defecto avisa de sesion vencida; con title/description sirve para avisar antes del vencimiento.
+    val bannerTitle = title ?: stringResource(Res.string.session_expired_banner_title)
+    val bannerDescription = description ?: stringResource(Res.string.session_expired_banner_desc)
     if (themeStyle == AppThemeStyle.MIUIX) {
         MiuixCard(
             modifier = modifier.fillMaxWidth(),
@@ -64,13 +70,13 @@ fun SessionExpiredBanner(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     MiuixText(
-                        text = stringResource(Res.string.session_expired_banner_title),
+                        text = bannerTitle,
                         style = MiuixTheme.textStyles.title2,
                         color = MiuixTheme.colorScheme.onErrorContainer
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     MiuixText(
-                        text = stringResource(Res.string.session_expired_banner_desc),
+                        text = bannerDescription,
                         style = MiuixTheme.textStyles.body2,
                         color = MiuixTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f)
                     )
@@ -111,13 +117,13 @@ fun SessionExpiredBanner(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(Res.string.session_expired_banner_title),
+                        text = bannerTitle,
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = stringResource(Res.string.session_expired_banner_desc),
+                        text = bannerDescription,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.9f)
                     )
@@ -139,4 +145,11 @@ fun SessionExpiredBanner(
             }
         }
     }
+}
+
+/** Fecha legible del vencimiento del token (ej. "Martes 16 de Diciembre"), en la zona del dispositivo. */
+fun formatTokenExpiryDate(expiresAtMillis: Long): String {
+    val dayMs = 24L * 60 * 60 * 1000
+    val daysRemaining = ((expiresAtMillis - DateTimeUtil.nowEpochMillis()) / dayMs).toInt().coerceAtLeast(0)
+    return DateTimeUtil.formatFullDate(DateTimeUtil.addDays(DateTimeUtil.nowLocalDate(), daysRemaining))
 }

@@ -45,6 +45,7 @@ import me.joxquin.notivas.ui.animation.staggeredEntrance
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
 import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
+import me.joxquin.notivas.ui.dashboard.components.formatTokenExpiryDate
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseHeader
@@ -112,6 +113,7 @@ fun InicioMiuixContent(
     val institutionName by viewModel.institutionName.collectAsState()
     val discussions by viewModel.discussions.collectAsState()
     val isSessionExpired by viewModel.isSessionExpired.collectAsState()
+    val tokenExpiryWarningAt by viewModel.tokenExpiryWarningAt.collectAsState()
     val showQuickRelogin by viewModel.showQuickRelogin.collectAsState()
     val universityUrl by viewModel.universityUrl.collectAsState()
 
@@ -278,6 +280,19 @@ fun InicioMiuixContent(
                                         onReconnect = { viewModel.openQuickRelogin() },
                                         themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
                                     )
+                                }
+                            }
+                        } else {
+                            tokenExpiryWarningAt?.let { expiresAt ->
+                                item {
+                                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                        SessionExpiredBanner(
+                                            onReconnect = { viewModel.openQuickRelogin() },
+                                            themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                                            title = stringResource(Res.string.token_expiring_banner_title),
+                                            description = stringResource(Res.string.token_expiring_banner_desc, formatTokenExpiryDate(expiresAt))
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -151,6 +151,8 @@
     <string name="session_expired_banner_title">Canvas Session Expired</string>
     <string name="session_expired_banner_desc">Your web session has expired. Tap to reconnect in 1 step.</string>
     <string name="session_expired_banner_action">Reconnect</string>
+    <string name="token_expiring_banner_title">Your Canvas access is about to expire</string>
+    <string name="token_expiring_banner_desc">It expires on %1$s. Reconnect to renew it without losing anything.</string>
     <string name="urgent_tasks_title">For Today &amp; Tomorrow</string>
     <string name="urgent_badge_count">%1$d urgent</string>
     <string name="urgent_due_tomorrow">Due tomorrow</string>

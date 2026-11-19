@@ -151,6 +151,8 @@
     <string name="session_expired_banner_title">Sesión de Canvas expirada</string>
     <string name="session_expired_banner_desc">Tu sesión web ha caducado. Toca para reconectar en 1 toque.</string>
     <string name="session_expired_banner_action">Reconectar</string>
+    <string name="token_expiring_banner_title">Tu acceso a Canvas está por vencer</string>
+    <string name="token_expiring_banner_desc">Vence el %1$s. Vuelve a conectarte para renovarlo sin perder nada.</string>
     <string name="urgent_tasks_title">Para Hoy y Mañana</string>
     <string name="urgent_badge_count">%1$d urgentes</string>
     <string name="urgent_due_tomorrow">Vence mañana</string>
