@@ -195,25 +195,17 @@ fun AjustesTokenScreen(
         }
     }
 
-    // Cálculo de vencimiento
-    val nowMillis = remember { DateTimeUtil.nowEpochMillis() }
-    val daysRemaining = if (tokenExpiresAt > nowMillis) {
-        ((tokenExpiresAt - nowMillis) / (24L * 60 * 60 * 1000)).toInt()
-    } else {
-        0
-    }
-    val formattedExpirationDate = remember(tokenExpiresAt, daysRemaining) {
-        if (tokenExpiresAt > 0L) {
-            try {
-                val now = DateTimeUtil.nowLocalDate()
-                val targetDate = DateTimeUtil.addDays(now, daysRemaining)
-                DateTimeUtil.formatFullDate(targetDate)
-            } catch (_: Throwable) {
-                null
-            }
-        } else {
+    // Cálculo de vencimiento: fecha local real y días de calendario (ver tokenExpiryDisplay).
+    val expiryDisplay = remember(tokenExpiresAt) {
+        try {
+            me.joxquin.notivas.util.tokenExpiryDisplay(tokenExpiresAt)
+        } catch (_: Throwable) {
             null
         }
+    }
+    val daysRemaining = expiryDisplay?.daysRemaining ?: 0
+    val formattedExpirationDate = remember(expiryDisplay) {
+        expiryDisplay?.let { DateTimeUtil.formatFullDate(it.date) }
     }
 
     // Enmascaramiento de token

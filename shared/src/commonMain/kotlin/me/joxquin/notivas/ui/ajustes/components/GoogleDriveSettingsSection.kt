@@ -395,7 +395,7 @@ fun GoogleDriveSettingsSection(
                                     },
                                     fontSize = 13.sp,
                                     color = MiuixTheme.colorScheme.onSurface,
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
@@ -563,7 +563,7 @@ fun GoogleDriveSettingsSection(
                                 },
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
@@ -623,7 +623,7 @@ fun GoogleDriveSettingsSection(
                                 Text(
                                     text = stringResource(Res.string.drive_reconnect_btn),
                                     fontSize = 11.sp,
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
@@ -645,7 +645,7 @@ fun GoogleDriveSettingsSection(
                                 Text(
                                     text = stringResource(Res.string.drive_clear_cache_btn),
                                     fontSize = 11.sp,
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }

@@ -89,6 +89,7 @@ import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
@@ -210,6 +211,11 @@ fun CopilotScreen(
             animationSpec = tween(durationMillis = 200),
             label = "copilotBottomPadding"
         )
+        // Alto real de los controles flotantes (aviso de API key, sugerencias y cápsula de entrada).
+        // La lista solo reservaba la cápsula (60 dp) y el aviso tapaba la última sugerencia.
+        val controlsDensity = LocalDensity.current
+        var floatingControlsHeight by remember { mutableStateOf(0.dp) }
+        val extraListBottom = (floatingControlsHeight - 60.dp).coerceAtLeast(0.dp)
 
         val auraAlpha by animateFloatAsState(
             targetValue = if (uiState.isLoading) 1f else 0f,
@@ -325,7 +331,7 @@ fun CopilotScreen(
                         knownDiscussions = knownDiscussions,
                         courses = uiState.courses,
                         themeStyle = AppThemeStyle.MIUIX,
-                        bottomPadding = animatedBottomPadding,
+                        bottomPadding = animatedBottomPadding + extraListBottom,
                         modifier = Modifier.fillMaxSize()
                     )
 
@@ -347,6 +353,9 @@ fun CopilotScreen(
                         .fillMaxWidth()
                         .align(Alignment.BottomCenter)
                         .padding(bottom = animatedBottomPadding)
+                        .onSizeChanged { size ->
+                            floatingControlsHeight = with(controlsDensity) { size.height.toDp() }
+                        }
                 ) {
                     // Alerta de API Key o activación
                     CopilotWarningBanner(

@@ -151,6 +151,8 @@
     <string name="session_expired_banner_title">Sesión de Canvas expirada</string>
     <string name="session_expired_banner_desc">Tu sesión web ha caducado. Toca para reconectar en 1 toque.</string>
     <string name="session_expired_banner_action">Reconectar</string>
+    <string name="token_expiring_banner_title">Tu acceso a Canvas está por vencer</string>
+    <string name="token_expiring_banner_desc">Vence el %1$s. Vuelve a conectarte para renovarlo sin perder nada.</string>
     <string name="urgent_tasks_title">Para Hoy y Mañana</string>
     <string name="urgent_badge_count">%1$d urgentes</string>
     <string name="urgent_due_tomorrow">Vence mañana</string>
@@ -168,6 +170,15 @@
     <string name="status_above_average">Arriba del promedio</string>
     <string name="status_at_risk">En riesgo</string>
     <string name="status_unevaluated">Sin evaluar</string>
+    <string name="hero_summary_title">RESUMEN ACADÉMICO</string>
+    <string name="hero_current_average">PROMEDIO ACTUAL</string>
+    <string name="hero_projected_final">PROYECCIÓN FINAL</string>
+    <string name="hero_evaluated_progress">Avance Evaluado del Ciclo</string>
+    <string name="hero_status_good">Buen rendimiento</string>
+    <string name="hero_status_regular">Rendimiento regular</string>
+    <string name="hero_status_watch">En observación</string>
+    <string name="hero_status_risk">Riesgo de desaprobación</string>
+    <string name="hero_status_no_data">Sin notas aún</string>
 
     <!-- Forums / Foros -->
     <string name="foros_title">Foros Académicos</string>
@@ -245,7 +256,7 @@
     <string name="bento_progress_subtitle">Notas y promedio actual</string>
     <string name="bento_active_course">Curso activo</string>
     <string name="bento_no_graded_assignments">Sin evaluaciones calificadas</string>
-    <string name="bento_evaluated_prefix">Evaluada: %1$d%%</string>
+    <string name="bento_evaluated_prefix">Evaluada: %1$d%</string>
     <string name="bento_projected_prefix">Proyectada: %1$s</string>
     <string name="bento_average_prefix">Promedio: %1$s</string>
     <string name="bento_simulator_title">Simulador</string>
@@ -320,6 +331,7 @@
     <string name="unconfigured_banner_btn">Configurar fórmulas y grupos</string>
     <string name="urgent_due_hours_format">En %1$dh</string>
     <string name="course_pending_format">%1$d pendientes</string>
+    <string name="course_pending_one">%1$d pendiente</string>
     <string name="course_up_to_date">Al día</string>
 
     <!-- Additional Copilot Strings -->
@@ -466,7 +478,7 @@
     <string name="settings_drive_section_title">Google Drive y Borradores</string>
     <string name="drive_connected_status">Conectado</string>
     <string name="drive_disconnected_status">No vinculado</string>
-    <string name="drive_last_sync_format">Sincronizado hace %1$s</string>
+    <string name="drive_last_sync_format">Sincronizado %1$s</string>
     <string name="drive_connect_btn">Conectar Google Drive</string>
     <string name="drive_unlink_btn">Desvincular Cuenta</string>
     <string name="drive_reconnect_btn">Reconectar / Renovar Acceso</string>
@@ -537,7 +549,7 @@
     <string name="archive_summary_card_title">Resumen de Entregas &amp; Archivo</string>
     <string name="archive_semester_tag">Ciclo Actual</string>
     <string name="archive_stat_ontime">A tiempo</string>
-    <string name="archive_stat_ontime_rate">%1$d%% puntual</string>
+    <string name="archive_stat_ontime_rate">%1$d% puntual</string>
     <string name="archive_stat_discarded">Descartadas</string>
     <string name="archive_stat_discarded_sub">Sin efecto</string>
     <string name="archive_stat_average">Promedio</string>
@@ -620,7 +632,7 @@
     <string name="course_detail_stat_avance">Avance</string>
     <string name="course_detail_stat_modulos">Módulos</string>
     <string name="course_detail_deliverables_format">%1$d de %2$d entregables listos</string>
-    <string name="course_detail_percent_completed_format">%1$d%% completado</string>
+    <string name="course_detail_percent_completed_format">%1$d% completado</string>
     <string name="course_detail_empty_modules">No hay módulos disponibles para este curso.</string>
     <string name="course_modules_screen_title">Módulos</string>
     <string name="course_detail_view_all_modules">Ver todos los módulos (%1$d)</string>
@@ -792,7 +804,7 @@
     <string name="token_active_expires_format">Expira en %1$d días (%2$s)</string>
     <string name="token_active_no_expiration">Sin fecha de expiración registrada</string>
     <string name="token_auto_renew_title">Autorenovar token</string>
-    <string name="token_auto_renew_desc">Renovar automáticamente 1 día antes de expirar</string>
+    <string name="token_auto_renew_desc">Renovar automáticamente 3 días antes de expirar</string>
     <string name="token_auto_renew_web_disabled_hint">No disponible en sesión web. Crea un token primero.</string>
     <string name="token_new_section_title">Cambiar Token de Acceso</string>
     <string name="token_new_input_label">Nuevo Token de Canvas LMS</string>

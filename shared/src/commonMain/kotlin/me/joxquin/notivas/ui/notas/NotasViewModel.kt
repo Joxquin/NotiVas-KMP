@@ -64,7 +64,19 @@ data class SimEvaluation(
 )
 
 enum class RiskLevel {
-    Safe, ModerateRisk, HighRisk
+    Safe, ModerateRisk, HighRisk,
+
+    /** El curso aún no tiene notas: no hay riesgo que calcular (antes caía en HighRisk por promedio 0). */
+    NoData;
+
+    companion object {
+        fun from(hasGrades: Boolean, currentAverage: Float): RiskLevel = when {
+            !hasGrades -> NoData
+            currentAverage >= 14f -> Safe
+            currentAverage >= 10.5f -> ModerateRisk
+            else -> HighRisk
+        }
+    }
 }
 
 data class SimulationGroupUiModel(
@@ -80,7 +92,7 @@ data class NotasUiState(
     val currentAverage: Float = 0f,
     val evaluatedProgressRatio: Float = 0f,
     val projectedFinalGrade: Float = 0f,
-    val riskLevel: RiskLevel = RiskLevel.Safe,
+    val riskLevel: RiskLevel = RiskLevel.NoData,
     val simulationGroups: List<SimulationGroupUiModel> = emptyList(),
     val totalConfiguredWeight: Float = 0f,
     val groupCurrentAverage: Float = 0f,
@@ -112,8 +124,6 @@ class NotasViewModel(
         _selectedCourse,
         assignments
     ) { courseList: List<Course>, selectedCourse: Course?, allAssignments: List<Assignment> ->
-        val activeCourse = selectedCourse ?: courseList.firstOrNull()
-
         // Obtener la última tarea calificada a nivel global
         val globalLatestGraded = allAssignments
             .filter { it.score != null }
@@ -121,6 +131,9 @@ class NotasViewModel(
             .firstOrNull()
 
         val globalLatestCourse = courseList.find { it.id == globalLatestGraded?.courseId }
+        // Sin selección explícita se abre el curso con la nota más reciente, no el primero de la lista
+        // (que podía ser uno sin evaluaciones y dejaba la tarjeta de Progreso vacía).
+        val activeCourse = selectedCourse ?: globalLatestCourse ?: courseList.firstOrNull()
         val latestName = globalLatestGraded?.name
         val latestScoreFormatted = if (globalLatestGraded?.score != null) {
             val scoreVal = ((globalLatestGraded.score / (globalLatestGraded.pointsPossible ?: 20.0).coerceAtLeast(1.0)) * 20.0)
@@ -173,7 +186,8 @@ class NotasViewModel(
                 val groupUiList = groupsWithItems.map { g ->
                     val weight = g.group.weightPercentage
                     totalWeight += weight
-                    val avg = if (g.items.isNotEmpty()) g.items.map { it.simulatedScore }.average().toFloat() else 0f
+                    // effectiveScore usa la nota real escrita (manualScore) y solo recurre a la simulada si no hay.
+                    val avg = if (g.items.isNotEmpty()) g.items.map { it.effectiveScore }.average().toFloat() else 0f
                     weightedSum += (avg * (weight / 100f))
                     SimulationGroupUiModel(
                         group = g.group,
@@ -186,19 +200,21 @@ class NotasViewModel(
                 val groupSimulatedFinal = if (totalWeight > 0f) (weightedSum / (totalWeight / 100f)) else simulatedProjection
 
                 // Si el curso actual tiene tareas calificadas, actualizamos el latest graded para ser contextual
+                // Si el curso no tiene notas no se toma la tarea de otro curso: la tarjeta mezclaba el
+                // nombre de un curso con la nota de otro ("20.0 / 20 pts" junto a "Promedio: 0.0").
                 val courseGraded = graded.sortedByDescending { it.gradedAt ?: it.dueAt ?: "" }.firstOrNull()
-                val courseLatestName = courseGraded?.name ?: baseState.latestGradedAssignmentName
+                val courseLatestName = courseGraded?.name
                 val courseLatestScore = if (courseGraded?.actualScore != null) {
                     val rounded = (courseGraded.actualScore * 10f).roundToInt() / 10f
                     "$rounded / 20 pts"
-                } else baseState.latestGradedScoreFormatted
+                } else null
 
                 baseState.copy(
                     evaluations = evals,
                     currentAverage = currentAvg,
                     evaluatedProgressRatio = progressRatio,
                     projectedFinalGrade = if (groupUiList.isNotEmpty()) groupSimulatedFinal else simulatedProjection,
-                    riskLevel = if (currentAvg >= 14f) RiskLevel.Safe else if (currentAvg >= 10.5f) RiskLevel.ModerateRisk else RiskLevel.HighRisk,
+                    riskLevel = RiskLevel.from(hasGrades = graded.isNotEmpty(), currentAverage = currentAvg),
                     simulationGroups = groupUiList,
                     totalConfiguredWeight = totalWeight,
                     groupCurrentAverage = currentAvg,

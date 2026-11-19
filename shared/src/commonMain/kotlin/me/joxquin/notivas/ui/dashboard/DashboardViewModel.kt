@@ -117,6 +117,19 @@ class DashboardViewModel(
     ).random()
 
     val isSessionExpired: StateFlow<Boolean> = preferencesManager.isSessionExpired
+
+    /**
+     * Vencimiento del token cuando ya entró en la ventana de renovación y sigue sin renovarse
+     * (Canvas no lo permitió o la autorrenovación está apagada). Inicio pide reconectar con él.
+     */
+    val tokenExpiryWarningAt: StateFlow<Long?> = combine(
+        preferencesManager.authMode,
+        preferencesManager.tokenExpiresAt
+    ) { mode, expiresAt ->
+        val now = DateTimeUtil.nowEpochMillis()
+        expiresAt.takeIf { me.joxquin.notivas.data.remote.AccessTokenPolicy.needsRenewal(now, it, mode) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     private val _showQuickRelogin = MutableStateFlow(false)
     val showQuickRelogin: StateFlow<Boolean> = _showQuickRelogin.asStateFlow()
 
@@ -485,7 +498,7 @@ class DashboardViewModel(
                             }
                             me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE -> {
                                 // Obtener URL de descarga del archivo de Canvas y descargarlo
-                                println("[DashboardViewModel] Procesando plantilla CANVAS_FILE: ${effectiveCandidate.title}, url=${effectiveCandidate.url}, canvasFileId=${effectiveCandidate.canvasFileId}")
+                                println("[DashboardViewModel] Procesando plantilla CANVAS_FILE: canvasFileId=${effectiveCandidate.canvasFileId}")
                                 var fileBytes: ByteArray? = null
 
                                 var downloadUrl = effectiveCandidate.url.replace("&amp;", "&").trim()
@@ -1116,6 +1129,14 @@ class DashboardViewModel(
         viewModelScope.launch {
             _syncStatus.value = SyncStatus.SYNCING
             try {
+                // Si el token está por vencer se renueva antes de sincronizar; un fallo aquí no frena la carga.
+                try {
+                    repository.renewTokenIfNeeded()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Throwable) {
+                    println("DashboardViewModel: no se pudo revisar el vencimiento del token: ${e.message}")
+                }
                 repository.getProfile()
                 repository.fetchAndSaveData()
                 _syncStatus.value = SyncStatus.SYNCED

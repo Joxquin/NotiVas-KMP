@@ -97,27 +97,16 @@ class CanvasApiService(
         cookies: String,
         csrfToken: String?,
         purpose: String = "NotiVas App"
-    ): String? {
+    ): GeneratedAccessToken? {
         return try {
             val cleanCookies = cookies.removePrefix("Cookie: ").trim()
             val url = formatUrl(baseUrl, "api/v1/users/self/tokens")
-            val expirationDate = try {
-                val now = me.joxquin.notivas.util.DateTimeUtil.nowLocalDate()
-                val targetDate = me.joxquin.notivas.util.DateTimeUtil.addDays(now, 28)
-                val m = if (targetDate.month < 10) "0${targetDate.month}" else "${targetDate.month}"
-                val d = if (targetDate.day < 10) "0${targetDate.day}" else "${targetDate.day}"
-                "${targetDate.year}-${m}-${d}T23:59:59Z"
-            } catch (_: Throwable) {
-                val nowMillis = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
-                val targetMillis = nowMillis + (28L * 24 * 60 * 60 * 1000)
-                // Fallback aproximado
-                "2026-12-01T23:59:59Z"
-            }
+            val requestedExpiresAt = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + AccessTokenPolicy.LIFETIME_MS
             val response = client.submitForm(
                 url = url,
                 formParameters = parameters {
                     append("token[purpose]", purpose)
-                    append("token[expires_at]", expirationDate)
+                    append("token[expires_at]", epochMillisToIsoUtc(requestedExpiresAt))
                 }
             ) {
                 header("User-Agent", "CanvasFastClient/1.0")
@@ -125,28 +114,57 @@ class CanvasApiService(
                 header("X-Forwarded-Cookie", cleanCookies)
                 csrfToken?.let { header("X-CSRF-Token", it) }
             }
-            val text = response.body<String>()
-            // La respuesta exitosa trae el token completo: solo se imprime el cuerpo de los errores.
-            println("[CanvasApiService] generateStudentAccessToken status: ${response.status.value}")
-            if (!response.status.isSuccess()) {
-                println("[CanvasApiService] generateStudentAccessToken error: ${text.take(300)}")
-            }
-            if (response.status.isSuccess() && text.trimStart().startsWith("{")) {
-                val json = KtorHttpClientProvider.jsonConfig.parseToJsonElement(text) as? JsonObject
-                val token = json?.get("token")?.let { (it as? JsonPrimitive)?.contentOrNull }
-                    ?: json?.get("visible_token")?.let { (it as? JsonPrimitive)?.contentOrNull }
-                if (!token.isNullOrBlank()) {
-                    println("[CanvasApiService] Token de estudiante autogenerado con éxito")
-                    return token
-                }
-            }
-            null
+            readGeneratedToken(response.status, response.body<String>(), requestedExpiresAt, "generateStudentAccessToken")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
             println("[CanvasApiService] No se pudo generar token de estudiante: ${e.message}")
             null
         }
+    }
+
+    /**
+     * Crea un token nuevo usando el token vigente, sin invalidarlo: si Canvas lo rechaza, el
+     * token actual sigue sirviendo hasta su vencimiento.
+     */
+    suspend fun createAccessTokenWithBearer(
+        baseUrl: String,
+        bearerToken: String,
+        purpose: String = "NotiVas App"
+    ): GeneratedAccessToken? {
+        return try {
+            val requestedExpiresAt = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis() + AccessTokenPolicy.LIFETIME_MS
+            val response = client.submitForm(
+                url = formatUrl(baseUrl, "api/v1/users/self/tokens"),
+                formParameters = parameters {
+                    append("token[purpose]", purpose)
+                    append("token[expires_at]", epochMillisToIsoUtc(requestedExpiresAt))
+                }
+            ) {
+                applyAuth(bearerToken)
+            }
+            readGeneratedToken(response.status, response.body<String>(), requestedExpiresAt, "createAccessTokenWithBearer")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            println("[CanvasApiService] No se pudo renovar el token: ${e.message}")
+            null
+        }
+    }
+
+    private fun readGeneratedToken(
+        status: HttpStatusCode,
+        body: String,
+        requestedExpiresAt: Long,
+        operation: String
+    ): GeneratedAccessToken? {
+        // La respuesta exitosa trae el token completo: solo se imprime el estado y el cuerpo de los errores.
+        println("[CanvasApiService] $operation status: ${status.value}")
+        if (!status.isSuccess()) {
+            println("[CanvasApiService] $operation error: ${body.take(300)}")
+            return null
+        }
+        return parseGeneratedAccessToken(body, requestedExpiresAt)
     }
 
     suspend fun getCourses(
@@ -175,13 +193,14 @@ class CanvasApiService(
                 applyAuth(token)
             }
             val text = httpResponse.body<String>()
-            println("[CanvasApiService] getDashboardCards status: ${httpResponse.status}, body: ${text.take(300)}")
+            // Sin cuerpo: trae nombres de cursos y enlaces firmados de las portadas.
+            println("[CanvasApiService] getDashboardCards status: ${httpResponse.status.value}")
             if (text.trimStart().startsWith("[")) {
                 val list = KtorHttpClientProvider.jsonConfig.decodeFromString<List<me.joxquin.notivas.data.model.CanvasDashboardCard>>(text)
                 println("[CanvasApiService] getDashboardCards éxito: ${list.size} tarjetas")
                 list
             } else {
-                println("[CanvasApiService] getDashboardCards no devolvió array JSON: $text")
+                println("[CanvasApiService] getDashboardCards no devolvió array JSON (${text.length} caracteres)")
                 emptyList()
             }
         } catch (e: CancellationException) {
@@ -337,7 +356,8 @@ class CanvasApiService(
         }
         val text = response.body<String>()
         checkAuth(response.status, text)
-        println("CanvasApiService: getProfile response from $url: $text")
+        // El perfil trae nombre, ID y avatar del estudiante: solo se registra el estado.
+        println("CanvasApiService: getProfile status: ${response.status.value}")
         return KtorHttpClientProvider.jsonConfig.decodeFromString<UserProfile>(text)
     }
 

@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -83,9 +85,12 @@ fun CopilotMessageList(
     val bottomInset = if (themeStyle == AppThemeStyle.MIUIX) bottomPadding + 60.dp else bottomPadding
 
     if (messages.isEmpty()) {
+        // Con scroll: si los controles flotantes (aviso de API key, entrada) ocupan mucho, las
+        // sugerencias conservan su tamaño y se alcanzan deslizando en vez de aplastarse.
         Column(
             modifier = modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(
                     top = topInset,
                     bottom = bottomInset

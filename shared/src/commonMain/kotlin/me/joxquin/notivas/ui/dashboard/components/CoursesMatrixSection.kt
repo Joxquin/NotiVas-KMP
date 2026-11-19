@@ -42,6 +42,7 @@ import coil3.compose.AsyncImage
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.course_pending_format
+import me.joxquin.notivas.shared.resources.course_pending_one
 import me.joxquin.notivas.shared.resources.course_up_to_date
 import me.joxquin.notivas.shared.resources.courses_enrolled_format
 import me.joxquin.notivas.shared.resources.courses_section_title
@@ -52,7 +53,9 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun MaterialCourseHeader(
     totalCourses: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Sin pantalla de gestión de cursos todavía: el enlace solo aparece si hay una acción real.
+    onManage: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = 4.dp),
@@ -81,12 +84,14 @@ fun MaterialCourseHeader(
             }
         }
 
-        Text(
-            text = stringResource(Res.string.manage),
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.clickable { }
-        )
+        if (onManage != null) {
+            Text(
+                text = stringResource(Res.string.manage),
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable(onClick = onManage)
+            )
+        }
     }
 }
 
@@ -267,7 +272,7 @@ private fun MaterialCourseGridCard(
 
                 Text(
                     text = if (pendingCount > 0) {
-                        stringResource(Res.string.course_pending_format, pendingCount)
+                        stringResource(if (pendingCount == 1) Res.string.course_pending_one else Res.string.course_pending_format, pendingCount)
                     } else {
                         stringResource(Res.string.course_up_to_date)
                     },

@@ -33,6 +33,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.notas.RiskLevel
+import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.hero_current_average
+import me.joxquin.notivas.shared.resources.hero_evaluated_progress
+import me.joxquin.notivas.shared.resources.hero_projected_final
+import me.joxquin.notivas.shared.resources.hero_status_good
+import me.joxquin.notivas.shared.resources.hero_status_no_data
+import me.joxquin.notivas.shared.resources.hero_status_regular
+import me.joxquin.notivas.shared.resources.hero_status_risk
+import me.joxquin.notivas.shared.resources.hero_status_watch
+import me.joxquin.notivas.shared.resources.hero_summary_title
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -54,22 +66,28 @@ fun HeroSummaryCard(
     if (themeStyle == AppThemeStyle.MIUIX) {
         val (statusLabel, statusBg, statusContentColor, statusIcon) = when (riskLevel) {
             RiskLevel.Safe -> Quadruple(
-                if (currentAverage >= 14f) "Buen rendimiento" else "Rendimiento regular",
+                stringResource(if (currentAverage >= 14f) Res.string.hero_status_good else Res.string.hero_status_regular),
                 MiuixTheme.colorScheme.surfaceContainerHigh,
                 MiuixTheme.colorScheme.primary,
                 Icons.Default.CheckCircle
             )
             RiskLevel.ModerateRisk -> Quadruple(
-                "En observación",
+                stringResource(Res.string.hero_status_watch),
                 MiuixTheme.colorScheme.surfaceContainerHigh,
                 MiuixTheme.colorScheme.onSurface,
                 Icons.Default.Info
             )
             RiskLevel.HighRisk -> Quadruple(
-                "Riesgo de desaprobación",
+                stringResource(Res.string.hero_status_risk),
                 MiuixTheme.colorScheme.errorContainer,
                 MiuixTheme.colorScheme.onErrorContainer,
                 Icons.Default.Warning
+            )
+            RiskLevel.NoData -> Quadruple(
+                stringResource(Res.string.hero_status_no_data),
+                MiuixTheme.colorScheme.surfaceContainerHigh,
+                MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                Icons.Default.Info
             )
         }
 
@@ -93,11 +111,14 @@ fun HeroSummaryCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "RESUMEN ACADÉMICO",
+                        text = stringResource(Res.string.hero_summary_title),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
                     )
                     Row(
                         modifier = Modifier
@@ -117,7 +138,9 @@ fun HeroSummaryCard(
                             text = statusLabel,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = statusContentColor
+                            color = statusContentColor,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }
@@ -136,7 +159,7 @@ fun HeroSummaryCard(
                             .padding(14.dp)
                     ) {
                         Text(
-                            text = "PROMEDIO ACTUAL",
+                            text = stringResource(Res.string.hero_current_average),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MiuixTheme.colorScheme.onSurfaceVariantSummary
@@ -159,7 +182,7 @@ fun HeroSummaryCard(
                             .padding(14.dp)
                     ) {
                         Text(
-                            text = "PROYECCIÓN FINAL",
+                            text = stringResource(Res.string.hero_projected_final),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MiuixTheme.colorScheme.onSurfaceVariantSummary
@@ -181,7 +204,7 @@ fun HeroSummaryCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Avance Evaluado del Ciclo",
+                            text = stringResource(Res.string.hero_evaluated_progress),
                             fontSize = 12.sp,
                             color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                         )
@@ -207,22 +230,28 @@ fun HeroSummaryCard(
     } else {
         val (statusLabel, statusBg, statusContentColor, statusIcon) = when (riskLevel) {
             RiskLevel.Safe -> Quadruple(
-                if (currentAverage >= 14f) "Buen rendimiento" else "Rendimiento regular",
+                stringResource(if (currentAverage >= 14f) Res.string.hero_status_good else Res.string.hero_status_regular),
                 MaterialTheme.colorScheme.secondaryContainer,
                 MaterialTheme.colorScheme.onSecondaryContainer,
                 Icons.Default.CheckCircle
             )
             RiskLevel.ModerateRisk -> Quadruple(
-                "En observación",
+                stringResource(Res.string.hero_status_watch),
                 MaterialTheme.colorScheme.tertiaryContainer,
                 MaterialTheme.colorScheme.onTertiaryContainer,
                 Icons.Default.Info
             )
             RiskLevel.HighRisk -> Quadruple(
-                "Riesgo de desaprobación",
+                stringResource(Res.string.hero_status_risk),
                 MaterialTheme.colorScheme.errorContainer,
                 MaterialTheme.colorScheme.onErrorContainer,
                 Icons.Default.Warning
+            )
+            RiskLevel.NoData -> Quadruple(
+                stringResource(Res.string.hero_status_no_data),
+                MaterialTheme.colorScheme.surfaceContainerHighest,
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                Icons.Default.Info
             )
         }
 
@@ -245,11 +274,14 @@ fun HeroSummaryCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "RESUMEN ACADÉMICO",
+                        text = stringResource(Res.string.hero_summary_title),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
                     )
                     Row(
                         modifier = Modifier
@@ -269,7 +301,9 @@ fun HeroSummaryCard(
                             text = statusLabel,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = statusContentColor
+                            color = statusContentColor,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }
@@ -287,7 +321,7 @@ fun HeroSummaryCard(
                             .padding(14.dp)
                     ) {
                         Text(
-                            text = "PROMEDIO ACTUAL",
+                            text = stringResource(Res.string.hero_current_average),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -309,7 +343,7 @@ fun HeroSummaryCard(
                             .padding(14.dp)
                     ) {
                         Text(
-                            text = "PROYECCIÓN FINAL",
+                            text = stringResource(Res.string.hero_projected_final),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -331,7 +365,7 @@ fun HeroSummaryCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Avance Evaluado del Ciclo",
+                            text = stringResource(Res.string.hero_evaluated_progress),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

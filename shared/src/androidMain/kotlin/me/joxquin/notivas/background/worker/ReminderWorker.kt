@@ -31,6 +31,9 @@ class ReminderWorker(
             if (hasAuth) {
                 notificationHelper.showSyncNotification()
                 try {
+                    // Renovar antes de sincronizar: si el token esta por vencer, la sincronizacion ya usa el nuevo.
+                    val renewal = canvasRepository.renewTokenIfNeeded()
+                    println("ReminderWorker [Token] Revisión de vencimiento: $renewal")
                     println("ReminderWorker [Sync] Iniciando fetchAndSaveData()")
                     withTimeoutOrNull(45_000L) {
                         canvasRepository.fetchAndSaveData()

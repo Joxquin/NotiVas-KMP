@@ -34,6 +34,7 @@ import coil3.compose.AsyncImage
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.course_pending_format
+import me.joxquin.notivas.shared.resources.course_pending_one
 import me.joxquin.notivas.shared.resources.course_up_to_date
 import me.joxquin.notivas.shared.resources.courses_enrolled_format
 import me.joxquin.notivas.shared.resources.courses_section_title
@@ -52,7 +53,9 @@ import top.yukonga.miuix.kmp.utils.PressFeedbackType
 @Composable
 fun MiuixCourseHeader(
     totalCourses: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Sin pantalla de gestión de cursos todavía: el enlace solo aparece si hay una acción real.
+    onManage: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -85,13 +88,15 @@ fun MiuixCourseHeader(
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             )
 
-            Text(
-                text = stringResource(Res.string.manage),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = MiuixTheme.colorScheme.primary,
-                modifier = Modifier.clickable { }
-            )
+            if (onManage != null) {
+                Text(
+                    text = stringResource(Res.string.manage),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MiuixTheme.colorScheme.primary,
+                    modifier = Modifier.clickable(onClick = onManage)
+                )
+            }
         }
     }
 }
@@ -262,7 +267,7 @@ private fun MiuixCourseGridCard(
 
                 Text(
                     text = if (pendingCount > 0) {
-                        stringResource(Res.string.course_pending_format, pendingCount)
+                        stringResource(if (pendingCount == 1) Res.string.course_pending_one else Res.string.course_pending_format, pendingCount)
                     } else {
                         stringResource(Res.string.course_up_to_date)
                     },

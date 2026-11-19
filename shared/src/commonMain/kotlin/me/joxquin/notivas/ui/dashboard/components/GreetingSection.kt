@@ -50,17 +50,7 @@ fun GreetingSection(
     modifier: Modifier = Modifier
 ) {
     val rawName = profile?.name ?: ""
-    val studentFirstName = remember(rawName) {
-        if (rawName.isBlank()) ""
-        else if ("," in rawName) {
-            val givenPart = rawName.substringAfter(",").trim()
-            val first = givenPart.split(" ").firstOrNull { it.isNotBlank() } ?: ""
-            first.lowercase().replaceFirstChar { it.uppercase() }
-        } else {
-            val first = rawName.trim().split(" ").firstOrNull { it.isNotBlank() } ?: ""
-            first.lowercase().replaceFirstChar { it.uppercase() }
-        }
-    }
+    val studentFirstName = remember(rawName) { me.joxquin.notivas.util.canvasFirstName(rawName) ?: "" }
     val initials = remember(rawName, studentFirstName) {
         if (rawName.isBlank()) "NV"
         else if ("," in rawName) {
