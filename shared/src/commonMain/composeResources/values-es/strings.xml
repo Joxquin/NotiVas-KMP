@@ -281,7 +281,6 @@
     <string name="bento_archived_count">%1$d Archivadas</string>
 
     <!-- Utilidades Settings Submenu -->
-    <string name="groups_menu_options_title">Opciones de Ponderación</string>
     <string name="groups_menu_import_catalog">Importar desde catálogo oficial</string>
     <string name="groups_menu_import_json">Importar archivo JSON (Storage)</string>
     <string name="groups_menu_export_json">Guardar archivo JSON (Storage)</string>

@@ -86,7 +86,6 @@ import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import org.jetbrains.compose.resources.stringResource
-import me.joxquin.notivas.ui.utilidades.components.GroupsSettingsBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
 
@@ -109,7 +108,6 @@ fun NotasScreen(
     var showManualCreateBottomSheet by remember { mutableStateOf(false) }
     var showGitHubImportDialog by remember { mutableStateOf(false) }
     var showCopilotAnalysisSheet by remember { mutableStateOf(false) }
-    var showTuneSettingsSheet by remember { mutableStateOf(false) }
 
     val isScrolled by remember {
         derivedStateOf {
@@ -168,29 +166,6 @@ fun NotasScreen(
         )
     }
 
-    // Modal de ajustes de grupos de ponderación (Importar/Exportar/Reset)
-    if (showTuneSettingsSheet) {
-        GroupsSettingsBottomSheet(
-            onDismiss = { showTuneSettingsSheet = false },
-            onOpenCatalogImport = {
-                showTuneSettingsSheet = false
-                showGitHubImportDialog = true
-            },
-            onImportJson = { json ->
-                viewModel.importGlobalGroupsFromJson(json) { }
-            },
-            onRequestExportContent = { callback ->
-                viewModel.exportGlobalGroups { json ->
-                    callback(json)
-                }
-            },
-            onResetGroups = {
-                viewModel.resetAllSimulationGroups()
-            },
-            themeStyle = themeStyle
-        )
-    }
-
     val totalWeight = uiState.totalConfiguredWeight.roundToInt()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
@@ -223,7 +198,7 @@ fun NotasScreen(
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
                                         imageVector = MiuixIcons.Tune,
-                                        contentDescription = stringResource(Res.string.groups_menu_options_title),
+                                        contentDescription = stringResource(Res.string.assignment_detail_tab_options),
                                         modifier = Modifier.size(28.dp).glassPopupAnchorContent(menuAnchor),
                                         tint = MiuixTheme.colorScheme.onSurface,
                                     )
@@ -355,14 +330,6 @@ fun NotasScreen(
             },
             gap = 0.dp,
         ) {
-            GlassPopupItem(
-                text = stringResource(Res.string.groups_menu_options_title),
-                icon = MiuixIcons.Tune,
-                onClick = {
-                    showTuneMenu = false
-                    showTuneSettingsSheet = true
-                }
-            )
             GlassPopupItem(
                 text = stringResource(Res.string.groups_create_github_title),
                 icon = Icons.Default.LibraryBooks,

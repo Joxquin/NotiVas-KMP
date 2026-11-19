@@ -292,7 +292,6 @@ fun MainAppShell(
     var showingScheduleDetail by remember { mutableStateOf(false) }
     var selectedCourseForDetail by remember { mutableStateOf<Course?>(null) }
     var selectedCourseForModules by remember { mutableStateOf<Course?>(null) }
-    var showUtilidadesTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
     val forosUiState by forosViewModel.uiState.collectAsState()
@@ -551,7 +550,6 @@ fun MainAppShell(
                                             onOpenGroupDetail = { gid, cid ->
                                                 miuixNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
                                             },
-                                            onOpenTuneSettings = { showUtilidadesTuneSheet = true },
                                             onBack = {},
                                             themeStyle = AppThemeStyle.MIUIX,
                                             lazyListState = utilidadesListState
@@ -1314,7 +1312,6 @@ fun MainAppShell(
                                             onOpenGroupDetail = { gid, cid ->
                                                 materialNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
                                             },
-                                            onOpenTuneSettings = { showUtilidadesTuneSheet = true },
                                             onOpenCatalogImport = { showCatalogImportDialog = true },
                                             onImportJsonClick = { filePicker.launchFilePicker() },
                                             onExportJsonClick = { filePicker.launchFileCreator("notivas_ponderacion.json") },
@@ -1821,27 +1818,6 @@ fun MainAppShell(
         UpdateDialog(
             updateInfo = info,
             onDismiss = { activeUpdateInfo = null }
-        )
-    }
-
-    if (showUtilidadesTuneSheet) {
-        me.joxquin.notivas.ui.utilidades.components.GroupsSettingsBottomSheet(
-            onDismiss = { showUtilidadesTuneSheet = false },
-            onOpenCatalogImport = { showCatalogImportDialog = true },
-            onImportJson = { json ->
-                notasViewModel.importGlobalGroupsFromJson(json) { result ->
-                    // Result handling
-                }
-            },
-            onRequestExportContent = { callback ->
-                notasViewModel.exportGlobalGroups { json ->
-                    callback(json)
-                }
-            },
-            onResetGroups = {
-                notasViewModel.resetAllSimulationGroups()
-            },
-            themeStyle = themeStyle
         )
     }
 

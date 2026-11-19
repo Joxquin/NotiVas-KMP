@@ -49,7 +49,6 @@ fun UtilidadesScreen(
     onOpenArchive: () -> Unit = {},
     onOpenAssignmentDetail: ((me.joxquin.notivas.data.model.Assignment) -> Unit)? = null,
     onOpenGroupDetail: ((Long, Long) -> Unit)? = null,
-    onOpenTuneSettings: () -> Unit = {},
     onOpenCatalogImport: () -> Unit = {},
     onImportJsonClick: () -> Unit = {},
     onExportJsonClick: () -> Unit = {},
@@ -85,7 +84,6 @@ fun UtilidadesScreen(
             onOpenForos = onOpenForos,
             onOpenForoDetail = handleOpenForoDetail,
             onOpenArchive = onOpenArchive,
-            onOpenTuneSettings = onOpenTuneSettings,
             lazyListState = lazyListState,
             modifier = modifier
         )
@@ -189,7 +187,6 @@ fun UtilidadesScreen(
                         onOpenForos = onOpenForos,
                         onOpenForoDetail = handleOpenForoDetail,
                         onOpenArchive = onOpenArchive,
-                        onOpenTuneSettings = onOpenTuneSettings,
                         lazyListState = lazyListState
                     )
                 } else {
@@ -200,7 +197,6 @@ fun UtilidadesScreen(
                         onOpenForos = onOpenForos,
                         onOpenForoDetail = handleOpenForoDetail,
                         onOpenArchive = onOpenArchive,
-                        onOpenTuneSettings = onOpenTuneSettings,
                         onOpenCatalogImport = onOpenCatalogImport,
                         onImportJsonClick = onImportJsonClick,
                         onExportJsonClick = onExportJsonClick,

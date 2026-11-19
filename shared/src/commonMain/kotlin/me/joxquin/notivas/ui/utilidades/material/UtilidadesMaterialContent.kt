@@ -67,7 +67,6 @@ fun UtilidadesMaterialContent(
     onOpenForos: () -> Unit = {},
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenArchive: () -> Unit = {},
-    onOpenTuneSettings: () -> Unit = {},
     onOpenCatalogImport: () -> Unit = {},
     onImportJsonClick: () -> Unit = {},
     onExportJsonClick: () -> Unit = {},
@@ -145,7 +144,7 @@ fun UtilidadesMaterialContent(
                         IconButton(onClick = { menuExpanded = true }) {
                             Icon(
                                 imageVector = Icons.Outlined.Tune,
-                                contentDescription = stringResource(Res.string.groups_menu_options_title),
+                                contentDescription = stringResource(Res.string.assignment_detail_tab_options),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }

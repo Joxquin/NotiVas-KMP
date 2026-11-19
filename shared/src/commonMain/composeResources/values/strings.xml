@@ -281,7 +281,6 @@
     <string name="bento_archived_count">%1$d Archived</string>
 
     <!-- Utilidades Settings Submenu -->
-    <string name="groups_menu_options_title">Weighting Options</string>
     <string name="groups_menu_import_catalog">Import from official catalog</string>
     <string name="groups_menu_import_json">Import JSON file (Storage)</string>
     <string name="groups_menu_export_json">Export JSON file (Storage)</string>
