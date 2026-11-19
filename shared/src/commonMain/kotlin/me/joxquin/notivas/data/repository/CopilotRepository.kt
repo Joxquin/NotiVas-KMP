@@ -111,17 +111,19 @@ class CopilotRepository(
 
             // Intentar primero con tools (salvo que ya sepamos que este modelo/proveedor no las soporta)
             var response = try {
-                openRouterApiService.chatCompletion(
-                    apiKey = apiKey,
-                    request = OpenRouterChatRequest(
-                        model = model,
-                        messages = messages,
-                        tools = if (disableTools) null else toolExecutor.tools,
-                        temperature = 0.3,
-                        maxTokens = 4000
-                    ),
-                    customBaseUrl = customBaseUrl
-                )
+                retryOnceOnTimeout {
+                    openRouterApiService.chatCompletion(
+                        apiKey = apiKey,
+                        request = OpenRouterChatRequest(
+                            model = model,
+                            messages = messages,
+                            tools = if (disableTools) null else toolExecutor.tools,
+                            temperature = 0.3,
+                            maxTokens = 4000
+                        ),
+                        customBaseUrl = customBaseUrl
+                    )
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -288,17 +290,19 @@ class CopilotRepository(
                         content = "Con toda la información obtenida arriba de Canvas LMS, responde ahora de forma completa, detallada y estructurada la consulta original del estudiante en Markdown (usando tablas, divisores y viñetas según corresponda)."
                     )
                 )
-                val finalSynthesisResponse = openRouterApiService.chatCompletion(
-                    apiKey = apiKey,
-                    request = OpenRouterChatRequest(
-                        model = model,
-                        messages = messages,
-                        tools = null,
-                        temperature = 0.3,
-                        maxTokens = 4000
-                    ),
-                    customBaseUrl = customBaseUrl
-                )
+                val finalSynthesisResponse = retryOnceOnTimeout {
+                    openRouterApiService.chatCompletion(
+                        apiKey = apiKey,
+                        request = OpenRouterChatRequest(
+                            model = model,
+                            messages = messages,
+                            tools = null,
+                            temperature = 0.3,
+                            maxTokens = 4000
+                        ),
+                        customBaseUrl = customBaseUrl
+                    )
+                }
                 val synthesisText = finalSynthesisResponse.choices?.firstOrNull()?.message?.content
                 if (!synthesisText.isNullOrBlank()) {
                     finalReply = synthesisText.replace(Regex("(?s)<tool_call>.*?</tool_call>"), "").trim()
@@ -371,6 +375,24 @@ class CopilotRepository(
             "fetch_module_item_content" -> "Leyendo contenido de clase..."
             "create_simulation_group" -> "Configurando grupo de simulación..."
             else -> "Procesando información..."
+        }
+    }
+
+    /**
+     * Repite una vez la llamada al modelo si se agotó el tiempo: en las pruebas, Google AI Studio a veces
+     * no respondía en 60 s tras recibir resultados de herramientas y la consulta se perdía entera.
+     */
+    private suspend fun <T> retryOnceOnTimeout(call: suspend () -> T): T {
+        return try {
+            call()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            val isTimeout = e is io.ktor.client.plugins.HttpRequestTimeoutException ||
+                e.message?.contains("timeout", ignoreCase = true) == true
+            if (!isTimeout) throw e
+            println("Copilot [Aviso] Tiempo agotado esperando al modelo; reintentando una vez")
+            call()
         }
     }
 

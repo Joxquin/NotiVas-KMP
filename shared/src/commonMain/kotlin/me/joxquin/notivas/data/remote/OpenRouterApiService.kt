@@ -6,6 +6,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.plugins.timeout
 import me.joxquin.notivas.data.model.OpenRouterChatRequest
 import me.joxquin.notivas.data.model.OpenRouterChatResponse
 import me.joxquin.notivas.data.model.OpenRouterCreditsResponse
@@ -25,6 +26,9 @@ class OpenRouterApiService(
     private val baseUrl: String = "https://openrouter.ai/api/v1"
 ) {
     companion object {
+        /** Tiempo máximo de una llamada al modelo (el cliente compartido usa 60 s). */
+        const val CHAT_TIMEOUT_MS = 120_000L
+
         val requestJson = Json {
             ignoreUnknownKeys = true
             isLenient = true
@@ -76,6 +80,12 @@ class OpenRouterApiService(
             header("X-Title", "NotiVas Academic Copilot")
             contentType(ContentType.Application.Json)
             setBody(requestBodyJson)
+            // El cliente compartido corta a los 60 s (pensado para Canvas). Un modelo con resultados de
+            // herramientas grandes puede tardar más: se le da hasta 2 minutos solo a esta llamada.
+            timeout {
+                requestTimeoutMillis = CHAT_TIMEOUT_MS
+                socketTimeoutMillis = CHAT_TIMEOUT_MS
+            }
         }
         
         val status = response.status.value
