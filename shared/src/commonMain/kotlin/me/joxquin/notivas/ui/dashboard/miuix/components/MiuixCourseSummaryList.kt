@@ -53,7 +53,9 @@ import top.yukonga.miuix.kmp.utils.PressFeedbackType
 @Composable
 fun MiuixCourseHeader(
     totalCourses: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Sin pantalla de gestión de cursos todavía: el enlace solo aparece si hay una acción real.
+    onManage: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -86,13 +88,15 @@ fun MiuixCourseHeader(
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             )
 
-            Text(
-                text = stringResource(Res.string.manage),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = MiuixTheme.colorScheme.primary,
-                modifier = Modifier.clickable { }
-            )
+            if (onManage != null) {
+                Text(
+                    text = stringResource(Res.string.manage),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MiuixTheme.colorScheme.primary,
+                    modifier = Modifier.clickable(onClick = onManage)
+                )
+            }
         }
     }
 }
