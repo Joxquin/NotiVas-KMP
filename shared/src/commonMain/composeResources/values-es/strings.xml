@@ -387,6 +387,15 @@
     <string name="foro_show_less_action">Ver menos</string>
 
     <!-- Copilot Assistant Sheet -->
+    <string name="copilot_sheet_title">Estructurar respuesta con Copilot</string>
+    <string name="copilot_scanning_title">Estructurando respuesta con IA</string>
+    <string name="copilot_step_reading_prompt">Leyendo consigna y rúbrica oficial...</string>
+    <string name="copilot_step_analyzing_replies">Analizando intervenciones del debate...</string>
+    <string name="copilot_step_identifying_objectives">Extrayendo objetivo pedagógico y rigor...</string>
+    <string name="copilot_step_structuring_draft">Estructurando borrador académico...</string>
+    <string name="copilot_tab_draft">Borrador</string>
+    <string name="copilot_tab_structure">Estructura</string>
+    <string name="copilot_tab_tone">Afinar tono</string>
     <string name="copilot_assist_return_to_forum">Volver al Foro</string>
     <string name="copilot_assist_academic_copilot">COPILOT ACADÉMICO</string>
     <string name="copilot_assist_strategy_for">Estrategia para %1$s</string>

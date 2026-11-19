@@ -1,8 +1,17 @@
 package me.joxquin.notivas.ui.foros.detail.components
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -14,42 +23,51 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.captionBar
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Compress
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CrisisAlert
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FactCheck
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,58 +79,74 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
+import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.ui.components.RichContentRenderer
+import me.joxquin.notivas.ui.components.aura.monetAuraBackground
 import me.joxquin.notivas.ui.copilot.components.formatMarkdown
 import me.joxquin.notivas.ui.foros.CopilotForoStrategy
+import org.jetbrains.compose.resources.stringResource
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.TabRowWithContour
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.squircle.squircleClip
+import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
+import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import top.yukonga.miuix.kmp.utils.overScrollVertical
+import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import top.yukonga.miuix.kmp.utils.springAnimateToPage
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 
-import org.jetbrains.compose.resources.stringResource
-import me.joxquin.notivas.shared.resources.Res
-import me.joxquin.notivas.shared.resources.copilot_assist_return_to_forum
-import me.joxquin.notivas.shared.resources.copilot_assist_academic_copilot
-import me.joxquin.notivas.shared.resources.copilot_assist_strategy_for
-import me.joxquin.notivas.shared.resources.copilot_assist_analyzing_with
-import me.joxquin.notivas.shared.resources.copilot_assist_extracting
-import me.joxquin.notivas.shared.resources.copilot_assist_failed_strategy
-import me.joxquin.notivas.shared.resources.copilot_assist_retry_btn
-import me.joxquin.notivas.shared.resources.copilot_assist_objective_detected
-import me.joxquin.notivas.shared.resources.copilot_assist_technical_rigor
-import me.joxquin.notivas.shared.resources.copilot_assist_counterexample
-import me.joxquin.notivas.shared.resources.copilot_assist_interaction
-import me.joxquin.notivas.shared.resources.copilot_assist_structure_header
-import me.joxquin.notivas.shared.resources.copilot_assist_phases_count
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_header
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_formal
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_formal_prompt
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_concise
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_concise_prompt
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_citations
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_citations_prompt
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_counterexample
-import me.joxquin.notivas.shared.resources.copilot_assist_tone_counterexample_prompt
-import me.joxquin.notivas.shared.resources.copilot_assist_draft_suggested
-import me.joxquin.notivas.shared.resources.copilot_assist_words_count
-import me.joxquin.notivas.shared.resources.copilot_assist_academic_tone
-import me.joxquin.notivas.shared.resources.copilot_assist_copied
-import me.joxquin.notivas.shared.resources.copilot_assist_copy_text
-import me.joxquin.notivas.shared.resources.copilot_assist_edit_draft
-import me.joxquin.notivas.shared.resources.copilot_assist_insert_btn
+private enum class ForoCopilotProgressStep {
+    READING_PROMPT,
+    ANALYZING_REPLIES,
+    EXTRACTING_OBJECTIVES,
+    STRUCTURING_DRAFT
+}
+
+private enum class SheetStage {
+    LOADING,
+    ERROR,
+    RESULT
+}
+
+private fun cleanModelName(activeModelName: String): String {
+    return when {
+        activeModelName.contains("gemini-3.5-flash-lite", ignoreCase = true) -> "Gemini 3.5 Flash-Lite"
+        activeModelName.contains("gemini-3.5-flash", ignoreCase = true) -> "Gemini 3.5 Flash"
+        activeModelName.contains("gemini-3.1-pro", ignoreCase = true) -> "Gemini 3.1 Pro"
+        activeModelName.contains("gemini-2.5-flash", ignoreCase = true) -> "Gemini 2.5 Flash"
+        activeModelName.contains("gemini-2.5-pro", ignoreCase = true) -> "Gemini 2.5 Pro"
+        activeModelName.contains("claude-3-5-sonnet", ignoreCase = true) -> "Claude 3.5 Sonnet"
+        activeModelName.contains("deepseek-r1", ignoreCase = true) -> "DeepSeek-R1"
+        activeModelName.contains("gpt-4o", ignoreCase = true) -> "GPT-4o"
+        else -> activeModelName.substringAfterLast("/")
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForoCopilotAssistantSheet(
+    show: Boolean = true,
     topic: CanvasDiscussionTopic,
     strategy: CopilotForoStrategy?,
     isGenerating: Boolean,
@@ -123,731 +157,887 @@ fun ForoCopilotAssistantSheet(
     onInsertDraft: (String) -> Unit,
     themeStyle: AppThemeStyle
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val clipboardManager = LocalClipboardManager.current
-    var isCopied by remember { mutableStateOf(false) }
-    var selectedTone by remember { mutableStateOf<String?>(null) }
+    var isSheetAnimationFinished by remember { mutableStateOf(false) }
 
-    LaunchedEffect(topic.id) {
-        if (strategy == null && !isGenerating && errorMessage == null) {
+    LaunchedEffect(show) {
+        if (show) {
+            isSheetAnimationFinished = false
+            delay(420)
+            isSheetAnimationFinished = true
+        } else {
+            isSheetAnimationFinished = false
+        }
+    }
+
+    LaunchedEffect(topic.id, show) {
+        if (show && strategy == null && !isGenerating && errorMessage == null) {
             onGenerate(null)
         }
     }
 
-    val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-    val onSurface = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-    val onSurfaceVariant = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
-    val cardBg = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainer
-    val chipBg = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
-    val successColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+    val auraAlpha by animateFloatAsState(
+        targetValue = if (isGenerating && isSheetAnimationFinished) 0.85f else 0f,
+        animationSpec = tween(
+            durationMillis = if (isGenerating) 600 else 400,
+            easing = FastOutSlowInEasing
+        ),
+        label = "foroCopilotAuraAlpha"
+    )
 
-    val cleanModelDisplayName = remember(activeModelName) {
-        when {
-            activeModelName.contains("gemini-3.5-flash-lite", ignoreCase = true) -> "Gemini 3.5 Flash-Lite"
-            activeModelName.contains("gemini-3.5-flash", ignoreCase = true) -> "Gemini 3.5 Flash"
-            activeModelName.contains("gemini-3.1-pro", ignoreCase = true) -> "Gemini 3.1 Pro"
-            activeModelName.contains("gemini-2.5-flash", ignoreCase = true) -> "Gemini 2.5 Flash"
-            activeModelName.contains("gemini-2.5-pro", ignoreCase = true) -> "Gemini 2.5 Pro"
-            activeModelName.contains("claude-3-5-sonnet", ignoreCase = true) -> "Claude 3.5 Sonnet"
-            activeModelName.contains("deepseek-r1", ignoreCase = true) -> "DeepSeek-R1"
-            activeModelName.contains("gpt-4o", ignoreCase = true) -> "GPT-4o"
-            else -> activeModelName.substringAfterLast("/")
+    val isAuraActive = isGenerating || auraAlpha > 0.001f
+
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        val sheetBackgroundColor = if (isAuraActive) Color.Transparent else MiuixTheme.colorScheme.surfaceContainer
+        val sheetModifier = if (isAuraActive) {
+            Modifier
+                .squircleClip(
+                    topStart = 28.dp,
+                    topEnd = 28.dp,
+                    bottomEnd = 0.dp,
+                    bottomStart = 0.dp
+                )
+                .monetAuraBackground(
+                    alpha = auraAlpha,
+                    surfaceColor = MiuixTheme.colorScheme.surfaceContainer
+                )
+        } else {
+            Modifier
+        }
+
+        WindowBottomSheet(
+            title = stringResource(Res.string.copilot_sheet_title),
+            show = show,
+            onDismissRequest = onDismiss,
+            backgroundColor = sheetBackgroundColor,
+            modifier = sheetModifier,
+            content = {
+                ForoCopilotContentMiuix(
+                    topic = topic,
+                    strategy = strategy,
+                    isGenerating = isGenerating,
+                    errorMessage = errorMessage,
+                    activeModelName = activeModelName,
+                    onDismiss = onDismiss,
+                    onGenerate = onGenerate,
+                    onInsertDraft = onInsertDraft
+                )
+            }
+        )
+    } else {
+        if (!show) return
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val sheetBackgroundColor = if (isAuraActive) Color.Transparent else MaterialTheme.colorScheme.surface
+        val sheetModifier = if (isAuraActive) {
+            Modifier
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .monetAuraBackground(
+                    alpha = auraAlpha,
+                    surfaceColor = MaterialTheme.colorScheme.surface
+                )
+        } else {
+            Modifier
+        }
+
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            containerColor = sheetBackgroundColor,
+            modifier = sheetModifier
+        ) {
+            ForoCopilotContentMaterial(
+                topic = topic,
+                strategy = strategy,
+                isGenerating = isGenerating,
+                errorMessage = errorMessage,
+                activeModelName = activeModelName,
+                onDismiss = onDismiss,
+                onGenerate = onGenerate,
+                onInsertDraft = onInsertDraft
+            )
+        }
+    }
+}
+
+@Composable
+private fun ForoCopilotContentMiuix(
+    topic: CanvasDiscussionTopic,
+    strategy: CopilotForoStrategy?,
+    isGenerating: Boolean,
+    errorMessage: String?,
+    activeModelName: String,
+    onDismiss: () -> Unit,
+    onGenerate: (toneModifier: String?) -> Unit,
+    onInsertDraft: (String) -> Unit
+) {
+    val navInsets = WindowInsets.navigationBars.asPaddingValues()
+
+    var lastValidStrategy by remember { mutableStateOf(strategy) }
+    if (strategy != null) {
+        lastValidStrategy = strategy
+    }
+    val currentStrategy = strategy ?: lastValidStrategy
+
+    var progressStep by remember { mutableStateOf(ForoCopilotProgressStep.READING_PROMPT) }
+
+    LaunchedEffect(isGenerating) {
+        if (isGenerating) {
+            progressStep = ForoCopilotProgressStep.READING_PROMPT
+            delay(1100)
+            if (isGenerating) progressStep = ForoCopilotProgressStep.ANALYZING_REPLIES
+            delay(1400)
+            if (isGenerating) progressStep = ForoCopilotProgressStep.EXTRACTING_OBJECTIVES
+            delay(1600)
+            if (isGenerating) progressStep = ForoCopilotProgressStep.STRUCTURING_DRAFT
         }
     }
 
-    WindowBottomSheet(
-        show = true,
-        onDismissRequest = onDismiss,
-        backgroundColor = if (themeStyle == AppThemeStyle.MIUIX) {
-            MiuixTheme.colorScheme.surface
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLow
-        },
-        dragHandleColor = if (themeStyle == AppThemeStyle.MIUIX) {
-            MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.2f)
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-        },
-        insideMargin = DpSize(0.dp, 0.dp),
-        cornerRadius = 28.dp
-    ) {
-        val dismissState = LocalDismissState.current
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.92f)
-                .padding(top = 12.dp)
-        ) {
-            // Header: Botón volver + Modelo Activo
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(9999.dp),
-                    color = chipBg,
-                    modifier = Modifier.clickable {
-                        dismissState?.invoke() ?: onDismiss()
-                    }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.copilot_assist_return_to_forum),
-                            tint = primaryColor,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = stringResource(Res.string.copilot_assist_return_to_forum),
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = onSurface
-                        )
-                    }
-                }
+    val currentStage = when {
+        isGenerating -> SheetStage.LOADING
+        errorMessage != null && currentStrategy == null -> SheetStage.ERROR
+        else -> SheetStage.RESULT
+    }
 
-                // Chip de Modelo de IA Activo
-                Surface(
-                    shape = RoundedCornerShape(9999.dp),
-                    color = primaryColor.copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        text = cleanModelDisplayName,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp),
-                        color = primaryColor
-                    )
-                }
+    AnimatedContent(
+        targetState = currentStage,
+        transitionSpec = {
+            (fadeIn(animationSpec = tween(320, easing = FastOutSlowInEasing)) +
+             scaleIn(initialScale = 0.97f, animationSpec = tween(320, easing = FastOutSlowInEasing)))
+                .togetherWith(
+                    fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
+                    scaleOut(targetScale = 0.98f, animationSpec = tween(220, easing = FastOutSlowInEasing))
+                )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = 0.85f,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ),
+        label = "foroCopilotContentMiuix"
+    ) { stage ->
+        when (stage) {
+            SheetStage.LOADING -> {
+                CopilotLoadingViewMiuix(
+                    step = progressStep,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = navInsets.calculateBottomPadding() + 20.dp)
+                )
             }
-
-            // Título Principal
-            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
-                Text(
-                    text = stringResource(Res.string.copilot_assist_academic_copilot),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp,
-                        fontSize = 10.sp
-                    ),
-                    color = primaryColor
+            SheetStage.ERROR -> {
+                CopilotErrorViewMiuix(
+                    error = errorMessage ?: stringResource(Res.string.copilot_assist_failed_strategy),
+                    onRetry = { onGenerate(null) },
+                    onClose = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = navInsets.calculateBottomPadding() + 20.dp)
                 )
-                Text(
-                    text = stringResource(Res.string.copilot_assist_strategy_for, topic.title),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = onSurface,
-                    maxLines = 1
-                )
-            }            // Contenido dinámico (Cargando / Error / Contenido)
-            if (isGenerating) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            color = primaryColor,
-                            modifier = Modifier.size(36.dp)
-                        )
-                        Text(
-                            text = stringResource(Res.string.copilot_assist_analyzing_with, cleanModelDisplayName),
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                            color = onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = stringResource(Res.string.copilot_assist_extracting),
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                            color = onSurfaceVariant.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            } else if (errorMessage != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.HelpOutline,
-                            contentDescription = null,
-                            tint = if (themeStyle == AppThemeStyle.MIUIX) {
-                                MiuixTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.error
-                            },
-                            modifier = Modifier.size(40.dp)
-                        )
-                        Text(
-                            text = stringResource(Res.string.copilot_assist_failed_strategy),
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = onSurface
-                        )
-                        Text(
-                            text = errorMessage,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = primaryColor,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable { onGenerate(selectedTone) }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = null,
-                                    tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = stringResource(Res.string.copilot_assist_retry_btn),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                        }
-                    }
-                }
-            } else if (strategy != null) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    // 1. Tarjeta de Diagnóstico y Cumplimiento de Rúbrica
-                    item(key = "copilot_diagnostic") {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = cardBg,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.Top
-                                ) {
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(9999.dp),
-                                            color = successColor.copy(alpha = 0.15f)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Verified,
-                                                    contentDescription = null,
-                                                    tint = successColor,
-                                                    modifier = Modifier.size(13.dp)
-                                                )
-                                                Text(
-                                                    text = stringResource(Res.string.copilot_assist_objective_detected),
-                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold
-                                                    ),
-                                                    color = successColor
-                                                )
-                                            }
-                                        }
-
-                                        val formattedObjective = remember(strategy.learningObjective) {
-                                            formatMarkdown(strategy.learningObjective)
-                                        }
-                                        Text(
-                                            text = formattedObjective,
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                lineHeight = 18.sp
-                                            ),
-                                            color = onSurface
-                                        )
-                                    }
-
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = primaryColor.copy(alpha = 0.15f),
-                                        modifier = Modifier.size(36.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = Icons.Default.FactCheck,
-                                                contentDescription = null,
-                                                tint = primaryColor,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Mini medidores
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    MetricPill(
-                                        title = stringResource(Res.string.copilot_assist_technical_rigor),
-                                        value = strategy.technicalRigor,
-                                        themeStyle = themeStyle,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    MetricPill(
-                                        title = stringResource(Res.string.copilot_assist_counterexample),
-                                        value = strategy.counterExample,
-                                        themeStyle = themeStyle,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    MetricPill(
-                                        title = stringResource(Res.string.copilot_assist_interaction),
-                                        value = strategy.activeInteraction,
-                                        themeStyle = themeStyle,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // 2. Estructura Argumental Recomendada (3 Fases)
-                    item(key = "copilot_structure") {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.copilot_assist_structure_header),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 0.5.sp
-                                    ),
-                                    color = onSurfaceVariant
-                                )
-                                Text(
-                                    text = stringResource(Res.string.copilot_assist_phases_count),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = primaryColor
-                                )
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                color = cardBg,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column {
-                                    StructurePhaseItem(
-                                        phaseNumber = "1",
-                                        title = strategy.phase1Title,
-                                        description = strategy.phase1Desc,
-                                        themeStyle = themeStyle
-                                    )
-                                    StructurePhaseItem(
-                                        phaseNumber = "2",
-                                        title = strategy.phase2Title,
-                                        description = strategy.phase2Desc,
-                                        themeStyle = themeStyle,
-                                        isAlternate = true
-                                    )
-                                    StructurePhaseItem(
-                                        phaseNumber = "3",
-                                        title = strategy.phase3Title,
-                                        description = strategy.phase3Desc,
-                                        themeStyle = themeStyle
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // 3. Afinador de Tono & Perspectiva (Chips interactivos)
-                    item(key = "copilot_tone_tuner") {
-                        val toneFormalPrompt = stringResource(Res.string.copilot_assist_tone_formal_prompt)
-                        val toneConcisePrompt = stringResource(Res.string.copilot_assist_tone_concise_prompt)
-                        val toneCitationsPrompt = stringResource(Res.string.copilot_assist_tone_citations_prompt)
-                        val toneCounterPrompt = stringResource(Res.string.copilot_assist_tone_counterexample_prompt)
-
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.copilot_assist_tone_header),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 0.5.sp
-                                    ),
-                                    color = onSurfaceVariant
-                                )
-                                Icon(
-                                    imageVector = Icons.Default.Tune,
-                                    contentDescription = null,
-                                    tint = onSurfaceVariant,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                ToneChip(
-                                    icon = Icons.Default.Psychology,
-                                    text = stringResource(Res.string.copilot_assist_tone_formal),
-                                    isSelected = selectedTone == toneFormalPrompt,
-                                    onClick = {
-                                        selectedTone = toneFormalPrompt
-                                        onGenerate(selectedTone)
-                                    },
-                                    themeStyle = themeStyle
-                                )
-                                ToneChip(
-                                    icon = Icons.Default.Compress,
-                                    text = stringResource(Res.string.copilot_assist_tone_concise),
-                                    isSelected = selectedTone == toneConcisePrompt,
-                                    onClick = {
-                                        selectedTone = toneConcisePrompt
-                                        onGenerate(selectedTone)
-                                    },
-                                    themeStyle = themeStyle
-                                )
-                                ToneChip(
-                                    icon = Icons.Default.MenuBook,
-                                    text = stringResource(Res.string.copilot_assist_tone_citations),
-                                    isSelected = selectedTone == toneCitationsPrompt,
-                                    onClick = {
-                                        selectedTone = toneCitationsPrompt
-                                        onGenerate(selectedTone)
-                                    },
-                                    themeStyle = themeStyle
-                                )
-                                ToneChip(
-                                    icon = Icons.Default.CrisisAlert,
-                                    text = stringResource(Res.string.copilot_assist_tone_counterexample),
-                                    isSelected = selectedTone == toneCounterPrompt,
-                                    onClick = {
-                                        selectedTone = toneCounterPrompt
-                                        onGenerate(selectedTone)
-                                    },
-                                    themeStyle = themeStyle
-                                )
-                            }
-                        }
-                    }
-
-                    // 4. Tarjeta de Respuesta Generada
-                    item(key = "copilot_draft_preview") {
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = cardBg,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(9999.dp),
-                                            color = primaryColor.copy(alpha = 0.15f)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.AutoAwesome,
-                                                    contentDescription = null,
-                                                    tint = primaryColor,
-                                                    modifier = Modifier.size(12.dp)
-                                                )
-                                                Text(
-                                                    text = stringResource(Res.string.copilot_assist_draft_suggested),
-                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold
-                                                    ),
-                                                    color = primaryColor
-                                                )
-                                            }
-                                        }
-
-                                        Text(
-                                            text = stringResource(Res.string.copilot_assist_words_count, strategy.wordCount),
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                                            color = onSurfaceVariant
-                                        )
-                                    }
-
-                                    Surface(
-                                        shape = RoundedCornerShape(9999.dp),
-                                        color = chipBg
-                                    ) {
-                                        Text(
-                                            text = stringResource(Res.string.copilot_assist_academic_tone),
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Medium),
-                                            color = primaryColor,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                        )
-                                    }
-                                }
-
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = chipBg,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    me.joxquin.notivas.ui.components.RichContentRenderer(
-                                        text = strategy.suggestedDraft,
-                                        themeStyle = themeStyle,
-                                        textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                            fontSize = 13.sp,
-                                            lineHeight = 20.sp
-                                        ),
-                                        textColor = onSurface,
-                                        modifier = Modifier.padding(12.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // 5. Botones de Acción (Copiar + Editar + Insertar)
-                    item(key = "copilot_actions") {
-                        val draftCopiedText = stringResource(Res.string.copilot_assist_copied)
-                        val copyDraftText = stringResource(Res.string.copilot_assist_copy_text)
-                        val editDraftText = stringResource(Res.string.copilot_assist_edit_draft)
-                        val insertDraftText = stringResource(Res.string.copilot_assist_insert_btn)
-
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = chipBg,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(42.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .clickable {
-                                            clipboardManager.setText(AnnotatedString(strategy.suggestedDraft))
-                                            isCopied = true
-                                            coroutineScope.launch {
-                                                delay(2000)
-                                                isCopied = false
-                                            }
-                                        }
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxSize(),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                            contentDescription = null,
-                                            tint = if (isCopied) successColor else onSurface,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(Modifier.width(6.dp))
-                                        Text(
-                                            text = if (isCopied) draftCopiedText else copyDraftText,
-                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                            color = if (isCopied) successColor else onSurface
-                                        )
-                                    }
-                                }
-
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = chipBg,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(42.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .clickable {
-                                            onInsertDraft(strategy.suggestedDraft)
-                                            dismissState?.invoke() ?: onDismiss()
-                                        }
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxSize(),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Edit,
-                                            contentDescription = null,
-                                            tint = onSurface,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(Modifier.width(6.dp))
-                                        Text(
-                                            text = editDraftText,
-                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                            color = onSurface
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Botón Principal de Inserción
-                            Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                color = primaryColor,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .clickable {
-                                        onInsertDraft(strategy.suggestedDraft)
-                                        dismissState?.invoke() ?: onDismiss()
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
-                                            contentDescription = null,
-                                            tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Text(
-                                            text = insertDraftText,
-                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                            color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
-                                        )
-                                    }
-
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                        contentDescription = null,
-                                        tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    item {
-                        Spacer(
-                            Modifier.padding(
-                                bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
-                                    WindowInsets.captionBar.asPaddingValues().calculateBottomPadding() + 16.dp
-                            )
-                        )
-                    }
+            }
+            SheetStage.RESULT -> {
+                if (currentStrategy != null) {
+                    CopilotResultViewMiuix(
+                        topic = topic,
+                        strategy = currentStrategy,
+                        activeModelName = activeModelName,
+                        onGenerate = onGenerate,
+                        onInsertDraft = onInsertDraft,
+                        onClose = onDismiss
+                    )
                 }
             }
         }
     }
 }
 
-
 @Composable
-private fun MetricPill(
-    title: String,
-    value: String,
-    themeStyle: AppThemeStyle,
+private fun CopilotLoadingViewMiuix(
+    step: ForoCopilotProgressStep,
     modifier: Modifier = Modifier
 ) {
-    val chipBg = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
-    val onSurfaceVariant = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
-    val successColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+    val message = when (step) {
+        ForoCopilotProgressStep.READING_PROMPT -> stringResource(Res.string.copilot_step_reading_prompt)
+        ForoCopilotProgressStep.ANALYZING_REPLIES -> stringResource(Res.string.copilot_step_analyzing_replies)
+        ForoCopilotProgressStep.EXTRACTING_OBJECTIVES -> stringResource(Res.string.copilot_step_identifying_objectives)
+        ForoCopilotProgressStep.STRUCTURING_DRAFT -> stringResource(Res.string.copilot_step_structuring_draft)
+    }
 
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = chipBg,
+    Column(
         modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .squircleSurface(MiuixTheme.colorScheme.primary.copy(alpha = 0.12f), 24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                color = onSurfaceVariant
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = null,
+                tint = MiuixTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp)
             )
-            Text(
+        }
+
+        MiuixText(
+            text = stringResource(Res.string.copilot_scanning_title),
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Bold,
+            color = MiuixTheme.colorScheme.onSurface
+        )
+
+        MiuixText(
+            text = message,
+            fontSize = 13.sp,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        ProgressStepRowMiuix(
+            label = stringResource(Res.string.copilot_step_reading_prompt),
+            isActive = step == ForoCopilotProgressStep.READING_PROMPT,
+            isCompleted = step.ordinal > ForoCopilotProgressStep.READING_PROMPT.ordinal
+        )
+        ProgressStepRowMiuix(
+            label = stringResource(Res.string.copilot_step_analyzing_replies),
+            isActive = step == ForoCopilotProgressStep.ANALYZING_REPLIES,
+            isCompleted = step.ordinal > ForoCopilotProgressStep.ANALYZING_REPLIES.ordinal
+        )
+        ProgressStepRowMiuix(
+            label = stringResource(Res.string.copilot_step_identifying_objectives),
+            isActive = step == ForoCopilotProgressStep.EXTRACTING_OBJECTIVES,
+            isCompleted = step.ordinal > ForoCopilotProgressStep.EXTRACTING_OBJECTIVES.ordinal
+        )
+        ProgressStepRowMiuix(
+            label = stringResource(Res.string.copilot_step_structuring_draft),
+            isActive = step == ForoCopilotProgressStep.STRUCTURING_DRAFT,
+            isCompleted = step.ordinal > ForoCopilotProgressStep.STRUCTURING_DRAFT.ordinal
+        )
+    }
+}
+
+@Composable
+private fun ProgressStepRowMiuix(
+    label: String,
+    isActive: Boolean,
+    isCompleted: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        if (isCompleted) {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = MiuixTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
+        } else if (isActive) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(14.dp),
+                strokeWidth = 2.dp,
+                color = MiuixTheme.colorScheme.primary
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(MiuixTheme.colorScheme.outline.copy(alpha = 0.2f))
+            )
+        }
+
+        MiuixText(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isActive || isCompleted) MiuixTheme.colorScheme.onSurface else MiuixTheme.colorScheme.onSurfaceVariantSummary
+        )
+    }
+}
+
+@Composable
+private fun CopilotErrorViewMiuix(
+    error: String,
+    onRetry: () -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .squircleSurface(MiuixTheme.colorScheme.errorContainer.copy(alpha = 0.2f), 20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.ErrorOutline,
+                contentDescription = null,
+                tint = MiuixTheme.colorScheme.error,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+
+        MiuixText(
+            text = stringResource(Res.string.copilot_assist_failed_strategy),
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = MiuixTheme.colorScheme.onSurface
+        )
+
+        MiuixText(
+            text = error,
+            fontSize = 13.sp,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp)
+        )
+
+        Row(
+            modifier = Modifier.padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            MiuixTextButton(
+                text = stringResource(Res.string.copilot_assist_retry_btn),
+                onClick = onRetry,
+                colors = ButtonDefaults.textButtonColorsPrimary()
+            )
+            MiuixTextButton(
+                text = stringResource(Res.string.review_action_close),
+                onClick = onClose,
+                colors = ButtonDefaults.textButtonColors(
+                    color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                    textColor = MiuixTheme.colorScheme.onSurface
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun CopilotResultViewMiuix(
+    topic: CanvasDiscussionTopic,
+    strategy: CopilotForoStrategy,
+    activeModelName: String,
+    onGenerate: (toneModifier: String?) -> Unit,
+    onInsertDraft: (String) -> Unit,
+    onClose: () -> Unit
+) {
+    val dismissState = LocalDismissState.current
+    val density = LocalDensity.current
+    val windowInfo = LocalWindowInfo.current
+    val statusBarPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val displayCutoutPadding = WindowInsets.displayCutout.asPaddingValues().calculateTopPadding()
+    val safeTopInset = remember(statusBarPadding, displayCutoutPadding) {
+        maxOf(statusBarPadding, displayCutoutPadding)
+    }
+    val navInsets = WindowInsets.navigationBars.asPaddingValues()
+
+    val maxAvailableContentHeight = remember(windowInfo.containerDpSize.height, safeTopInset) {
+        (windowInfo.containerDpSize.height - safeTopInset - 72.dp).coerceAtLeast(320.dp)
+    }
+
+    var headerHeightDp by remember { mutableStateOf(110.dp) }
+    var footerHeightDp by remember { mutableStateOf(80.dp) }
+
+    val dynamicPagerHeight = remember(maxAvailableContentHeight, headerHeightDp, footerHeightDp) {
+        (maxAvailableContentHeight - headerHeightDp - footerHeightDp - 20.dp).coerceIn(160.dp, 440.dp)
+    }
+
+    val tabLabels = listOf(
+        stringResource(Res.string.copilot_tab_draft),
+        stringResource(Res.string.copilot_tab_structure),
+        stringResource(Res.string.copilot_tab_tone)
+    )
+
+    val scope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { tabLabels.size })
+    val contourTabListState = rememberLazyListState()
+    val flingBehavior = PagerDefaults.flingBehavior(
+        state = pagerState,
+        snapAnimationSpec = PagerNavigationSpringSpec
+    )
+
+    val clipboardManager = LocalClipboardManager.current
+    var isCopied by remember { mutableStateOf(false) }
+    var selectedTone by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Encabezado dinámico: Título del Foro, Chip de Modelo y TabRowWithContour
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { coordinates ->
+                    headerHeightDp = with(density) { coordinates.size.height.toDp() }
+                },
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+                insideMargin = PaddingValues(12.dp),
+                pressFeedbackType = PressFeedbackType.None
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.copilot_assist_academic_copilot),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MiuixTheme.colorScheme.primary
+                        )
+                        MiuixText(
+                            text = topic.title,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MiuixTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .squircleSurface(MiuixTheme.colorScheme.primary.copy(alpha = 0.12f), 9999.dp)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        MiuixText(
+                            text = cleanModelName(activeModelName),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MiuixTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            TabRowWithContour(
+                tabs = tabLabels,
+                selectedTabIndex = pagerState.currentPage,
+                onTabSelected = { index ->
+                    scope.launch {
+                        pagerState.springAnimateToPage(index)
+                    }
+                },
+                listState = contourTabListState,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // HorizontalPager sincronizado con altura acotada dinámica
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(dynamicPagerHeight),
+            userScrollEnabled = true,
+            flingBehavior = flingBehavior,
+            key = { it },
+            pageContent = { page ->
+                when (page) {
+                    0 -> {
+                        // Pestaña 0: Borrador sugerido
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .scrollEndHaptic()
+                                .overScrollVertical(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(bottom = 8.dp)
+                        ) {
+                            item(key = "draft_card") {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+                                    insideMargin = PaddingValues(14.dp),
+                                    pressFeedbackType = PressFeedbackType.None
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .squircleSurface(MiuixTheme.colorScheme.primary.copy(alpha = 0.12f), 9999.dp)
+                                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                                ) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.AutoAwesome,
+                                                            contentDescription = null,
+                                                            tint = MiuixTheme.colorScheme.primary,
+                                                            modifier = Modifier.size(12.dp)
+                                                        )
+                                                        MiuixText(
+                                                            text = stringResource(Res.string.copilot_assist_draft_suggested),
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = MiuixTheme.colorScheme.primary
+                                                        )
+                                                    }
+                                                }
+
+                                                MiuixText(
+                                                    text = stringResource(Res.string.copilot_assist_words_count, strategy.wordCount),
+                                                    fontSize = 11.sp,
+                                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                                )
+                                            }
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .squircleSurface(MiuixTheme.colorScheme.surfaceContainerHigh, 9999.dp)
+                                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                                            ) {
+                                                MiuixText(
+                                                    text = stringResource(Res.string.copilot_assist_academic_tone),
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = MiuixTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .squircleSurface(MiuixTheme.colorScheme.surfaceContainerHigh, 12.dp)
+                                                .padding(12.dp)
+                                        ) {
+                                            RichContentRenderer(
+                                                text = strategy.suggestedDraft,
+                                                themeStyle = AppThemeStyle.MIUIX,
+                                                textColor = MiuixTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    1 -> {
+                        // Pestaña 1: Estructura pedagógica y fases
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .scrollEndHaptic()
+                                .overScrollVertical(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(bottom = 8.dp)
+                        ) {
+                            item(key = "diagnostic_card") {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+                                    insideMargin = PaddingValues(14.dp),
+                                    pressFeedbackType = PressFeedbackType.None
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.Top
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .squircleSurface(MiuixTheme.colorScheme.primary.copy(alpha = 0.12f), 9999.dp)
+                                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                                ) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Verified,
+                                                            contentDescription = null,
+                                                            tint = MiuixTheme.colorScheme.primary,
+                                                            modifier = Modifier.size(13.dp)
+                                                        )
+                                                        MiuixText(
+                                                            text = stringResource(Res.string.copilot_assist_objective_detected),
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = MiuixTheme.colorScheme.primary
+                                                        )
+                                                    }
+                                                }
+
+                                                val formattedObjective = remember(strategy.learningObjective) {
+                                                    formatMarkdown(strategy.learningObjective)
+                                                }
+                                                MiuixText(
+                                                    text = formattedObjective,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = MiuixTheme.colorScheme.onSurface
+                                                )
+                                            }
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .squircleSurface(MiuixTheme.colorScheme.primary.copy(alpha = 0.12f), 12.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.FactCheck,
+                                                    contentDescription = null,
+                                                    tint = MiuixTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            MetricPillMiuix(
+                                                title = stringResource(Res.string.copilot_assist_technical_rigor),
+                                                value = strategy.technicalRigor,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            MetricPillMiuix(
+                                                title = stringResource(Res.string.copilot_assist_counterexample),
+                                                value = strategy.counterExample,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            MetricPillMiuix(
+                                                title = stringResource(Res.string.copilot_assist_interaction),
+                                                value = strategy.activeInteraction,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            item(key = "phases_header") {
+                                SmallTitle(
+                                    text = stringResource(Res.string.copilot_assist_structure_header),
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                )
+                            }
+
+                            item(key = "phases_card") {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+                                    insideMargin = PaddingValues(0.dp),
+                                    pressFeedbackType = PressFeedbackType.None
+                                ) {
+                                    Column {
+                                        StructurePhaseItemMiuix(
+                                            phaseNumber = "1",
+                                            title = strategy.phase1Title,
+                                            description = strategy.phase1Desc
+                                        )
+                                        StructurePhaseItemMiuix(
+                                            phaseNumber = "2",
+                                            title = strategy.phase2Title,
+                                            description = strategy.phase2Desc,
+                                            isAlternate = true
+                                        )
+                                        StructurePhaseItemMiuix(
+                                            phaseNumber = "3",
+                                            title = strategy.phase3Title,
+                                            description = strategy.phase3Desc
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    2 -> {
+                        // Pestaña 2: Afinar tono
+                        val toneFormalPrompt = stringResource(Res.string.copilot_assist_tone_formal_prompt)
+                        val toneConcisePrompt = stringResource(Res.string.copilot_assist_tone_concise_prompt)
+                        val toneCitationsPrompt = stringResource(Res.string.copilot_assist_tone_citations_prompt)
+                        val toneCounterPrompt = stringResource(Res.string.copilot_assist_tone_counterexample_prompt)
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .scrollEndHaptic()
+                                .overScrollVertical(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(bottom = 8.dp)
+                        ) {
+                            item(key = "tone_header") {
+                                SmallTitle(
+                                    text = stringResource(Res.string.copilot_assist_tone_header),
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                )
+                            }
+
+                            item(key = "tone_chips_row") {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+                                    insideMargin = PaddingValues(14.dp),
+                                    pressFeedbackType = PressFeedbackType.None
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        MiuixText(
+                                            text = "Selecciona un estilo para regenerar el borrador adaptando la profundidad conceptual y técnica:",
+                                            fontSize = 12.sp,
+                                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                        )
+
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            ToneOptionRowMiuix(
+                                                icon = Icons.Default.Psychology,
+                                                text = stringResource(Res.string.copilot_assist_tone_formal),
+                                                isSelected = selectedTone == toneFormalPrompt,
+                                                onClick = {
+                                                    selectedTone = toneFormalPrompt
+                                                    onGenerate(selectedTone)
+                                                }
+                                            )
+                                            ToneOptionRowMiuix(
+                                                icon = Icons.Default.Compress,
+                                                text = stringResource(Res.string.copilot_assist_tone_concise),
+                                                isSelected = selectedTone == toneConcisePrompt,
+                                                onClick = {
+                                                    selectedTone = toneConcisePrompt
+                                                    onGenerate(selectedTone)
+                                                }
+                                            )
+                                            ToneOptionRowMiuix(
+                                                icon = Icons.Default.MenuBook,
+                                                text = stringResource(Res.string.copilot_assist_tone_citations),
+                                                isSelected = selectedTone == toneCitationsPrompt,
+                                                onClick = {
+                                                    selectedTone = toneCitationsPrompt
+                                                    onGenerate(selectedTone)
+                                                }
+                                            )
+                                            ToneOptionRowMiuix(
+                                                icon = Icons.Default.CrisisAlert,
+                                                text = stringResource(Res.string.copilot_assist_tone_counterexample),
+                                                isSelected = selectedTone == toneCounterPrompt,
+                                                onClick = {
+                                                    selectedTone = toneCounterPrompt
+                                                    onGenerate(selectedTone)
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        // Pie medido dinámicamente: Botones de Acción fijos
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { coordinates ->
+                    footerHeightDp = with(density) { coordinates.size.height.toDp() }
+                },
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                MiuixTextButton(
+                    text = if (isCopied) stringResource(Res.string.copilot_assist_copied) else stringResource(Res.string.copilot_assist_copy_text),
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(strategy.suggestedDraft))
+                        isCopied = true
+                        scope.launch {
+                            delay(2000)
+                            isCopied = false
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColors(
+                        color = MiuixTheme.colorScheme.surfaceContainerHigh,
+                        textColor = if (isCopied) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface
+                    )
+                )
+
+                MiuixTextButton(
+                    text = stringResource(Res.string.copilot_assist_insert_btn),
+                    onClick = {
+                        onInsertDraft(strategy.suggestedDraft)
+                        dismissState?.invoke() ?: onClose()
+                    },
+                    modifier = Modifier.weight(1.3f),
+                    colors = ButtonDefaults.textButtonColorsPrimary()
+                )
+            }
+
+            Spacer(Modifier.height(navInsets.calculateBottomPadding() + 8.dp))
+        }
+    }
+}
+
+@Composable
+private fun MetricPillMiuix(
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .squircleSurface(MiuixTheme.colorScheme.surfaceContainerHigh, 10.dp)
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            MiuixText(
+                text = title,
+                fontSize = 10.sp,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+            )
+            MiuixText(
                 text = value,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                color = successColor,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = MiuixTheme.colorScheme.primary,
                 maxLines = 1
             )
         }
@@ -855,21 +1045,13 @@ private fun MetricPill(
 }
 
 @Composable
-private fun StructurePhaseItem(
+private fun StructurePhaseItemMiuix(
     phaseNumber: String,
     title: String,
     description: String,
-    themeStyle: AppThemeStyle,
     isAlternate: Boolean = false
 ) {
-    val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-    val onSurface = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-    val onSurfaceVariant = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
-    val bg = if (isAlternate) {
-        if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f)
-    } else {
-        Color.Transparent
-    }
+    val bg = if (isAlternate) MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f) else Color.Transparent
 
     Row(
         modifier = Modifier
@@ -879,18 +1061,18 @@ private fun StructurePhaseItem(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top
     ) {
-        Surface(
-            shape = CircleShape,
-            color = primaryColor.copy(alpha = 0.18f),
-            modifier = Modifier.size(24.dp)
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .squircleSurface(MiuixTheme.colorScheme.primary.copy(alpha = 0.15f), 9999.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = phaseNumber,
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = primaryColor
-                )
-            }
+            MiuixText(
+                text = phaseNumber,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = MiuixTheme.colorScheme.primary
+            )
         }
 
         Column(
@@ -899,59 +1081,391 @@ private fun StructurePhaseItem(
         ) {
             val formattedTitle = remember(title) { formatMarkdown(title) }
             val formattedDesc = remember(description) { formatMarkdown(description) }
-            Text(
+            MiuixText(
                 text = formattedTitle,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
-                color = onSurface
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MiuixTheme.colorScheme.onSurface
             )
-            Text(
+            MiuixText(
                 text = formattedDesc,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 16.sp),
-                color = onSurfaceVariant
+                fontSize = 12.sp,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
             )
         }
     }
 }
 
 @Composable
-private fun ToneChip(
+private fun ToneOptionRowMiuix(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     text: String,
     isSelected: Boolean,
-    onClick: () -> Unit,
-    themeStyle: AppThemeStyle
+    onClick: () -> Unit
 ) {
-    val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-    val onPrimary = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
-    val onSurface = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-    val chipBg = if (isSelected) primaryColor else if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
+    val bg = if (isSelected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.surfaceContainerHigh
+    val textColor = if (isSelected) MiuixTheme.colorScheme.onPrimary else MiuixTheme.colorScheme.onSurface
+    val iconColor = if (isSelected) MiuixTheme.colorScheme.onPrimary else MiuixTheme.colorScheme.primary
 
-    Surface(
-        shape = RoundedCornerShape(9999.dp),
-        color = chipBg,
+    Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(9999.dp))
+            .fillMaxWidth()
+            .squircleSurface(bg, 12.dp)
             .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconColor,
+            modifier = Modifier.size(16.dp)
+        )
+        MiuixText(
+            text = text,
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = textColor,
+            modifier = Modifier.weight(1f)
+        )
+        if (isSelected) {
             Icon(
-                imageVector = icon,
+                imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = if (isSelected) onPrimary else primaryColor,
-                modifier = Modifier.size(14.dp)
+                tint = textColor,
+                modifier = Modifier.size(16.dp)
             )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 11.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+        }
+    }
+}
+
+@Composable
+private fun ForoCopilotContentMaterial(
+    topic: CanvasDiscussionTopic,
+    strategy: CopilotForoStrategy?,
+    isGenerating: Boolean,
+    errorMessage: String?,
+    activeModelName: String,
+    onDismiss: () -> Unit,
+    onGenerate: (toneModifier: String?) -> Unit,
+    onInsertDraft: (String) -> Unit
+) {
+    val navInsets = WindowInsets.navigationBars.asPaddingValues()
+
+    var lastValidStrategy by remember { mutableStateOf(strategy) }
+    if (strategy != null) {
+        lastValidStrategy = strategy
+    }
+    val currentStrategy = strategy ?: lastValidStrategy
+
+    val currentStage = when {
+        isGenerating -> SheetStage.LOADING
+        errorMessage != null && currentStrategy == null -> SheetStage.ERROR
+        else -> SheetStage.RESULT
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = navInsets.calculateBottomPadding() + 20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(
+            text = stringResource(Res.string.copilot_sheet_title),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        AnimatedContent(
+            targetState = currentStage,
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(320, easing = FastOutSlowInEasing)) +
+                 scaleIn(initialScale = 0.97f, animationSpec = tween(320, easing = FastOutSlowInEasing)))
+                    .togetherWith(
+                        fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
+                        scaleOut(targetScale = 0.98f, animationSpec = tween(220, easing = FastOutSlowInEasing))
+                    )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = 0.85f,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
                 ),
-                color = if (isSelected) onPrimary else onSurface
-            )
+            label = "foroCopilotContentMaterial"
+        ) { stage ->
+            when (stage) {
+                SheetStage.LOADING -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(38.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = stringResource(Res.string.copilot_scanning_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                SheetStage.ERROR -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = errorMessage ?: stringResource(Res.string.copilot_assist_failed_strategy),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { onGenerate(null) }) {
+                                Text(stringResource(Res.string.copilot_assist_retry_btn))
+                            }
+                            TextButton(onClick = onDismiss) {
+                                Text(stringResource(Res.string.review_action_close))
+                            }
+                        }
+                    }
+                }
+                SheetStage.RESULT -> {
+                    if (currentStrategy != null) {
+                        CopilotResultViewMaterial(
+                            topic = topic,
+                            strategy = currentStrategy,
+                            activeModelName = activeModelName,
+                            onGenerate = onGenerate,
+                            onInsertDraft = onInsertDraft,
+                            onClose = onDismiss
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CopilotResultViewMaterial(
+    topic: CanvasDiscussionTopic,
+    strategy: CopilotForoStrategy,
+    activeModelName: String,
+    onGenerate: (toneModifier: String?) -> Unit,
+    onInsertDraft: (String) -> Unit,
+    onClose: () -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabLabels = listOf(
+        stringResource(Res.string.copilot_tab_draft),
+        stringResource(Res.string.copilot_tab_structure),
+        stringResource(Res.string.copilot_tab_tone)
+    )
+
+    val clipboardManager = LocalClipboardManager.current
+    var isCopied by remember { mutableStateOf(false) }
+    var selectedTone by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(Res.string.copilot_assist_academic_copilot),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = topic.title,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(9999.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = cleanModelName(activeModelName),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        }
+
+        TabRow(selectedTabIndex = selectedTabIndex) {
+            tabLabels.forEachIndexed { index, label ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    text = { Text(label) }
+                )
+            }
+        }
+
+        when (selectedTabIndex) {
+            0 -> {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.copilot_assist_draft_suggested),
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = stringResource(Res.string.copilot_assist_words_count, strategy.wordCount),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        RichContentRenderer(
+                            text = strategy.suggestedDraft,
+                            themeStyle = AppThemeStyle.MATERIAL,
+                            textColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+            1 -> {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.copilot_assist_objective_detected),
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = formatMarkdown(strategy.learningObjective),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+            2 -> {
+                val toneFormalPrompt = stringResource(Res.string.copilot_assist_tone_formal_prompt)
+                val toneConcisePrompt = stringResource(Res.string.copilot_assist_tone_concise_prompt)
+                val toneCitationsPrompt = stringResource(Res.string.copilot_assist_tone_citations_prompt)
+                val toneCounterPrompt = stringResource(Res.string.copilot_assist_tone_counterexample_prompt)
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            selectedTone = toneFormalPrompt
+                            onGenerate(selectedTone)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(Res.string.copilot_assist_tone_formal))
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            selectedTone = toneConcisePrompt
+                            onGenerate(selectedTone)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(Res.string.copilot_assist_tone_concise))
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            selectedTone = toneCitationsPrompt
+                            onGenerate(selectedTone)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(Res.string.copilot_assist_tone_citations))
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            selectedTone = toneCounterPrompt
+                            onGenerate(selectedTone)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(Res.string.copilot_assist_tone_counterexample))
+                    }
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            OutlinedButton(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(strategy.suggestedDraft))
+                    isCopied = true
+                    scope.launch {
+                        delay(2000)
+                        isCopied = false
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(if (isCopied) stringResource(Res.string.copilot_assist_copied) else stringResource(Res.string.copilot_assist_copy_text))
+            }
+
+            Button(
+                onClick = {
+                    onInsertDraft(strategy.suggestedDraft)
+                    onClose()
+                },
+                modifier = Modifier.weight(1.3f)
+            ) {
+                Text(stringResource(Res.string.copilot_assist_insert_btn))
+            }
         }
     }
 }

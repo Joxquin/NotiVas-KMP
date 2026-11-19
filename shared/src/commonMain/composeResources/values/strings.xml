@@ -387,6 +387,15 @@
     <string name="foro_show_less_action">See less</string>
 
     <!-- Copilot Assistant Sheet -->
+    <string name="copilot_sheet_title">Structure response with Copilot</string>
+    <string name="copilot_scanning_title">Structuring response with AI</string>
+    <string name="copilot_step_reading_prompt">Reading prompt and official rubric...</string>
+    <string name="copilot_step_analyzing_replies">Analyzing discussion replies...</string>
+    <string name="copilot_step_identifying_objectives">Extracting learning objective and rigor...</string>
+    <string name="copilot_step_structuring_draft">Structuring academic draft...</string>
+    <string name="copilot_tab_draft">Draft</string>
+    <string name="copilot_tab_structure">Structure</string>
+    <string name="copilot_tab_tone">Tune tone</string>
     <string name="copilot_assist_return_to_forum">Back to Forum</string>
     <string name="copilot_assist_academic_copilot">ACADEMIC COPILOT</string>
     <string name="copilot_assist_strategy_for">Strategy for %1$s</string>

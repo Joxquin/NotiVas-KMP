@@ -442,22 +442,21 @@ fun ForoDetailScreen(
     }
 
     // Modal Bottom Sheet de Copilot IA
-    if (showCopilotAssistant) {
-        ForoCopilotAssistantSheet(
-            topic = topic,
-            strategy = uiState.copilotStrategy,
-            isGenerating = uiState.isGeneratingCopilot,
-            errorMessage = uiState.copilotErrorMessage,
-            activeModelName = uiState.activeCopilotModel,
-            onDismiss = { showCopilotAssistant = false },
-            onGenerate = { toneModifier ->
-                viewModel.generateCopilotStrategy(topic, toneModifier)
-            },
-            onInsertDraft = { suggestion ->
-                viewModel.applyCopilotSuggestion(suggestion)
-                showCopilotAssistant = false
-            },
-            themeStyle = themeStyle
-        )
-    }
+    ForoCopilotAssistantSheet(
+        show = showCopilotAssistant,
+        topic = topic,
+        strategy = uiState.copilotStrategy,
+        isGenerating = uiState.isGeneratingCopilot,
+        errorMessage = uiState.copilotErrorMessage,
+        activeModelName = uiState.activeCopilotModel,
+        onDismiss = { showCopilotAssistant = false },
+        onGenerate = { toneModifier ->
+            viewModel.generateCopilotStrategy(topic, toneModifier)
+        },
+        onInsertDraft = { suggestion ->
+            viewModel.applyCopilotSuggestion(suggestion)
+            showCopilotAssistant = false
+        },
+        themeStyle = themeStyle
+    )
 }
