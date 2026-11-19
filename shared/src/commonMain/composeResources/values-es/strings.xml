@@ -170,6 +170,15 @@
     <string name="status_above_average">Arriba del promedio</string>
     <string name="status_at_risk">En riesgo</string>
     <string name="status_unevaluated">Sin evaluar</string>
+    <string name="hero_summary_title">RESUMEN ACADÉMICO</string>
+    <string name="hero_current_average">PROMEDIO ACTUAL</string>
+    <string name="hero_projected_final">PROYECCIÓN FINAL</string>
+    <string name="hero_evaluated_progress">Avance Evaluado del Ciclo</string>
+    <string name="hero_status_good">Buen rendimiento</string>
+    <string name="hero_status_regular">Rendimiento regular</string>
+    <string name="hero_status_watch">En observación</string>
+    <string name="hero_status_risk">Riesgo de desaprobación</string>
+    <string name="hero_status_no_data">Sin notas aún</string>
 
     <!-- Forums / Foros -->
     <string name="foros_title">Foros Académicos</string>
