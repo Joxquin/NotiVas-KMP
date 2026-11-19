@@ -321,9 +321,28 @@ class ProfileViewModel(
     }
 
     fun setOpenRouterApiKey(key: String?) {
+        saveCopilotKey(key, fieldProvider = me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER)
+    }
+
+    /**
+     * Guarda la key en el campo del servicio al que pertenece (aunque se haya pegado en el otro) y,
+     * si se reconoce, activa ese proveedor para que el Copiloto la use de inmediato.
+     */
+    private fun saveCopilotKey(key: String?, fieldProvider: me.joxquin.notivas.data.local.CopilotProvider) {
         viewModelScope.launch {
-            preferencesManager.setOpenRouterApiKey(key)
-            refreshOpenRouterBalance()
+            val trimmed = key?.trim()
+            val detected = me.joxquin.notivas.data.local.CopilotKeyDetector.providerFor(trimmed)
+            val target = detected ?: fieldProvider
+            when (target) {
+                me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> preferencesManager.setOpenRouterApiKey(trimmed)
+                me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> preferencesManager.setGoogleAiStudioApiKey(trimmed)
+            }
+            if (detected != null) {
+                preferencesManager.setCopilotProvider(detected)
+            }
+            if (target == me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER) {
+                refreshOpenRouterBalance()
+            }
         }
     }
 
@@ -332,7 +351,7 @@ class ProfileViewModel(
     }
 
     fun setGoogleAiStudioApiKey(key: String?) {
-        viewModelScope.launch { preferencesManager.setGoogleAiStudioApiKey(key) }
+        saveCopilotKey(key, fieldProvider = me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO)
     }
 
     fun setGoogleAiStudioModel(model: String) {
