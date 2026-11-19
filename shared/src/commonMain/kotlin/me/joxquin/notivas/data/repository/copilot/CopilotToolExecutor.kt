@@ -9,6 +9,7 @@ import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasAcademicT
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasDiscussionsToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.CanvasModulesToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.GoogleSearchToolsHandler
+import me.joxquin.notivas.data.repository.copilot.tools.handlers.GradesToolsHandler
 import me.joxquin.notivas.data.repository.copilot.tools.handlers.SimulatorToolsHandler
 
 data class ToolExecutionResult(
@@ -22,7 +23,8 @@ class CopilotToolExecutor(
     canvasModulesToolsHandler: CanvasModulesToolsHandler,
     canvasDiscussionsToolsHandler: CanvasDiscussionsToolsHandler,
     simulatorToolsHandler: SimulatorToolsHandler,
-    googleSearchToolsHandler: GoogleSearchToolsHandler
+    googleSearchToolsHandler: GoogleSearchToolsHandler,
+    gradesToolsHandler: GradesToolsHandler
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -31,6 +33,8 @@ class CopilotToolExecutor(
     }
 
     private val handlers: List<CopilotToolHandler> = listOf(
+        // Primero las notas locales: respuesta inmediata y con las mismas cifras que la app.
+        gradesToolsHandler,
         canvasAcademicToolsHandler,
         canvasModulesToolsHandler,
         canvasDiscussionsToolsHandler,

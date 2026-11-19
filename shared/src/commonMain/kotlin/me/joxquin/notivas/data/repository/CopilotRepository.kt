@@ -53,7 +53,11 @@ class CopilotRepository(
         canvasModulesToolsHandler = CanvasModulesToolsHandler(canvasApiService, localStore, preferencesManager),
         canvasDiscussionsToolsHandler = CanvasDiscussionsToolsHandler(canvasApiService, localStore, preferencesManager),
         simulatorToolsHandler = SimulatorToolsHandler(localStore),
-        googleSearchToolsHandler = GoogleSearchToolsHandler(openRouterApiService.client)
+        googleSearchToolsHandler = GoogleSearchToolsHandler(openRouterApiService.client),
+        gradesToolsHandler = me.joxquin.notivas.data.repository.copilot.tools.handlers.GradesToolsHandler(
+            localStore,
+            me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase()
+        )
     )
 
     suspend fun queryCopilot(
@@ -356,6 +360,8 @@ class CopilotRepository(
                 if (!query.isNullOrBlank()) "Buscando en la web con Google: \"$query\"..."
                 else "Buscando en la web con Google Search..."
             }
+            "get_grades_summary" -> "Revisando tus promedios..."
+            "calculate_needed_grade" -> "Calculando cuánto necesitas..."
             "get_academic_overview" -> "Consultando resumen académico..."
             "get_course_assignments" -> "Listando tareas disponibles..."
             "fetch_canvas_assignment_details" -> "Obteniendo detalles de la entrega..."
