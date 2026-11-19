@@ -202,7 +202,7 @@ fun InicioScreen(
                     // ─── 0. Header de Bienvenida (Welcome, Salung) ───────────────────
                     item {
                         val defaultStudent = stringResource(Res.string.greeting_default_student)
-                        val studentFirstName = userProfile?.name?.trim()?.substringBefore(" ")?.takeIf { it.isNotBlank() } ?: defaultStudent
+                        val studentFirstName = me.joxquin.notivas.util.canvasFirstName(userProfile?.name) ?: defaultStudent
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()

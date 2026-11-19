@@ -146,7 +146,7 @@ fun InicioMiuixContent(
     val backdrop = rememberMiuixBlurBackdrop()
     val scrollBehavior = MiuixScrollBehavior()
     val defaultStudent = stringResource(Res.string.greeting_default_student)
-    val studentFirstName = userProfile?.name?.trim()?.substringBefore(" ")?.takeIf { it.isNotBlank() } ?: defaultStudent
+    val studentFirstName = me.joxquin.notivas.util.canvasFirstName(userProfile?.name) ?: defaultStudent
 
     Box(
         modifier = modifier

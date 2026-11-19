@@ -22,6 +22,15 @@ class StringResourcesTest {
         }
     }
 
+    /** AGENTS.md: Compose no usa String.format, así que `%%` se ve tal cual ("50%% completado"). */
+    @Test
+    fun testNoDoublePercentInStrings() {
+        catalogs.forEach { file ->
+            val doubled = file.readLines().filter { "%%" in it }.map { it.trim() }
+            assertTrue(doubled.isEmpty(), "${file.parentFile.name}/strings.xml tiene %% que se vería doble en pantalla: $doubled")
+        }
+    }
+
     @Test
     fun testEnglishAndSpanishHaveTheSameKeys() {
         val keyPattern = Regex("""<string name="([^"]+)"""")

@@ -34,6 +34,7 @@ import coil3.compose.AsyncImage
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.course_pending_format
+import me.joxquin.notivas.shared.resources.course_pending_one
 import me.joxquin.notivas.shared.resources.course_up_to_date
 import me.joxquin.notivas.shared.resources.courses_enrolled_format
 import me.joxquin.notivas.shared.resources.courses_section_title
@@ -262,7 +263,7 @@ private fun MiuixCourseGridCard(
 
                 Text(
                     text = if (pendingCount > 0) {
-                        stringResource(Res.string.course_pending_format, pendingCount)
+                        stringResource(if (pendingCount == 1) Res.string.course_pending_one else Res.string.course_pending_format, pendingCount)
                     } else {
                         stringResource(Res.string.course_up_to_date)
                     },

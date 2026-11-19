@@ -247,7 +247,7 @@
     <string name="bento_progress_subtitle">Grades &amp; current average</string>
     <string name="bento_active_course">Active course</string>
     <string name="bento_no_graded_assignments">No graded evaluations</string>
-    <string name="bento_evaluated_prefix">Evaluated: %1$d%%</string>
+    <string name="bento_evaluated_prefix">Evaluated: %1$d%</string>
     <string name="bento_projected_prefix">Projected: %1$s</string>
     <string name="bento_average_prefix">Average: %1$s</string>
     <string name="bento_simulator_title">Simulator</string>
@@ -309,7 +309,7 @@
     <string name="greeting_evening">Good evening, %1$s</string>
     <string name="greeting_default_student">Student</string>
     <string name="dashboard_dynamic_subtitle_1">Are you forgetting something?</string>
-    <string name="dashboard_dynamic_subtitle_2">Let\'s check your pending tasks</string>
+    <string name="dashboard_dynamic_subtitle_2">Let's check your pending tasks</string>
     <string name="dashboard_dynamic_subtitle_3">Ready to get things done today?</string>
     <string name="dashboard_dynamic_subtitle_4">One step at a time toward your goals</string>
     <string name="dashboard_dynamic_subtitle_5">Is everything up to date on Canvas?</string>
@@ -322,6 +322,7 @@
     <string name="unconfigured_banner_btn">Configure formulas and groups</string>
     <string name="urgent_due_hours_format">In %1$dh</string>
     <string name="course_pending_format">%1$d pending</string>
+    <string name="course_pending_one">%1$d pending</string>
     <string name="course_up_to_date">On track</string>
 
     <!-- Additional Copilot Strings -->
@@ -539,7 +540,7 @@
     <string name="archive_summary_card_title">Submissions &amp; Archive Summary</string>
     <string name="archive_semester_tag">Current Term</string>
     <string name="archive_stat_ontime">On time</string>
-    <string name="archive_stat_ontime_rate">%1$d%% on time</string>
+    <string name="archive_stat_ontime_rate">%1$d% on time</string>
     <string name="archive_stat_discarded">Discarded</string>
     <string name="archive_stat_discarded_sub">No academic weight</string>
     <string name="archive_stat_average">Average</string>
@@ -622,7 +623,7 @@
     <string name="course_detail_stat_avance">Progress</string>
     <string name="course_detail_stat_modulos">Modules</string>
     <string name="course_detail_deliverables_format">%1$d of %2$d deliverables ready</string>
-    <string name="course_detail_percent_completed_format">%1$d%% completed</string>
+    <string name="course_detail_percent_completed_format">%1$d% completed</string>
     <string name="course_detail_empty_modules">No modules available for this course.</string>
     <string name="course_modules_screen_title">Modules</string>
     <string name="course_detail_view_all_modules">View all modules (%1$d)</string>
