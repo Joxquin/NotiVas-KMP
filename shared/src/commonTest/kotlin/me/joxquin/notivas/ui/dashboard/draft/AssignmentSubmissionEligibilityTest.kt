@@ -162,8 +162,11 @@ class AssignmentSubmissionEligibilityTest {
 
     @Test
     fun testFormatCanvasLockDate_spanishFormat() {
-        val formatted = formatCanvasLockDate("2026-10-29T18:50:00Z")
-        assertEquals("29 de octubre de 2026 a las 18:50", formatted)
+        // La app muestra la hora local del celular (Lima = 13:50); el test no debe depender de la zona.
+        val iso = "2026-10-29T18:50:00Z"
+        val local = DateTimeUtil.parseIsoToComponents(iso)!!
+        val hhmm = "${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
+        assertEquals("${local.date.day} de octubre de 2026 a las $hhmm", formatCanvasLockDate(iso))
     }
 
     @Test

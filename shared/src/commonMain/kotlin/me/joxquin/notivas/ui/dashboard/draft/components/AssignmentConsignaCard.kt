@@ -85,6 +85,20 @@ private val H3_REGEX = Regex("""(?s)<h3[^>]*>(.*?)</h3>""")
 private val NEXT_CARD_REGEX = Regex("""(?i)(<div[^>]*style=["'][^"']*(?:border-|background-color|display:\s*table)|<div[^>]*class=["'][^"']*card)""")
 private val HTML_TAG_REGEX = Regex("<[^>]*>")
 private val A_HREF_REGEX = Regex("""(?s)<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""")
+
+// Palabras con las que los docentes enlazan un documento para copiar o completar (formato, plantilla, guia).
+private val TEMPLATE_HINT_REGEX = Regex("formato|plantilla|template|gu[ií]a", RegexOption.IGNORE_CASE)
+
+/**
+ * Enlace que la consigna ofrece para descargar o copiar: archivos de Canvas, nombres con extension
+ * de documento o un Google Docs/Sheets/Slides cuyo texto indica que es el formato a usar
+ * (por ejemplo "Acceder al formato del Perfil de Proyecto").
+ */
+internal fun isDownloadOrTemplateLink(text: String, url: String): Boolean =
+    text.contains("Descargar", ignoreCase = true) ||
+        listOf(".docx", ".pdf", ".xlsx", ".pptx", ".zip").any { text.endsWith(it, ignoreCase = true) } ||
+        url.contains("/files/") ||
+        (url.contains("docs.google.com") && TEMPLATE_HINT_REGEX.containsMatchIn(text))
 private val A_TAG_BODY_REGEX = Regex("""(?s)<a[^>]*>(.*?)</a>""")
 private val LI_REGEX = Regex("""(?s)<li[^>]*>(.*?)</li>""")
 private val LIST_CONTAINER_REGEX = Regex("""(?is)<(ol|ul)[^>]*>(.*?)</\1>""")
@@ -1044,16 +1058,7 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
                 text to url
             }.toList()
 
-            val downloadLink = allLinks.firstOrNull { (text, url) ->
-                text.contains("Descargar", ignoreCase = true) ||
-                text.endsWith(".docx", ignoreCase = true) ||
-                text.endsWith(".pdf", ignoreCase = true) ||
-                text.endsWith(".xlsx", ignoreCase = true) ||
-                text.endsWith(".pptx", ignoreCase = true) ||
-                text.endsWith(".zip", ignoreCase = true) ||
-                url.contains("/files/") ||
-                (text.contains("Guía", ignoreCase = true) && (url.contains("docs.google.com") || url.contains("/files/")))
-            }
+            val downloadLink = allLinks.firstOrNull { (text, url) -> isDownloadOrTemplateLink(text, url) }
 
             val otherLinks = allLinks.filter { it != downloadLink && !it.second.startsWith("\$CANVAS") }
 
@@ -1101,16 +1106,7 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
         text to url
     }.toList()
 
-    val downloadLink = allLinks.firstOrNull { (text, url) ->
-        text.contains("Descargar", ignoreCase = true) ||
-        text.endsWith(".docx", ignoreCase = true) ||
-        text.endsWith(".pdf", ignoreCase = true) ||
-        text.endsWith(".xlsx", ignoreCase = true) ||
-        text.endsWith(".pptx", ignoreCase = true) ||
-        text.endsWith(".zip", ignoreCase = true) ||
-        url.contains("/files/") ||
-        (text.contains("Guía", ignoreCase = true) && (url.contains("docs.google.com") || url.contains("/files/")))
-    }
+    val downloadLink = allLinks.firstOrNull { (text, url) -> isDownloadOrTemplateLink(text, url) }
 
     val imageUrls = extractImageUrls(html, baseUrl)
 
