@@ -600,10 +600,8 @@ class CanvasRepository(
                 val finalImageUrl = localImage ?: cardImage ?: course.imageUrl
                 course.copy(imageUrl = finalImageUrl)
             }
+            // Los enlaces de portada llevan un token firmado de Canvas: solo se registra el conteo.
             println("[CanvasRepository] Cursos actualizados: ${allCoursesList.size}. Con portada: ${allCoursesList.count { !it.imageUrl.isNullOrBlank() }}")
-            allCoursesList.forEach {
-                println("[CanvasRepository] Curso ${it.id} (${it.courseCode}): imageUrl=${it.imageUrl}")
-            }
             localStore.syncCourses(allCoursesList)
 
             // 3. Fetch assignments for courses in parallel

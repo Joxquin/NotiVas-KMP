@@ -193,13 +193,14 @@ class CanvasApiService(
                 applyAuth(token)
             }
             val text = httpResponse.body<String>()
-            println("[CanvasApiService] getDashboardCards status: ${httpResponse.status}, body: ${text.take(300)}")
+            // Sin cuerpo: trae nombres de cursos y enlaces firmados de las portadas.
+            println("[CanvasApiService] getDashboardCards status: ${httpResponse.status.value}")
             if (text.trimStart().startsWith("[")) {
                 val list = KtorHttpClientProvider.jsonConfig.decodeFromString<List<me.joxquin.notivas.data.model.CanvasDashboardCard>>(text)
                 println("[CanvasApiService] getDashboardCards éxito: ${list.size} tarjetas")
                 list
             } else {
-                println("[CanvasApiService] getDashboardCards no devolvió array JSON: $text")
+                println("[CanvasApiService] getDashboardCards no devolvió array JSON (${text.length} caracteres)")
                 emptyList()
             }
         } catch (e: CancellationException) {
@@ -355,7 +356,8 @@ class CanvasApiService(
         }
         val text = response.body<String>()
         checkAuth(response.status, text)
-        println("CanvasApiService: getProfile response from $url: $text")
+        // El perfil trae nombre, ID y avatar del estudiante: solo se registra el estado.
+        println("CanvasApiService: getProfile status: ${response.status.value}")
         return KtorHttpClientProvider.jsonConfig.decodeFromString<UserProfile>(text)
     }
 

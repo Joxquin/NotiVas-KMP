@@ -94,12 +94,12 @@ fun AsyncAvatarImage(
 
             // 2. Si no existe en disco, descargar por red
             try {
-                println("AsyncAvatarImage: Loading avatar from $url")
+                // Las URLs de avatar pueden llevar tokens firmados: no se escriben en el registro.
                 val resolvedUrl = resolveApiUrl(url)
                 val bytes = withContext(Dispatchers.Default) {
                     ImageCacheManager.imageClient.get(resolvedUrl).body<ByteArray>()
                 }
-                println("AsyncAvatarImage: Received ${bytes.size} bytes for $url")
+                println("AsyncAvatarImage: Received ${bytes.size} bytes")
                 if (bytes.isNotEmpty()) {
                     val decoded = bytes.decodeToImageBitmap()
                     ImageCacheManager.cache[url] = decoded
@@ -115,7 +115,7 @@ fun AsyncAvatarImage(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
-                println("AsyncAvatarImage error loading $url: ${e::class.simpleName} - ${e.message}")
+                println("AsyncAvatarImage error loading avatar: ${e::class.simpleName}")
             }
         }
     }

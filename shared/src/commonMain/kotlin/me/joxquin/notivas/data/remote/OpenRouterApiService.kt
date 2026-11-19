@@ -80,7 +80,8 @@ class OpenRouterApiService(
         
         val status = response.status.value
         val responseText = response.body<String>()
-        println("Copilot [Api] HTTP $status response from $targetBaseUrl: $responseText")
+        // La respuesta del modelo puede repetir notas y tareas del estudiante: no se escribe en el registro.
+        println("Copilot [Api] HTTP $status desde $targetBaseUrl (${responseText.length} caracteres)")
         
         if (status !in 200..299) {
             val errorMsg = try {

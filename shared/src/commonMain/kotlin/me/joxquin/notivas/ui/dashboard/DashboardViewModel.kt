@@ -498,7 +498,7 @@ class DashboardViewModel(
                             }
                             me.joxquin.notivas.data.model.TemplateSourceType.CANVAS_FILE -> {
                                 // Obtener URL de descarga del archivo de Canvas y descargarlo
-                                println("[DashboardViewModel] Procesando plantilla CANVAS_FILE: ${effectiveCandidate.title}, url=${effectiveCandidate.url}, canvasFileId=${effectiveCandidate.canvasFileId}")
+                                println("[DashboardViewModel] Procesando plantilla CANVAS_FILE: canvasFileId=${effectiveCandidate.canvasFileId}")
                                 var fileBytes: ByteArray? = null
 
                                 var downloadUrl = effectiveCandidate.url.replace("&amp;", "&").trim()
