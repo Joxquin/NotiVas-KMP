@@ -1065,18 +1065,24 @@ class CanvasRepository(
         val baseUrl = preferencesManager.universityUrl.first() ?: ""
         val token = getAuthToken() ?: throw IllegalStateException("No auth credential found")
         if (cached != null && !forceRefresh) {
-            // Sincronizar en segundo plano de forma no bloqueante
-            CoroutineScope(AppDispatchers.IO).launch {
-                try {
-                    val remoteProfile = apiService.getProfile(baseUrl, token)
-                    localStore.saveUserProfile(remoteProfile)
-                } catch (_: Throwable) {}
+            // Sincronizar en segundo plano de forma no bloqueante. Inicio y Perfil lo piden a la vez al
+            // abrir la app: si ya se refrescó hace menos de un minuto no se repite la petición.
+            val now = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
+            if (now - lastProfileRefreshAt > PROFILE_REFRESH_INTERVAL_MS) {
+                lastProfileRefreshAt = now
+                CoroutineScope(AppDispatchers.IO).launch {
+                    try {
+                        val remoteProfile = apiService.getProfile(baseUrl, token)
+                        localStore.saveUserProfile(remoteProfile)
+                    } catch (_: Throwable) {}
+                }
             }
             return@withContext cached
         }
         try {
             val remoteProfile = apiService.getProfile(baseUrl, token)
             localStore.saveUserProfile(remoteProfile)
+            lastProfileRefreshAt = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
             remoteProfile
         } catch (e: CancellationException) {
             throw e
