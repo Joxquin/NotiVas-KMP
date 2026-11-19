@@ -178,13 +178,11 @@ fun AssignmentSubmissionCard(
     var successMessage by remember { mutableStateOf<String?>(null) }
     var showAiReviewSheet by remember { mutableStateOf(false) }
 
-    val effectiveAllowedExtensions: List<String> = remember(assignment.allowedExtensions, assignment.description) {
-        val fromAssignment = assignment.allowedExtensions?.filter { it.isNotBlank() }?.map { it.removePrefix(".").lowercase() }
-        if (!fromAssignment.isNullOrEmpty()) {
-            fromAssignment
-        } else {
-            detectExtensionsFromHtml(assignment.description)
-        }
+    val effectiveAllowedExtensions: List<String> = remember(assignment.allowedExtensions) {
+        assignment.allowedExtensions
+            ?.filter { it.isNotBlank() }
+            ?.map { it.removePrefix(".").lowercase() }
+            ?: emptyList()
     }
 
     val onDocumentLoaded: (SelectedDocument) -> Unit = { doc ->
