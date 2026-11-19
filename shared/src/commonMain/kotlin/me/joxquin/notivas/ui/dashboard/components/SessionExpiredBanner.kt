@@ -147,9 +147,6 @@ fun SessionExpiredBanner(
     }
 }
 
-/** Fecha legible del vencimiento del token (ej. "Martes 16 de Diciembre"), en la zona del dispositivo. */
-fun formatTokenExpiryDate(expiresAtMillis: Long): String {
-    val dayMs = 24L * 60 * 60 * 1000
-    val daysRemaining = ((expiresAtMillis - DateTimeUtil.nowEpochMillis()) / dayMs).toInt().coerceAtLeast(0)
-    return DateTimeUtil.formatFullDate(DateTimeUtil.addDays(DateTimeUtil.nowLocalDate(), daysRemaining))
-}
+/** Fecha legible del vencimiento del token (ej. "Jueves 17 de Diciembre"), en la zona del dispositivo. */
+fun formatTokenExpiryDate(expiresAtMillis: Long): String =
+    me.joxquin.notivas.util.tokenExpiryDisplay(expiresAtMillis)?.let { DateTimeUtil.formatFullDate(it.date) } ?: ""

@@ -804,7 +804,7 @@
     <string name="token_active_expires_format">Expires in %1$d days (%2$s)</string>
     <string name="token_active_no_expiration">No expiration date recorded</string>
     <string name="token_auto_renew_title">Auto-renew token</string>
-    <string name="token_auto_renew_desc">Automatically renew 1 day before expiration</string>
+    <string name="token_auto_renew_desc">Automatically renew 3 days before expiration</string>
     <string name="token_auto_renew_web_disabled_hint">Unavailable in web session. Create a token first.</string>
     <string name="token_new_section_title">Change Access Token</string>
     <string name="token_new_input_label">New Canvas LMS Token</string>
