@@ -9,6 +9,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import org.jetbrains.compose.resources.getString
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.copilot_error_auth
+import me.joxquin.notivas.shared.resources.copilot_error_generic
+import me.joxquin.notivas.shared.resources.copilot_error_overloaded
+import me.joxquin.notivas.shared.resources.copilot_error_rate_limited
+import me.joxquin.notivas.shared.resources.copilot_error_timeout
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.local.PreferencesManager
@@ -566,17 +573,12 @@ class CopilotViewModel(
                         refreshOpenRouterBalance()
                     },
                     onFailure = { error ->
-                        val errorText = error.message ?: "Ocurrió un error inesperado."
+                        val errorText = friendlyErrorText(error)
                         _errorMessage.value = errorText
-                        val provider = preferencesManager.copilotProvider.first()
-                        val providerName = when (provider) {
-                            me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
-                            me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
-                        }
                         val assistantErrorMessage = CopilotMessageItem(
                             id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
                             role = CopilotRole.ASSISTANT,
-                            text = "No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu API Key de $providerName y tu conexión.",
+                            text = errorText,
                             timestamp = DateTimeUtil.nowEpochMillis()
                         )
                         _messages.value = _messages.value + assistantErrorMessage
@@ -587,12 +589,12 @@ class CopilotViewModel(
                 throw e
             } catch (e: Throwable) {
                 _isLoading.value = false
-                val errorText = e.message ?: "Ocurrió un error inesperado."
+                val errorText = friendlyErrorText(e)
                 _errorMessage.value = errorText
                 val assistantErrorMessage = CopilotMessageItem(
                     id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
                     role = CopilotRole.ASSISTANT,
-                    text = "No se pudo procesar tu solicitud: $errorText\n\nPor favor, verifica tu conexión y configuración de Copilot.",
+                    text = errorText,
                     timestamp = DateTimeUtil.nowEpochMillis()
                 )
                 _messages.value = _messages.value + assistantErrorMessage
@@ -665,8 +667,7 @@ class CopilotViewModel(
                         refreshOpenRouterBalance()
                     },
                     onFailure = { error ->
-                        val errorText = error.message ?: "Ocurrió un error inesperado al regenerar."
-                        _errorMessage.value = errorText
+                        _errorMessage.value = friendlyErrorText(error)
                     }
                 )
             } catch (e: CancellationException) {
@@ -674,8 +675,31 @@ class CopilotViewModel(
             } catch (e: Throwable) {
                 _isLoading.value = false
                 _thinkingStatus.value = null
-                _errorMessage.value = e.message ?: "Error al regenerar respuesta."
+                _errorMessage.value = friendlyErrorText(e)
             }
+        }
+    }
+
+    /**
+     * Texto del error para el chat según su tipo, en vez del mensaje crudo del servicio
+     * (antes se veía el JSON de Google: "Error HTTP 503: [{ "error": { "code": 503, ...").
+     */
+    private suspend fun friendlyErrorText(error: Throwable?): String {
+        val providerName = when (preferencesManager.copilotProvider.first()) {
+            me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
+            me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
+        }
+        return when (me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.classify(error)) {
+            me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.OVERLOADED ->
+                getString(Res.string.copilot_error_overloaded, providerName)
+            me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.RATE_LIMITED ->
+                getString(Res.string.copilot_error_rate_limited, providerName)
+            me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.TIMEOUT ->
+                getString(Res.string.copilot_error_timeout)
+            me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.AUTH ->
+                getString(Res.string.copilot_error_auth, providerName)
+            me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.OTHER ->
+                getString(Res.string.copilot_error_generic, (error?.message ?: "").take(160))
         }
     }
 

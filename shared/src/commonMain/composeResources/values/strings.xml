@@ -215,6 +215,11 @@
     <string name="copilot_input_placeholder">Ask anything about your courses, homework, or schedule...</string>
     <string name="copilot_send">Send</string>
     <string name="copilot_hero_subtitle">Your AI academic copilot with direct Canvas LMS context</string>
+    <string name="copilot_error_overloaded">The %1$s AI is overloaded right now. Wait a few seconds and tap Regenerate.</string>
+    <string name="copilot_error_rate_limited">Your %1$s key hit its usage limit. Wait a minute or check your quota.</string>
+    <string name="copilot_error_timeout">The AI took too long to answer. Tap Regenerate to try again.</string>
+    <string name="copilot_error_auth">%1$s did not accept your API key. Check it in Settings, Copilot AI Assistant.</string>
+    <string name="copilot_error_generic">Your request could not be processed: %1$s</string>
     <string name="copilot_quick_settings_title">AI Settings</string>
     <string name="copilot_provider_label">Provider</string>
     <string name="copilot_model_label">Model</string>

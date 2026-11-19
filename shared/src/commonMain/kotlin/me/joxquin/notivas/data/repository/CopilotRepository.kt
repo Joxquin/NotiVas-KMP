@@ -1,6 +1,7 @@
 package me.joxquin.notivas.data.repository
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
@@ -8,6 +9,7 @@ import me.joxquin.notivas.data.model.OpenRouterChatRequest
 import me.joxquin.notivas.data.model.OpenRouterMessage
 import me.joxquin.notivas.data.remote.CanvasApiService
 import me.joxquin.notivas.data.remote.OpenRouterApiService
+import me.joxquin.notivas.data.repository.copilot.CopilotErrorKind
 import me.joxquin.notivas.data.repository.copilot.CopilotPromptBuilder
 import me.joxquin.notivas.data.repository.copilot.CopilotToolExecutor
 import kotlinx.serialization.json.contentOrNull
@@ -111,7 +113,7 @@ class CopilotRepository(
 
             // Intentar primero con tools (salvo que ya sepamos que este modelo/proveedor no las soporta)
             var response = try {
-                retryOnceOnTimeout {
+                retryTransient {
                     openRouterApiService.chatCompletion(
                         apiKey = apiKey,
                         request = OpenRouterChatRequest(
@@ -290,7 +292,7 @@ class CopilotRepository(
                         content = "Con toda la información obtenida arriba de Canvas LMS, responde ahora de forma completa, detallada y estructurada la consulta original del estudiante en Markdown (usando tablas, divisores y viñetas según corresponda)."
                     )
                 )
-                val finalSynthesisResponse = retryOnceOnTimeout {
+                val finalSynthesisResponse = retryTransient {
                     openRouterApiService.chatCompletion(
                         apiKey = apiKey,
                         request = OpenRouterChatRequest(
@@ -379,20 +381,34 @@ class CopilotRepository(
     }
 
     /**
-     * Repite una vez la llamada al modelo si se agotó el tiempo: en las pruebas, Google AI Studio a veces
-     * no respondía en 60 s tras recibir resultados de herramientas y la consulta se perdía entera.
+     * Repite la llamada al modelo ante fallos pasajeros. En las pruebas con Google AI Studio gratis la
+     * consulta se perdía entera por un 503 "high demand" o por no responder en 60 s; esos fallos suelen
+     * resolverse en segundos. Los errores de key u otros se devuelven de inmediato.
      */
-    private suspend fun <T> retryOnceOnTimeout(call: suspend () -> T): T {
-        return try {
-            call()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Throwable) {
-            val isTimeout = e is io.ktor.client.plugins.HttpRequestTimeoutException ||
-                e.message?.contains("timeout", ignoreCase = true) == true
-            if (!isTimeout) throw e
-            println("Copilot [Aviso] Tiempo agotado esperando al modelo; reintentando una vez")
-            call()
+    private suspend fun <T> retryTransient(call: suspend () -> T): T {
+        var retries = 0
+        while (true) {
+            try {
+                return call()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                val kind = CopilotErrorKind.classify(e)
+                val maxRetries = when (kind) {
+                    CopilotErrorKind.OVERLOADED -> 2
+                    CopilotErrorKind.RATE_LIMITED, CopilotErrorKind.TIMEOUT -> 1
+                    else -> 0
+                }
+                if (retries >= maxRetries) throw e
+                retries++
+                val waitMs = when (kind) {
+                    CopilotErrorKind.OVERLOADED -> 2_000L * retries
+                    CopilotErrorKind.RATE_LIMITED -> 5_000L
+                    else -> 0L
+                }
+                println("Copilot [Aviso] Fallo pasajero ($kind); reintento $retries de $maxRetries en ${waitMs / 1000} s")
+                if (waitMs > 0) delay(waitMs)
+            }
         }
     }
 
