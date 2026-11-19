@@ -20,10 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Sync
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,27 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-@JsFun("() => window.NotiVasBridge ? Boolean(window.NotiVasBridge.isAvailable) : false")
-private external fun jsIsBridgeAvailable(): Boolean
-
-@JsFun("() => window.postMessage({ type: 'NOTIVAS_PING' }, '*')")
-private external fun jsSendPing()
-
-@JsFun("(domain) => window.NotiVasBridge && window.NotiVasBridge.requestSession(domain)")
-private external fun jsRequestSession(domain: String)
-
-@JsFun("() => window.NotiVasBridge ? String(window.NotiVasBridge.sessionState || '') : ''")
-private external fun jsGetSessionState(): String
-
-@JsFun("() => window.NotiVasBridge ? String(window.NotiVasBridge.cookieHeader || '') : ''")
-private external fun jsGetCookieHeader(): String
-
-@JsFun("() => window.NotiVasBridge ? String(window.NotiVasBridge.csrfToken || '') : ''")
-private external fun jsGetCsrfToken(): String
-
-@JsFun("() => window.NotiVasBridge ? String(window.NotiVasBridge.errorMessage || '') : ''")
-private external fun jsGetErrorMessage(): String
-
 @JsFun("() => window.NotiVasPairing && window.NotiVasPairing.createChannel()")
 private external fun jsCreatePairingChannel()
 
@@ -92,8 +68,6 @@ actual fun CanvasLoginWebView(
     onPageStarted: (() -> Unit)?,
     onPageFinished: (() -> Unit)?
 ) {
-    var isBridgeAvailable by remember { mutableStateOf(false) }
-    var isFetching by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Estado del PIN efímero para NotiVas Web
@@ -101,25 +75,9 @@ actual fun CanvasLoginWebView(
     var pairingStatus by remember { mutableStateOf("IDLE") }
     var pairingTimer by remember { mutableStateOf(120) }
 
-    val cleanDomain = remember(url) {
-        url.removePrefix("https://")
-            .removePrefix("http://")
-            .split("/")[0]
-            .trim()
-    }
-
     LaunchedEffect(Unit) {
         onPageFinished?.invoke()
         jsCreatePairingChannel()
-        for (i in 0..20) {
-            jsSendPing()
-            val available = jsIsBridgeAvailable()
-            if (available) {
-                isBridgeAvailable = true
-                break
-            }
-            delay(500)
-        }
     }
 
     // Monitoreo del estado de vinculación Web (PIN de 6 dígitos)
@@ -178,37 +136,6 @@ actual fun CanvasLoginWebView(
                 pairingTimer = 0
             }
         }
-    }
-
-    LaunchedEffect(isFetching) {
-        if (!isFetching) return@LaunchedEffect
-        onPageStarted?.invoke()
-
-        var attempts = 0
-        while (attempts < 60) {
-            delay(300)
-            val state = jsGetSessionState()
-            if (state == "SUCCESS") {
-                val cookies = jsGetCookieHeader()
-                val csrf = jsGetCsrfToken().takeIf { it.isNotBlank() }
-                isFetching = false
-                onPageFinished?.invoke()
-                if (cookies.isNotBlank()) {
-                    onLoginSuccess(cookies, csrf)
-                    return@LaunchedEffect
-                }
-            } else if (state == "ERROR") {
-                isFetching = false
-                onPageFinished?.invoke()
-                val err = jsGetErrorMessage()
-                errorMessage = if (err.isNotBlank()) err else "No se pudo recuperar la sesion de Canvas."
-                return@LaunchedEffect
-            }
-            attempts++
-        }
-        isFetching = false
-        onPageFinished?.invoke()
-        errorMessage = "Tiempo de espera agotado al conectar con Canvas."
     }
 
     Box(
@@ -346,52 +273,6 @@ actual fun CanvasLoginWebView(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
-                            }
-                        }
-                    }
-                }
-
-                // Opción alternativa: Si el usuario tiene la extensión Bridge instalada en el navegador
-                if (isBridgeAvailable) {
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "O sincroniza con la extensión detectada en este navegador",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Button(
-                                onClick = {
-                                    errorMessage = null
-                                    isFetching = true
-                                    jsRequestSession(cleanDomain)
-                                },
-                                enabled = !isFetching,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                if (isFetching) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        strokeWidth = 2.dp
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Sincronizando...")
-                                } else {
-                                    Icon(imageVector = Icons.Outlined.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Usar extensión de navegador")
-                                }
                             }
                         }
                     }
