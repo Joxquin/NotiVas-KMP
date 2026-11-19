@@ -81,7 +81,7 @@ enum class ConsignaIconType {
 }
 
 private val BASE_URL_REGEX = Regex("""^(https?://[^/]+)""")
-private val H3_REGEX = Regex("""(?s)<h3[^>]*>(.*?)</h3>""")
+private val HEADING_REGEX = Regex("""(?is)<(h[2-4])[^>]*>(.*?)</\1>""")
 private val NEXT_CARD_REGEX = Regex("""(?i)(<div[^>]*style=["'][^"']*(?:border-|background-color|display:\s*table)|<div[^>]*class=["'][^"']*card)""")
 private val HTML_TAG_REGEX = Regex("<[^>]*>")
 private val A_HREF_REGEX = Regex("""(?s)<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""")
@@ -1017,22 +1017,77 @@ internal fun parseConsignaBulletItem(liHtml: String, indexStr: String?, baseUrl:
 internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List<ConsignaSection> {
     if (html.isNullOrBlank()) return emptyList()
 
-    val sectionMatches = H3_REGEX.findAll(html).toList()
+    val sectionMatches = HEADING_REGEX.findAll(html).filter { match ->
+        match.groupValues[2].replace(HTML_TAG_REGEX, "").trim().isNotBlank()
+    }.toList()
 
     if (sectionMatches.isNotEmpty()) {
-        return sectionMatches.mapIndexed { index, match ->
-            val rawTitle = match.groupValues[1]
-            val currH3Start = match.range.first
-            val currH3End = match.range.last + 1
-            val prevH3End = if (index > 0) sectionMatches[index - 1].range.last + 1 else 0
-            val nextH3Start = if (index < sectionMatches.size - 1) sectionMatches[index + 1].range.first else html.length
+        val firstHeadingStart = sectionMatches.first().range.first
+        val leadInHtml = html.substring(0, firstHeadingStart)
+        val cleanPreludeText = cleanHtmlToMarkdown(leadInHtml, baseUrl)
 
-            val leadIn = html.substring(prevH3End, currH3Start)
+        val preludeListMatches = LIST_CONTAINER_REGEX.findAll(leadInHtml).toList()
+        val preludeBullets = mutableListOf<ConsignaBullet>()
+        val preludeIntroText: String
+        val preludeFooterNotes = mutableListOf<String>()
+
+        if (preludeListMatches.isNotEmpty()) {
+            val firstListStart = preludeListMatches.first().range.first
+            val lastListEnd = preludeListMatches.last().range.last + 1
+            preludeIntroText = cleanHtmlToMarkdown(leadInHtml.substring(0, firstListStart), baseUrl)
+            var listIndex = 1
+            for (listMatch in preludeListMatches) {
+                val isOrdered = listMatch.groupValues[1].equals("ol", ignoreCase = true)
+                for (liMatch in LI_REGEX.findAll(listMatch.groupValues[2])) {
+                    val idxStr = if (isOrdered) "${listIndex++}." else null
+                    preludeBullets.add(parseConsignaBulletItem(liMatch.groupValues[1], idxStr, baseUrl))
+                }
+            }
+            val cleanAfter = cleanHtmlToMarkdown(leadInHtml.substring(lastListEnd), baseUrl)
+            if (cleanAfter.isNotBlank()) {
+                cleanAfter.split("\n\n").forEach { p ->
+                    val trimmed = p.trim()
+                    if (trimmed.isNotBlank()) preludeFooterNotes.add(trimmed)
+                }
+            }
+        } else {
+            preludeIntroText = cleanPreludeText
+        }
+
+        val preludeAllLinks = A_HREF_REGEX.findAll(leadInHtml).map {
+            val rawUrl = it.groupValues[1]
+            val url = if (rawUrl.startsWith("/") && !baseUrl.isNullOrBlank()) "${baseUrl.trimEnd('/')}$rawUrl" else rawUrl
+            val text = it.groupValues[2].replace(HTML_TAG_REGEX, "").cleanEmoji().trim()
+            text to url
+        }.toList()
+        val preludeDownloadLink = preludeAllLinks.firstOrNull { (text, url) -> isDownloadOrTemplateLink(text, url) }
+        val preludeOtherLinks = preludeAllLinks.filter { it != preludeDownloadLink && !it.second.startsWith("\$CANVAS") }
+        val allLeadInImages = extractImageUrls(leadInHtml, baseUrl)
+
+        val hasRealPreludeContent = preludeIntroText.isNotBlank() || preludeBullets.isNotEmpty() || preludeDownloadLink != null
+        val preludeImages = if (hasRealPreludeContent) {
+            if (allLeadInImages.size > 1) allLeadInImages.dropLast(1) else allLeadInImages
+        } else {
+            emptyList()
+        }
+        val firstSectionIconUrl = allLeadInImages.lastOrNull()
+
+        val parsedSections = sectionMatches.mapIndexed { index, match ->
+            val rawTitle = match.groupValues[2]
+            val currHStart = match.range.first
+            val currHEnd = match.range.last + 1
+            val prevHEnd = if (index > 0) sectionMatches[index - 1].range.last + 1 else 0
+            val nextHStart = if (index < sectionMatches.size - 1) sectionMatches[index + 1].range.first else html.length
+
+            val leadIn = html.substring(prevHEnd, currHStart)
             val leadInImages = extractImageUrls(leadIn, baseUrl)
-            val iconUrl = leadInImages.lastOrNull()
-            val preludeImages = if (index == 0 && leadInImages.size > 1) leadInImages.dropLast(1) else emptyList()
+            val iconUrl = if (index == 0) {
+                if (!hasRealPreludeContent) firstSectionIconUrl else null
+            } else {
+                leadInImages.lastOrNull()
+            }
 
-            val rawBodyChunk = html.substring(currH3End, nextH3Start)
+            val rawBodyChunk = html.substring(currHEnd, nextHStart)
             val cardBoundaryMatch = if (index < sectionMatches.size - 1) {
                 NEXT_CARD_REGEX.find(rawBodyChunk)
             } else null
@@ -1059,42 +1114,87 @@ internal fun parseConsignaSections(html: String?, baseUrl: String? = null): List
             }.toList()
 
             val downloadLink = allLinks.firstOrNull { (text, url) -> isDownloadOrTemplateLink(text, url) }
-
             val otherLinks = allLinks.filter { it != downloadLink && !it.second.startsWith("\$CANVAS") }
 
+            val listMatches = LIST_CONTAINER_REGEX.findAll(rawBody).toList()
             val lis = mutableListOf<ConsignaBullet>()
-            var listIndex = 1
-            for (listMatch in LIST_CONTAINER_REGEX.findAll(rawBody)) {
-                val isOrdered = listMatch.groupValues[1].equals("ol", ignoreCase = true)
-                for (liMatch in LI_REGEX.findAll(listMatch.groupValues[2])) {
-                    val idxStr = if (isOrdered) "${listIndex++}." else null
-                    lis.add(parseConsignaBulletItem(liMatch.groupValues[1], idxStr, baseUrl))
-                }
-            }
+            val introText: String
+            val footerNotes = mutableListOf<String>()
 
-            val bodyWithoutLists = rawBody.replace(LIST_CONTAINER_REGEX, "")
-            var cleanText = cleanHtmlToMarkdown(bodyWithoutLists, baseUrl)
+            if (listMatches.isNotEmpty()) {
+                val firstListStart = listMatches.first().range.first
+                val lastListEnd = listMatches.last().range.last + 1
 
-            if (downloadLink != null && downloadLink.first.isNotBlank()) {
-                val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
-                if (cleanDlLabel.isNotBlank()) {
-                    cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(WHITESPACE_REGEX, " ")
+                val beforeLists = rawBody.substring(0, firstListStart)
+                var cleanBefore = cleanHtmlToMarkdown(beforeLists, baseUrl)
+                if (downloadLink != null && downloadLink.first.isNotBlank()) {
+                    val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
+                    if (cleanDlLabel.isNotBlank()) {
+                        cleanBefore = cleanBefore.replace(cleanDlLabel, "").trim().replace(WHITESPACE_REGEX, " ")
+                    }
                 }
+                introText = cleanBefore
+
+                var listIndex = 1
+                for (listMatch in listMatches) {
+                    val isOrdered = listMatch.groupValues[1].equals("ol", ignoreCase = true)
+                    for (liMatch in LI_REGEX.findAll(listMatch.groupValues[2])) {
+                        val idxStr = if (isOrdered) "${listIndex++}." else null
+                        lis.add(parseConsignaBulletItem(liMatch.groupValues[1], idxStr, baseUrl))
+                    }
+                }
+
+                val afterLists = rawBody.substring(lastListEnd)
+                val cleanAfter = cleanHtmlToMarkdown(afterLists, baseUrl)
+                if (cleanAfter.isNotBlank()) {
+                    cleanAfter.split("\n\n").forEach { paragraph ->
+                        val p = paragraph.trim()
+                        if (p.isNotBlank()) {
+                            footerNotes.add(p)
+                        }
+                    }
+                }
+            } else {
+                var cleanText = cleanHtmlToMarkdown(rawBody, baseUrl)
+                if (downloadLink != null && downloadLink.first.isNotBlank()) {
+                    val cleanDlLabel = downloadLink.first.cleanEmoji().trim()
+                    if (cleanDlLabel.isNotBlank()) {
+                        cleanText = cleanText.replace(cleanDlLabel, "").trim().replace(WHITESPACE_REGEX, " ")
+                    }
+                }
+                introText = cleanText
             }
 
             val bodyImages = extractImageUrls(rawBody, baseUrl)
-            val sectionImages = if (index == 0) preludeImages + bodyImages else bodyImages
 
             ConsignaSection(
                 title = cleanTitle,
                 iconType = iconType,
-                introText = cleanText,
+                introText = introText,
                 downloadLink = downloadLink,
                 bullets = lis,
                 otherLinks = otherLinks,
-                imageUrls = sectionImages,
-                iconUrl = iconUrl
+                imageUrls = bodyImages,
+                iconUrl = iconUrl,
+                footerNotes = footerNotes
             )
+        }
+
+        return if (hasRealPreludeContent) {
+            val preludeSection = ConsignaSection(
+                title = "Descripción",
+                iconType = ConsignaIconType.GENERAL,
+                introText = preludeIntroText,
+                downloadLink = preludeDownloadLink,
+                bullets = preludeBullets,
+                otherLinks = preludeOtherLinks,
+                imageUrls = preludeImages,
+                iconUrl = null,
+                footerNotes = preludeFooterNotes
+            )
+            listOf(preludeSection) + parsedSections
+        } else {
+            parsedSections
         }
     }
 
