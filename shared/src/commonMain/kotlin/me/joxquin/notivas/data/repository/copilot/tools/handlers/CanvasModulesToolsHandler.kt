@@ -87,7 +87,7 @@ class CanvasModulesToolsHandler(
             "get_course_modules" -> {
                 val cid = args["course_id"]?.jsonPrimitive?.longOrNull ?: selectedCourseId ?: 0L
                 val authCred = preferencesManager.getAuthCredential()
-                val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
+                val domain = preferencesManager.universityUrl.first() ?: "https://tecsup.instructure.com"
 
                 if (authCred != null && cid != 0L) {
                     try {
@@ -130,7 +130,7 @@ class CanvasModulesToolsHandler(
                 val resourceNameQuery = args["resource_name"]?.jsonPrimitive?.content?.trim() ?: ""
                 val explicitPageUrl = args["page_url"]?.jsonPrimitive?.content?.trim()
                 val authCred = preferencesManager.getAuthCredential()
-                val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
+                val domain = preferencesManager.universityUrl.first() ?: "https://tecsup.instructure.com"
 
                 if (authCred != null && cid != 0L) {
                     try {

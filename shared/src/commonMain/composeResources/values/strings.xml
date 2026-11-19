@@ -241,7 +241,7 @@
     <string name="onboarding_notifications_desc">Receive instant alerts for new grades, announcements, and upcoming deadlines</string>
     <string name="onboarding_token_switch_btn">Manual Token</string>
     <string name="onboarding_domain_input_label">INSTITUTION OR CAMPUS</string>
-    <string name="onboarding_domain_input_placeholder">e.g. mycampus</string>
+    <string name="onboarding_domain_input_placeholder">e.g. tecsup</string>
     <string name="onboarding_domain_quick_suggestions">Quick suggestions</string>
     <string name="onboarding_domain_continue_btn">Continue</string>
     <string name="onboarding_domain_help">Can't find your university domain?</string>

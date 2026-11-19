@@ -158,7 +158,7 @@ fun GroupsSettingsBottomSheet(
             SettingActionTile(
                 icon = Icons.Default.LibraryBooks,
                 title = "Desde Repositorio Oficial",
-                subtitle = "Descarga plantillas oficiales desde GitHub (ej. Tecsup, UTP)",
+                subtitle = "Descarga plantillas oficiales de Tecsup desde GitHub",
                 themeStyle = themeStyle,
                 onClick = {
                     onDismiss()

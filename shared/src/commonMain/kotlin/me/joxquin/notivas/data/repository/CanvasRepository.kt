@@ -963,7 +963,7 @@ class CanvasRepository(
                 return@withContext Result.failure(IllegalArgumentException("El token no puede estar vacío"))
             }
             val url = preferencesManager.universityUrl.first()
-                ?: "https://canvas.utp.edu.pe"
+                ?: "https://tecsup.instructure.com"
             apiService.verifyToken(url, "Bearer $trimmedToken")
             preferencesManager.saveAccessToken(trimmedToken, 0L)
             preferencesManager.setSessionExpired(false)

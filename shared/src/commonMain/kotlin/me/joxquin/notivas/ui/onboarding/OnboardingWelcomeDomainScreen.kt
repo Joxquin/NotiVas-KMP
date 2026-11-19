@@ -139,12 +139,10 @@ fun OnboardingWelcomeDomainScreen(
         val clean = currentUrl.removePrefix("https://").removePrefix("http://")
         val sub = if (clean.contains(".instructure.com")) {
             clean.substringBefore(".instructure.com")
-        } else if (clean.contains("canvas.utp.edu.pe")) {
-            "utp"
         } else {
             clean
         }
-        mutableStateOf(if (sub.isNotBlank()) sub else "utp")
+        mutableStateOf(if (sub.isNotBlank()) sub else "tecsup")
     }
 
     val isWeb = remember { me.joxquin.notivas.getPlatform().name.contains("Web") }
@@ -155,10 +153,6 @@ fun OnboardingWelcomeDomainScreen(
     var isTokenVisible by remember { mutableStateOf(false) }
 
     val presets = listOf(
-        "UTP" to "https://canvas.utp.edu.pe",
-        "PUCP" to "pucp",
-        "UPC" to "upc",
-        "UNMSM" to "unmsm",
         "Tecsup" to "tecsup"
     )
 
@@ -448,11 +442,7 @@ fun OnboardingWelcomeDomainScreen(
                                     },
                                     trailingIcon = {
                                         Text(
-                                            text = if (inputSubdomain.contains("utp", ignoreCase = true)) {
-                                                ".edu.pe"
-                                            } else {
-                                                ".instructure.com"
-                                            },
+                                            text = ".instructure.com",
                                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
                                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                                             modifier = Modifier.padding(end = 12.dp)
@@ -551,7 +541,7 @@ fun OnboardingWelcomeDomainScreen(
                                 ) {
                                     presets.forEach { (label, value) ->
                                         val isSelected = inputSubdomain.equals(label, ignoreCase = true) ||
-                                                (label == "UTP" && inputSubdomain.contains("utp", ignoreCase = true))
+                                                inputSubdomain.equals(value, ignoreCase = true)
 
                                         Surface(
                                             shape = CircleShape,
@@ -561,7 +551,7 @@ fun OnboardingWelcomeDomainScreen(
                                                 MaterialTheme.colorScheme.surfaceContainerHighest
                                             },
                                             modifier = Modifier.clickable {
-                                                inputSubdomain = if (label == "UTP") "canvas.utp.edu.pe" else value
+                                                inputSubdomain = value
                                             }
                                         ) {
                                             Text(
@@ -606,7 +596,6 @@ fun OnboardingWelcomeDomainScreen(
                             onClick = {
                                 val finalUrl = when {
                                     inputSubdomain.startsWith("http://") || inputSubdomain.startsWith("https://") -> inputSubdomain
-                                    inputSubdomain.contains("utp", ignoreCase = true) -> "https://canvas.utp.edu.pe"
                                     inputSubdomain.contains(".") -> "https://$inputSubdomain"
                                     else -> "https://${inputSubdomain}.instructure.com"
                                 }

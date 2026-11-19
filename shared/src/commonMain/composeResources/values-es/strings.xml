@@ -241,7 +241,7 @@
     <string name="onboarding_notifications_desc">Recibe avisos inmediatos de nuevas calificaciones, anuncios y tareas pendientes</string>
     <string name="onboarding_token_switch_btn">Token Manual</string>
     <string name="onboarding_domain_input_label">INSTITUCIÓN O CAMPUS</string>
-    <string name="onboarding_domain_input_placeholder">ej. micampus</string>
+    <string name="onboarding_domain_input_placeholder">ej. tecsup</string>
     <string name="onboarding_domain_quick_suggestions">Sugerencias rápidas</string>
     <string name="onboarding_domain_continue_btn">Continuar</string>
     <string name="onboarding_domain_help">¿No encuentras el dominio de tu universidad?</string>

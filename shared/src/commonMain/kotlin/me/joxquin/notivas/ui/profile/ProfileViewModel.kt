@@ -380,7 +380,7 @@ class ProfileViewModel(
         } else null
 
         val payload = me.joxquin.notivas.data.model.SessionPairingPayload(
-            universityUrl = preferencesManager.getUniversityUrl() ?: "https://canvas.utp.edu.pe",
+            universityUrl = preferencesManager.getUniversityUrl() ?: "https://tecsup.instructure.com",
             authMode = authMode,
             accessToken = preferencesManager.getAccessToken(),
             sessionCookies = if (authMode == me.joxquin.notivas.data.model.AuthMode.TOKEN) null else preferencesManager.getSessionCookies(),
