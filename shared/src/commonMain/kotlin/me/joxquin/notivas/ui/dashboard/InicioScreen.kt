@@ -157,6 +157,7 @@ fun InicioScreen(
                     onNavigateToSchedule = onNavigateToSchedule,
                     onNavigateToAjustes = onNavigateToAjustes,
                     actionsEnabled = !searchOverlayAnimStatus.shouldExpand(),
+                    isEntranceTriggered = isEntranceTriggered,
                     modifier = Modifier.graphicsLayer {
                         alpha = topBarAlpha
                     }

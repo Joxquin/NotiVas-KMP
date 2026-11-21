@@ -51,6 +51,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseHeader
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseRowItem
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
+import me.joxquin.notivas.ui.components.brand.NotiVasOutlineLogo
+import me.joxquin.notivas.ui.splash.LocalSplashLogoTarget
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.basic.TopAppBarDefaults
@@ -171,6 +175,31 @@ fun InicioMiuixContent(
                         ),
                         scrollBehavior = scrollBehavior,
                         backgroundAlpha = { searchBarAlpha.value },
+                        navigationIcon = {
+                            val onTargetPositioned = LocalSplashLogoTarget.current
+                            val iconAlpha = if (isEntranceTriggered) {
+                                if (isSearchExpanded) 0f else searchBarAlpha.value
+                            } else {
+                                0f
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .graphicsLayer {
+                                        alpha = iconAlpha
+                                    }
+                                    .onGloballyPositioned { coords ->
+                                        onTargetPositioned?.invoke(coords.boundsInRoot())
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                NotiVasOutlineLogo(
+                                    size = 28.dp,
+                                    tint = MiuixTheme.colorScheme.primary,
+                                    accentTint = MiuixTheme.colorScheme.primary.copy(alpha = 0.45f)
+                                )
+                            }
+                        },
                         actions = {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 GlassIconButton(
