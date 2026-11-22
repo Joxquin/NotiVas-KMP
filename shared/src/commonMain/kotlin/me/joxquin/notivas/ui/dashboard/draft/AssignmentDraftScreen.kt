@@ -275,6 +275,7 @@ fun AssignmentDraftScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // 1. Encabezado Hero del Detalle de Tarea

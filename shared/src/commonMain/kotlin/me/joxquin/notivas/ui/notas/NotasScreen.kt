@@ -228,6 +228,7 @@ fun NotasScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     // ─── 1. Selector de Curso Dropdown ──────────────────────────────

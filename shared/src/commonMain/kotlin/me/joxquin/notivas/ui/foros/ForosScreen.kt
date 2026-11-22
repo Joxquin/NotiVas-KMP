@@ -212,6 +212,7 @@ fun ForosScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                         // Estado de Carga

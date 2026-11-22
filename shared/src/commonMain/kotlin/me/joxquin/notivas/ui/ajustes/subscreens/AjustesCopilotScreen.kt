@@ -101,6 +101,7 @@ fun AjustesCopilotScreen(
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     modifier = Modifier
                         .fillMaxSize()
                         .miuixBackdropModifier(backdrop)

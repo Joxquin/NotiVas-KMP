@@ -288,6 +288,7 @@ fun AjustesScreen(
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     modifier = Modifier
                         .fillMaxSize()
                         .miuixBackdropModifier(backdrop)

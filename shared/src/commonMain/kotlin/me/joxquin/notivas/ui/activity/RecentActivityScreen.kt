@@ -154,6 +154,7 @@ fun RecentActivityScreen(
                     state = lazyListState,
                     modifier = Modifier.miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Chips horizontales de filtrado rápido

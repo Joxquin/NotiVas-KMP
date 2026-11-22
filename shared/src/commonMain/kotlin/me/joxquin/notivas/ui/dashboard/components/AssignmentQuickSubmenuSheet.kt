@@ -58,11 +58,11 @@ import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import top.yukonga.miuix.kmp.window.WindowDialog
@@ -186,7 +186,7 @@ fun AssignmentQuickSubmenuSheet(
             },
             startAction = {
                 val dismissState = LocalDismissState.current
-                top.yukonga.miuix.kmp.basic.IconButton(
+                GlassIconButton(
                     onClick = { dismissState?.invoke() }
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
@@ -202,7 +202,6 @@ fun AssignmentQuickSubmenuSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .scrollEndHaptic()
-                    .overScrollVertical()
             ) {
                 // Sección 1: Cabecera con Información de la Tarea
                 item {

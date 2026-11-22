@@ -130,6 +130,7 @@ fun CourseDetailScreen(
                     LazyColumn(
                         state = listState,
                         contentPadding = contentPadding,
+                        overscrollEffect = null,
                         modifier = Modifier
                             .fillMaxSize()
                             .miuixPageScrollModifiers(scrollBehavior),

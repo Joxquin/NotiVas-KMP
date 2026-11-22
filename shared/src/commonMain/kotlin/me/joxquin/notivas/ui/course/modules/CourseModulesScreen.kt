@@ -153,6 +153,7 @@ fun CourseModulesScreen(
                     LazyColumn(
                         state = listState,
                         contentPadding = contentPadding,
+                        overscrollEffect = null,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.miuixPageScrollModifiers(scrollBehavior)
                     ) {

@@ -48,13 +48,13 @@ import me.joxquin.notivas.ui.foros.DiscussionSortOption
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
 import top.yukonga.miuix.kmp.icon.extended.Ok
 import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
@@ -87,7 +87,7 @@ fun ForosFilterBottomSheet(
             onDismissRequest = onDismissRequest,
             startAction = {
                 val dismissState = LocalDismissState.current
-                top.yukonga.miuix.kmp.basic.IconButton(
+                GlassIconButton(
                     onClick = { dismissState?.invoke() }
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
@@ -99,7 +99,7 @@ fun ForosFilterBottomSheet(
             },
             endAction = {
                 val dismissState = LocalDismissState.current
-                top.yukonga.miuix.kmp.basic.IconButton(
+                GlassIconButton(
                     onClick = { dismissState?.invoke() }
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
@@ -114,7 +114,6 @@ fun ForosFilterBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .scrollEndHaptic()
-                    .overScrollVertical()
             ) {
                 // Sección 1: Estado del Foro
                 item {

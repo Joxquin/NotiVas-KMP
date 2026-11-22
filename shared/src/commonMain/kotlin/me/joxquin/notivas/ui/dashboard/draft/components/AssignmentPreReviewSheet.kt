@@ -116,7 +116,6 @@ import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
-import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.utils.springAnimateToPage
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
@@ -498,8 +497,7 @@ private fun PreReviewConfigViewMiuix(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .scrollEndHaptic()
-                                .overScrollVertical(),
+                                .scrollEndHaptic(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(bottom = 8.dp)
                         ) {
@@ -547,8 +545,7 @@ private fun PreReviewConfigViewMiuix(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .scrollEndHaptic()
-                                .overScrollVertical(),
+                                .scrollEndHaptic(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(bottom = 8.dp)
                         ) {
@@ -601,8 +598,7 @@ private fun PreReviewConfigViewMiuix(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .scrollEndHaptic()
-                                .overScrollVertical(),
+                                .scrollEndHaptic(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(bottom = 8.dp)
                         ) {
@@ -979,8 +975,7 @@ private fun ReportResultViewMiuix(
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .scrollEndHaptic()
-                                    .overScrollVertical(),
+                                    .scrollEndHaptic(),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                                 contentPadding = PaddingValues(bottom = 8.dp)
                             ) {
@@ -995,8 +990,7 @@ private fun ReportResultViewMiuix(
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .scrollEndHaptic()
-                                    .overScrollVertical(),
+                                    .scrollEndHaptic(),
                                 contentPadding = PaddingValues(bottom = 8.dp)
                             ) {
                                 item(key = "raw_markdown") {
@@ -1013,8 +1007,7 @@ private fun ReportResultViewMiuix(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .scrollEndHaptic()
-                                .overScrollVertical(),
+                                .scrollEndHaptic(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(bottom = 8.dp)
                         ) {
@@ -1048,8 +1041,7 @@ private fun ReportResultViewMiuix(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .scrollEndHaptic()
-                                .overScrollVertical(),
+                                .scrollEndHaptic(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(bottom = 8.dp)
                         ) {

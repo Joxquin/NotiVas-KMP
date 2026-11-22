@@ -89,6 +89,7 @@ fun UtilidadesMiuixContent(
                     .fillMaxSize()
                     .miuixPageScrollModifiers(scrollBehavior),
                 contentPadding = contentPadding,
+                overscrollEffect = null,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item {

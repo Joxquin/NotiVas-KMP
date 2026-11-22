@@ -169,6 +169,7 @@ fun ScheduleScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // ─── 1. Selector de Mes y Días Semanales (Estilo Stitch) ────────────

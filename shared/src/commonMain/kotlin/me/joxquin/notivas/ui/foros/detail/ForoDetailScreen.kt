@@ -182,6 +182,7 @@ fun ForoDetailScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                 // 1. Encabezado Hero del Foro
