@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Arrangement
@@ -96,6 +97,10 @@ import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
 import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
 import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
 import top.yukonga.miuix.kmp.nav.transition.NavTransitions
+import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
+import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
+import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
+import top.yukonga.miuix.kmp.utils.pagerGestureOverride
 import me.joxquin.notivas.ui.components.miuix.MiuixPersistentNavigationRail
 import me.joxquin.notivas.ui.navigation.NotiVasNavigationRail
 import me.joxquin.notivas.ui.util.LocalIsWideScreen
@@ -217,7 +222,14 @@ fun MainAppShell(
     }
 
     val currentDestination by remember {
-        derivedStateOf { destinations.getOrElse(mainPagerState.selectedPage) { MainDestination.Inicio } }
+        derivedStateOf {
+            val page = if (mainPagerState.isNavigating) {
+                mainPagerState.selectedPage
+            } else {
+                mainPagerState.pagerState.currentPage
+            }
+            destinations.getOrElse(page) { MainDestination.Inicio }
+        }
     }
 
     val dashboardViewModel = remember { DashboardViewModel(canvasRepository) }
@@ -455,11 +467,24 @@ fun MainAppShell(
                                 .fillMaxSize()
                                 .layerBackdrop(contentBackdrop)
                         ) {
+                            val flingBehavior = PagerDefaults.flingBehavior(
+                                state = mainPagerState.pagerState,
+                                snapAnimationSpec = PagerNavigationSpringSpec,
+                            )
                             HorizontalPager(
                                 state = mainPagerState.pagerState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .pagerGestureOverride(
+                                        pagerState = mainPagerState.pagerState,
+                                        flingBehavior = flingBehavior,
+                                        mode = PagerInterceptionMode.CrossAxis,
+                                        enabled = true,
+                                    ),
                                 userScrollEnabled = false,
-                                modifier = Modifier.fillMaxSize(),
+                                pageNestedScrollConnection = PagerGestureNestedScrollConnection,
                                 verticalAlignment = Alignment.Top,
+                                flingBehavior = flingBehavior,
                                 beyondViewportPageCount = 1
                             ) { page ->
                                 when (destinations[page]) {
