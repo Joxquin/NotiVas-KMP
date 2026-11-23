@@ -100,14 +100,16 @@ fun AjustesAppearanceScreen(
                             dynamicColorEnabled = dynamicColorEnabled,
                             onDynamicColorChange = onDynamicColorChange,
                             themeStyle = themeStyle,
-                            onThemeStyleChange = onThemeStyleChange
+                            onThemeStyleChange = onThemeStyleChange,
+                            backdrop = backdrop
                         )
                     }
                     item {
                         LanguageSettingsSection(
                             appLanguage = appLanguage,
                             onLanguageChange = onLanguageChange,
-                            themeStyle = AppThemeStyle.MIUIX
+                            themeStyle = AppThemeStyle.MIUIX,
+                            backdrop = backdrop
                         )
                     }
                 }

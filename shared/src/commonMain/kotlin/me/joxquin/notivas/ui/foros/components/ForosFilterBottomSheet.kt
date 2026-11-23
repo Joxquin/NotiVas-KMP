@@ -48,11 +48,12 @@ import me.joxquin.notivas.ui.foros.DiscussionSortOption
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
 import top.yukonga.miuix.kmp.icon.extended.Ok
-import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -77,6 +78,7 @@ fun ForosFilterBottomSheet(
     sortOption: DiscussionSortOption,
     onSortOptionSelected: (DiscussionSortOption) -> Unit,
     themeStyle: AppThemeStyle,
+    backdrop: Backdrop? = null,
     isWeeksReversed: Boolean = true,
     onWeeksReversedChange: (Boolean) -> Unit = {}
 ) {
@@ -212,7 +214,7 @@ fun ForosFilterBottomSheet(
                             color = MiuixTheme.colorScheme.secondaryContainer
                         )
                     ) {
-                        WindowDropdownPreference(
+                        GlassDropdownPreference(
                             title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_selected_course),
                             items = courseOptions,
                             selectedIndex = currentCourseIndex,
@@ -223,7 +225,8 @@ fun ForosFilterBottomSheet(
                                     val course = courses.getOrNull(index - 1)
                                     onCourseSelected(course?.id)
                                 }
-                            }
+                            },
+                            backdrop = backdrop
                         )
                     }
                 }
@@ -251,14 +254,15 @@ fun ForosFilterBottomSheet(
                             color = MiuixTheme.colorScheme.secondaryContainer
                         )
                     ) {
-                        WindowDropdownPreference(
+                        GlassDropdownPreference(
                             title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_sort_criteria),
                             items = sortOptions,
                             selectedIndex = currentSortIndex,
                             onSelectedIndexChange = { index ->
                                 val selected = DiscussionSortOption.entries.getOrNull(index) ?: DiscussionSortOption.DUE_DATE_ASC
                                 onSortOptionSelected(selected)
-                            }
+                            },
+                            backdrop = backdrop
                         )
                     }
 
@@ -279,13 +283,14 @@ fun ForosFilterBottomSheet(
                             color = MiuixTheme.colorScheme.secondaryContainer
                         )
                     ) {
-                        WindowDropdownPreference(
+                        GlassDropdownPreference(
                             title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_section_weeks_order),
                             items = weeksOrderOptions,
                             selectedIndex = selectedWeeksOrderIndex,
                             onSelectedIndexChange = { index ->
                                 onWeeksReversedChange(index == 0)
-                            }
+                            },
+                            backdrop = backdrop
                         )
                     }
 

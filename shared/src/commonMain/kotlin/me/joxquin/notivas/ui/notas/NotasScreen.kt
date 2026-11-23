@@ -237,7 +237,8 @@ fun NotasScreen(
                             courses = uiState.courses,
                             selectedCourse = uiState.selectedCourse,
                             onCourseSelect = { viewModel.selectCourse(it) },
-                            themeStyle = themeStyle
+                            themeStyle = themeStyle,
+                            backdrop = backdrop
                         )
                     }
 

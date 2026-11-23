@@ -860,4 +860,6 @@
     <string name="review_action_start">Iniciar revisión</string>
     <string name="review_action_new_review">Nueva revisión</string>
     <string name="review_step_downloading_modules">Descargando y analizando lecturas del módulo...</string>
+    <string name="notas_select_course">Selecciona un curso</string>
+    <string name="notas_course_default">Curso</string>
 </resources>

@@ -860,4 +860,6 @@
     <string name="review_action_start">Start review</string>
     <string name="review_action_new_review">New review</string>
     <string name="review_step_downloading_modules">Downloading and analyzing module readings...</string>
+    <string name="notas_select_course">Select a course</string>
+    <string name="notas_course_default">Course</string>
 </resources>

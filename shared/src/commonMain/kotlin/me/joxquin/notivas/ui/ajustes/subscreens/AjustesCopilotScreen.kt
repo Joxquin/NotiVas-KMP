@@ -126,7 +126,8 @@ fun AjustesCopilotScreen(
                             onGoogleAiStudioModelChange = onGoogleAiStudioModelChange,
                             onRefreshBalance = onRefreshBalance,
                             onAnalyzeModel = onAnalyzeModel,
-                            themeStyle = AppThemeStyle.MIUIX
+                            themeStyle = AppThemeStyle.MIUIX,
+                            backdrop = backdrop
                         )
                     }
                 }

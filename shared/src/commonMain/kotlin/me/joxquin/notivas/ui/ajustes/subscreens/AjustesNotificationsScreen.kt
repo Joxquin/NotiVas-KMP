@@ -117,7 +117,8 @@ fun AjustesNotificationsScreen(
                             onNotifNewQuizzesChange = onNotifNewQuizzesChange,
                             onNotifNewForosChange = onNotifNewForosChange,
                             onSyncIntervalChange = onSyncIntervalChange,
-                            themeStyle = AppThemeStyle.MIUIX
+                            themeStyle = AppThemeStyle.MIUIX,
+                            backdrop = backdrop
                         )
                     }
                 }

@@ -51,13 +51,15 @@ import me.joxquin.notivas.shared.resources.close
 import me.joxquin.notivas.shared.resources.change
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
 
 @Composable
 fun LanguageSettingsSection(
     appLanguage: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier
 ) {
     val languageOptions = remember {
@@ -189,7 +191,7 @@ fun LanguageSettingsSection(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
-                WindowDropdownPreference(
+                GlassDropdownPreference(
                     title = stringResource(Res.string.settings_language_title),
                     summary = currentLanguageLabel,
                     items = languageOptions.map { languageLabels[it] ?: it.displayName },
@@ -197,7 +199,8 @@ fun LanguageSettingsSection(
                     onSelectedIndexChange = { index ->
                         val newLang = languageOptions[index]
                         onLanguageChange(newLang)
-                    }
+                    },
+                    backdrop = backdrop
                 )
             }
         }

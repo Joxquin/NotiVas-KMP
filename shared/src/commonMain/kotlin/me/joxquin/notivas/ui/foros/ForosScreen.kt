@@ -123,8 +123,9 @@ fun ForosScreen(
         }
     }
 
+    val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
+
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
 
         top.yukonga.miuix.kmp.basic.Scaffold(
@@ -639,6 +640,7 @@ fun ForosScreen(
         sortOption = uiState.sortOption,
         onSortOptionSelected = { option -> viewModel.onSortOptionSelected(option) },
         themeStyle = themeStyle,
+        backdrop = backdrop,
         isWeeksReversed = uiState.isWeeksReversed,
         onWeeksReversedChange = { reversed -> viewModel.setWeeksReversed(reversed) }
     )
