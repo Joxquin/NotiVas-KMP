@@ -52,20 +52,20 @@ class GradesToolsHandler(
         OpenRouterTool(
             function = OpenRouterFunction(
                 name = NEEDED,
-                description = "Calcula el promedio mínimo que el estudiante necesita en lo que falta evaluar de un curso para terminar con la nota meta " +
-                    "(por defecto, la nota aprobatoria). Úsala para '¿cuánto necesito para aprobar?' o '¿cuánto necesito en el examen final?'.",
+                description = "Calcula el promedio mínimo que el estudiante necesita en lo que falta evaluar para terminar con la nota meta " +
+                    "(por defecto, la nota aprobatoria). Úsala para '¿cuánto necesito para aprobar?' o '¿cuánto necesito en el examen final?'. " +
+                    "Sin 'course' calcula todos los cursos en una sola llamada; con 'course', solo ese curso.",
                 parameters = OpenRouterParameters(
                     properties = mapOf(
                         "course" to OpenRouterProperty(
                             type = "string",
-                            description = "ID, código o parte del nombre del curso."
+                            description = "Opcional. ID, código o parte del nombre del curso. Omítelo si pregunta por todos sus cursos."
                         ),
                         "target_grade" to OpenRouterProperty(
                             type = "number",
-                            description = "Opcional. Nota final deseada (0-20). Si se omite se usa la nota aprobatoria del curso."
+                            description = "Opcional. Nota final deseada (0-20). Si se omite se usa la nota aprobatoria de cada curso."
                         )
-                    ),
-                    required = listOf("course")
+                    )
                 )
             )
         )
@@ -109,11 +109,25 @@ class GradesToolsHandler(
                 ToolExecutionResult(json.toString(), source = SOURCE)
             }
             NEEDED -> {
-                val target = course ?: return ToolExecutionResult("""{"error": "Indica el curso para calcular cuánto necesitas."}""")
-                val snapshot = snapshotOf(target)
-                val goal = args.number("target_grade") ?: target.passingGrade.toDouble()
-                val needed = GradeInsights.neededAverage(snapshot.currentAverage, snapshot.evaluatedPercent, goal)
-                ToolExecutionResult(needed(snapshot, needed).toString(), source = SOURCE)
+                val goal = args.number("target_grade")
+                fun neededFor(s: CourseGradeSnapshot) =
+                    GradeInsights.neededAverage(s.currentAverage, s.evaluatedPercent, goal ?: s.course.passingGrade.toDouble())
+                val json = if (course != null) {
+                    val snapshot = snapshotOf(course)
+                    needed(snapshot, neededFor(snapshot))
+                } else {
+                    buildJsonObject {
+                        put("escala", "0-20")
+                        put("cursos", buildJsonArray {
+                            courses.map(::snapshotOf).forEach { s -> add(neededCompact(s, neededFor(s))) }
+                        })
+                        put(
+                            "metodo",
+                            "ponderado=true usa los grupos del simulador de NotiVas; ponderado=false es aproximado (cada tarea pesa igual)."
+                        )
+                    }
+                }
+                ToolExecutionResult(json.toString(), source = SOURCE)
             }
             else -> ToolExecutionResult("""{"error": "Herramienta no soportada por GradesToolsHandler"}""")
         }
@@ -163,18 +177,32 @@ class GradesToolsHandler(
         put("avance_evaluado_pct", n.evaluatedPercent)
         put("restante_pct", n.remainingPercent)
         n.neededAverage?.let { put("promedio_necesario_en_lo_restante", it) }
-        put("resultado", when (n.outcome) {
-            NeededGrade.Outcome.ALREADY_SECURED -> "ya_asegurado"
-            NeededGrade.Outcome.REACHABLE -> "alcanzable"
-            NeededGrade.Outcome.IMPOSSIBLE -> "imposible_con_lo_que_queda"
-            NeededGrade.Outcome.CLOSED_PASSED -> "curso_cerrado_aprobado"
-            NeededGrade.Outcome.CLOSED_FAILED -> "curso_cerrado_desaprobado"
-        })
+        put("resultado", outcome(n.outcome))
         put(
             "metodo",
             if (s.weightsConfigured) "ponderado con los grupos del simulador de NotiVas"
             else "aproximado: sin ponderaciones configuradas, cada tarea pesa igual. Sugiere configurar los grupos del sílabo en el simulador para un cálculo exacto."
         )
+    }
+
+    /** Una fila por curso para "cuánto necesito" en todos los cursos a la vez. */
+    private fun neededCompact(s: CourseGradeSnapshot, n: NeededGrade) = buildJsonObject {
+        put("id", s.course.id)
+        put("curso", shortName(s.course))
+        n.currentAverage?.let { put("promedio_actual", GradeInsights.round1(it)) }
+        put("meta", n.target)
+        put("restante_pct", n.remainingPercent)
+        n.neededAverage?.let { put("promedio_necesario_en_lo_restante", it) }
+        put("resultado", outcome(n.outcome))
+        put("ponderado", s.weightsConfigured)
+    }
+
+    private fun outcome(outcome: NeededGrade.Outcome) = when (outcome) {
+        NeededGrade.Outcome.ALREADY_SECURED -> "ya_asegurado"
+        NeededGrade.Outcome.REACHABLE -> "alcanzable"
+        NeededGrade.Outcome.IMPOSSIBLE -> "imposible_con_lo_que_queda"
+        NeededGrade.Outcome.CLOSED_PASSED -> "curso_cerrado_aprobado"
+        NeededGrade.Outcome.CLOSED_FAILED -> "curso_cerrado_desaprobado"
     }
 
     private fun status(s: CourseGradeSnapshot): String {

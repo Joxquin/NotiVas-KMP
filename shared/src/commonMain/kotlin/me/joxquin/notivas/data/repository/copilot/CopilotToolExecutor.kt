@@ -55,6 +55,8 @@ class CopilotToolExecutor(
             JsonObject(emptyMap())
         }
 
+        // Solo el nombre de la herramienta y de sus argumentos (sin valores) para seguir el flujo en logcat.
+        println("Copilot [Herramienta] $functionName ${args.keys}")
         val handler = handlers.firstOrNull { it.canHandle(functionName) }
         return handler?.execute(functionName, args, selectedCourseId)
             ?: ToolExecutionResult("""{"error": "Herramienta no reconocida: $functionName"}""")
