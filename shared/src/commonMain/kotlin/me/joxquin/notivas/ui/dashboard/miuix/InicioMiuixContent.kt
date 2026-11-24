@@ -76,6 +76,7 @@ import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
+import kotlin.math.roundToInt
 
 /**
  * Dashboard Académico Miuix:
@@ -236,9 +237,11 @@ fun InicioMiuixContent(
                                     .padding(horizontal = TopAppBarDefaults.TitlePadding)
                                     .layout { measurable, constraints ->
                                         val placeable = measurable.measure(constraints)
-                                        val h = if (subtitleAlpha > 0f) placeable.height else 0
+                                        // La altura acompaña al desvanecimiento en lugar de cortarse en seco:
+                                        // evita el salto de ~20dp cuando cruza el primer tercio del colapso.
+                                        val h = (placeable.height * subtitleAlpha).roundToInt()
                                         layout(placeable.width, h) {
-                                            if (subtitleAlpha > 0f) {
+                                            if (h > 0) {
                                                 placeable.placeRelative(0, 0)
                                             }
                                         }
