@@ -20,7 +20,19 @@ class CopilotErrorKindTest {
     fun separatesQuotaFromOtherErrors() {
         assertEquals(CopilotErrorKind.RATE_LIMITED, CopilotErrorKind.classify("""Error HTTP 429: {"status": "RESOURCE_EXHAUSTED"}"""))
         assertEquals(CopilotErrorKind.AUTH, CopilotErrorKind.classify("""Error HTTP 400: API key not valid. Please pass a valid API key."""))
-        assertEquals(CopilotErrorKind.OTHER, CopilotErrorKind.classify("Unable to resolve host"))
+        assertEquals(CopilotErrorKind.OTHER, CopilotErrorKind.classify("Unexpected JSON token at offset 0"))
+    }
+
+    /** Mismo nombre que la excepción de java.nio que lanza Ktor (CIO) sin mensaje cuando no hay red. */
+    private class UnresolvedAddressException : Exception()
+
+    @Test
+    fun recognisesNetworkFailuresEvenWithoutMessage() {
+        // En modo avión el chat mostraba "No se pudo procesar tu solicitud: " sin nada más.
+        assertEquals(CopilotErrorKind.NETWORK, CopilotErrorKind.classify(UnresolvedAddressException()))
+        assertEquals(CopilotErrorKind.NETWORK, CopilotErrorKind.classify(RuntimeException("envoltura", UnresolvedAddressException())))
+        assertEquals(CopilotErrorKind.NETWORK, CopilotErrorKind.classify("Unable to resolve host \"generativelanguage.googleapis.com\""))
+        assertFalse(CopilotErrorKind.NETWORK.isTransient)
     }
 
     @Test

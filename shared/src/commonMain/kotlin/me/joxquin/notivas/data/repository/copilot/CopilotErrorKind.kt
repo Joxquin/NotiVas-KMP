@@ -14,11 +14,25 @@ enum class CopilotErrorKind {
     /** La key no es válida para el proveedor elegido (401/403, "Missing Authentication header"). */
     AUTH,
 
+    /** Sin conexión: no se pudo resolver o alcanzar el servidor (modo avión, sin datos). */
+    NETWORK,
+
     OTHER;
 
     val isTransient: Boolean get() = this == OVERLOADED || this == RATE_LIMITED || this == TIMEOUT
 
     companion object {
+        /**
+         * Fallos de red que Ktor (motor CIO) lanza sin mensaje: en modo avión llegaba
+         * UnresolvedAddressException con message null y el chat mostraba "No se pudo procesar tu solicitud: ".
+         */
+        private val networkExceptions = setOf(
+            "UnresolvedAddressException", "UnknownHostException", "ConnectException", "NoRouteToHostException", "SocketException"
+        )
+        private val network = Regex(
+            """Unable to resolve host|No address associated|Network is unreachable|Failed to connect|UnresolvedAddress""",
+            RegexOption.IGNORE_CASE
+        )
         private val overloaded = Regex("""HTTP 50[234]|"code":\s*50[234]|UNAVAILABLE|high demand|overloaded""", RegexOption.IGNORE_CASE)
         private val rateLimited = Regex("""HTTP 429|"code":\s*429|RESOURCE_EXHAUSTED|rate limit|quota""", RegexOption.IGNORE_CASE)
         private val auth = Regex(
@@ -28,6 +42,11 @@ enum class CopilotErrorKind {
 
         fun classify(error: Throwable?): CopilotErrorKind {
             if (error is io.ktor.client.plugins.HttpRequestTimeoutException) return TIMEOUT
+            var cause = error
+            repeat(5) {
+                if (cause?.let { it::class.simpleName } in networkExceptions) return NETWORK
+                cause = cause?.cause
+            }
             return classify(error?.message)
         }
 
@@ -35,6 +54,7 @@ enum class CopilotErrorKind {
             val text = message.orEmpty()
             return when {
                 text.contains("timeout", ignoreCase = true) -> TIMEOUT
+                network.containsMatchIn(text) -> NETWORK
                 rateLimited.containsMatchIn(text) -> RATE_LIMITED
                 overloaded.containsMatchIn(text) -> OVERLOADED
                 auth.containsMatchIn(text) -> AUTH

@@ -13,6 +13,7 @@ import org.jetbrains.compose.resources.getString
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.copilot_error_auth
 import me.joxquin.notivas.shared.resources.copilot_error_generic
+import me.joxquin.notivas.shared.resources.copilot_error_network
 import me.joxquin.notivas.shared.resources.copilot_error_overloaded
 import me.joxquin.notivas.shared.resources.copilot_error_rate_limited
 import me.joxquin.notivas.shared.resources.copilot_error_timeout
@@ -698,8 +699,13 @@ class CopilotViewModel(
                 getString(Res.string.copilot_error_timeout)
             me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.AUTH ->
                 getString(Res.string.copilot_error_auth, providerName)
-            me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.OTHER ->
-                getString(Res.string.copilot_error_generic, (error?.message ?: "").take(160))
+            me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.NETWORK ->
+                getString(Res.string.copilot_error_network)
+            me.joxquin.notivas.data.repository.copilot.CopilotErrorKind.OTHER -> {
+                // Sin mensaje, al menos el tipo de error: nunca "No se pudo procesar tu solicitud: " vacío.
+                val detail = error?.message?.takeIf { it.isNotBlank() } ?: error?.let { it::class.simpleName } ?: "?"
+                getString(Res.string.copilot_error_generic, detail.take(160))
+            }
         }
     }
 
