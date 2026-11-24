@@ -33,9 +33,9 @@ import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
@@ -101,7 +101,7 @@ fun ModuleTemplatePickerSheet(
             backdrop = backdrop,
             startAction = {
                 val dismissState = LocalDismissState.current
-                GlassIconButton(
+                MiuixIconButton(
                     onClick = {
                         dismissState?.invoke() ?: onDismissRequest()
                     }
@@ -109,7 +109,7 @@ fun ModuleTemplatePickerSheet(
                     MiuixIcon(
                         imageVector = MiuixIcons.MiuixClose,
                         contentDescription = stringResource(Res.string.close),
-                        tint = MiuixTheme.colorScheme.onBackground
+                        tint = MiuixTheme.colorScheme.onSurface
                     )
                 }
             }

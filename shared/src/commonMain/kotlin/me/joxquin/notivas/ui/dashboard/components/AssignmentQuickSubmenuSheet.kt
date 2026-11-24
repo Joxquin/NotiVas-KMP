@@ -57,10 +57,10 @@ import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
-import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
 import top.yukonga.miuix.kmp.theme.LocalDismissState
@@ -192,13 +192,13 @@ fun AssignmentQuickSubmenuSheet(
             },
             startAction = {
                 val dismissState = LocalDismissState.current
-                GlassIconButton(
+                MiuixIconButton(
                     onClick = { dismissState?.invoke() }
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
                         imageVector = MiuixIcons.MiuixClose,
                         contentDescription = stringResource(Res.string.close),
-                        tint = MiuixTheme.colorScheme.onBackground
+                        tint = MiuixTheme.colorScheme.onSurface
                     )
                 }
             },

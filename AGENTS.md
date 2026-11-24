@@ -161,6 +161,7 @@ Card(
   - Utilizar el componente oficial HyperOS Liquid Glass `top.yukonga.miuix.kmp.glass.GlassBottomSheet`.
   - Debe recibir el fondo difuminado en tiempo real (`backdrop: Backdrop?`) provisto por la pantalla o `rememberMiuixBlurBackdrop()`.
   - El contenedor hijo scrollable debe incorporar `.navigationBarsPadding()` para desplazar con holgura los márgenes del sistema.
+  - **Botones de acción y cierre en cabecera de BottomSheet (Prohibido GlassIconButton en Sheets):** Los iconos de cierre (`startAction`) o de acción contextual (`endAction`) dentro de `GlassBottomSheet` deben usar exclusivamente `top.yukonga.miuix.kmp.basic.IconButton` (sin fondo ni contenedor de cápsula, `backgroundColor = Color.Unspecified`). El componente `GlassIconButton` (cápsula circular con sombra y desenfoque) está estrictamente reservado para la barra superior (`TopAppBar`) y la barra flotante (`FloatingNavigationBar`). Nunca debe utilizarse en BottomSheets ni diálogos emergentes.
   - El botón de cierre en `startAction` utiliza `val dismissState = LocalDismissState.current` y `dismissState?.invoke()`.
   - `GlassBottomSheet` maneja sus propios márgenes laterales internos oficiales (`GlassBottomSheetDefaults.InsideMargin = DpSize(12.dp, 0.dp)`).
 - **Material Design 3 (`WindowBottomSheet` o `ModalBottomSheet`):**
@@ -320,6 +321,7 @@ Compose Multiplatform procesa los recursos de strings mediante un motor propio y
 10. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
 11. **¿Paquetes de materiales e imports correctos?** Importar `GlassShadows`, `GlassDefaults`, `RuntimeShader` e `isRuntimeShaderSupported` desde `top.yukonga.miuix.kmp.material.*` (no desde `.glass` ni `.blur`).
 12. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
+13. **¿Iconos en BottomSheet sin contenedor?** En `GlassBottomSheet`, usar exclusivamente `IconButton` de `top.yukonga.miuix.kmp.basic` para `startAction` o `endAction`. Prohibido usar `GlassIconButton` dentro de BottomSheets.
 
 <!-- graphify-rules-start (managed by `graphify init`) -->
 ## Use Graphify before grep

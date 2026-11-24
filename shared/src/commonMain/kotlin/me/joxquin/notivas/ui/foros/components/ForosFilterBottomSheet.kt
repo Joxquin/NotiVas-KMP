@@ -47,11 +47,11 @@ import me.joxquin.notivas.ui.foros.DiscussionFilterTab
 import me.joxquin.notivas.ui.foros.DiscussionSortOption
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
-import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
 import top.yukonga.miuix.kmp.icon.extended.Ok
@@ -92,19 +92,19 @@ fun ForosFilterBottomSheet(
             backdrop = backdrop,
             startAction = {
                 val dismissState = LocalDismissState.current
-                GlassIconButton(
+                MiuixIconButton(
                     onClick = { dismissState?.invoke() }
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
                         imageVector = MiuixIcons.MiuixClose,
                         contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.close),
-                        tint = MiuixTheme.colorScheme.onBackground
+                        tint = MiuixTheme.colorScheme.onSurface
                     )
                 }
             },
             endAction = {
                 val dismissState = LocalDismissState.current
-                GlassIconButton(
+                MiuixIconButton(
                     onClick = { dismissState?.invoke() }
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
