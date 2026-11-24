@@ -155,7 +155,7 @@ class AssignmentReviewUseCase(
     ): String {
         return try {
             val authCred = preferencesManager.getAuthCredential()
-            val baseUrl = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
+            val baseUrl = preferencesManager.universityUrl.first() ?: "https://tecsup.instructure.com"
             if (authCred == null) return "Sin conexión a Canvas LMS para obtener recursos de módulo."
 
             val token = when (authCred) {

@@ -51,7 +51,7 @@ fun OnboardingFlow(
     onComplete: () -> Unit,
     themeStyle: me.joxquin.notivas.data.local.AppThemeStyle = me.joxquin.notivas.di.AppModule.preferencesManager.getThemeStyle()
 ) {
-    val universityUrl by viewModel.universityUrl.collectAsState(initial = "https://canvas.utp.edu.pe")
+    val universityUrl by viewModel.universityUrl.collectAsState(initial = "https://tecsup.instructure.com")
     val accessToken by viewModel.accessToken.collectAsState(initial = "")
     val isVerifying by viewModel.isVerifying.collectAsState(initial = false)
     val verificationSuccess by viewModel.verificationSuccess.collectAsState(initial = null)

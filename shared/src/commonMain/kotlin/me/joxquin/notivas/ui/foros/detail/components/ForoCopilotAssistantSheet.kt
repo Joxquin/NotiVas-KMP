@@ -105,16 +105,19 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TabRowWithContour
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
-import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.utils.springAnimateToPage
-import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheetDefaults
+import top.yukonga.miuix.kmp.glass.glassBottomSheetSurface
+import top.yukonga.miuix.kmp.layout.BottomSheetDefaults
+import top.yukonga.miuix.kmp.material.GlassShape
+import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 
 private enum class ForoCopilotProgressStep {
     READING_PROMPT,
@@ -155,7 +158,8 @@ fun ForoCopilotAssistantSheet(
     onDismiss: () -> Unit,
     onGenerate: (toneModifier: String?) -> Unit,
     onInsertDraft: (String) -> Unit,
-    themeStyle: AppThemeStyle
+    themeStyle: AppThemeStyle,
+    backdrop: Backdrop? = null
 ) {
     var isSheetAnimationFinished by remember { mutableStateOf(false) }
 
@@ -175,41 +179,57 @@ fun ForoCopilotAssistantSheet(
         }
     }
 
+    val isInitialLoading = strategy == null && errorMessage == null
     val auraAlpha by animateFloatAsState(
-        targetValue = if (isGenerating && isSheetAnimationFinished) 0.85f else 0f,
+        targetValue = if ((isGenerating || isInitialLoading) && isSheetAnimationFinished) 0.85f else 0f,
         animationSpec = tween(
-            durationMillis = if (isGenerating) 600 else 400,
+            durationMillis = if (isGenerating || isInitialLoading) 600 else 400,
             easing = FastOutSlowInEasing
         ),
         label = "foroCopilotAuraAlpha"
     )
 
-    val isAuraActive = isGenerating || auraAlpha > 0.001f
+    val isAuraActive = isGenerating || isInitialLoading || auraAlpha > 0.001f
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val sheetBackgroundColor = if (isAuraActive) Color.Transparent else MiuixTheme.colorScheme.surfaceContainer
-        val sheetModifier = if (isAuraActive) {
-            Modifier
-                .squircleClip(
-                    topStart = 28.dp,
-                    topEnd = 28.dp,
-                    bottomEnd = 0.dp,
-                    bottomStart = 0.dp
-                )
-                .monetAuraBackground(
-                    alpha = auraAlpha,
-                    surfaceColor = MiuixTheme.colorScheme.surfaceContainer
-                )
-        } else {
-            Modifier
-        }
+        val glassSurface = glassBottomSheetSurface(backdrop)
 
-        WindowBottomSheet(
+        OverlayBottomSheet(
             title = stringResource(Res.string.copilot_sheet_title),
             show = show,
             onDismissRequest = onDismiss,
-            backgroundColor = sheetBackgroundColor,
-            modifier = sheetModifier,
+            outsideMargin = BottomSheetDefaults.outsideMargin,
+            insideMargin = GlassBottomSheetDefaults.InsideMargin,
+            renderInRootScaffold = true,
+            dimColor = GlassBottomSheetDefaults.ScrimColor,
+            surface = {
+                val baseModifier = glassSurface()
+                if (isAuraActive) {
+                    val auraSurfaceColor = MiuixTheme.colorScheme.surfaceContainer.copy(
+                        alpha = (auraAlpha / 0.85f).coerceIn(0f, 1f)
+                    )
+                    if (isOverscroll) {
+                        baseModifier.background(auraSurfaceColor)
+                    } else {
+                        val shape = remember(cornerRadius) {
+                            GlassShape(
+                                topStart = cornerRadius,
+                                topEnd = cornerRadius,
+                                bottomEnd = 0.dp,
+                                bottomStart = 0.dp
+                            )
+                        }
+                        baseModifier
+                            .clip(shape)
+                            .monetAuraBackground(
+                                alpha = auraAlpha,
+                                surfaceColor = auraSurfaceColor
+                            )
+                    }
+                } else {
+                    baseModifier
+                }
+            },
             content = {
                 ForoCopilotContentMiuix(
                     topic = topic,
@@ -292,9 +312,9 @@ private fun ForoCopilotContentMiuix(
     }
 
     val currentStage = when {
-        isGenerating -> SheetStage.LOADING
         errorMessage != null && currentStrategy == null -> SheetStage.ERROR
-        else -> SheetStage.RESULT
+        currentStrategy != null && !isGenerating -> SheetStage.RESULT
+        else -> SheetStage.LOADING
     }
 
     AnimatedContent(
@@ -666,8 +686,7 @@ private fun CopilotResultViewMiuix(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .scrollEndHaptic()
-                                .overScrollVertical(),
+                                .scrollEndHaptic(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(bottom = 8.dp)
                         ) {
@@ -755,8 +774,7 @@ private fun CopilotResultViewMiuix(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .scrollEndHaptic()
-                                .overScrollVertical(),
+                                .scrollEndHaptic(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(bottom = 8.dp)
                         ) {
@@ -897,8 +915,7 @@ private fun CopilotResultViewMiuix(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .scrollEndHaptic()
-                                .overScrollVertical(),
+                                .scrollEndHaptic(),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                             contentPadding = PaddingValues(bottom = 8.dp)
                         ) {
@@ -1160,9 +1177,9 @@ private fun ForoCopilotContentMaterial(
     val currentStrategy = strategy ?: lastValidStrategy
 
     val currentStage = when {
-        isGenerating -> SheetStage.LOADING
         errorMessage != null && currentStrategy == null -> SheetStage.ERROR
-        else -> SheetStage.RESULT
+        currentStrategy != null && !isGenerating -> SheetStage.RESULT
+        else -> SheetStage.LOADING
     }
 
     Column(

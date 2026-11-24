@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Arrangement
@@ -96,6 +97,10 @@ import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
 import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
 import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
 import top.yukonga.miuix.kmp.nav.transition.NavTransitions
+import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
+import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
+import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
+import top.yukonga.miuix.kmp.utils.pagerGestureOverride
 import me.joxquin.notivas.ui.components.miuix.MiuixPersistentNavigationRail
 import me.joxquin.notivas.ui.navigation.NotiVasNavigationRail
 import me.joxquin.notivas.ui.util.LocalIsWideScreen
@@ -217,7 +222,14 @@ fun MainAppShell(
     }
 
     val currentDestination by remember {
-        derivedStateOf { destinations.getOrElse(mainPagerState.selectedPage) { MainDestination.Inicio } }
+        derivedStateOf {
+            val page = if (mainPagerState.isNavigating) {
+                mainPagerState.selectedPage
+            } else {
+                mainPagerState.pagerState.currentPage
+            }
+            destinations.getOrElse(page) { MainDestination.Inicio }
+        }
     }
 
     val dashboardViewModel = remember { DashboardViewModel(canvasRepository) }
@@ -292,7 +304,6 @@ fun MainAppShell(
     var showingScheduleDetail by remember { mutableStateOf(false) }
     var selectedCourseForDetail by remember { mutableStateOf<Course?>(null) }
     var selectedCourseForModules by remember { mutableStateOf<Course?>(null) }
-    var showUtilidadesTuneSheet by remember { mutableStateOf(false) }
     var showCatalogImportDialog by remember { mutableStateOf(false) }
 
     val forosUiState by forosViewModel.uiState.collectAsState()
@@ -415,7 +426,12 @@ fun MainAppShell(
             LocalMiuixSnackbarHostState provides miuixSnackbarHostState,
             LocalIsWideScreen provides isWideScreen,
         ) {
-            Row(modifier = Modifier.fillMaxSize()) {
+            top.yukonga.miuix.kmp.basic.Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
+            ) { _ ->
+                Row(modifier = Modifier.fillMaxSize()) {
                 if (isWideScreen) {
                     MiuixPersistentNavigationRail(
                         destinations = destinations,
@@ -456,11 +472,24 @@ fun MainAppShell(
                                 .fillMaxSize()
                                 .layerBackdrop(contentBackdrop)
                         ) {
+                            val flingBehavior = PagerDefaults.flingBehavior(
+                                state = mainPagerState.pagerState,
+                                snapAnimationSpec = PagerNavigationSpringSpec,
+                            )
                             HorizontalPager(
                                 state = mainPagerState.pagerState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .pagerGestureOverride(
+                                        pagerState = mainPagerState.pagerState,
+                                        flingBehavior = flingBehavior,
+                                        mode = PagerInterceptionMode.CrossAxis,
+                                        enabled = true,
+                                    ),
                                 userScrollEnabled = false,
-                                modifier = Modifier.fillMaxSize(),
+                                pageNestedScrollConnection = PagerGestureNestedScrollConnection,
                                 verticalAlignment = Alignment.Top,
+                                flingBehavior = flingBehavior,
                                 beyondViewportPageCount = 1
                             ) { page ->
                                 when (destinations[page]) {
@@ -551,7 +580,6 @@ fun MainAppShell(
                                             onOpenGroupDetail = { gid, cid ->
                                                 miuixNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
                                             },
-                                            onOpenTuneSettings = { showUtilidadesTuneSheet = true },
                                             onBack = {},
                                             themeStyle = AppThemeStyle.MIUIX,
                                             lazyListState = utilidadesListState
@@ -1086,6 +1114,7 @@ fun MainAppShell(
         }
     }
 }
+}
 } else {
         // ─── ARQUITECTURA MATERIAL DESIGN 3 (AOSP PREDICTIVE BACK & NAVDISPLAY) ───
         val materialBackStack = rememberNavBackStack<MiuixRoute>(MiuixRoute.Main)
@@ -1314,7 +1343,6 @@ fun MainAppShell(
                                             onOpenGroupDetail = { gid, cid ->
                                                 materialNavigator.push(MiuixRoute.SimulationGroupDetail(gid, cid))
                                             },
-                                            onOpenTuneSettings = { showUtilidadesTuneSheet = true },
                                             onOpenCatalogImport = { showCatalogImportDialog = true },
                                             onImportJsonClick = { filePicker.launchFilePicker() },
                                             onExportJsonClick = { filePicker.launchFileCreator("notivas_ponderacion.json") },
@@ -1821,27 +1849,6 @@ fun MainAppShell(
         UpdateDialog(
             updateInfo = info,
             onDismiss = { activeUpdateInfo = null }
-        )
-    }
-
-    if (showUtilidadesTuneSheet) {
-        me.joxquin.notivas.ui.utilidades.components.GroupsSettingsBottomSheet(
-            onDismiss = { showUtilidadesTuneSheet = false },
-            onOpenCatalogImport = { showCatalogImportDialog = true },
-            onImportJson = { json ->
-                notasViewModel.importGlobalGroupsFromJson(json) { result ->
-                    // Result handling
-                }
-            },
-            onRequestExportContent = { callback ->
-                notasViewModel.exportGlobalGroups { json ->
-                    callback(json)
-                }
-            },
-            onResetGroups = {
-                notasViewModel.resetAllSimulationGroups()
-            },
-            themeStyle = themeStyle
         )
     }
 

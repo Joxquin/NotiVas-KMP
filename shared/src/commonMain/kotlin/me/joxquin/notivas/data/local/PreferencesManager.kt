@@ -31,8 +31,9 @@ class PreferencesManager(
 
     private val _isLoaded = MutableStateFlow(false)
     val isLoaded: Flow<Boolean> = _isLoaded.asStateFlow()
+    fun isLoadedSync(): Boolean = _isLoaded.value
 
-    private val _universityUrl = MutableStateFlow<String?>("https://canvas.utp.edu.pe")
+    private val _universityUrl = MutableStateFlow<String?>("https://tecsup.instructure.com")
     val universityUrl: Flow<String?> = _universityUrl.asStateFlow()
     fun getUniversityUrl(): String? = _universityUrl.value
 

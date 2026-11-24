@@ -204,4 +204,54 @@ class AssignmentConsignaAndFormatTest {
         assertTrue(section.footerNotes.any { it.contains("Fecha límite") })
         assertTrue(section.footerNotes.any { it.contains("Docente:") })
     }
+
+    @Test
+    fun testParseConsignaSections_canvasAssignmentWithPreludeAndPostListNotes() {
+        val assignmentHtml = """
+            <p>En equipos de hasta cinco integrantes, investiguen cómo se utilizan las pruebas estáticas para evaluar la calidad del código fuente. A partir de lo investigado, elaboren una propuesta de revisión para un proyecto de software elegido por el equipo. Puede ser un proyecto propio, uno de código abierto o un proyecto ficticio que describan brevemente.</p>
+            <h3>Puntos que deben desarrollar</h3>
+            <ol>
+                <li><strong>Conceptos fundamentales.</strong> Expliquen qué son las pruebas estáticas, qué tipos de defectos permiten identificar y cómo se complementan con las pruebas dinámicas.</li>
+                <li><strong>Herramientas.</strong> Investiguen y comparen tres herramientas de análisis estático apropiadas para el lenguaje del proyecto elegido.</li>
+                <li><strong>Métricas de calidad.</strong> Expliquen al menos tres métricas relevantes para revisar el código.</li>
+                <li><strong>Criterios de revisión.</strong> Propongan una lista breve de aspectos que el equipo debería revisar antes de integrar un cambio.</li>
+                <li><strong>Puerta de calidad.</strong> Definan al menos tres condiciones para aceptar un cambio de código.</li>
+                <li><strong>Conclusión.</strong> Recomienden una de las herramientas investigadas y expliquen sus ventajas y limitaciones.</li>
+            </ol>
+            <p>Consulten al menos tres fuentes confiables e incluyan las referencias en formato APA 7.</p>
+            <h3>Presentación y entrega</h3>
+            <p>Durante la clase, cada equipo presentará su investigación en el formato que considere más adecuado: PPT, infografía, póster digital u otro recurso visual. Todos los integrantes deben participar y poder justificar las decisiones del equipo.</p>
+            <p>Como tarea, deberán desarrollar un documento por equipo que reúna todos los puntos desarrollados y sus referencias. El documento es el entregable, cada integrante debera subir el documento a Canvas; el formato visual queda a elección del equipo para la exposición en clase.</p>
+        """.trimIndent()
+
+        val sections = parseConsignaSections(assignmentHtml)
+        assertEquals(3, sections.size)
+
+        // 1. Preludio / Descripción
+        assertEquals("Descripción", sections[0].title)
+        assertEquals(ConsignaIconType.GENERAL, sections[0].iconType)
+        assertTrue(sections[0].introText.contains("En equipos de hasta cinco integrantes"))
+        assertTrue(sections[0].bullets.isEmpty())
+        assertTrue(sections[0].footerNotes.isEmpty())
+
+        // 2. Puntos que deben desarrollar
+        assertEquals("Puntos que deben desarrollar", sections[1].title)
+        assertTrue(sections[1].introText.isBlank(), "Intro text should be blank because there is no text before the list")
+        assertEquals(6, sections[1].bullets.size)
+        assertEquals("1.", sections[1].bullets[0].index)
+        assertEquals("Conceptos fundamentales", sections[1].bullets[0].label)
+        assertTrue(sections[1].bullets[0].value.contains("Expliquen qué son las pruebas estáticas"))
+        assertEquals("6.", sections[1].bullets[5].index)
+        assertEquals("Conclusión", sections[1].bullets[5].label)
+
+        // Footer note must be at the bottom (after list)
+        assertEquals(1, sections[1].footerNotes.size)
+        assertTrue(sections[1].footerNotes[0].contains("Consulten al menos tres fuentes confiables"))
+
+        // 3. Presentación y entrega
+        assertEquals("Presentación y entrega", sections[2].title)
+        assertTrue(sections[2].bullets.isEmpty())
+        assertTrue(sections[2].introText.contains("Durante la clase, cada equipo presentará su investigación"))
+        assertTrue(sections[2].introText.contains("Como tarea, deberán desarrollar un documento por equipo"))
+    }
 }

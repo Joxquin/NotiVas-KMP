@@ -197,7 +197,8 @@ fun AcademicPerformanceMiuixView(
                 modifier = Modifier
                     .fillMaxSize()
                     .miuixPageScrollModifiers(scrollBehavior),
-                contentPadding = contentPadding
+                contentPadding = contentPadding,
+                overscrollEffect = null
             ) {
                 // 1. Tarjeta Hero KPI de Rendimiento Global
                 item(key = "miuix_hero_kpi") {

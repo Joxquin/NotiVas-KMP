@@ -142,8 +142,9 @@ fun ForoDetailScreen(
         }
     }
 
+    val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
+
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
         val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
 
@@ -182,6 +183,7 @@ fun ForoDetailScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                 // 1. Encabezado Hero del Foro
@@ -223,7 +225,12 @@ fun ForoDetailScreen(
                         isExpired = isExpired,
                         isPublishing = uiState.isPublishing,
                         onPublishToCanvas = { viewModel.publishForumReply(topic) },
-                        onOpenCopilotAssistant = { showCopilotAssistant = true },
+                        onOpenCopilotAssistant = {
+                            showCopilotAssistant = true
+                            if (uiState.copilotStrategy == null && !uiState.isGeneratingCopilot && uiState.copilotErrorMessage == null) {
+                                viewModel.generateCopilotStrategy(topic)
+                            }
+                        },
                         themeStyle = themeStyle
                     )
                 }
@@ -395,7 +402,12 @@ fun ForoDetailScreen(
                         isExpired = isExpired,
                         isPublishing = uiState.isPublishing,
                         onPublishToCanvas = { viewModel.publishForumReply(topic) },
-                        onOpenCopilotAssistant = { showCopilotAssistant = true },
+                        onOpenCopilotAssistant = {
+                            showCopilotAssistant = true
+                            if (uiState.copilotStrategy == null && !uiState.isGeneratingCopilot && uiState.copilotErrorMessage == null) {
+                                viewModel.generateCopilotStrategy(topic)
+                            }
+                        },
                         themeStyle = themeStyle
                     )
                 }
@@ -457,6 +469,7 @@ fun ForoDetailScreen(
             viewModel.applyCopilotSuggestion(suggestion)
             showCopilotAssistant = false
         },
-        themeStyle = themeStyle
+        themeStyle = themeStyle,
+        backdrop = backdrop
     )
 }

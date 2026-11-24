@@ -55,9 +55,10 @@ import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
-import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowDialog
 
@@ -126,6 +127,7 @@ fun GranularNotificationsSection(
     onNotifNewForosChange: (Boolean) -> Unit,
     onSyncIntervalChange: (Long) -> Unit,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier
 ) {
     var showSyncIntervalDialog by remember { mutableStateOf(false) }
@@ -286,14 +288,15 @@ fun GranularNotificationsSection(
                     onCheckedChange = onNotif30mChange
                 )
                 val selectedSyncIndex = syncOptions.indexOfFirst { it.first == syncIntervalMinutes }.coerceAtLeast(0)
-                WindowDropdownPreference(
+                GlassDropdownPreference(
                     title = stringResource(Res.string.sync_interval_title),
                     summary = currentLabel,
                     items = syncOptions.map { it.second },
                     selectedIndex = selectedSyncIndex,
                     onSelectedIndexChange = { index ->
                         onSyncIntervalChange(syncOptions[index].first)
-                    }
+                    },
+                    backdrop = backdrop
                 )
                 ArrowPreference(
                     title = stringResource(Res.string.onboarding_battery_title),

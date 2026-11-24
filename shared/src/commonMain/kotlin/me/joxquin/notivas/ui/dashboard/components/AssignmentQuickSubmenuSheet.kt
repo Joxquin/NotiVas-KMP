@@ -58,14 +58,17 @@ import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import top.yukonga.miuix.kmp.window.WindowDialog
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,6 +82,7 @@ import kotlinx.coroutines.launch
 fun AssignmentQuickSubmenuSheet(
     assignmentUi: AssignmentUiModel?,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
     onDismissRequest: () -> Unit,
     onOpenDraftScreen: (AssignmentUiModel) -> Unit,
     onMarkCompleted: ((Long) -> Unit)? = null,
@@ -165,6 +169,7 @@ fun AssignmentQuickSubmenuSheet(
             assignment = item.assignment,
             courseName = item.courseName,
             themeStyle = themeStyle,
+            backdrop = backdrop,
             onReminderSet = {
                 onDismissRequest()
             }
@@ -172,10 +177,11 @@ fun AssignmentQuickSubmenuSheet(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        WindowBottomSheet(
+        GlassBottomSheet(
             title = stringResource(Res.string.task_actions_title),
             show = isVisible,
             onDismissRequest = onDismissRequest,
+            backdrop = backdrop,
             onDismissFinished = {
                 val action = pendingAction
                 pendingAction = null
@@ -186,7 +192,7 @@ fun AssignmentQuickSubmenuSheet(
             },
             startAction = {
                 val dismissState = LocalDismissState.current
-                top.yukonga.miuix.kmp.basic.IconButton(
+                GlassIconButton(
                     onClick = { dismissState?.invoke() }
                 ) {
                     top.yukonga.miuix.kmp.basic.Icon(
@@ -202,7 +208,7 @@ fun AssignmentQuickSubmenuSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .scrollEndHaptic()
-                    .overScrollVertical()
+                    .navigationBarsPadding()
             ) {
                 // Sección 1: Cabecera con Información de la Tarea
                 item {
@@ -302,7 +308,7 @@ fun AssignmentQuickSubmenuSheet(
                     }
                 }
 
-                // Sección 2: Acción Destacada (Google Drive o Evaluación Quiz)
+                // Sección 2: Consigna y entregable o Evaluación Quiz
                 val isQuiz = item.assignment.isQuiz
                 item {
                     val sectionTitle = if (isQuiz) {
@@ -611,7 +617,7 @@ fun AssignmentQuickSubmenuSheet(
                     }
                 }
 
-                // Acción Prioritaria: Gestionar Borrador en Drive o Evaluación Quiz
+                // Acción Prioritaria: Consigna y entregable o Evaluación Quiz
                 val isQuiz = item.assignment.isQuiz
                 item {
                     val sectionTitle = if (isQuiz) {

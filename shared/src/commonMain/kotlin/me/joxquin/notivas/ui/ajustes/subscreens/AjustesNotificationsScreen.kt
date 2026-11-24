@@ -95,6 +95,7 @@ fun AjustesNotificationsScreen(
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     modifier = Modifier
                         .fillMaxSize()
                         .miuixBackdropModifier(backdrop)
@@ -116,7 +117,8 @@ fun AjustesNotificationsScreen(
                             onNotifNewQuizzesChange = onNotifNewQuizzesChange,
                             onNotifNewForosChange = onNotifNewForosChange,
                             onSyncIntervalChange = onSyncIntervalChange,
-                            themeStyle = AppThemeStyle.MIUIX
+                            themeStyle = AppThemeStyle.MIUIX,
+                            backdrop = backdrop
                         )
                     }
                 }

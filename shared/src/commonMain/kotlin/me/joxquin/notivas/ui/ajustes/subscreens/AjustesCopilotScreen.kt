@@ -101,6 +101,7 @@ fun AjustesCopilotScreen(
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     modifier = Modifier
                         .fillMaxSize()
                         .miuixBackdropModifier(backdrop)
@@ -125,7 +126,8 @@ fun AjustesCopilotScreen(
                             onGoogleAiStudioModelChange = onGoogleAiStudioModelChange,
                             onRefreshBalance = onRefreshBalance,
                             onAnalyzeModel = onAnalyzeModel,
-                            themeStyle = AppThemeStyle.MIUIX
+                            themeStyle = AppThemeStyle.MIUIX,
+                            backdrop = backdrop
                         )
                     }
                 }

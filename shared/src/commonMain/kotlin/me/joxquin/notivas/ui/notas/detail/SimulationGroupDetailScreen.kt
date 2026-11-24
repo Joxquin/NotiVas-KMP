@@ -312,6 +312,7 @@ fun SimulationGroupDetailScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     // Header de Métricas del Grupo

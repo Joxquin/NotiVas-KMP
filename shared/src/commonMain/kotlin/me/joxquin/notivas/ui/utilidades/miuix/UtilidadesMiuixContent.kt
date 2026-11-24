@@ -44,11 +44,6 @@ fun UtilidadesMiuixContent(
     onOpenForos: () -> Unit = {},
     onOpenForoDetail: ((me.joxquin.notivas.data.model.CanvasDiscussionTopic) -> Unit)? = null,
     onOpenArchive: () -> Unit = {},
-    onOpenTuneSettings: () -> Unit = {},
-    onOpenCatalogImport: () -> Unit = {},
-    onImportJsonClick: () -> Unit = {},
-    onExportJsonClick: () -> Unit = {},
-    onResetGroups: () -> Unit = {},
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
@@ -94,6 +89,7 @@ fun UtilidadesMiuixContent(
                     .fillMaxSize()
                     .miuixPageScrollModifiers(scrollBehavior),
                 contentPadding = contentPadding,
+                overscrollEffect = null,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item {

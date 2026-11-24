@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,8 @@ import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
@@ -51,7 +54,8 @@ fun CreateGroupBottomSheet(
     currentTotalWeight: Float,
     onDismiss: () -> Unit,
     onSave: (name: String, weight: Float, targetAssessments: Int, dropLowest: Boolean, minToDrop: Int) -> Unit,
-    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
+    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null
 ) {
     var name by remember { mutableStateOf("") }
     var weightInput by remember { mutableStateOf("") }
@@ -105,16 +109,11 @@ fun CreateGroupBottomSheet(
         fieldColors
     }
 
-    WindowBottomSheet(
-        title = stringResource(Res.string.group_create_sheet_title),
-        show = true,
-        onDismissRequest = onDismiss,
-        backgroundColor = backgroundColor,
-        dragHandleColor = dragHandleColor
-    ) {
+    val formContent: @Composable () -> Unit = {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -237,5 +236,26 @@ fun CreateGroupBottomSheet(
                 )
             }
         }
+    }
+
+    if (isMiuix) {
+        GlassBottomSheet(
+            title = stringResource(Res.string.group_create_sheet_title),
+            show = true,
+            onDismissRequest = onDismiss,
+            backdrop = backdrop,
+            content = formContent
+        )
+    } else {
+        val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
+        val dragHandleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+        WindowBottomSheet(
+            title = stringResource(Res.string.group_create_sheet_title),
+            show = true,
+            onDismissRequest = onDismiss,
+            backgroundColor = backgroundColor,
+            dragHandleColor = dragHandleColor,
+            content = formContent
+        )
     }
 }

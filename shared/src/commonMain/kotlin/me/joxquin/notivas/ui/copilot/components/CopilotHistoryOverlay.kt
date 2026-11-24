@@ -1,7 +1,10 @@
 package me.joxquin.notivas.ui.copilot.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -27,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -64,11 +68,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.CopilotSession
@@ -88,11 +105,13 @@ import me.joxquin.notivas.shared.resources.copilot_rename_query_title
 import me.joxquin.notivas.shared.resources.copilot_tokens_count
 import me.joxquin.notivas.shared.resources.delete
 import me.joxquin.notivas.ui.components.BackHandler
+import me.joxquin.notivas.ui.components.miuix.SearchModeEasing
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
@@ -296,107 +315,363 @@ fun CopilotHistoryOverlay(
         onDismissRequest()
     }
 
-    AnimatedVisibility(
-        visible = expanded,
-        enter = fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(280)) { it / 3 },
-        exit = fadeOut(animationSpec = tween(180)) + slideOutVertically(animationSpec = tween(220)) { it / 3 },
-        modifier = modifier.fillMaxSize()
-    ) {
-        val backgroundColor = if (themeStyle == AppThemeStyle.MIUIX) {
-            MiuixTheme.colorScheme.surface
-        } else {
-            MaterialTheme.colorScheme.surface
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        val transition = updateTransition(expanded, label = "copilotGlassSearch")
+        val progress = transition.animateFloat(
+            transitionSpec = { tween(400, easing = SearchModeEasing) },
+            label = "copilotSearchGeometry",
+        ) { if (it) 1f else 0f }
+
+        val cancelAlpha = transition.animateFloat(
+            transitionSpec = { tween(150, delayMillis = if (targetState) 100 else 0, easing = LinearEasing) },
+            label = "copilotSearchCancelMaterial",
+        ) { if (it) 1f else 0f }
+
+        val active = expanded || transition.currentState || transition.isRunning
+
+        val density = LocalDensity.current
+        val keyboard = LocalSoftwareKeyboardController.current
+
+        LaunchedEffect(expanded) {
+            if (expanded) {
+                focusRequester.requestFocus()
+                keyboard?.show()
+            } else if (active) {
+                focusManager.clearFocus()
+                keyboard?.hide()
+            }
         }
 
+        if (!active) return
+
+        val direction = LocalLayoutDirection.current
+        val statusBarHeight = WindowInsets.statusBars.getTop(density)
+        val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        val colors = MiuixTheme.colorScheme
+        val cancelDesc = stringResource(Res.string.cancel)
+
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .background(backgroundColor)
+                .onPreviewKeyEvent {
+                    if (it.key == Key.Escape && it.type == KeyEventType.KeyUp) {
+                        onDismissRequest()
+                        true
+                    } else {
+                        false
+                    }
+                }
         ) {
-            val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-            val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-            val listState = rememberLazyListState()
+            // Scrim que atenúa el fondo detrás del overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = progress.value }
+                    .background(colors.surface)
+                    .clickable(interactionSource = null, indication = null) {
+                        keyboard?.hide()
+                        focusManager.clearFocus()
+                    }
+            )
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = statusBarTop + 8.dp)
+                    .graphicsLayer { alpha = progress.value }
+                    .windowInsetsPadding(WindowInsets.statusBars)
                     .imePadding()
             ) {
-                // Cabecera superior con barra de busqueda y boton Cancelar
-                Row(
+                // Cabecera elástica que desciende desde el status bar
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .graphicsLayer { translationY = -statusBarHeight * (1f - progress.value) }
                 ) {
-                    // Search bar capsule
-                    if (themeStyle == AppThemeStyle.MIUIX) {
-                        Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .squircleSurface(
-                                    color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                                    cornerRadius = 22.dp
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        enabled = expanded,
+                        singleLine = true,
+                        textStyle = MiuixTheme.textStyles.body1.copy(color = colors.onSurface),
+                        cursorBrush = SolidColor(colors.primary),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                keyboard?.hide()
+                                focusManager.clearFocus()
+                            }
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .layout { measurable, constraints ->
+                                val endSpace = (54.dp.toPx() * progress.value).toInt()
+                                val width = (constraints.maxWidth - endSpace).coerceAtLeast(0)
+                                val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+                                layout(constraints.maxWidth, placeable.height) {
+                                    placeable.placeRelative(0, 0)
+                                }
+                            }
+                            .height(44.dp)
+                            .focusRequester(focusRequester),
+                        decorationBox = { field ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(colors.surfaceContainerHigh, CircleShape)
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                MiuixIcon(
+                                    imageVector = MiuixIcons.Glass.GlassSearch,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = colors.onSurfaceVariantSummary
                                 )
-                                .padding(horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                Box(Modifier.weight(1f)) {
+                                    if (searchQuery.isEmpty()) {
+                                        MiuixText(
+                                            text = stringResource(Res.string.copilot_history_search_placeholder),
+                                            color = colors.onSurfaceVariantSummary,
+                                            style = MiuixTheme.textStyles.body1
+                                        )
+                                    }
+                                    field()
+                                }
+                                if (searchQuery.isNotEmpty()) {
+                                    MiuixIconButton(
+                                        onClick = {
+                                            searchQuery = ""
+                                            focusRequester.requestFocus()
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        MiuixIcon(
+                                            imageVector = MiuixIcons.Glass.GlassClose,
+                                            contentDescription = cancelDesc,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = colors.onSurfaceVariantSummary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    )
+
+                    // Botón circular Cancelar / Cerrar con animación angular lateral y blur
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .graphicsLayer {
+                                val fraction = progress.value
+                                translationX = 66.dp.toPx() * (1f - fraction) * if (direction == LayoutDirection.Ltr) 1f else -1f
+                                scaleX = fraction
+                                scaleY = fraction
+                                alpha = cancelAlpha.value
+                                val blur = 50f * (1f - cancelAlpha.value)
+                                renderEffect = if (blur > 0.5f) BlurEffect(blur, blur, TileMode.Decal) else null
+                            }
+                    ) {
+                        MiuixIconButton(
+                            onClick = onDismissRequest,
+                            enabled = expanded,
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(colors.surfaceContainerHigh, CircleShape)
                         ) {
                             MiuixIcon(
-                                imageVector = MiuixIcons.Glass.GlassSearch,
-                                contentDescription = null,
-                                tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                modifier = Modifier.size(20.dp)
+                                imageVector = MiuixIcons.Glass.GlassClose,
+                                contentDescription = cancelDesc,
+                                modifier = Modifier.size(24.dp),
+                                tint = colors.onSurface
                             )
-                            Box(modifier = Modifier.weight(1f)) {
-                                if (searchQuery.isEmpty()) {
-                                    MiuixText(
-                                        text = stringResource(Res.string.copilot_history_search_placeholder),
-                                        style = MiuixTheme.textStyles.body2,
-                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                        }
+                    }
+                }
+
+                // Cuerpo del historial: Botón nueva consulta y lista de sesiones con desvanecimiento coordinado
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = progress.value }
+                ) {
+                    val listState = rememberLazyListState()
+
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Acción rápida: Nueva consulta
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .squircleSurface(
+                                        color = colors.primary.copy(alpha = 0.12f),
+                                        cornerRadius = 14.dp
                                     )
-                                }
-                                BasicTextField(
-                                    value = searchQuery,
-                                    onValueChange = { searchQuery = it },
-                                    singleLine = true,
-                                    textStyle = MiuixTheme.textStyles.body2.copy(
-                                        color = MiuixTheme.colorScheme.onSurface
-                                    ),
-                                    cursorBrush = SolidColor(MiuixTheme.colorScheme.primary),
-                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                                    keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .focusRequester(focusRequester)
-                                )
-                            }
-                            if (searchQuery.isNotEmpty()) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(26.dp)
-                                        .clip(CircleShape)
-                                        .clickable { searchQuery = "" },
-                                    contentAlignment = Alignment.Center
+                                    .clickable {
+                                        onNewSession()
+                                        onDismissRequest()
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     MiuixIcon(
-                                        imageVector = MiuixIcons.Glass.GlassClose,
+                                        imageVector = Icons.Default.Add,
                                         contentDescription = null,
-                                        tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                        modifier = Modifier.size(16.dp)
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    MiuixText(
+                                        text = stringResource(Res.string.copilot_btn_new_query),
+                                        style = MiuixTheme.textStyles.body2.copy(fontWeight = FontWeight.Bold),
+                                        color = colors.primary
                                     )
                                 }
                             }
                         }
 
-                        MiuixTextButton(
-                            text = stringResource(Res.string.cancel),
-                            onClick = onDismissRequest
-                        )
-                    } else {
+                        // Lista o estado vacío
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            when {
+                                sessions.isEmpty() -> {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 32.dp),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        MiuixIcon(
+                                            imageVector = MiuixIcons.Glass.BookOutline,
+                                            contentDescription = null,
+                                            tint = colors.onSurfaceVariantSummary,
+                                            modifier = Modifier.size(64.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        MiuixText(
+                                            text = stringResource(Res.string.copilot_no_past_queries),
+                                            style = MiuixTheme.textStyles.title3,
+                                            color = colors.onSurface
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        MiuixText(
+                                            text = stringResource(Res.string.copilot_history_empty_hint),
+                                            style = MiuixTheme.textStyles.footnote1,
+                                            color = colors.onSurfaceVariantSummary
+                                        )
+                                    }
+                                }
+                                filteredSessions.isEmpty() -> {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 32.dp),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        MiuixText(
+                                            text = stringResource(Res.string.copilot_history_no_results, searchQuery),
+                                            style = MiuixTheme.textStyles.body1,
+                                            color = colors.onSurfaceVariantSummary
+                                        )
+                                    }
+                                }
+                                else -> {
+                                    LazyColumn(
+                                        state = listState,
+                                        contentPadding = PaddingValues(
+                                            start = 16.dp,
+                                            end = 16.dp,
+                                            top = 8.dp,
+                                            bottom = navBarBottom + 24.dp
+                                        ),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        item {
+                                            SmallTitle(
+                                                text = stringResource(Res.string.copilot_history_title),
+                                                modifier = Modifier.padding(vertical = 4.dp)
+                                            )
+                                        }
+
+                                        items(filteredSessions, key = { it.id }) { session ->
+                                            val isSelected = session.id == currentSessionId
+                                            HistorySessionRow(
+                                                session = session,
+                                                isSelected = isSelected,
+                                                onSelect = {
+                                                    onSelectSession(session.id)
+                                                    onDismissRequest()
+                                                },
+                                                onRename = {
+                                                    sessionToRename = session
+                                                    renameText = session.title
+                                                },
+                                                onDelete = {
+                                                    sessionToDelete = session
+                                                },
+                                                themeStyle = AppThemeStyle.MIUIX
+                                            )
+                                        }
+                                    }
+
+                                    VerticalScrollBar(
+                                        adapter = rememberScrollBarAdapter(listState),
+                                        modifier = Modifier
+                                            .align(Alignment.CenterEnd)
+                                            .fillMaxHeight(),
+                                        trackPadding = PaddingValues(top = 8.dp, bottom = navBarBottom + 24.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn(animationSpec = tween(220)) + slideInVertically(animationSpec = tween(280)) { it / 3 },
+            exit = fadeOut(animationSpec = tween(180)) + slideOutVertically(animationSpec = tween(220)) { it / 3 },
+            modifier = modifier.fillMaxSize()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                val listState = rememberLazyListState()
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = statusBarTop + 8.dp)
+                        .imePadding()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         Surface(
                             modifier = Modifier
                                 .weight(1f)
@@ -460,47 +735,13 @@ fun CopilotHistoryOverlay(
                             Text(stringResource(Res.string.cancel))
                         }
                     }
-                }
 
-                // Accion rapida: Nueva consulta
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    if (themeStyle == AppThemeStyle.MIUIX) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .squircleSurface(
-                                    color = MiuixTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                    cornerRadius = 14.dp
-                                )
-                                .clickable {
-                                    onNewSession()
-                                    onDismissRequest()
-                                }
-                                .padding(vertical = 12.dp, horizontal = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                MiuixIcon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = null,
-                                    tint = MiuixTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                MiuixText(
-                                    text = stringResource(Res.string.copilot_btn_new_query),
-                                    style = MiuixTheme.textStyles.body2.copy(fontWeight = FontWeight.Bold),
-                                    color = MiuixTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    } else {
+                    // Accion rapida: Nueva consulta (Material 3)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -531,44 +772,22 @@ fun CopilotHistoryOverlay(
                             }
                         }
                     }
-                }
 
-                // Contenido principal de la lista
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    when {
-                        sessions.isEmpty() -> {
-                            // Estado sin historial
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 32.dp),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                if (themeStyle == AppThemeStyle.MIUIX) {
-                                    MiuixIcon(
-                                        imageVector = MiuixIcons.Glass.BookOutline,
-                                        contentDescription = null,
-                                        tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                                        modifier = Modifier.size(64.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    MiuixText(
-                                        text = stringResource(Res.string.copilot_no_past_queries),
-                                        style = MiuixTheme.textStyles.title3,
-                                        color = MiuixTheme.colorScheme.onSurface
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    MiuixText(
-                                        text = stringResource(Res.string.copilot_history_empty_hint),
-                                        style = MiuixTheme.textStyles.footnote1,
-                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                                    )
-                                } else {
+                    // Contenido principal de la lista (Material 3)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        when {
+                            sessions.isEmpty() -> {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 32.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
                                     Icon(
                                         imageVector = Icons.Default.ChatBubbleOutline,
                                         contentDescription = null,
@@ -589,23 +808,14 @@ fun CopilotHistoryOverlay(
                                     )
                                 }
                             }
-                        }
-                        filteredSessions.isEmpty() -> {
-                            // Estado sin resultados para la busqueda
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 32.dp),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                if (themeStyle == AppThemeStyle.MIUIX) {
-                                    MiuixText(
-                                        text = stringResource(Res.string.copilot_history_no_results, searchQuery),
-                                        style = MiuixTheme.textStyles.body1,
-                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                                    )
-                                } else {
+                            filteredSessions.isEmpty() -> {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 32.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
                                     Text(
                                         text = stringResource(Res.string.copilot_history_no_results, searchQuery),
                                         style = MaterialTheme.typography.bodyLarge,
@@ -613,27 +823,19 @@ fun CopilotHistoryOverlay(
                                     )
                                 }
                             }
-                        }
-                        else -> {
-                            // Lista de sesiones
-                            LazyColumn(
-                                state = listState,
-                                contentPadding = PaddingValues(
-                                    start = 16.dp,
-                                    end = 16.dp,
-                                    top = 8.dp,
-                                    bottom = navBarBottom + 24.dp
-                                ),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                item {
-                                    if (themeStyle == AppThemeStyle.MIUIX) {
-                                        SmallTitle(
-                                            text = stringResource(Res.string.copilot_history_title),
-                                            modifier = Modifier.padding(vertical = 4.dp)
-                                        )
-                                    } else {
+                            else -> {
+                                LazyColumn(
+                                    state = listState,
+                                    contentPadding = PaddingValues(
+                                        start = 16.dp,
+                                        end = 16.dp,
+                                        top = 8.dp,
+                                        bottom = navBarBottom + 24.dp
+                                    ),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    item {
                                         Text(
                                             text = stringResource(Res.string.copilot_history_title),
                                             style = MaterialTheme.typography.labelLarge,
@@ -641,37 +843,27 @@ fun CopilotHistoryOverlay(
                                             modifier = Modifier.padding(vertical = 4.dp)
                                         )
                                     }
-                                }
 
-                                items(filteredSessions, key = { it.id }) { session ->
-                                    val isSelected = session.id == currentSessionId
-                                    HistorySessionRow(
-                                        session = session,
-                                        isSelected = isSelected,
-                                        onSelect = {
-                                            onSelectSession(session.id)
-                                            onDismissRequest()
-                                        },
-                                        onRename = {
-                                            sessionToRename = session
-                                            renameText = session.title
-                                        },
-                                        onDelete = {
-                                            sessionToDelete = session
-                                        },
-                                        themeStyle = themeStyle
-                                    )
+                                    items(filteredSessions, key = { it.id }) { session ->
+                                        val isSelected = session.id == currentSessionId
+                                        HistorySessionRow(
+                                            session = session,
+                                            isSelected = isSelected,
+                                            onSelect = {
+                                                onSelectSession(session.id)
+                                                onDismissRequest()
+                                            },
+                                            onRename = {
+                                                sessionToRename = session
+                                                renameText = session.title
+                                            },
+                                            onDelete = {
+                                                sessionToDelete = session
+                                            },
+                                            themeStyle = AppThemeStyle.MATERIAL
+                                        )
+                                    }
                                 }
-                            }
-
-                            if (themeStyle == AppThemeStyle.MIUIX) {
-                                VerticalScrollBar(
-                                    adapter = rememberScrollBarAdapter(listState),
-                                    modifier = Modifier
-                                        .align(Alignment.CenterEnd)
-                                        .fillMaxHeight(),
-                                    trackPadding = PaddingValues(top = 8.dp, bottom = navBarBottom + 24.dp)
-                                )
                             }
                         }
                     }

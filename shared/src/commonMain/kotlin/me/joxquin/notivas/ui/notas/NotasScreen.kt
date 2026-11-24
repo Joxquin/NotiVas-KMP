@@ -86,7 +86,6 @@ import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import org.jetbrains.compose.resources.stringResource
-import me.joxquin.notivas.ui.utilidades.components.GroupsSettingsBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
 
@@ -109,13 +108,14 @@ fun NotasScreen(
     var showManualCreateBottomSheet by remember { mutableStateOf(false) }
     var showGitHubImportDialog by remember { mutableStateOf(false) }
     var showCopilotAnalysisSheet by remember { mutableStateOf(false) }
-    var showTuneSettingsSheet by remember { mutableStateOf(false) }
 
     val isScrolled by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 40
         }
     }
+
+    val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
 
     // Modal de selección de método de creación
     if (showCreationChoiceSheet) {
@@ -124,7 +124,8 @@ fun NotasScreen(
             onSelectManual = { showManualCreateBottomSheet = true },
             onSelectGitHub = { showGitHubImportDialog = true },
             onSelectCopilot = { showCopilotAnalysisSheet = true },
-            themeStyle = themeStyle
+            themeStyle = themeStyle,
+            backdrop = backdrop
         )
     }
 
@@ -133,6 +134,7 @@ fun NotasScreen(
         CreateGroupBottomSheet(
             currentTotalWeight = uiState.totalConfiguredWeight,
             themeStyle = themeStyle,
+            backdrop = backdrop,
             onDismiss = { showManualCreateBottomSheet = false },
             onSave = { name, weight, targetAssessments, dropLowest, minToDrop ->
                 viewModel.createGroupWithItems(name, weight, targetAssessments, dropLowest, minToDrop)
@@ -163,38 +165,15 @@ fun NotasScreen(
             course = activeCourse,
             viewModel = viewModel,
             themeStyle = themeStyle,
+            backdrop = backdrop,
             onDismiss = { showCopilotAnalysisSheet = false },
             onGroupsApplied = { showCopilotAnalysisSheet = false }
-        )
-    }
-
-    // Modal de ajustes de grupos de ponderación (Importar/Exportar/Reset)
-    if (showTuneSettingsSheet) {
-        GroupsSettingsBottomSheet(
-            onDismiss = { showTuneSettingsSheet = false },
-            onOpenCatalogImport = {
-                showTuneSettingsSheet = false
-                showGitHubImportDialog = true
-            },
-            onImportJson = { json ->
-                viewModel.importGlobalGroupsFromJson(json) { }
-            },
-            onRequestExportContent = { callback ->
-                viewModel.exportGlobalGroups { json ->
-                    callback(json)
-                }
-            },
-            onResetGroups = {
-                viewModel.resetAllSimulationGroups()
-            },
-            themeStyle = themeStyle
         )
     }
 
     val totalWeight = uiState.totalConfiguredWeight.roundToInt()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
         val menuAnchor = rememberGlassPopupAnchor()
         var showTuneMenu by remember { mutableStateOf(false) }
@@ -223,7 +202,7 @@ fun NotasScreen(
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
                                         imageVector = MiuixIcons.Tune,
-                                        contentDescription = stringResource(Res.string.groups_menu_options_title),
+                                        contentDescription = stringResource(Res.string.assignment_detail_tab_options),
                                         modifier = Modifier.size(28.dp).glassPopupAnchorContent(menuAnchor),
                                         tint = MiuixTheme.colorScheme.onSurface,
                                     )
@@ -253,6 +232,7 @@ fun NotasScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     // ─── 1. Selector de Curso Dropdown ──────────────────────────────
@@ -261,7 +241,8 @@ fun NotasScreen(
                             courses = uiState.courses,
                             selectedCourse = uiState.selectedCourse,
                             onCourseSelect = { viewModel.selectCourse(it) },
-                            themeStyle = themeStyle
+                            themeStyle = themeStyle,
+                            backdrop = backdrop
                         )
                     }
 
@@ -355,14 +336,6 @@ fun NotasScreen(
             },
             gap = 0.dp,
         ) {
-            GlassPopupItem(
-                text = stringResource(Res.string.groups_menu_options_title),
-                icon = MiuixIcons.Tune,
-                onClick = {
-                    showTuneMenu = false
-                    showTuneSettingsSheet = true
-                }
-            )
             GlassPopupItem(
                 text = stringResource(Res.string.groups_create_github_title),
                 icon = Icons.Default.LibraryBooks,

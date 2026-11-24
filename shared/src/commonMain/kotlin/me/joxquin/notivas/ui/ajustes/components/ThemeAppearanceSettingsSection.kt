@@ -42,8 +42,9 @@ import me.joxquin.notivas.ui.theme.isDynamicColorAvailable
 import me.joxquin.notivas.ui.theme.isMiuixThemeSupported
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
-import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
 
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
@@ -70,6 +71,7 @@ fun ThemeAppearanceSettingsSection(
     onDynamicColorChange: (Boolean) -> Unit,
     themeStyle: AppThemeStyle,
     onThemeStyleChange: (AppThemeStyle) -> Unit,
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier
 ) {
     val miuixSupported = remember { isMiuixThemeSupported() }
@@ -199,7 +201,7 @@ fun ThemeAppearanceSettingsSection(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
-                WindowDropdownPreference(
+                GlassDropdownPreference(
                     title = stringResource(Res.string.settings_theme_title),
                     summary = stringResource(Res.string.settings_theme_summary),
                     items = themeOptions.map { it.second },
@@ -207,7 +209,8 @@ fun ThemeAppearanceSettingsSection(
                     onSelectedIndexChange = { index ->
                         val newStyle = themeOptions[index].first
                         onThemeStyleChange(newStyle)
-                    }
+                    },
+                    backdrop = backdrop
                 )
                 if (isDynamicColorAvailable()) {
                     SwitchPreference(

@@ -28,8 +28,11 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.*
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.foundation.layout.navigationBarsPadding
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 
@@ -39,30 +42,16 @@ fun GroupCreationChoiceBottomSheet(
     onSelectManual: () -> Unit,
     onSelectGitHub: () -> Unit,
     onSelectCopilot: () -> Unit,
-    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
+    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null
 ) {
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
-    val backgroundColor = if (isMiuix) {
-        MiuixTheme.colorScheme.surface
-    } else {
-        MaterialTheme.colorScheme.surfaceContainerLow
-    }
-    val dragHandleColor = if (isMiuix) {
-        MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.2f)
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-    }
 
-    WindowBottomSheet(
-        title = stringResource(Res.string.groups_create_choice_title),
-        show = true,
-        onDismissRequest = onDismiss,
-        backgroundColor = backgroundColor,
-        dragHandleColor = dragHandleColor
-    ) {
+    val content: @Composable () -> Unit = {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -112,6 +101,27 @@ fun GroupCreationChoiceBottomSheet(
                 }
             )
         }
+    }
+
+    if (isMiuix) {
+        GlassBottomSheet(
+            title = stringResource(Res.string.groups_create_choice_title),
+            show = true,
+            onDismissRequest = onDismiss,
+            backdrop = backdrop,
+            content = content
+        )
+    } else {
+        val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
+        val dragHandleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+        WindowBottomSheet(
+            title = stringResource(Res.string.groups_create_choice_title),
+            show = true,
+            onDismissRequest = onDismiss,
+            backgroundColor = backgroundColor,
+            dragHandleColor = dragHandleColor,
+            content = content
+        )
     }
 }
 

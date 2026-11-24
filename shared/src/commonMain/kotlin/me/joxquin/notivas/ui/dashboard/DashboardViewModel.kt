@@ -144,7 +144,7 @@ class DashboardViewModel(
     fun onReloginSuccess(cookies: String, csrfToken: String?) {
         viewModelScope.launch {
             _showQuickRelogin.value = false
-            val url = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
+            val url = preferencesManager.universityUrl.first() ?: "https://tecsup.instructure.com"
             val success = repository.verifyAndSaveSession(url, cookies, csrfToken)
             if (success) {
                 refreshData()
@@ -1114,8 +1114,8 @@ class DashboardViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "CANVAS")
 
     val universityUrl: StateFlow<String> = preferencesManager.universityUrl.map {
-        it ?: "https://canvas.utp.edu.pe"
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "https://canvas.utp.edu.pe")
+        it ?: "https://tecsup.instructure.com"
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "https://tecsup.instructure.com")
 
     init {
         initialSync()

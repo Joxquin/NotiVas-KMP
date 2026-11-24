@@ -85,7 +85,7 @@ class CanvasDiscussionsToolsHandler(
             "get_course_discussions" -> {
                 val cid = args["course_id"]?.jsonPrimitive?.longOrNull ?: selectedCourseId ?: 0L
                 val authCred = preferencesManager.getAuthCredential()
-                val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
+                val domain = preferencesManager.universityUrl.first() ?: "https://tecsup.instructure.com"
                 val courseName = courses.find { it.id == cid }?.name ?: "Curso $cid"
 
                 if (authCred != null && cid != 0L) {
@@ -124,7 +124,7 @@ class CanvasDiscussionsToolsHandler(
                 var topicId = args["topic_id"]?.jsonPrimitive?.longOrNull ?: 0L
                 val topicTitleQuery = args["topic_title"]?.jsonPrimitive?.content?.trim() ?: ""
                 val authCred = preferencesManager.getAuthCredential()
-                val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
+                val domain = preferencesManager.universityUrl.first() ?: "https://tecsup.instructure.com"
                 val courseName = courses.find { it.id == cid }?.name ?: "Curso $cid"
 
                 if (authCred != null && cid != 0L) {

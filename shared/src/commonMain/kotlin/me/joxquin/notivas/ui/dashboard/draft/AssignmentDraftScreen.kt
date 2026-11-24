@@ -57,6 +57,7 @@ import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentBottomActionBar
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentConsignaCard
 import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentDetailHeroCard
@@ -199,6 +200,8 @@ fun AssignmentDraftScreen(
         viewModel?.closeTemplatePicker()
     }
 
+    val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
+
     if (showTemplatePicker) {
         me.joxquin.notivas.ui.dashboard.components.draft.ModuleTemplatePickerSheet(
             courseName = courseName,
@@ -206,6 +209,7 @@ fun AssignmentDraftScreen(
             isLoading = isLoadingTemplates,
             currentModuleName = currentAssignmentModuleName,
             themeStyle = themeStyle,
+            backdrop = backdrop,
             onSelectTemplate = { selectedCandidate ->
                 handleDismissTemplatePicker()
                 viewModel?.startOrCloneDraft(
@@ -219,7 +223,6 @@ fun AssignmentDraftScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
         val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
         val menuAnchor = rememberGlassPopupAnchor()
@@ -274,6 +277,7 @@ fun AssignmentDraftScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior),
                     contentPadding = contentPadding,
+                    overscrollEffect = null,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // 1. Encabezado Hero del Detalle de Tarea
@@ -300,6 +304,7 @@ fun AssignmentDraftScreen(
                                 themeStyle = themeStyle,
                                 viewModel = viewModel,
                                 draftInfo = draftInfo,
+                                backdrop = backdrop,
                                 onStartDraft = handleStartDraft,
                                 onExploreTemplates = handleExploreTemplates,
                                 onCancelDraft = handleCancelDraft,
@@ -317,10 +322,10 @@ fun AssignmentDraftScreen(
                         item(key = "task_consigna_header") {
                             ConsignaHeaderTitle(themeStyle = themeStyle)
                         }
-                        items(
+                        itemsIndexed(
                             items = consignaSections,
-                            key = { section -> "consigna_miuix_${section.title.hashCode()}_${section.introText.take(15).hashCode()}" }
-                        ) { section ->
+                            key = { index, section -> "consigna_miuix_${index}_${section.title.hashCode()}" }
+                        ) { _, section ->
                             ConsignaSectionItem(
                                 section = section,
                                 themeStyle = themeStyle,
@@ -579,10 +584,10 @@ fun AssignmentDraftScreen(
                     item(key = "task_consigna_header_material") {
                         ConsignaHeaderTitle(themeStyle = themeStyle)
                     }
-                    items(
+                    itemsIndexed(
                         items = consignaSections,
-                        key = { section -> "consigna_mat_${section.title.hashCode()}_${section.introText.take(15).hashCode()}" }
-                    ) { section ->
+                        key = { index, section -> "consigna_mat_${index}_${section.title.hashCode()}" }
+                    ) { _, section ->
                         ConsignaSectionItem(
                             section = section,
                             themeStyle = themeStyle,

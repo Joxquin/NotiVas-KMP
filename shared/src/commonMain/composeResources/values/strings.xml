@@ -246,7 +246,7 @@
     <string name="onboarding_notifications_desc">Receive instant alerts for new grades, announcements, and upcoming deadlines</string>
     <string name="onboarding_token_switch_btn">Manual Token</string>
     <string name="onboarding_domain_input_label">INSTITUTION OR CAMPUS</string>
-    <string name="onboarding_domain_input_placeholder">e.g. mycampus</string>
+    <string name="onboarding_domain_input_placeholder">e.g. tecsup</string>
     <string name="onboarding_domain_quick_suggestions">Quick suggestions</string>
     <string name="onboarding_domain_continue_btn">Continue</string>
     <string name="onboarding_domain_help">Can't find your university domain?</string>
@@ -286,7 +286,6 @@
     <string name="bento_archived_count">%1$d Archived</string>
 
     <!-- Utilidades Settings Submenu -->
-    <string name="groups_menu_options_title">Weighting Options</string>
     <string name="groups_menu_import_catalog">Import from official catalog</string>
     <string name="groups_menu_import_json">Import JSON file (Storage)</string>
     <string name="groups_menu_export_json">Export JSON file (Storage)</string>
@@ -449,8 +448,8 @@
     <string name="draft_status_card_title">Draft Synchronization</string>
     <string name="draft_open_docs_btn">Open in Google Docs</string>
     <string name="task_actions_title">Management &amp; Options</string>
-    <string name="task_submenu_manage_draft">Manage Draft in Google Drive</string>
-    <string name="task_submenu_manage_draft_desc">Create synchronized document or open existing draft</string>
+    <string name="task_submenu_manage_draft">Guidelines &amp; Deliverable</string>
+    <string name="task_submenu_manage_draft_desc">Review instructions, prepare drafts, and manage deliverables</string>
     <string name="task_consigna_title">Instructions &amp; Prompts</string>
     <string name="task_submenu_open_canvas">Open assignment in Canvas LMS</string>
     <string name="task_submenu_mark_completed">Mark as completed</string>
@@ -466,6 +465,28 @@
     <string name="custom_reminder_save">Save reminder</string>
     <string name="custom_reminder_saved_toast">Reminder scheduled successfully</string>
     <string name="custom_reminder_invalid_past">Selected date and time is in the past</string>
+    <string name="custom_reminder_period_am">a.m.</string>
+    <string name="custom_reminder_period_pm">p.m.</string>
+    <string name="custom_reminder_day_mon">Mon</string>
+    <string name="custom_reminder_day_tue">Tue</string>
+    <string name="custom_reminder_day_wed">Wed</string>
+    <string name="custom_reminder_day_thu">Thu</string>
+    <string name="custom_reminder_day_fri">Fri</string>
+    <string name="custom_reminder_day_sat">Sat</string>
+    <string name="custom_reminder_day_sun">Sun</string>
+    <string name="custom_reminder_month_1">Jan</string>
+    <string name="custom_reminder_month_2">Feb</string>
+    <string name="custom_reminder_month_3">Mar</string>
+    <string name="custom_reminder_month_4">Apr</string>
+    <string name="custom_reminder_month_5">May</string>
+    <string name="custom_reminder_month_6">Jun</string>
+    <string name="custom_reminder_month_7">Jul</string>
+    <string name="custom_reminder_month_8">Aug</string>
+    <string name="custom_reminder_month_9">Sep</string>
+    <string name="custom_reminder_month_10">Oct</string>
+    <string name="custom_reminder_month_11">Nov</string>
+    <string name="custom_reminder_month_12">Dec</string>
+    <string name="custom_reminder_date_format">%1$s, %3$s %2$d</string>
     <string name="foros_view_mode_grouped">Group by week</string>
     <string name="foros_view_mode_flat">List view</string>
     <string name="foros_group_general">General Forums</string>
@@ -866,4 +887,6 @@
     <string name="review_action_start">Start review</string>
     <string name="review_action_new_review">New review</string>
     <string name="review_step_downloading_modules">Downloading and analyzing module readings...</string>
+    <string name="notas_select_course">Select a course</string>
+    <string name="notas_course_default">Course</string>
 </resources>

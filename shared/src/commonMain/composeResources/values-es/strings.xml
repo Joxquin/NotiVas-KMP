@@ -246,7 +246,7 @@
     <string name="onboarding_notifications_desc">Recibe avisos inmediatos de nuevas calificaciones, anuncios y tareas pendientes</string>
     <string name="onboarding_token_switch_btn">Token Manual</string>
     <string name="onboarding_domain_input_label">INSTITUCIÓN O CAMPUS</string>
-    <string name="onboarding_domain_input_placeholder">ej. micampus</string>
+    <string name="onboarding_domain_input_placeholder">ej. tecsup</string>
     <string name="onboarding_domain_quick_suggestions">Sugerencias rápidas</string>
     <string name="onboarding_domain_continue_btn">Continuar</string>
     <string name="onboarding_domain_help">¿No encuentras el dominio de tu universidad?</string>
@@ -286,7 +286,6 @@
     <string name="bento_archived_count">%1$d Archivadas</string>
 
     <!-- Utilidades Settings Submenu -->
-    <string name="groups_menu_options_title">Opciones de Ponderación</string>
     <string name="groups_menu_import_catalog">Importar desde catálogo oficial</string>
     <string name="groups_menu_import_json">Importar archivo JSON (Storage)</string>
     <string name="groups_menu_export_json">Guardar archivo JSON (Storage)</string>
@@ -449,8 +448,8 @@
     <string name="draft_status_card_title">Sincronización de Borrador</string>
     <string name="draft_open_docs_btn">Abrir en Google Docs</string>
     <string name="task_actions_title">Gestión y Opciones</string>
-    <string name="task_submenu_manage_draft">Gestionar Borrador en Google Drive</string>
-    <string name="task_submenu_manage_draft_desc">Crear documento sincronizado o abrir borrador existente</string>
+    <string name="task_submenu_manage_draft">Consigna y entregable</string>
+    <string name="task_submenu_manage_draft_desc">Revisar instrucciones, preparar el borrador y gestionar tu entrega</string>
     <string name="task_consigna_title">Consigna e Instrucciones</string>
     <string name="task_submenu_open_canvas">Abrir tarea en Canvas LMS</string>
     <string name="task_submenu_mark_completed">Marcar como realizada</string>
@@ -466,6 +465,28 @@
     <string name="custom_reminder_save">Guardar recordatorio</string>
     <string name="custom_reminder_saved_toast">Recordatorio programado con éxito</string>
     <string name="custom_reminder_invalid_past">La fecha y hora seleccionada ya transcurrió</string>
+    <string name="custom_reminder_period_am">a.m.</string>
+    <string name="custom_reminder_period_pm">p.m.</string>
+    <string name="custom_reminder_day_mon">lun</string>
+    <string name="custom_reminder_day_tue">mar</string>
+    <string name="custom_reminder_day_wed">mié</string>
+    <string name="custom_reminder_day_thu">jue</string>
+    <string name="custom_reminder_day_fri">vie</string>
+    <string name="custom_reminder_day_sat">sáb</string>
+    <string name="custom_reminder_day_sun">dom</string>
+    <string name="custom_reminder_month_1">ene</string>
+    <string name="custom_reminder_month_2">feb</string>
+    <string name="custom_reminder_month_3">mar</string>
+    <string name="custom_reminder_month_4">abr</string>
+    <string name="custom_reminder_month_5">may</string>
+    <string name="custom_reminder_month_6">jun</string>
+    <string name="custom_reminder_month_7">jul</string>
+    <string name="custom_reminder_month_8">ago</string>
+    <string name="custom_reminder_month_9">sep</string>
+    <string name="custom_reminder_month_10">oct</string>
+    <string name="custom_reminder_month_11">nov</string>
+    <string name="custom_reminder_month_12">dic</string>
+    <string name="custom_reminder_date_format">%1$s, %2$d de %3$s</string>
     <string name="foros_view_mode_grouped">Agrupar por semana</string>
     <string name="foros_view_mode_flat">Vista en lista</string>
     <string name="foros_group_general">Foros Generales</string>
@@ -866,4 +887,6 @@
     <string name="review_action_start">Iniciar revisión</string>
     <string name="review_action_new_review">Nueva revisión</string>
     <string name="review_step_downloading_modules">Descargando y analizando lecturas del módulo...</string>
+    <string name="notas_select_course">Selecciona un curso</string>
+    <string name="notas_course_default">Curso</string>
 </resources>

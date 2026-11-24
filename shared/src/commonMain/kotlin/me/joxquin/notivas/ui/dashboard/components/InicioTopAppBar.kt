@@ -35,6 +35,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import me.joxquin.notivas.ui.components.brand.NotiVasOutlineLogo
+import me.joxquin.notivas.ui.splash.LocalSplashLogoTarget
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -48,6 +53,7 @@ fun InicioTopAppBar(
     onNavigateToSchedule: () -> Unit = {},
     onNavigateToAjustes: () -> Unit = {},
     actionsEnabled: Boolean = true,
+    isEntranceTriggered: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val topAppBarContainerColor by animateColorAsState(
@@ -62,6 +68,27 @@ fun InicioTopAppBar(
 
     TopAppBar(
         modifier = modifier,
+        navigationIcon = {
+            val onTargetPositioned = LocalSplashLogoTarget.current
+            Box(
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .size(40.dp)
+                    .graphicsLayer {
+                        alpha = if (isEntranceTriggered) 1f else 0f
+                    }
+                    .onGloballyPositioned { coords ->
+                        onTargetPositioned?.invoke(coords.boundsInRoot())
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                NotiVasOutlineLogo(
+                    size = 28.dp,
+                    tint = MaterialTheme.colorScheme.primary,
+                    accentTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                )
+            }
+        },
         title = {
             AnimatedVisibility(
                 visible = isScrolled,
@@ -70,30 +97,11 @@ fun InicioTopAppBar(
                 exit = fadeOut(animationSpec = tween(150)) +
                         slideOutVertically(animationSpec = tween(180)) { it / 2 }
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         },
         actions = {

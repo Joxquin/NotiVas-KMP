@@ -28,12 +28,12 @@ import me.joxquin.notivas.ui.navigation.NotificationNavTarget
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
-        splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
-            splashScreenViewProvider.remove()
+        me.joxquin.notivas.data.local.FileStorageProvider.init(this)
+        splashScreen.setKeepOnScreenCondition {
+            !AppModule.preferencesManager.isLoadedSync()
         }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        me.joxquin.notivas.data.local.FileStorageProvider.init(this)
 
         // FirebaseApp solo existe si el build incluyó google-services.json.
         if (FirebaseApp.getApps(this).isNotEmpty()) {

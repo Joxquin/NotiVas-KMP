@@ -51,6 +51,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseHeader
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseRowItem
 import me.joxquin.notivas.ui.dashboard.miuix.components.MiuixCourseSummaryList
+import me.joxquin.notivas.ui.components.brand.NotiVasOutlineLogo
+import me.joxquin.notivas.ui.splash.LocalSplashLogoTarget
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.basic.TopAppBarDefaults
@@ -63,9 +67,9 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
-import me.joxquin.notivas.ui.dashboard.components.search.glassSearchBarTransition
-import me.joxquin.notivas.ui.dashboard.components.search.rememberGlassSearchBarAlpha
-import me.joxquin.notivas.ui.dashboard.components.search.rememberGlassSearchTitleAlpha
+import me.joxquin.notivas.ui.components.miuix.glassSearchBarTransition
+import me.joxquin.notivas.ui.components.miuix.rememberGlassSearchBarAlpha
+import me.joxquin.notivas.ui.components.miuix.rememberGlassSearchTitleAlpha
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
@@ -171,6 +175,31 @@ fun InicioMiuixContent(
                         ),
                         scrollBehavior = scrollBehavior,
                         backgroundAlpha = { searchBarAlpha.value },
+                        navigationIcon = {
+                            val onTargetPositioned = LocalSplashLogoTarget.current
+                            val iconAlpha = if (isEntranceTriggered) {
+                                if (isSearchExpanded) 0f else searchBarAlpha.value
+                            } else {
+                                0f
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .graphicsLayer {
+                                        alpha = iconAlpha
+                                    }
+                                    .onGloballyPositioned { coords ->
+                                        onTargetPositioned?.invoke(coords.boundsInRoot())
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                NotiVasOutlineLogo(
+                                    size = 28.dp,
+                                    tint = MiuixTheme.colorScheme.primary,
+                                    accentTint = MiuixTheme.colorScheme.primary.copy(alpha = 0.45f)
+                                )
+                            }
+                        },
                         actions = {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 GlassIconButton(
@@ -411,10 +440,11 @@ fun InicioMiuixContent(
             onAskAi = { query -> onNavigateToCopilot() },
         )
 
-        // Submenú Rápido de Opciones y Gestión de Tarea (WindowBottomSheet)
+        // Submenú Rápido de Opciones y Gestión de Tarea (GlassBottomSheet)
         me.joxquin.notivas.ui.dashboard.components.AssignmentQuickSubmenuSheet(
             assignmentUi = selectedAssignmentForSubmenu,
             themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+            backdrop = backdrop,
             onDismissRequest = { selectedAssignmentForSubmenu = null },
             onOpenDraftScreen = { assignment ->
                 selectedAssignmentForSubmenu = null

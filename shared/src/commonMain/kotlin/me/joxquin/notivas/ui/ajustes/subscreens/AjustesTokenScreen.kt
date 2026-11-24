@@ -256,7 +256,8 @@ fun AjustesTokenScreen(
                         .fillMaxSize()
                         .miuixPageScrollModifiers(scrollBehavior)
                         .miuixBackdropModifier(backdrop),
-                    contentPadding = contentPadding
+                    contentPadding = contentPadding,
+                    overscrollEffect = null
                 ) {
                     // Si la sesión es web: banner informativo + acción principal destacada
                     if (isWebSession) {

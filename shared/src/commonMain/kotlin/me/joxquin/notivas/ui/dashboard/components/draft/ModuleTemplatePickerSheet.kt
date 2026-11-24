@@ -33,16 +33,18 @@ import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +54,7 @@ fun ModuleTemplatePickerSheet(
     isLoading: Boolean,
     currentModuleName: String? = null,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
     onSelectTemplate: (TemplateCandidate) -> Unit,
     onDismissRequest: () -> Unit
 ) {
@@ -91,13 +94,14 @@ fun ModuleTemplatePickerSheet(
     }
 
     if (isMiuix) {
-        WindowBottomSheet(
+        GlassBottomSheet(
             title = stringResource(Res.string.template_picker_title),
             show = true,
             onDismissRequest = onDismissRequest,
+            backdrop = backdrop,
             startAction = {
                 val dismissState = LocalDismissState.current
-                MiuixIconButton(
+                GlassIconButton(
                     onClick = {
                         dismissState?.invoke() ?: onDismissRequest()
                     }
@@ -115,7 +119,7 @@ fun ModuleTemplatePickerSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .scrollEndHaptic()
-                    .overScrollVertical()
+                    .navigationBarsPadding()
             ) {
                 if (isLoading) {
                     item {

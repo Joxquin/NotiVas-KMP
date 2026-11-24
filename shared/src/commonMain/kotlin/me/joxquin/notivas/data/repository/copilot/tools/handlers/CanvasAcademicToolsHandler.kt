@@ -238,7 +238,7 @@ class CanvasAcademicToolsHandler(
                     ToolExecutionResult("""{"error": "Falta el parámetro 'assignment_id'."}""")
                 } else {
                     val authCred = preferencesManager.getAuthCredential()
-                    val domain = preferencesManager.universityUrl.first() ?: "https://canvas.utp.edu.pe"
+                    val domain = preferencesManager.universityUrl.first() ?: "https://tecsup.instructure.com"
 
                     var resolvedCid = args["course_id"]?.jsonPrimitive?.longOrNull ?: selectedCourseId
                     if (resolvedCid == null) {

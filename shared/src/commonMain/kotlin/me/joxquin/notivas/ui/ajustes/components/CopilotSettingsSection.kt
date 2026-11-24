@@ -88,7 +88,8 @@ import me.joxquin.notivas.shared.resources.change
 import me.joxquin.notivas.shared.resources.sync
 
 import me.joxquin.notivas.data.local.CopilotProvider
-import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
 import me.joxquin.notivas.shared.resources.copilot_provider_title
 import me.joxquin.notivas.shared.resources.copilot_provider_summary
 import me.joxquin.notivas.shared.resources.copilot_provider_dialog_title
@@ -124,6 +125,7 @@ fun CopilotSettingsSection(
     onRefreshBalance: () -> Unit,
     onAnalyzeModel: (suspend (String) -> me.joxquin.notivas.data.model.CustomModelAnalysisResult)? = null,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier
 ) {
     var showApiKeyDialog by remember { mutableStateOf(false) }
@@ -846,7 +848,7 @@ fun CopilotSettingsSection(
                     onCheckedChange = onEnabledChange
                 )
 
-                WindowDropdownPreference(
+                GlassDropdownPreference(
                     title = stringResource(Res.string.copilot_provider_title),
                     summary = if (provider == CopilotProvider.OPENROUTER) "OpenRouter" else "Google AI Studio",
                     items = providerItems,
@@ -854,7 +856,8 @@ fun CopilotSettingsSection(
                     onSelectedIndexChange = { index ->
                         val selected = if (index == 0) CopilotProvider.OPENROUTER else CopilotProvider.GOOGLE_AI_STUDIO
                         onProviderChange(selected)
-                    }
+                    },
+                    backdrop = backdrop
                 )
 
                 // Opciones para OpenRouter

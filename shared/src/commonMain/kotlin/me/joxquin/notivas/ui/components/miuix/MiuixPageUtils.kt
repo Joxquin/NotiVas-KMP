@@ -35,11 +35,16 @@ import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 fun Modifier.miuixPageScrollModifiers(
     scrollBehavior: ScrollBehavior? = null,
     enableScrollEndHaptic: Boolean = true,
-): Modifier = this
-    .then(if (enableScrollEndHaptic) Modifier.scrollEndHaptic() else Modifier)
-    .overScrollVertical()
-    .then(if (scrollBehavior != null) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier)
-    .fillMaxHeight()
+): Modifier {
+    val onOffsetChanged: ((Float) -> Unit)? = scrollBehavior?.let { sb ->
+        { sb.state.overscrollOffset = it }
+    }
+    return this
+        .then(if (enableScrollEndHaptic) Modifier.scrollEndHaptic() else Modifier)
+        .overScrollVertical(onOffsetChanged = onOffsetChanged)
+        .then(if (scrollBehavior != null) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier)
+        .fillMaxHeight()
+}
 
 /**
  * Calcula el padding de contenido seguro para páginas Miuix a partir del innerPadding

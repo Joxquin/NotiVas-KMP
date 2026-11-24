@@ -14,7 +14,7 @@ class OnboardingViewModel(
     private val repository: CanvasRepository
 ) : ViewModel() {
 
-    private val _universityUrl = MutableStateFlow("https://canvas.utp.edu.pe")
+    private val _universityUrl = MutableStateFlow("https://tecsup.instructure.com")
     val universityUrl: StateFlow<String> = _universityUrl.asStateFlow()
 
     private val _accessToken = MutableStateFlow("")
@@ -151,7 +151,7 @@ class OnboardingViewModel(
     }
 
     fun resetState() {
-        _universityUrl.value = "https://canvas.utp.edu.pe"
+        _universityUrl.value = "https://tecsup.instructure.com"
         _accessToken.value = ""
         _isVerifying.value = false
         _verificationSuccess.value = null

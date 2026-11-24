@@ -17,7 +17,7 @@ enum class CopilotProvider {
 
 @Serializable
 data class PersistentPreferencesSnapshot(
-    val universityUrl: String? = "https://canvas.utp.edu.pe",
+    val universityUrl: String? = "https://tecsup.instructure.com",
     val accessToken: String? = null,
     val isOnboardingCompleted: Boolean = false,
     val syncIntervalMinutes: Long = 15L,
