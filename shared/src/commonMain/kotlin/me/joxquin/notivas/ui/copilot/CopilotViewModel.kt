@@ -572,35 +572,13 @@ class CopilotViewModel(
                         chatRepository.updateSessionTokens(sessionId, newSessionTokens)
                         refreshOpenRouterBalance()
                     },
-                    onFailure = { error ->
-                        val errorText = friendlyErrorText(error)
-                        _errorMessage.value = errorText
-                        val assistantErrorMessage = CopilotMessageItem(
-                            id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
-                            role = CopilotRole.ASSISTANT,
-                            text = errorText,
-                            timestamp = DateTimeUtil.nowEpochMillis()
-                        )
-                        _messages.value = _messages.value + assistantErrorMessage
-                        chatRepository.saveMessage(sessionId, assistantErrorMessage)
-                    }
+                    onFailure = { error -> appendErrorReply(sessionId, error) }
                 )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
                 _isLoading.value = false
-                val errorText = friendlyErrorText(e)
-                _errorMessage.value = errorText
-                val assistantErrorMessage = CopilotMessageItem(
-                    id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
-                    role = CopilotRole.ASSISTANT,
-                    text = errorText,
-                    timestamp = DateTimeUtil.nowEpochMillis()
-                )
-                _messages.value = _messages.value + assistantErrorMessage
-                try {
-                    chatRepository.saveMessage(sessionId, assistantErrorMessage)
-                } catch (_: Throwable) {}
+                appendErrorReply(sessionId, e)
             }
         }
     }
@@ -610,11 +588,12 @@ class CopilotViewModel(
         val currentMsgs = _messages.value
         val lastUserMessage = currentMsgs.lastOrNull { it.role == CopilotRole.USER } ?: return
 
-        val trimmedMessages = if (currentMsgs.lastOrNull()?.role == CopilotRole.ASSISTANT) {
-            currentMsgs.dropLast(1)
-        } else {
-            currentMsgs
-        }
+        // La respuesta nueva (o el error) reutiliza el id de la que se regenera: así también la
+        // reemplaza en la base y el historial no muestra la versión vieja junto a la nueva.
+        val replacedMessage = currentMsgs.lastOrNull()?.takeIf { it.role == CopilotRole.ASSISTANT }
+        val trimmedMessages = if (replacedMessage != null) currentMsgs.dropLast(1) else currentMsgs
+        // Con el mismo id, la respuesta nueva no se animaría por figurar como ya mostrada.
+        replacedMessage?.let { _animatedMessageIds.remove(it.id) }
 
         _messages.value = trimmedMessages
         _isLoading.value = true
@@ -651,7 +630,7 @@ class CopilotViewModel(
                 result.fold(
                     onSuccess = { response ->
                         val assistantMessage = CopilotMessageItem(
-                            id = (DateTimeUtil.nowEpochMillis() + 1).toString(),
+                            id = replacedMessage?.id ?: (DateTimeUtil.nowEpochMillis() + 1).toString(),
                             role = CopilotRole.ASSISTANT,
                             text = response.reply,
                             sources = response.sources,
@@ -666,17 +645,38 @@ class CopilotViewModel(
                         chatRepository.updateSessionTokens(sessionId, newSessionTokens)
                         refreshOpenRouterBalance()
                     },
-                    onFailure = { error ->
-                        _errorMessage.value = friendlyErrorText(error)
-                    }
+                    onFailure = { error -> appendErrorReply(sessionId, error, replacedMessage?.id) }
                 )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
                 _isLoading.value = false
                 _thinkingStatus.value = null
-                _errorMessage.value = friendlyErrorText(e)
+                appendErrorReply(sessionId, e, replacedMessage?.id)
             }
+        }
+    }
+
+    /**
+     * Muestra el error como respuesta del asistente y lo guarda en el historial. Antes, si fallaba
+     * al regenerar, el error solo iba a [errorMessage] (que no se dibuja) y el chat quedaba con la
+     * pregunta sola, sin botón para volver a intentarlo.
+     */
+    private suspend fun appendErrorReply(sessionId: String, error: Throwable?, messageId: String? = null) {
+        val errorText = friendlyErrorText(error)
+        _errorMessage.value = errorText
+        val assistantErrorMessage = CopilotMessageItem(
+            id = messageId ?: (DateTimeUtil.nowEpochMillis() + 1).toString(),
+            role = CopilotRole.ASSISTANT,
+            text = errorText,
+            timestamp = DateTimeUtil.nowEpochMillis()
+        )
+        _messages.value = _messages.value + assistantErrorMessage
+        try {
+            chatRepository.saveMessage(sessionId, assistantErrorMessage)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
         }
     }
 
