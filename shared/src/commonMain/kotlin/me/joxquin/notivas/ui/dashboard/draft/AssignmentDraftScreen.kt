@@ -200,6 +200,8 @@ fun AssignmentDraftScreen(
         viewModel?.closeTemplatePicker()
     }
 
+    val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
+
     if (showTemplatePicker) {
         me.joxquin.notivas.ui.dashboard.components.draft.ModuleTemplatePickerSheet(
             courseName = courseName,
@@ -207,6 +209,7 @@ fun AssignmentDraftScreen(
             isLoading = isLoadingTemplates,
             currentModuleName = currentAssignmentModuleName,
             themeStyle = themeStyle,
+            backdrop = backdrop,
             onSelectTemplate = { selectedCandidate ->
                 handleDismissTemplatePicker()
                 viewModel?.startOrCloneDraft(
@@ -220,7 +223,6 @@ fun AssignmentDraftScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
         val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
         val menuAnchor = rememberGlassPopupAnchor()
@@ -302,6 +304,7 @@ fun AssignmentDraftScreen(
                                 themeStyle = themeStyle,
                                 viewModel = viewModel,
                                 draftInfo = draftInfo,
+                                backdrop = backdrop,
                                 onStartDraft = handleStartDraft,
                                 onExploreTemplates = handleExploreTemplates,
                                 onCancelDraft = handleCancelDraft,

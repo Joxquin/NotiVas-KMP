@@ -117,8 +117,9 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.utils.springAnimateToPage
-import top.yukonga.miuix.kmp.window.WindowBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,6 +130,7 @@ fun AssignmentPreReviewSheet(
     draftFileId: String? = null,
     textBody: String? = null,
     themeStyle: AppThemeStyle = AppThemeStyle.MIUIX,
+    backdrop: Backdrop? = null,
     onDismissRequest: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -215,11 +217,11 @@ fun AssignmentPreReviewSheet(
             Modifier
         }
 
-        WindowBottomSheet(
+        GlassBottomSheet(
             title = stringResource(Res.string.review_sheet_title),
             show = show,
             onDismissRequest = onDismissRequest,
-            backgroundColor = sheetBackgroundColor,
+            backdrop = backdrop,
             modifier = sheetModifier,
             content = {
                 PreReviewSheetContentMiuix(

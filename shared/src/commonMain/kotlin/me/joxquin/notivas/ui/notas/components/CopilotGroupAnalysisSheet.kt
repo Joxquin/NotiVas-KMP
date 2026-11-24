@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,6 +46,8 @@ import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import kotlin.math.roundToInt
@@ -54,6 +57,7 @@ fun CopilotGroupAnalysisSheet(
     course: Course,
     viewModel: NotasViewModel,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
     onDismiss: () -> Unit,
     onGroupsApplied: () -> Unit
 ) {
@@ -110,16 +114,11 @@ fun CopilotGroupAnalysisSheet(
         )
     }
 
-    WindowBottomSheet(
-        title = stringResource(Res.string.groups_create_copilot_title),
-        show = true,
-        onDismissRequest = onDismiss,
-        backgroundColor = backgroundColor,
-        dragHandleColor = dragHandleColor
-    ) {
+    val sheetContent: @Composable () -> Unit = {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -310,5 +309,24 @@ fun CopilotGroupAnalysisSheet(
                 }
             }
         }
+    }
+
+    if (isMiuix) {
+        GlassBottomSheet(
+            title = stringResource(Res.string.groups_create_copilot_title),
+            show = true,
+            onDismissRequest = onDismiss,
+            backdrop = backdrop,
+            content = sheetContent
+        )
+    } else {
+        WindowBottomSheet(
+            title = stringResource(Res.string.groups_create_copilot_title),
+            show = true,
+            onDismissRequest = onDismiss,
+            backgroundColor = backgroundColor,
+            dragHandleColor = dragHandleColor,
+            content = sheetContent
+        )
     }
 }

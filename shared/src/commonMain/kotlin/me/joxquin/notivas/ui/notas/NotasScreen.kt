@@ -115,6 +115,8 @@ fun NotasScreen(
         }
     }
 
+    val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
+
     // Modal de selección de método de creación
     if (showCreationChoiceSheet) {
         GroupCreationChoiceBottomSheet(
@@ -122,7 +124,8 @@ fun NotasScreen(
             onSelectManual = { showManualCreateBottomSheet = true },
             onSelectGitHub = { showGitHubImportDialog = true },
             onSelectCopilot = { showCopilotAnalysisSheet = true },
-            themeStyle = themeStyle
+            themeStyle = themeStyle,
+            backdrop = backdrop
         )
     }
 
@@ -131,6 +134,7 @@ fun NotasScreen(
         CreateGroupBottomSheet(
             currentTotalWeight = uiState.totalConfiguredWeight,
             themeStyle = themeStyle,
+            backdrop = backdrop,
             onDismiss = { showManualCreateBottomSheet = false },
             onSave = { name, weight, targetAssessments, dropLowest, minToDrop ->
                 viewModel.createGroupWithItems(name, weight, targetAssessments, dropLowest, minToDrop)
@@ -161,6 +165,7 @@ fun NotasScreen(
             course = activeCourse,
             viewModel = viewModel,
             themeStyle = themeStyle,
+            backdrop = backdrop,
             onDismiss = { showCopilotAnalysisSheet = false },
             onGroupsApplied = { showCopilotAnalysisSheet = false }
         )
@@ -169,7 +174,6 @@ fun NotasScreen(
     val totalWeight = uiState.totalConfiguredWeight.roundToInt()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
         val menuAnchor = rememberGlassPopupAnchor()
         var showTuneMenu by remember { mutableStateOf(false) }

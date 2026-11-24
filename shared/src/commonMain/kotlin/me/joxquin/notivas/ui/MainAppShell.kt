@@ -426,7 +426,12 @@ fun MainAppShell(
             LocalMiuixSnackbarHostState provides miuixSnackbarHostState,
             LocalIsWideScreen provides isWideScreen,
         ) {
-            Row(modifier = Modifier.fillMaxSize()) {
+            top.yukonga.miuix.kmp.basic.Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
+            ) { _ ->
+                Row(modifier = Modifier.fillMaxSize()) {
                 if (isWideScreen) {
                     MiuixPersistentNavigationRail(
                         destinations = destinations,
@@ -1108,6 +1113,7 @@ fun MainAppShell(
             )
         }
     }
+}
 }
 } else {
         // ─── ARQUITECTURA MATERIAL DESIGN 3 (AOSP PREDICTIVE BACK & NAVDISPLAY) ───

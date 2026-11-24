@@ -440,10 +440,11 @@ fun InicioMiuixContent(
             onAskAi = { query -> onNavigateToCopilot() },
         )
 
-        // Submenú Rápido de Opciones y Gestión de Tarea (WindowBottomSheet)
+        // Submenú Rápido de Opciones y Gestión de Tarea (GlassBottomSheet)
         me.joxquin.notivas.ui.dashboard.components.AssignmentQuickSubmenuSheet(
             assignmentUi = selectedAssignmentForSubmenu,
             themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+            backdrop = backdrop,
             onDismissRequest = { selectedAssignmentForSubmenu = null },
             onOpenDraftScreen = { assignment ->
                 selectedAssignmentForSubmenu = null

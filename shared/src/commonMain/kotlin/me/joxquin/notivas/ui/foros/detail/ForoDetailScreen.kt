@@ -142,8 +142,9 @@ fun ForoDetailScreen(
         }
     }
 
+    val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
+
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
         val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
 
@@ -458,6 +459,7 @@ fun ForoDetailScreen(
             viewModel.applyCopilotSuggestion(suggestion)
             showCopilotAssistant = false
         },
-        themeStyle = themeStyle
+        themeStyle = themeStyle,
+        backdrop = backdrop
     )
 }

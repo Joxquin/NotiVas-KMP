@@ -87,6 +87,7 @@ import me.joxquin.notivas.util.fileDropTarget
 import me.joxquin.notivas.util.rememberDocumentPicker
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -138,6 +139,7 @@ fun AssignmentSubmissionCard(
     themeStyle: AppThemeStyle,
     viewModel: DashboardViewModel?,
     draftInfo: DraftSyncInfo? = null,
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier,
     onStartDraft: (isTemplate: Boolean, templateName: String?) -> Unit = { _, _ -> },
     onExploreTemplates: () -> Unit = {},
@@ -2833,6 +2835,7 @@ fun AssignmentSubmissionCard(
         draftFileId = draftFileId,
         textBody = if (selectedTab == SubmissionTab.TEXT) textBody else null,
         themeStyle = themeStyle,
+        backdrop = backdrop,
         onDismissRequest = { showAiReviewSheet = false }
     )
 }

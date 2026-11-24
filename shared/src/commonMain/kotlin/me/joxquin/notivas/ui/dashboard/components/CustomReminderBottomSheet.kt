@@ -50,8 +50,10 @@ import top.yukonga.miuix.kmp.basic.NumberPicker
 import top.yukonga.miuix.kmp.basic.SnackbarDuration
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +63,7 @@ fun CustomReminderBottomSheet(
     assignment: Assignment,
     courseName: String,
     themeStyle: AppThemeStyle,
+    backdrop: Backdrop? = null,
     onReminderSet: () -> Unit
 ) {
     if (!show) return
@@ -200,14 +203,16 @@ fun CustomReminderBottomSheet(
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val dividerColor = MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.45f)
-        WindowBottomSheet(
+        GlassBottomSheet(
             show = show,
             onDismissRequest = onDismissRequest,
+            backdrop = backdrop,
             title = stringResource(Res.string.custom_reminder_title)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
                     .padding(bottom = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {

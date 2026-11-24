@@ -49,6 +49,7 @@ import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
@@ -60,6 +61,7 @@ import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,10 +85,11 @@ fun ForosFilterBottomSheet(
     onWeeksReversedChange: (Boolean) -> Unit = {}
 ) {
     if (themeStyle == AppThemeStyle.MIUIX) {
-        WindowBottomSheet(
+        GlassBottomSheet(
             title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_sheet_title),
             show = show,
             onDismissRequest = onDismissRequest,
+            backdrop = backdrop,
             startAction = {
                 val dismissState = LocalDismissState.current
                 GlassIconButton(
@@ -116,6 +119,7 @@ fun ForosFilterBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .scrollEndHaptic()
+                    .navigationBarsPadding()
             ) {
                 // Sección 1: Estado del Foro
                 item {

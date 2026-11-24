@@ -113,7 +113,8 @@ import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.utils.springAnimateToPage
-import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 
 private enum class ForoCopilotProgressStep {
     READING_PROMPT,
@@ -154,7 +155,8 @@ fun ForoCopilotAssistantSheet(
     onDismiss: () -> Unit,
     onGenerate: (toneModifier: String?) -> Unit,
     onInsertDraft: (String) -> Unit,
-    themeStyle: AppThemeStyle
+    themeStyle: AppThemeStyle,
+    backdrop: Backdrop? = null
 ) {
     var isSheetAnimationFinished by remember { mutableStateOf(false) }
 
@@ -203,11 +205,11 @@ fun ForoCopilotAssistantSheet(
             Modifier
         }
 
-        WindowBottomSheet(
+        GlassBottomSheet(
             title = stringResource(Res.string.copilot_sheet_title),
             show = show,
             onDismissRequest = onDismiss,
-            backgroundColor = sheetBackgroundColor,
+            backdrop = backdrop,
             modifier = sheetModifier,
             content = {
                 ForoCopilotContentMiuix(

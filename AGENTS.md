@@ -10,6 +10,10 @@ La aplicación opera bajo dos paradigmas de diseño visual con arquitecturas de 
 
 ### A. HyperOS MIUIX (`AppThemeStyle.MIUIX`)
 En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implementación de referencia oficial de `compose-miuix-ui` (`miuix/example`):
+0. **Scaffold Raíz Transparente (`MiuixPopupHost`):**
+   - El árbol principal de navegación debe estar envuelto en un `top.yukonga.miuix.kmp.basic.Scaffold(containerColor = Color.Transparent, contentWindowInsets = WindowInsets(0))`.
+   - Este Scaffold raíz provee `LocalRootDialogStates` y aloja `popupHost = { MiuixPopupHost() }`. Sin este contenedor raíz, los componentes de superposición (`GlassBottomSheet`, `OverlayBottomSheet`, `OverlayDialog`) que utilizan `renderInRootScaffold = true` no pueden renderizarse en pantalla.
+
 1. **Host Principal (`NavDisplay` con `NavTransitions.MiuixDefault`):**
    - Gobernado por `NavBackStack` y `MiuixRoute`.
    - Transiciones oficiales de ventana HyperOS mediante `NavTransitions.MiuixDefault` (o la transición personalizada `CrossActivityTransition` con curva `FastOutExtraSlowIn`, escala a 0.9, desplazamiento de 96dp, `dimAmount` dinámico y resorte `FLING_BOUNCE` al soltar gestos de retroceso).
@@ -152,20 +156,28 @@ Card(
   )
   ```
 
-### 5. Hojas y Diálogos Rápidos (Quicks / `WindowBottomSheet`)
-- **Uso universal:** Tanto en MIUIX como en Material Design 3, utilizar preferentemente `WindowBottomSheet` de MIUIX para las hojas emergentes (quicks) para garantizar consistencia visual y soporte háptico nativo.
+### 5. Hojas y Diálogos Rápidos (GlassBottomSheet vs WindowBottomSheet)
+- **HyperOS MIUIX (`GlassBottomSheet`):**
+  - Utilizar el componente oficial HyperOS Liquid Glass `top.yukonga.miuix.kmp.glass.GlassBottomSheet`.
+  - Debe recibir el fondo difuminado en tiempo real (`backdrop: Backdrop?`) provisto por la pantalla o `rememberMiuixBlurBackdrop()`.
+  - El contenedor hijo scrollable debe incorporar `.navigationBarsPadding()` para desplazar con holgura los márgenes del sistema.
+  - El botón de cierre en `startAction` utiliza `val dismissState = LocalDismissState.current` y `dismissState?.invoke()`.
+  - `GlassBottomSheet` maneja sus propios márgenes laterales internos oficiales (`GlassBottomSheetDefaults.InsideMargin = DpSize(12.dp, 0.dp)`).
+- **Material Design 3 (`WindowBottomSheet` o `ModalBottomSheet`):**
+  - En la rama Material se puede utilizar `WindowBottomSheet` con colores de `MaterialTheme.colorScheme` o `ModalBottomSheet`.
 - **Márgenes consistentes y prevención de doble padding:**
   - `WindowBottomSheet` ya incluye por defecto un margen horizontal interno de 24.dp (`insideMargin: DpSize = BottomSheetDefaults.insideMargin`).
-  - **Prohibido agregar padding horizontal adicional al contenedor raíz:** La `Column` o `LazyColumn` que aloja el contenido dentro de `WindowBottomSheet` **NO** debe tener `.padding(horizontal = 16.dp)`, ya que esto suma 24dp + 16dp = 40dp de margen lateral, comprimiendo antiestéticamente las tarjetas y botones. Usar únicamente:
+  - **Prohibido agregar padding horizontal adicional al contenedor raíz:** La `Column` o `LazyColumn` que aloja el contenido dentro del sheet **NO** debe tener `.padding(horizontal = 16.dp)`, ya que esto suma márgenes innecesarios comprimiendo antiestéticamente las tarjetas y botones. Usar únicamente:
     ```kotlin
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .padding(bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) { ... }
     ```
-  - No añadir espaciados superiores innecesarios (`padding(top = ...)` excesivo), ya que `WindowBottomSheet` ya incluye su propio drag handle y cabecera de título.
+  - No añadir espaciados superiores innecesarios (`padding(top = ...)` excesivo), ya que la cabecera ya incluye su propio drag handle y título.
 - **Botones de cabecera condicionales:** Si una vista implementa un estado vacío (`EmptyState`) con un botón de acción principal destacado, el botón equivalente en la cabecera (ej. "Crear grupo") debe condicionarse a `if (items.isNotEmpty()) { ... }` para evitar duplicación innecesaria en la pantalla.
 
 ### 6. Sistema Modular de Materiales y Shaders (`miuix-material`)
