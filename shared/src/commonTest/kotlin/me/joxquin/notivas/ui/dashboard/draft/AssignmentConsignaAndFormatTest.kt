@@ -2,6 +2,7 @@ package me.joxquin.notivas.ui.dashboard.draft
 
 import me.joxquin.notivas.ui.dashboard.draft.components.ConsignaIconType
 import me.joxquin.notivas.ui.dashboard.draft.components.detectExtensionsFromHtml
+import me.joxquin.notivas.ui.dashboard.draft.components.parseConsignaBulletItem
 import me.joxquin.notivas.ui.dashboard.draft.components.parseConsignaSections
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -253,5 +254,32 @@ class AssignmentConsignaAndFormatTest {
         assertTrue(sections[2].bullets.isEmpty())
         assertTrue(sections[2].introText.contains("Durante la clase, cada equipo presentará su investigación"))
         assertTrue(sections[2].introText.contains("Como tarea, deberán desarrollar un documento por equipo"))
+    }
+
+    @Test
+    fun testParseConsignaBulletItem_labelsWrappedInSpans() {
+        // Canvas suele envolver el texto del <strong> en <span>: llega como "** Etiqueta. **" con espacios.
+        val dotted = parseConsignaBulletItem(
+            """<li><strong><span>Herramientas.</span></strong><span> Investiguen tres herramientas.</span></li>""",
+            "2."
+        )
+        assertEquals("Herramientas", dotted.label)
+        assertEquals("Investiguen tres herramientas.", dotted.value)
+
+        // Con dos puntos dentro del <span>, el "**" que cierra la etiqueta no debe quedar al inicio del valor.
+        val colon = parseConsignaBulletItem(
+            """<li><strong><span>Desarrollo del proyecto:</span></strong><span> presenten las etapas: </span><strong><span>empatizar y definir</span></strong>.</li>""",
+            "1."
+        )
+        assertEquals("Desarrollo del proyecto", colon.label)
+        assertTrue(colon.value.startsWith("presenten las etapas"), "Valor con marca de negrita suelta: ${colon.value}")
+    }
+
+    @Test
+    fun testParseConsignaBulletItem_boldWithPeriodOnlyAtTheStartIsALabel() {
+        // Una negrita con punto en medio del texto no es una etiqueta.
+        val bullet = parseConsignaBulletItem("""<li>Revisen la guía. <strong>Lean la teoría.</strong> Luego apliquen.</li>""", null)
+        assertEquals("", bullet.label)
+        assertTrue(bullet.value.contains("Lean la teoría."))
     }
 }
