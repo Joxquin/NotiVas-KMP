@@ -220,6 +220,7 @@
     <string name="copilot_error_timeout">La IA tardó demasiado en responder. Toca Regenerar para intentarlo de nuevo.</string>
     <string name="copilot_error_auth">%1$s no aceptó tu API key. Revísala en Ajustes, Asistente Copilot IA.</string>
     <string name="copilot_error_generic">No se pudo procesar tu solicitud: %1$s</string>
+    <string name="copilot_status_retrying">La IA está ocupada, reintentando (%1$d de %2$d)...</string>
     <string name="copilot_quick_settings_title">Configuración de IA</string>
     <string name="copilot_provider_label">Proveedor</string>
     <string name="copilot_model_label">Modelo</string>

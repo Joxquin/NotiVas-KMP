@@ -3,6 +3,9 @@ package me.joxquin.notivas.data.repository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.getString
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.copilot_status_retrying
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.model.OpenRouterChatRequest
@@ -97,6 +100,11 @@ class CopilotRepository(
 
         val messages = promptBuilder.buildConversationMessages(systemPrompt, history, userPrompt)
 
+        // Mientras se reintenta, el estado de "pensando" explica la espera en vez de quedarse quieto.
+        val announceRetry: suspend (Int, Int) -> Unit = { attempt, max ->
+            onStatusUpdate(getString(Res.string.copilot_status_retrying, attempt, max))
+        }
+
         val accumulatedSources = mutableListOf<CopilotSource>()
         val accumulatedActionFeedback = mutableListOf<String>()
         var totalPromptTokens = 0
@@ -113,7 +121,7 @@ class CopilotRepository(
 
             // Intentar primero con tools (salvo que ya sepamos que este modelo/proveedor no las soporta)
             var response = try {
-                retryTransient {
+                retryTransient(onRetry = announceRetry) {
                     openRouterApiService.chatCompletion(
                         apiKey = apiKey,
                         request = OpenRouterChatRequest(
@@ -292,7 +300,7 @@ class CopilotRepository(
                         content = "Con toda la información obtenida arriba de Canvas LMS, responde ahora de forma completa, detallada y estructurada la consulta original del estudiante en Markdown (usando tablas, divisores y viñetas según corresponda)."
                     )
                 )
-                val finalSynthesisResponse = retryTransient {
+                val finalSynthesisResponse = retryTransient(onRetry = announceRetry) {
                     openRouterApiService.chatCompletion(
                         apiKey = apiKey,
                         request = OpenRouterChatRequest(
@@ -383,9 +391,13 @@ class CopilotRepository(
     /**
      * Repite la llamada al modelo ante fallos pasajeros. En las pruebas con Google AI Studio gratis la
      * consulta se perdía entera por un 503 "high demand" o por no responder en 60 s; esos fallos suelen
-     * resolverse en segundos. Los errores de key u otros se devuelven de inmediato.
+     * resolverse en segundos (en el Redmi, la mitad de los 503 pasaron al reintentar). Los errores de key
+     * u otros se devuelven de inmediato. [onRetry] permite avisar en pantalla por qué tarda.
      */
-    private suspend fun <T> retryTransient(call: suspend () -> T): T {
+    private suspend fun <T> retryTransient(
+        onRetry: suspend (attempt: Int, maxRetries: Int) -> Unit = { _, _ -> },
+        call: suspend () -> T
+    ): T {
         var retries = 0
         while (true) {
             try {
@@ -395,18 +407,20 @@ class CopilotRepository(
             } catch (e: Throwable) {
                 val kind = CopilotErrorKind.classify(e)
                 val maxRetries = when (kind) {
-                    CopilotErrorKind.OVERLOADED -> 2
+                    CopilotErrorKind.OVERLOADED -> 3
                     CopilotErrorKind.RATE_LIMITED, CopilotErrorKind.TIMEOUT -> 1
                     else -> 0
                 }
                 if (retries >= maxRetries) throw e
                 retries++
+                // Saturado: espera 2, 4 y 8 s (unos 14 s en total) antes de darse por vencido.
                 val waitMs = when (kind) {
-                    CopilotErrorKind.OVERLOADED -> 2_000L * retries
+                    CopilotErrorKind.OVERLOADED -> 1_000L shl retries
                     CopilotErrorKind.RATE_LIMITED -> 5_000L
                     else -> 0L
                 }
                 println("Copilot [Aviso] Fallo pasajero ($kind); reintento $retries de $maxRetries en ${waitMs / 1000} s")
+                onRetry(retries, maxRetries)
                 if (waitMs > 0) delay(waitMs)
             }
         }

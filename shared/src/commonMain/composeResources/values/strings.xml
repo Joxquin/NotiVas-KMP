@@ -220,6 +220,7 @@
     <string name="copilot_error_timeout">The AI took too long to answer. Tap Regenerate to try again.</string>
     <string name="copilot_error_auth">%1$s did not accept your API key. Check it in Settings, Copilot AI Assistant.</string>
     <string name="copilot_error_generic">Your request could not be processed: %1$s</string>
+    <string name="copilot_status_retrying">The AI is busy, retrying (%1$d of %2$d)...</string>
     <string name="copilot_quick_settings_title">AI Settings</string>
     <string name="copilot_provider_label">Provider</string>
     <string name="copilot_model_label">Model</string>
