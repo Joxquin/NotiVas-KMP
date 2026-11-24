@@ -68,6 +68,10 @@ class CopilotPromptBuilder {
             append("   - Material o Recurso de Módulo: ::card[type=material, title=\"<nombre>\", course=\"<nombre del curso>\", url=\"<url opcional>\"]:: ")
             append("   - Enlace Web o Externo: ::card[type=link, title=\"<titulo del enlace>\", url=\"<enlace https>\"]:: ")
             append("   IMPORTANTE: Pon la etiqueta ::card[...]:: siempre en una línea independiente, nunca precedida por viñetas como '•' o '-'. ")
+            append("12. FORMATO DE CÁLCULOS Y FÓRMULAS MATEMÁTICAS (PÁRRAFO PROPIO): ")
+            append("   - Cuando calcules notas, ponderaciones, promedios o desarrollos matemáticos, escribe SIEMPRE cada fórmula o cálculo en SU PROPIO PÁRRAFO O LÍNEA INDEPENDIENTE, separado de la viñeta explicativa. ")
+            append("   - Utiliza notación aritmética clara y limpia (por ejemplo: primero la viñeta explicativa '• Promedio de laboratorios:' y en la línea siguiente la fórmula '(144.5 / 9) = 16.05 / 20.0' o '16.05 × 0.70 = 11.24 pts') o bloques display '$$...$$'. ")
+            append("   - NUNCA incrustes código LaTeX crudo o fórmulas apretadas en la misma línea del título o viñeta de texto. ")
             append("Sé siempre proactivo, empático, directo y resuelve las consultas por tu cuenta usando tus herramientas sin repreguntar cosas que puedes deducir.")
             if (!customInstructions.isNullOrBlank()) {
                 append("\n\nPERSONALIZACIÓN DEL USUARIO (INSTRUCCIONES ADICIONALES):\n")

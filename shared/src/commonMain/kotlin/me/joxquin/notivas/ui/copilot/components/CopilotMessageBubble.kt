@@ -79,6 +79,7 @@ import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.util.DateTimeUtil
+import me.joxquin.notivas.util.MathFormatter
 import me.joxquin.notivas.util.PlatformShareHandler
 
 private val CARD_TAG_REGEX = Regex("""(?:\s*[-•*]?\s*)?::card\[(.*?)\]::\s*""")
@@ -86,7 +87,7 @@ private val CARD_PROP_REGEX = Regex("""(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^,\s
 private val HORIZONTAL_RULE_REGEX = Regex("""^([-_*])(\s*\1){2,}$""")
 private val TABLE_SEPARATOR_REGEX = Regex("""^:?-+:?$""")
 private val BULLET_REGEX = Regex("""^(\s*)([-*])\s+(.*)$""")
-private val INLINE_MARKDOWN_REGEX = Regex("""(\*\*([^*]+)\*\*)|(`([^`]+)`)|(\*([^*]+)\*)""")
+private val INLINE_MARKDOWN_REGEX = Regex("""(\*\*([^*]+)\*\*)|(`([^`]+)`)|(\*([^*]+)\*)|(\$([^$]+)\$)""")
 private val EXTRACT_DIGITS_REGEX = Regex("""\b\d+\b""")
 private val NORMALIZE_STRIP_REGEX = Regex("""[-*#_`~:>]""")
 private val MULTI_SPACE_REGEX = Regex("""\s+""")
@@ -107,6 +108,10 @@ sealed interface CopilotContentBlock {
         val url: String? = null,
         val dueDate: String? = null,
         val pointsPossible: Double? = null
+    ) : CopilotContentBlock
+    data class MathBlock(
+        val rawFormula: String,
+        val formattedFormula: String = MathFormatter.formatLatexToMathText(rawFormula)
     ) : CopilotContentBlock
 }
 
@@ -354,6 +359,12 @@ fun CopilotMessageBubble(
                                     themeStyle = themeStyle,
                                     onOpenAssignmentDraft = onOpenAssignmentDraft,
                                     onOpenForoDetail = onOpenForoDetail
+                                )
+                            }
+                            is CopilotContentBlock.MathBlock -> {
+                                CopilotMathBlockComposable(
+                                    formulaText = block.formattedFormula,
+                                    themeStyle = themeStyle
                                 )
                             }
                         }
@@ -815,6 +826,62 @@ fun parseMessageBlocks(
                 blocks.add(CopilotContentBlock.TableBlock(headers = headers, rows = tableRows))
                 continue
             }
+        }
+
+        // 5. Detectar bloque matemático display $$...$$
+        if (trimmed.startsWith("$$")) {
+            flushParagraph()
+            if (trimmed.endsWith("$$") && trimmed.length > 2) {
+                val formula = trimmed.removeSurrounding("$$").trim()
+                if (formula.isNotEmpty()) {
+                    blocks.add(CopilotContentBlock.MathBlock(rawFormula = formula))
+                }
+                i++
+                continue
+            } else {
+                val mathLines = mutableListOf<String>()
+                val firstContent = trimmed.removePrefix("$$").trim()
+                if (firstContent.isNotEmpty()) mathLines.add(firstContent)
+                i++
+                while (i < lines.size) {
+                    val mLine = lines[i].trim()
+                    if (mLine.endsWith("$$")) {
+                        val lastContent = mLine.removeSuffix("$$").trim()
+                        if (lastContent.isNotEmpty()) mathLines.add(lastContent)
+                        i++
+                        break
+                    } else {
+                        mathLines.add(lines[i])
+                        i++
+                    }
+                }
+                val formula = mathLines.joinToString("\n").trim()
+                if (formula.isNotEmpty()) {
+                    blocks.add(CopilotContentBlock.MathBlock(rawFormula = formula))
+                }
+                continue
+            }
+        }
+
+        // 6. Detectar fórmula prominente o cálculo matemático ("su párrafo propio")
+        val formulaMatch = Regex("""\$\$([^\$]+)\$\$|\$([^\$]+)\$""").find(trimmed)
+        val candidateFormula = formulaMatch?.let { m ->
+            m.groupValues[1].ifEmpty { m.groupValues[2] }.trim()
+        }
+        if (formulaMatch != null && candidateFormula != null && MathFormatter.isMathExpression(candidateFormula)) {
+            val prefix = trimmed.substring(0, formulaMatch.range.first).trim()
+            val suffix = trimmed.substring(formulaMatch.range.last + 1).trim()
+
+            if (prefix.isNotEmpty()) {
+                currentParagraph.add(prefix)
+            }
+            flushParagraph()
+            blocks.add(CopilotContentBlock.MathBlock(rawFormula = candidateFormula))
+            if (suffix.isNotEmpty()) {
+                currentParagraph.add(suffix)
+            }
+            i++
+            continue
         }
 
         currentParagraph.add(line)
@@ -1313,6 +1380,18 @@ private fun AnnotatedString.Builder.appendInlineMarkdown(content: String) {
             match.groups[6] != null -> {
                 withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
                     append(match.groups[6]!!.value)
+                }
+            }
+            match.groups[8] != null -> {
+                val mathText = MathFormatter.formatLatexToMathText(match.groups[8]!!.value)
+                withStyle(
+                    SpanStyle(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                ) {
+                    append(" $mathText ")
                 }
             }
         }
