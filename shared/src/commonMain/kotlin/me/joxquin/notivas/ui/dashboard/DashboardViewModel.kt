@@ -998,9 +998,13 @@ class DashboardViewModel(
                 val missing = courseAssignments.count { it.status == "missing" }
 
                 val groups = relationsByCourse[course.id]?.map { it.toDomain() } ?: emptyList()
+                // Grupos sin ninguna nota real (plantillas o datos de prueba) no dan promedio: antes el curso
+                // aparecía sin nota en Rendimiento aunque Canvas sí tenía calificaciones. Se usa Canvas como en
+                // el Estado A, igual que el Copiloto (GradeInsights).
+                val summary = if (groups.isNotEmpty()) academicCalculatorUseCase.calculateCourseSummary(course, groups) else null
 
-                if (groups.isEmpty()) {
-                    // Estado A: Sin grupos configurados -> fallback a notas reales de Canvas
+                if (summary == null || summary.currentAverage == null) {
+                    // Estado A: Sin grupos configurados (o sin notas reales en ellos) -> fallback a notas reales de Canvas
                     val gradedAssignments = courseAssignments.filter { it.score != null && (it.pointsPossible ?: 0.0) > 0.0 }
                     val fallbackAvg = if (gradedAssignments.isNotEmpty()) {
                         gradedAssignments.map { (it.score!! / it.pointsPossible!!) * 20.0 }.average()
@@ -1019,13 +1023,12 @@ class DashboardViewModel(
                         completedCount = completed,
                         missingCount = missing,
                         averageScore = fallbackAvg,
-                        hasConfiguredGroups = false,
+                        hasConfiguredGroups = groups.isNotEmpty(),
                         evaluatedProgressPercentage = if (courseAssignments.isNotEmpty()) (completed.toFloat() / courseAssignments.size.toFloat()) * 100f else 0f,
                         performanceLevel = performanceLevel
                     )
                 } else {
                     // Calcular con motor académico estricto
-                    val summary = academicCalculatorUseCase.calculateCourseSummary(course, groups)
                     CourseStat(
                         course = course,
                         pendingCount = pending,

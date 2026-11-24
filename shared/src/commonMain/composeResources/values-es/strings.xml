@@ -215,6 +215,13 @@
     <string name="copilot_input_placeholder">Pregunta sobre tus tareas, notas o syllabus...</string>
     <string name="copilot_send">Enviar</string>
     <string name="copilot_hero_subtitle">Tu copiloto académico con contexto directo de Canvas LMS</string>
+    <string name="copilot_error_overloaded">La IA de %1$s está saturada en este momento. Espera unos segundos y toca Regenerar.</string>
+    <string name="copilot_error_rate_limited">Tu key de %1$s llegó a su límite de uso. Espera un minuto o revisa tu cuota.</string>
+    <string name="copilot_error_timeout">La IA tardó demasiado en responder. Toca Regenerar para intentarlo de nuevo.</string>
+    <string name="copilot_error_auth">%1$s no aceptó tu API key. Revísala en Ajustes, Asistente Copilot IA.</string>
+    <string name="copilot_error_network">Sin conexión a internet. Revisa tu conexión y toca Regenerar.</string>
+    <string name="copilot_error_generic">No se pudo procesar tu solicitud: %1$s</string>
+    <string name="copilot_status_retrying">La IA está ocupada, reintentando (%1$d de %2$d)...</string>
     <string name="copilot_quick_settings_title">Configuración de IA</string>
     <string name="copilot_provider_label">Proveedor</string>
     <string name="copilot_model_label">Modelo</string>

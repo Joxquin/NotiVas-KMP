@@ -1,13 +1,18 @@
 package me.joxquin.notivas.data.repository
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.getString
+import me.joxquin.notivas.shared.resources.Res
+import me.joxquin.notivas.shared.resources.copilot_status_retrying
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.model.OpenRouterChatRequest
 import me.joxquin.notivas.data.model.OpenRouterMessage
 import me.joxquin.notivas.data.remote.CanvasApiService
 import me.joxquin.notivas.data.remote.OpenRouterApiService
+import me.joxquin.notivas.data.repository.copilot.CopilotErrorKind
 import me.joxquin.notivas.data.repository.copilot.CopilotPromptBuilder
 import me.joxquin.notivas.data.repository.copilot.CopilotToolExecutor
 import kotlinx.serialization.json.contentOrNull
@@ -53,7 +58,11 @@ class CopilotRepository(
         canvasModulesToolsHandler = CanvasModulesToolsHandler(canvasApiService, localStore, preferencesManager),
         canvasDiscussionsToolsHandler = CanvasDiscussionsToolsHandler(canvasApiService, localStore, preferencesManager),
         simulatorToolsHandler = SimulatorToolsHandler(localStore),
-        googleSearchToolsHandler = GoogleSearchToolsHandler(openRouterApiService.client)
+        googleSearchToolsHandler = GoogleSearchToolsHandler(openRouterApiService.client),
+        gradesToolsHandler = me.joxquin.notivas.data.repository.copilot.tools.handlers.GradesToolsHandler(
+            localStore,
+            me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase()
+        )
     )
 
     suspend fun queryCopilot(
@@ -91,6 +100,11 @@ class CopilotRepository(
 
         val messages = promptBuilder.buildConversationMessages(systemPrompt, history, userPrompt)
 
+        // Mientras se reintenta, el estado de "pensando" explica la espera en vez de quedarse quieto.
+        val announceRetry: suspend (Int, Int) -> Unit = { attempt, max ->
+            onStatusUpdate(getString(Res.string.copilot_status_retrying, attempt, max))
+        }
+
         val accumulatedSources = mutableListOf<CopilotSource>()
         val accumulatedActionFeedback = mutableListOf<String>()
         var totalPromptTokens = 0
@@ -107,17 +121,19 @@ class CopilotRepository(
 
             // Intentar primero con tools (salvo que ya sepamos que este modelo/proveedor no las soporta)
             var response = try {
-                openRouterApiService.chatCompletion(
-                    apiKey = apiKey,
-                    request = OpenRouterChatRequest(
-                        model = model,
-                        messages = messages,
-                        tools = if (disableTools) null else toolExecutor.tools,
-                        temperature = 0.3,
-                        maxTokens = 4000
-                    ),
-                    customBaseUrl = customBaseUrl
-                )
+                retryTransient(onRetry = announceRetry) {
+                    openRouterApiService.chatCompletion(
+                        apiKey = apiKey,
+                        request = OpenRouterChatRequest(
+                            model = model,
+                            messages = messages,
+                            tools = if (disableTools) null else toolExecutor.tools,
+                            temperature = 0.3,
+                            maxTokens = 4000
+                        ),
+                        customBaseUrl = customBaseUrl
+                    )
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -284,17 +300,19 @@ class CopilotRepository(
                         content = "Con toda la información obtenida arriba de Canvas LMS, responde ahora de forma completa, detallada y estructurada la consulta original del estudiante en Markdown (usando tablas, divisores y viñetas según corresponda)."
                     )
                 )
-                val finalSynthesisResponse = openRouterApiService.chatCompletion(
-                    apiKey = apiKey,
-                    request = OpenRouterChatRequest(
-                        model = model,
-                        messages = messages,
-                        tools = null,
-                        temperature = 0.3,
-                        maxTokens = 4000
-                    ),
-                    customBaseUrl = customBaseUrl
-                )
+                val finalSynthesisResponse = retryTransient(onRetry = announceRetry) {
+                    openRouterApiService.chatCompletion(
+                        apiKey = apiKey,
+                        request = OpenRouterChatRequest(
+                            model = model,
+                            messages = messages,
+                            tools = null,
+                            temperature = 0.3,
+                            maxTokens = 4000
+                        ),
+                        customBaseUrl = customBaseUrl
+                    )
+                }
                 val synthesisText = finalSynthesisResponse.choices?.firstOrNull()?.message?.content
                 if (!synthesisText.isNullOrBlank()) {
                     finalReply = synthesisText.replace(Regex("(?s)<tool_call>.*?</tool_call>"), "").trim()
@@ -356,6 +374,8 @@ class CopilotRepository(
                 if (!query.isNullOrBlank()) "Buscando en la web con Google: \"$query\"..."
                 else "Buscando en la web con Google Search..."
             }
+            "get_grades_summary" -> "Revisando tus promedios..."
+            "calculate_needed_grade" -> "Calculando cuánto necesitas..."
             "get_academic_overview" -> "Consultando resumen académico..."
             "get_course_assignments" -> "Listando tareas disponibles..."
             "fetch_canvas_assignment_details" -> "Obteniendo detalles de la entrega..."
@@ -365,6 +385,44 @@ class CopilotRepository(
             "fetch_module_item_content" -> "Leyendo contenido de clase..."
             "create_simulation_group" -> "Configurando grupo de simulación..."
             else -> "Procesando información..."
+        }
+    }
+
+    /**
+     * Repite la llamada al modelo ante fallos pasajeros. En las pruebas con Google AI Studio gratis la
+     * consulta se perdía entera por un 503 "high demand" o por no responder en 60 s; esos fallos suelen
+     * resolverse en segundos (en el Redmi, la mitad de los 503 pasaron al reintentar). Los errores de key
+     * u otros se devuelven de inmediato. [onRetry] permite avisar en pantalla por qué tarda.
+     */
+    private suspend fun <T> retryTransient(
+        onRetry: suspend (attempt: Int, maxRetries: Int) -> Unit = { _, _ -> },
+        call: suspend () -> T
+    ): T {
+        var retries = 0
+        while (true) {
+            try {
+                return call()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                val kind = CopilotErrorKind.classify(e)
+                val maxRetries = when (kind) {
+                    CopilotErrorKind.OVERLOADED -> 3
+                    CopilotErrorKind.RATE_LIMITED, CopilotErrorKind.TIMEOUT -> 1
+                    else -> 0
+                }
+                if (retries >= maxRetries) throw e
+                retries++
+                // Saturado: espera 2, 4 y 8 s (unos 14 s en total) antes de darse por vencido.
+                val waitMs = when (kind) {
+                    CopilotErrorKind.OVERLOADED -> 1_000L shl retries
+                    CopilotErrorKind.RATE_LIMITED -> 5_000L
+                    else -> 0L
+                }
+                println("Copilot [Aviso] Fallo pasajero ($kind); reintento $retries de $maxRetries en ${waitMs / 1000} s")
+                onRetry(retries, maxRetries)
+                if (waitMs > 0) delay(waitMs)
+            }
         }
     }
 
