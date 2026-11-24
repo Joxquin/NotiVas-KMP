@@ -4,6 +4,7 @@ import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.model.SimulationGroupWithItems
 import me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 /** De dónde sale el promedio de un curso. */
@@ -37,7 +38,12 @@ data class NeededGrade(
     val neededAverage: Double?,
     val outcome: Outcome
 ) {
-    enum class Outcome { ALREADY_SECURED, REACHABLE, IMPOSSIBLE, CLOSED_PASSED, CLOSED_FAILED }
+    enum class Outcome {
+        ALREADY_SECURED, REACHABLE, IMPOSSIBLE, CLOSED_PASSED, CLOSED_FAILED,
+
+        /** Sin ponderaciones y sin tareas pendientes publicadas: puede haber evaluaciones futuras, no es un cierre. */
+        NO_PENDING_PASSING, NO_PENDING_BELOW
+    }
 }
 
 object GradeInsights {
@@ -113,16 +119,22 @@ object GradeInsights {
     /**
      * Promedio mínimo que hace falta en lo que queda por evaluar para terminar con [target]:
      * final = (actual * evaluado + X * restante) / 100  =>  X = (100 * meta - actual * evaluado) / restante.
+     *
+     * [weighted] = false cuando el avance sale de contar tareas (sin grupos del simulador): entonces
+     * "todo calificado" solo significa que Canvas no tiene más tareas publicadas, y no se da el curso por cerrado.
      */
-    fun neededAverage(currentAverage: Double?, evaluatedPercent: Double, target: Double): NeededGrade {
+    fun neededAverage(currentAverage: Double?, evaluatedPercent: Double, target: Double, weighted: Boolean = true): NeededGrade {
         val evaluated = if (currentAverage == null) 0.0 else evaluatedPercent.coerceIn(0.0, 100.0)
         val remaining = 100.0 - evaluated
         if (remaining < 0.5) {
-            val avg = currentAverage ?: 0.0
-            return NeededGrade(
-                target, currentAverage, evaluated, 0.0, null,
-                if (avg >= target) NeededGrade.Outcome.CLOSED_PASSED else NeededGrade.Outcome.CLOSED_FAILED
-            )
+            val passing = (currentAverage ?: 0.0) >= target
+            val outcome = when {
+                weighted && passing -> NeededGrade.Outcome.CLOSED_PASSED
+                weighted -> NeededGrade.Outcome.CLOSED_FAILED
+                passing -> NeededGrade.Outcome.NO_PENDING_PASSING
+                else -> NeededGrade.Outcome.NO_PENDING_BELOW
+            }
+            return NeededGrade(target, currentAverage, evaluated, 0.0, null, outcome)
         }
         val raw = (100.0 * target - (currentAverage ?: 0.0) * evaluated) / remaining
         val outcome = when {
@@ -135,10 +147,16 @@ object GradeInsights {
             currentAverage = currentAverage,
             evaluatedPercent = round1(evaluated),
             remainingPercent = round1(remaining),
-            neededAverage = round1(raw.coerceAtLeast(0.0)),
+            neededAverage = ceil1(raw.coerceAtLeast(0.0)),
             outcome = outcome
         )
     }
 
     fun round1(value: Double): Double = (value * 10.0).roundToInt() / 10.0
+
+    /** Un decimal truncado, como los promedios de Inicio y Rendimiento (16.78 -> 16.7), para que la IA diga la misma cifra. */
+    fun shown1(value: Double): Double = (value * 10.0).toLong() / 10.0
+
+    /** Un decimal hacia arriba (13.62 -> 13.7): la nota que hace falta nunca se informa por debajo de la real. */
+    fun ceil1(value: Double): Double = ceil(value * 10.0 - 1e-6) / 10.0
 }

@@ -101,7 +101,7 @@ class GradesToolsHandler(
                     val snapshots = courses.map(::snapshotOf)
                     buildJsonObject {
                         put("escala", "0-20")
-                        GradeInsights.overallAverage(snapshots)?.let { put("promedio_general", GradeInsights.round1(it)) }
+                        GradeInsights.overallAverage(snapshots)?.let { put("promedio_general", GradeInsights.shown1(it)) }
                         put("cursos", buildJsonArray { snapshots.forEach { add(compact(it)) } })
                         put("nota", "promedio_general = media de los cursos con notas, igual que la pantalla Inicio de NotiVas.")
                     }
@@ -110,8 +110,9 @@ class GradesToolsHandler(
             }
             NEEDED -> {
                 val goal = args.number("target_grade")
-                fun neededFor(s: CourseGradeSnapshot) =
-                    GradeInsights.neededAverage(s.currentAverage, s.evaluatedPercent, goal ?: s.course.passingGrade.toDouble())
+                fun neededFor(s: CourseGradeSnapshot) = GradeInsights.neededAverage(
+                    s.currentAverage, s.evaluatedPercent, goal ?: s.course.passingGrade.toDouble(), weighted = s.weightsConfigured
+                )
                 val json = if (course != null) {
                     val snapshot = snapshotOf(course)
                     needed(snapshot, neededFor(snapshot))
@@ -123,7 +124,8 @@ class GradesToolsHandler(
                         })
                         put(
                             "metodo",
-                            "ponderado=true usa los grupos del simulador de NotiVas; ponderado=false es aproximado (cada tarea pesa igual)."
+                            "ponderado=true usa los grupos del simulador de NotiVas; ponderado=false es aproximado (cada tarea pesa igual). " +
+                                "sin_pendientes_publicadas_*: Canvas no tiene evaluaciones pendientes publicadas, NO significa que el curso terminó."
                         )
                     }
                 }
@@ -137,7 +139,7 @@ class GradesToolsHandler(
         put("id", s.course.id)
         put("curso", shortName(s.course))
         s.course.courseCode?.let { put("codigo", it) }
-        s.currentAverage?.let { put("promedio", GradeInsights.round1(it)) }
+        s.currentAverage?.let { put("promedio", GradeInsights.shown1(it)) }
         put("estado", status(s))
         put("calificadas", s.gradedCount)
         put("pendientes", s.pendingCount)
@@ -150,7 +152,7 @@ class GradesToolsHandler(
         put("id", s.course.id)
         put("curso", shortName(s.course))
         s.course.courseCode?.let { put("codigo", it) }
-        s.currentAverage?.let { put("promedio", GradeInsights.round1(it)) }
+        s.currentAverage?.let { put("promedio", GradeInsights.shown1(it)) }
         put("fuente_promedio", source(s.averageSource))
         put("estado", status(s))
         put("nota_aprobatoria", s.course.passingGrade.toDouble())
@@ -159,7 +161,7 @@ class GradesToolsHandler(
         put("vencidas", s.missingCount)
         put("avance_evaluado_pct", GradeInsights.round1(s.evaluatedPercent))
         put("ponderaciones_configuradas", s.weightsConfigured)
-        s.projectedFinal?.let { put("proyeccion_final_simulador", GradeInsights.round1(it)) }
+        s.projectedFinal?.let { put("proyeccion_final_simulador", GradeInsights.shown1(it)) }
         put("ultimas_notas", buildJsonArray {
             s.recentGrades.forEach { g ->
                 add(buildJsonObject {
@@ -172,7 +174,7 @@ class GradesToolsHandler(
 
     private fun needed(s: CourseGradeSnapshot, n: NeededGrade) = buildJsonObject {
         put("curso", shortName(s.course))
-        n.currentAverage?.let { put("promedio_actual", GradeInsights.round1(it)) }
+        n.currentAverage?.let { put("promedio_actual", GradeInsights.shown1(it)) }
         put("meta", n.target)
         put("avance_evaluado_pct", n.evaluatedPercent)
         put("restante_pct", n.remainingPercent)
@@ -189,7 +191,7 @@ class GradesToolsHandler(
     private fun neededCompact(s: CourseGradeSnapshot, n: NeededGrade) = buildJsonObject {
         put("id", s.course.id)
         put("curso", shortName(s.course))
-        n.currentAverage?.let { put("promedio_actual", GradeInsights.round1(it)) }
+        n.currentAverage?.let { put("promedio_actual", GradeInsights.shown1(it)) }
         put("meta", n.target)
         put("restante_pct", n.remainingPercent)
         n.neededAverage?.let { put("promedio_necesario_en_lo_restante", it) }
@@ -203,6 +205,8 @@ class GradesToolsHandler(
         NeededGrade.Outcome.IMPOSSIBLE -> "imposible_con_lo_que_queda"
         NeededGrade.Outcome.CLOSED_PASSED -> "curso_cerrado_aprobado"
         NeededGrade.Outcome.CLOSED_FAILED -> "curso_cerrado_desaprobado"
+        NeededGrade.Outcome.NO_PENDING_PASSING -> "sin_pendientes_publicadas_aprobando"
+        NeededGrade.Outcome.NO_PENDING_BELOW -> "sin_pendientes_publicadas_por_debajo"
     }
 
     private fun status(s: CourseGradeSnapshot): String {

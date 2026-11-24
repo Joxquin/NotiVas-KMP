@@ -81,10 +81,36 @@ class GradeInsightsTest {
     }
 
     @Test
+    fun withoutWeightsNothingPendingIsNotAClosedCourse() {
+        // En el Redmi la IA dijo "curso cerrado / desaprobado" para un curso con todo lo publicado ya calificado.
+        val unweighted = GradeInsights.neededAverage(currentAverage = 11.7, evaluatedPercent = 100.0, target = 12.0, weighted = false)
+        assertEquals(NeededGrade.Outcome.NO_PENDING_BELOW, unweighted.outcome)
+        assertNull(unweighted.neededAverage)
+        val weighted = GradeInsights.neededAverage(currentAverage = 11.7, evaluatedPercent = 100.0, target = 12.0, weighted = true)
+        assertEquals(NeededGrade.Outcome.CLOSED_FAILED, weighted.outcome)
+    }
+
+    @Test
     fun overallAverageIgnoresCoursesWithoutGrades() {
         val a = GradeInsights.snapshot(course, listOf(assignment(1, 18.0)), emptyList(), calculator)
         val b = GradeInsights.snapshot(course.copy(id = 2), listOf(assignment(2, null, status = "upcoming")), emptyList(), calculator)
         assertEquals(18.0, GradeInsights.overallAverage(listOf(a, b)))
         assertTrue(GradeInsights.overallAverage(listOf(b)) == null)
+    }
+
+    @Test
+    fun averagesAreTruncatedLikeTheAppShowsThem() {
+        // Inicio mostraba 16.7 y la IA decía 16.8 para el mismo promedio (16.78).
+        assertEquals(16.7, GradeInsights.shown1(16.78))
+        assertEquals(18.6, GradeInsights.shown1(18.66))
+        assertEquals(12.0, GradeInsights.shown1(12.0))
+    }
+
+    @Test
+    fun neededGradeIsRoundedUpSoItIsNeverTooLow() {
+        // (1200 - 11.5 * 45) / 55 = 12.4090...: con 12.4 no alcanzaría la meta, hace falta 12.5.
+        assertEquals(12.5, GradeInsights.neededAverage(currentAverage = 11.5, evaluatedPercent = 45.0, target = 12.0).neededAverage)
+        assertEquals(13.6, GradeInsights.ceil1(13.6))
+        assertEquals(13.7, GradeInsights.ceil1(13.62))
     }
 }
