@@ -67,9 +67,9 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
-import me.joxquin.notivas.ui.dashboard.components.search.glassSearchBarTransition
-import me.joxquin.notivas.ui.dashboard.components.search.rememberGlassSearchBarAlpha
-import me.joxquin.notivas.ui.dashboard.components.search.rememberGlassSearchTitleAlpha
+import me.joxquin.notivas.ui.components.miuix.glassSearchBarTransition
+import me.joxquin.notivas.ui.components.miuix.rememberGlassSearchBarAlpha
+import me.joxquin.notivas.ui.components.miuix.rememberGlassSearchTitleAlpha
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding

@@ -63,12 +63,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.local.CopilotProvider
 import me.joxquin.notivas.data.model.CanvasDiscussionTopic
 import me.joxquin.notivas.ui.components.aura.MonetAuraBackground
+import me.joxquin.notivas.ui.components.miuix.glassSearchBarTransition
+import me.joxquin.notivas.ui.components.miuix.rememberGlassSearchBarAlpha
+import me.joxquin.notivas.ui.components.miuix.rememberGlassSearchTitleAlpha
 import me.joxquin.notivas.ui.copilot.components.CopilotCustomInstructionsDialog
 import me.joxquin.notivas.ui.copilot.components.CopilotHeaderBar
 import me.joxquin.notivas.ui.copilot.components.CopilotHistoryOverlay
@@ -149,22 +153,6 @@ fun CopilotScreen(
             listState.animateScrollToItem(uiState.messages.size - 1)
         }
     }
-
-    // Modal / Overlay de Historial con buscador integrado
-    CopilotHistoryOverlay(
-        expanded = isHistorySheetVisible || uiState.isHistorySheetVisible,
-        onDismissRequest = {
-            isHistorySheetVisible = false
-            viewModel.dismissHistorySheet()
-        },
-        sessions = uiState.sessions,
-        currentSessionId = uiState.currentSessionId,
-        onSelectSession = { viewModel.loadSession(it) },
-        onNewSession = { viewModel.startNewSession() },
-        onRenameSession = { id, title -> viewModel.renameSession(id, title) },
-        onDeleteSession = { viewModel.deleteSession(it) },
-        themeStyle = themeStyle
-    )
 
     // Diálogos de Ajustes Rápidos (Proveedor, Modelo y Personalización)
     CopilotProviderPickerDialog(
@@ -250,6 +238,9 @@ fun CopilotScreen(
             label = "copilotSubmenuArrow"
         )
 
+        val isOverlayExpanded = isHistorySheetVisible || uiState.isHistorySheetVisible
+        val searchBarAlpha = rememberGlassSearchBarAlpha(isOverlayExpanded)
+
         Box(
             modifier = modifier.fillMaxSize()
         ) {
@@ -265,10 +256,18 @@ fun CopilotScreen(
                             isContentScrolled = true,
                             progressiveBlur = true,
                             collapsed = true,
+                            contentModifier = Modifier.glassSearchBarTransition(isOverlayExpanded, barAlpha = { searchBarAlpha.value }),
+                            titleAlpha = rememberGlassSearchTitleAlpha(
+                                isOverlayExpanded,
+                                collapsed = true
+                            ),
+                            backgroundAlpha = { searchBarAlpha.value },
                             navigationIcon = {
+                                val iconAlpha = if (isOverlayExpanded) 0f else searchBarAlpha.value
                                 GlassIconButton(
                                     backdrop = backdrop,
-                                    onClick = { viewModel.startNewSession() }
+                                    onClick = { viewModel.startNewSession() },
+                                    modifier = Modifier.graphicsLayer { alpha = iconAlpha }
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
                                         imageVector = MiuixIcons.Create,
@@ -278,13 +277,16 @@ fun CopilotScreen(
                                 }
                             },
                             actions = {
+                                val iconAlpha = if (isOverlayExpanded) 0f else searchBarAlpha.value
                                 GlassIconButton(
                                     backdrop = backdrop,
                                     onClick = { showQuickSettingsMenu = true },
-                                    modifier = Modifier.glassPopupAnchor(
-                                        anchor = menuAnchor,
-                                        cornerRadius = GlassTopAppBarDefaults.ButtonSize / 2,
-                                    )
+                                    modifier = Modifier
+                                        .graphicsLayer { alpha = iconAlpha }
+                                        .glassPopupAnchor(
+                                            anchor = menuAnchor,
+                                            cornerRadius = GlassTopAppBarDefaults.ButtonSize / 2,
+                                        )
                                 ) {
                                     top.yukonga.miuix.kmp.basic.Icon(
                                         imageVector = MiuixIcons.Tune,
@@ -574,6 +576,22 @@ fun CopilotScreen(
                     null -> {}
                 }
             }
+
+            // Overlay de Historial y Búsqueda HyperOS (CopilotHistoryOverlay)
+            CopilotHistoryOverlay(
+                expanded = isOverlayExpanded,
+                onDismissRequest = {
+                    isHistorySheetVisible = false
+                    viewModel.dismissHistorySheet()
+                },
+                sessions = uiState.sessions,
+                currentSessionId = uiState.currentSessionId,
+                onSelectSession = { viewModel.loadSession(it) },
+                onNewSession = { viewModel.startNewSession() },
+                onRenameSession = { id, title -> viewModel.renameSession(id, title) },
+                onDeleteSession = { viewModel.deleteSession(it) },
+                themeStyle = AppThemeStyle.MIUIX
+            )
         }
         return
     }
@@ -817,5 +835,21 @@ fun CopilotScreen(
                 modifier = Modifier.imePadding()
             )
         }
+
+        // Overlay de Historial y Búsqueda Material 3
+        CopilotHistoryOverlay(
+            expanded = isHistorySheetVisible || uiState.isHistorySheetVisible,
+            onDismissRequest = {
+                isHistorySheetVisible = false
+                viewModel.dismissHistorySheet()
+            },
+            sessions = uiState.sessions,
+            currentSessionId = uiState.currentSessionId,
+            onSelectSession = { viewModel.loadSession(it) },
+            onNewSession = { viewModel.startNewSession() },
+            onRenameSession = { id, title -> viewModel.renameSession(id, title) },
+            onDeleteSession = { viewModel.deleteSession(it) },
+            themeStyle = AppThemeStyle.MATERIAL
+        )
     }
 }
