@@ -154,8 +154,17 @@ Card(
 
 ### 5. Hojas y Diálogos Rápidos (Quicks / `WindowBottomSheet`)
 - **Uso universal:** Tanto en MIUIX como en Material Design 3, utilizar preferentemente `WindowBottomSheet` de MIUIX para las hojas emergentes (quicks) para garantizar consistencia visual y soporte háptico nativo.
-- **Márgenes consistentes:**
-  - Evitar paddings horizontales excesivos dentro de la hoja: el contenido debe alinearse de forma limpia con los márgenes estándar (12.dp a 16.dp).
+- **Márgenes consistentes y prevención de doble padding:**
+  - `WindowBottomSheet` ya incluye por defecto un margen horizontal interno de 24.dp (`insideMargin: DpSize = BottomSheetDefaults.insideMargin`).
+  - **Prohibido agregar padding horizontal adicional al contenedor raíz:** La `Column` o `LazyColumn` que aloja el contenido dentro de `WindowBottomSheet` **NO** debe tener `.padding(horizontal = 16.dp)`, ya que esto suma 24dp + 16dp = 40dp de margen lateral, comprimiendo antiestéticamente las tarjetas y botones. Usar únicamente:
+    ```kotlin
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) { ... }
+    ```
   - No añadir espaciados superiores innecesarios (`padding(top = ...)` excesivo), ya que `WindowBottomSheet` ya incluye su propio drag handle y cabecera de título.
 - **Botones de cabecera condicionales:** Si una vista implementa un estado vacío (`EmptyState`) con un botón de acción principal destacado, el botón equivalente en la cabecera (ej. "Crear grupo") debe condicionarse a `if (items.isNotEmpty()) { ... }` para evitar duplicación innecesaria en la pantalla.
 
@@ -181,6 +190,35 @@ En las versiones recientes de `compose-miuix-ui` (desde `0.9.4-ca674992` en adel
 - Para vistas con actualización por deslizamiento en MIUIX (ej. `InicioMiuixContent`):
   - Utilizar `val pullToRefreshState = rememberPullToRefreshState()` y envolver con `PullToRefresh(pullToRefreshState = pullToRefreshState, onRefresh = { ... })`.
   - Sincronizar con el scroll overscroll elástico vertical (`Modifier.overScrollVertical()`), permitiendo amortiguación y desvanecimiento suave de texto de completado sin interrupciones.
+
+### 10. Selectores de Fecha y Hora Unificados (`top.yukonga.miuix.kmp.basic.NumberPicker`)
+Para diálogos y hojas emergentes de selección de fecha y hora (como recordatorios personalizados):
+- **Una Sola Tarjeta Compacta:** No fragmentar en múltiples tarjetas separadas ni 5 ruedas individuales (Día, Mes, Año, Hora, Minuto). Alojar todo en un único `Card` de MIUIX (`surfaceContainer`) con `insideMargin = PaddingValues(0.dp)`.
+- **Rango Compacto (`visibleItemCount = 3`):** Usar siempre `visibleItemCount = 3` en lugar del valor por defecto de 5, reduciendo la altura vertical para que encaje de forma cómoda dentro del `WindowBottomSheet`.
+- **Columnas y Ruedas:**
+  - **Fecha Relativa Continua (Columna 1, weight 2.5f):** Rango de días (`0..180`) a partir de hoy con etiquetas localizadas (`lun, 24 de nov`, `mar, 25 de nov`), eliminando fechas inválidas (como 31 de febrero) y bloqueando desplazamientos hacia el pasado (`wrapAround = false`).
+  - **Formato 12 Horas (Columnas 2, 3 y 4):**
+    - Hora: `1..12` (`wrapAround = true`, weight 1f).
+    - Minutos: `0..59` con formato `00..59` (`wrapAround = true`, weight 1f).
+    - Período: `0..1` para `a.m.` / `p.m.` (`wrapAround = false`, weight 1.1f).
+- **Indicadores Centrales de Selección:** Dibujar dos líneas horizontales sutiles usando `Modifier.drawBehind` con `color = MiuixTheme.colorScheme.dividerLine.copy(alpha = 0.45f)` a la altura de `itemHeight` e `itemHeight * 2`, enmarcando la fila activa.
+- **Inicialización Segura en el Futuro:** Calcular la selección inicial a +1 hora en el futuro (o 9:00 a.m. del día siguiente si se abre en la noche), evitando que se disparen avisos de "fecha pasada" al abrir el diálogo.
+
+### 11. Renderizado de Fórmulas y Bloques Matemáticos (`CopilotMathBlockComposable`)
+- **Párrafo Propio y Dedicado:** Cualquier cálculo, fórmula LaTeX o expresión matemática en Copilot IA debe aislarse de los bloques de texto ordinarios y renderizarse en su propio contenedor visual dedicado (`CopilotContentBlock.MathBlock`).
+- **Limpieza de LaTeX (`MathFormatter`):** Convertir la notación LaTeX a texto Unicode matemático limpio (`MathFormatter.formatLatexToMathText`), traduciendo fracciones (`\frac{a}{b}` a `(a) / (b)`), raíces (`\sqrt`), operadores (`\times` a `×`, `\cdot` a `·`), letras griegas (`\mu`, `\alpha`, `\beta`) y estilos tipográficos (`\mathbf`, `\text`).
+- **Estética Dual:**
+  - **HyperOS MIUIX:** Contenedor con `Modifier.squircleSurface(color = MiuixTheme.colorScheme.surfaceContainer, cornerRadius = 14.dp)`, borde suave `squircleBorder`, insignia de "Cálculo" en acento primario y botón háptico para copiar la fórmula limpia al portapapeles.
+  - **Material Design 3:** `androidx.compose.material3.Card` con `surfaceContainerHigh` y esquinas redondeadas de 14.dp.
+
+### 12. Conjugación y Transiciones de Búsqueda HyperOS (`me.joxquin.notivas.ui.components.miuix`)
+Al implementar overlays o pantallas de búsqueda con el `TopAppBar`:
+- Utilizar la curva elástica oficial de MIUIX / HyperOS `SearchModeEasing` (400ms spring con amortiguación nativa).
+- Conjugar la barra de navegación y el toolbar con `Modifier.glassSearchBarTransition(isOverlayExpanded, ...)`:
+  - Escalar la barra superior suavemente a 0.9.
+  - Aplicar desenfoque progresivo hasta 50f.
+  - Desvanecer opacidad con `rememberGlassSearchTitleAlpha(isOverlayExpanded)`.
+- El botón circular de cancelar (`MiuixIcons.Glass.Close`) debe animarse lateralmente (traslación de 66dp) con escalado y desvanecimiento sincronizado.
 
 ---
 
@@ -261,13 +299,15 @@ Compose Multiplatform procesa los recursos de strings mediante un motor propio y
 1. **¿Se implementó el diseño dual?** Ramificar con `if (themeStyle == AppThemeStyle.MIUIX) { ... } else { ... }`.
 2. **¿Se respetó el TopAppBar en MIUIX?** Comprobar que la vista no duplique el `TopAppBar` y que esté integrada con `MiuixBlurredBar` y `MiuixPageTopAppBar` de `MiuixPageUtils.kt`.
 3. **¿Se usaron los componentes nativos correctos?** Usar `Card`, `TextField` (with title para formularios, no `InputField`), `SmallTitle`, `TextButton`.
-4. **¿Márgenes y paddings consistentes?** Padding horizontal de 16.dp en pantallas y 12.dp a 16.dp en quicks/sheets; sin paddings superiores excesivos en `WindowBottomSheet`.
-5. **¿Navegación protegida contra doble `onBack`?** No usar `LaunchedEffect` para retroceder tras eliminar; proteger con banderas y guardar caché `lastValidModel`.
-6. **¿Botones no redundantes?** Los botones de cabecera deben ocultarse cuando el estado vacío ya provee el CTA principal.
-7. **¿Formato de strings e i18n correcto?** Comprobar que los porcentajes usen `%1$d%` (no `%%`), y que todas las claves existan en `values` y `values-es`.
-8. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
-9. **¿Paquetes de materiales e imports correctos?** Importar `GlassShadows`, `GlassDefaults`, `RuntimeShader` e `isRuntimeShaderSupported` desde `top.yukonga.miuix.kmp.material.*` (no desde `.glass` ni `.blur`).
-10. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
+4. **¿Márgenes y paddings consistentes?** Padding horizontal de 16.dp en pantallas completas; en `WindowBottomSheet`, **NO** añadir `.padding(horizontal = ...)` al contenedor raíz, ya que el bottom sheet ya aplica 24.dp por defecto (`BottomSheetDefaults.insideMargin`).
+5. **¿Selectores de fecha/hora unificados?** Utilizar una sola tarjeta con `visibleItemCount = 3`, fecha relativa continua e inicialización en el futuro (+1h).
+6. **¿Expresiones matemáticas aisladas?** Usar `CopilotMathBlockComposable` en un párrafo propio para fórmulas de Copilot.
+7. **¿Navegación protegida contra doble `onBack`?** No usar `LaunchedEffect` para retroceder tras eliminar; proteger con banderas y guardar caché `lastValidModel`.
+8. **¿Botones no redundantes?** Los botones de cabecera deben ocultarse cuando el estado vacío ya provee el CTA principal.
+9. **¿Formato de strings e i18n correcto?** Comprobar que los porcentajes usen `%1$d%` (no `%%`), y que todas las claves existan en `values` y `values-es`.
+10. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
+11. **¿Paquetes de materiales e imports correctos?** Importar `GlassShadows`, `GlassDefaults`, `RuntimeShader` e `isRuntimeShaderSupported` desde `top.yukonga.miuix.kmp.material.*` (no desde `.glass` ni `.blur`).
+12. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
 
 <!-- graphify-rules-start (managed by `graphify init`) -->
 ## Use Graphify before grep
