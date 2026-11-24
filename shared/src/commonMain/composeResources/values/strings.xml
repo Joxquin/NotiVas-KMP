@@ -443,8 +443,8 @@
     <string name="draft_status_card_title">Draft Synchronization</string>
     <string name="draft_open_docs_btn">Open in Google Docs</string>
     <string name="task_actions_title">Management &amp; Options</string>
-    <string name="task_submenu_manage_draft">Manage Draft in Google Drive</string>
-    <string name="task_submenu_manage_draft_desc">Create synchronized document or open existing draft</string>
+    <string name="task_submenu_manage_draft">Guidelines &amp; Deliverable</string>
+    <string name="task_submenu_manage_draft_desc">Review instructions, prepare drafts, and manage deliverables</string>
     <string name="task_consigna_title">Instructions &amp; Prompts</string>
     <string name="task_submenu_open_canvas">Open assignment in Canvas LMS</string>
     <string name="task_submenu_mark_completed">Mark as completed</string>

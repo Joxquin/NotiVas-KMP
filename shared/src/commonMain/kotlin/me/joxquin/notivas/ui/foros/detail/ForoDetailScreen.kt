@@ -225,7 +225,12 @@ fun ForoDetailScreen(
                         isExpired = isExpired,
                         isPublishing = uiState.isPublishing,
                         onPublishToCanvas = { viewModel.publishForumReply(topic) },
-                        onOpenCopilotAssistant = { showCopilotAssistant = true },
+                        onOpenCopilotAssistant = {
+                            showCopilotAssistant = true
+                            if (uiState.copilotStrategy == null && !uiState.isGeneratingCopilot && uiState.copilotErrorMessage == null) {
+                                viewModel.generateCopilotStrategy(topic)
+                            }
+                        },
                         themeStyle = themeStyle
                     )
                 }
@@ -397,7 +402,12 @@ fun ForoDetailScreen(
                         isExpired = isExpired,
                         isPublishing = uiState.isPublishing,
                         onPublishToCanvas = { viewModel.publishForumReply(topic) },
-                        onOpenCopilotAssistant = { showCopilotAssistant = true },
+                        onOpenCopilotAssistant = {
+                            showCopilotAssistant = true
+                            if (uiState.copilotStrategy == null && !uiState.isGeneratingCopilot && uiState.copilotErrorMessage == null) {
+                                viewModel.generateCopilotStrategy(topic)
+                            }
+                        },
                         themeStyle = themeStyle
                     )
                 }

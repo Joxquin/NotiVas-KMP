@@ -443,8 +443,8 @@
     <string name="draft_status_card_title">Sincronización de Borrador</string>
     <string name="draft_open_docs_btn">Abrir en Google Docs</string>
     <string name="task_actions_title">Gestión y Opciones</string>
-    <string name="task_submenu_manage_draft">Gestionar Borrador en Google Drive</string>
-    <string name="task_submenu_manage_draft_desc">Crear documento sincronizado o abrir borrador existente</string>
+    <string name="task_submenu_manage_draft">Consigna y entregable</string>
+    <string name="task_submenu_manage_draft_desc">Revisar instrucciones, preparar el borrador y gestionar tu entrega</string>
     <string name="task_consigna_title">Consigna e Instrucciones</string>
     <string name="task_submenu_open_canvas">Abrir tarea en Canvas LMS</string>
     <string name="task_submenu_mark_completed">Marcar como realizada</string>

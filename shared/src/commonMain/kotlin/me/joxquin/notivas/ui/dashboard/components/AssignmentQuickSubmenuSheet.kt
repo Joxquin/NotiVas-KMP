@@ -308,7 +308,7 @@ fun AssignmentQuickSubmenuSheet(
                     }
                 }
 
-                // Sección 2: Acción Destacada (Google Drive o Evaluación Quiz)
+                // Sección 2: Consigna y entregable o Evaluación Quiz
                 val isQuiz = item.assignment.isQuiz
                 item {
                     val sectionTitle = if (isQuiz) {
@@ -617,7 +617,7 @@ fun AssignmentQuickSubmenuSheet(
                     }
                 }
 
-                // Acción Prioritaria: Gestionar Borrador en Drive o Evaluación Quiz
+                // Acción Prioritaria: Consigna y entregable o Evaluación Quiz
                 val isQuiz = item.assignment.isQuiz
                 item {
                     val sectionTitle = if (isQuiz) {

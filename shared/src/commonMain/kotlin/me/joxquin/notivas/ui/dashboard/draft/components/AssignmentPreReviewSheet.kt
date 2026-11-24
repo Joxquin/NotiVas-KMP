@@ -110,7 +110,6 @@ import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.preference.CheckboxPreference
 import top.yukonga.miuix.kmp.preference.RadioButtonPreference
 import top.yukonga.miuix.kmp.squircle.squircleBorder
-import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -118,7 +117,11 @@ import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.blur.Backdrop
-import top.yukonga.miuix.kmp.glass.GlassBottomSheet
+import top.yukonga.miuix.kmp.glass.GlassBottomSheetDefaults
+import top.yukonga.miuix.kmp.glass.glassBottomSheetSurface
+import top.yukonga.miuix.kmp.layout.BottomSheetDefaults
+import top.yukonga.miuix.kmp.material.GlassShape
+import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 import top.yukonga.miuix.kmp.utils.springAnimateToPage
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -200,29 +203,44 @@ fun AssignmentPreReviewSheet(
     val isAuraActive = isLoading || auraAlpha > 0.001f
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val sheetBackgroundColor = if (isAuraActive) Color.Transparent else MiuixTheme.colorScheme.surfaceContainer
-        val sheetModifier = if (isAuraActive) {
-            Modifier
-                .squircleClip(
-                    topStart = 28.dp,
-                    topEnd = 28.dp,
-                    bottomEnd = 0.dp,
-                    bottomStart = 0.dp
-                )
-                .monetAuraBackground(
-                    alpha = auraAlpha,
-                    surfaceColor = MiuixTheme.colorScheme.surfaceContainer
-                )
-        } else {
-            Modifier
-        }
+        val glassSurface = glassBottomSheetSurface(backdrop)
 
-        GlassBottomSheet(
+        OverlayBottomSheet(
             title = stringResource(Res.string.review_sheet_title),
             show = show,
             onDismissRequest = onDismissRequest,
-            backdrop = backdrop,
-            modifier = sheetModifier,
+            outsideMargin = BottomSheetDefaults.outsideMargin,
+            insideMargin = GlassBottomSheetDefaults.InsideMargin,
+            renderInRootScaffold = true,
+            dimColor = GlassBottomSheetDefaults.ScrimColor,
+            surface = {
+                val baseModifier = glassSurface()
+                if (isAuraActive) {
+                    val auraSurfaceColor = MiuixTheme.colorScheme.surfaceContainer.copy(
+                        alpha = (auraAlpha / 0.85f).coerceIn(0f, 1f)
+                    )
+                    if (isOverscroll) {
+                        baseModifier.background(auraSurfaceColor)
+                    } else {
+                        val shape = remember(cornerRadius) {
+                            GlassShape(
+                                topStart = cornerRadius,
+                                topEnd = cornerRadius,
+                                bottomEnd = 0.dp,
+                                bottomStart = 0.dp
+                            )
+                        }
+                        baseModifier
+                            .clip(shape)
+                            .monetAuraBackground(
+                                alpha = auraAlpha,
+                                surfaceColor = auraSurfaceColor
+                            )
+                    }
+                } else {
+                    baseModifier
+                }
+            },
             content = {
                 PreReviewSheetContentMiuix(
                     options = options,
