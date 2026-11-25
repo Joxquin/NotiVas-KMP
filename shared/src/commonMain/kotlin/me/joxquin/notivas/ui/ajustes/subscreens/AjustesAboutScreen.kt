@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material3.Card
@@ -47,6 +48,8 @@ import me.joxquin.notivas.shared.resources.about_developer_name
 import me.joxquin.notivas.shared.resources.about_developer_title
 import me.joxquin.notivas.shared.resources.about_license_name
 import me.joxquin.notivas.shared.resources.about_license_title
+import me.joxquin.notivas.shared.resources.about_licenses_summary
+import me.joxquin.notivas.shared.resources.about_licenses_title
 import me.joxquin.notivas.shared.resources.about_repo_subtitle
 import me.joxquin.notivas.shared.resources.about_repo_title
 import me.joxquin.notivas.shared.resources.settings_category_about
@@ -74,6 +77,7 @@ fun AjustesAboutScreen(
     themeStyle: AppThemeStyle,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenLicenses: () -> Unit = {},
     lazyListState: LazyListState = rememberLazyListState()
 ) {
     val title = stringResource(Res.string.settings_category_about)
@@ -150,7 +154,12 @@ fun AjustesAboutScreen(
                             ArrowPreference(
                                 title = stringResource(Res.string.about_license_title),
                                 summary = stringResource(Res.string.about_license_name),
-                                onClick = {}
+                                onClick = onOpenLicenses
+                            )
+                            ArrowPreference(
+                                title = stringResource(Res.string.about_licenses_title),
+                                summary = stringResource(Res.string.about_licenses_summary),
+                                onClick = onOpenLicenses
                             )
                         }
                     }
@@ -321,7 +330,10 @@ fun AjustesAboutScreen(
                             // License
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = onOpenLicenses)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Policy,
@@ -341,6 +353,46 @@ fun AjustesAboutScreen(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+
+                            // Licenses and credits
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = onOpenLicenses)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MenuBook,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(Res.string.about_licenses_title),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.about_licenses_summary),
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(14.dp)
+                                )
                             }
                         }
                     }

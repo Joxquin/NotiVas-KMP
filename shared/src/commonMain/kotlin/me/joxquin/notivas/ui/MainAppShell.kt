@@ -1100,6 +1100,14 @@ fun MainAppShell(
                 entry<MiuixRoute.SettingsAbout>(swipeDismiss = swipeBackDirection) {
                     me.joxquin.notivas.ui.ajustes.subscreens.AjustesAboutScreen(
                         themeStyle = AppThemeStyle.MIUIX,
+                        onOpenLicenses = { miuixNavigator.push(MiuixRoute.SettingsLicenses) },
+                        onBack = { handleMiuixBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsLicenses>(swipeDismiss = swipeBackDirection) {
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesLicensesScreen(
+                        themeStyle = AppThemeStyle.MIUIX,
                         onBack = { handleMiuixBack() }
                     )
                 }
@@ -1828,6 +1836,14 @@ fun MainAppShell(
 
                 entry<MiuixRoute.SettingsAbout>(swipeDismiss = materialSwipeBackDirection) {
                     me.joxquin.notivas.ui.ajustes.subscreens.AjustesAboutScreen(
+                        themeStyle = AppThemeStyle.MATERIAL,
+                        onOpenLicenses = { materialNavigator.push(MiuixRoute.SettingsLicenses) },
+                        onBack = { handleMaterialBack() }
+                    )
+                }
+
+                entry<MiuixRoute.SettingsLicenses>(swipeDismiss = materialSwipeBackDirection) {
+                    me.joxquin.notivas.ui.ajustes.subscreens.AjustesLicensesScreen(
                         themeStyle = AppThemeStyle.MATERIAL,
                         onBack = { handleMaterialBack() }
                     )

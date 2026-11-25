@@ -69,4 +69,7 @@ sealed interface MiuixRoute : NavKey {
 
     @Serializable
     data object SettingsAbout : MiuixRoute
+
+    @Serializable
+    data object SettingsLicenses : MiuixRoute
 }
