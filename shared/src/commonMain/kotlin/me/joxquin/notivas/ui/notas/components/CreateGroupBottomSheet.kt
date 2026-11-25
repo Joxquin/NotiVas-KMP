@@ -1,6 +1,7 @@
 package me.joxquin.notivas.ui.notas.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,10 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +39,8 @@ import me.joxquin.notivas.shared.resources.group_create_save_btn
 import me.joxquin.notivas.shared.resources.group_create_sheet_title
 import me.joxquin.notivas.shared.resources.group_create_weight_label
 import me.joxquin.notivas.shared.resources.cancel
+import me.joxquin.notivas.shared.resources.close
+import me.joxquin.notivas.ui.components.miuix.GlassSheetHeaderAction
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
@@ -44,13 +50,17 @@ import top.yukonga.miuix.kmp.basic.TextFieldDefaults
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.glass.Close
 import top.yukonga.miuix.kmp.preference.SwitchPreference
+import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import kotlin.math.abs
 
 @Composable
 fun CreateGroupBottomSheet(
+    show: Boolean,
     currentTotalWeight: Float,
     onDismiss: () -> Unit,
     onSave: (name: String, weight: Float, targetAssessments: Int, dropLowest: Boolean, minToDrop: Int) -> Unit,
@@ -62,6 +72,11 @@ fun CreateGroupBottomSheet(
     var assessmentsCountInput by remember { mutableStateOf("4") }
     var dropLowest by remember { mutableStateOf(false) }
     var minToDropInput by remember { mutableStateOf("3") }
+    var pendingSave by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val formScrollState = rememberScrollState()
+    val headerScrollOffset = remember(formScrollState) {
+        derivedStateOf { formScrollState.value.toFloat() }
+    }
 
     val parsedWeight = weightInput.toFloatOrNull() ?: 0f
     val remainingWeight = 100f - (currentTotalWeight + parsedWeight)
@@ -113,6 +128,7 @@ fun CreateGroupBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(formScrollState)
                 .navigationBarsPadding()
                 .padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -228,7 +244,16 @@ fun CreateGroupBottomSheet(
                     onClick = {
                         val assessmentsCount = assessmentsCountInput.toIntOrNull() ?: 1
                         val minToDrop = minToDropInput.toIntOrNull() ?: 3
-                        onSave(name.trim(), parsedWeight, assessmentsCount, dropLowest, minToDrop)
+                        val saveAction = {
+                            onSave(name.trim(), parsedWeight, assessmentsCount, dropLowest, minToDrop)
+                        }
+                        if (isMiuix) {
+                            pendingSave = saveAction
+                            onDismiss()
+                        } else {
+                            saveAction()
+                            onDismiss()
+                        }
                     },
                     enabled = isFormValid,
                     modifier = Modifier.weight(1f),
@@ -241,18 +266,42 @@ fun CreateGroupBottomSheet(
     if (isMiuix) {
         GlassBottomSheet(
             title = stringResource(Res.string.group_create_sheet_title),
-            show = true,
+            show = show,
             onDismissRequest = onDismiss,
             backdrop = backdrop,
-            content = formContent
+            progressiveBlur = true,
+            scrollOffset = { headerScrollOffset.value },
+            onDismissFinished = {
+                val action = pendingSave
+                pendingSave = null
+                action?.invoke()
+            },
+            startAction = {
+                val dismissState = LocalDismissState.current
+                GlassSheetHeaderAction(
+                    onClick = { dismissState?.invoke() ?: onDismiss() },
+                    imageVector = MiuixIcons.Glass.Close,
+                    contentDescription = stringResource(Res.string.close),
+                )
+            },
+            content = { innerPadding ->
+                Box(Modifier.padding(innerPadding)) {
+                    formContent()
+                }
+            }
         )
     } else {
         val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
         val dragHandleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         WindowBottomSheet(
             title = stringResource(Res.string.group_create_sheet_title),
-            show = true,
+            show = show,
             onDismissRequest = onDismiss,
+            onDismissFinished = {
+                val action = pendingSave
+                pendingSave = null
+                action?.invoke()
+            },
             backgroundColor = backgroundColor,
             dragHandleColor = dragHandleColor,
             content = formContent

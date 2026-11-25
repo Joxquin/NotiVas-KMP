@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.ui.components.miuix.GlassSheetHeaderAction
 import me.joxquin.notivas.ui.notas.CopilotAnalysisResult
 import me.joxquin.notivas.ui.notas.NotasViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -48,30 +51,47 @@ import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.glass.Close
+import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import kotlin.math.roundToInt
 
 @Composable
 fun CopilotGroupAnalysisSheet(
-    course: Course,
+    course: Course?,
+    show: Boolean,
     viewModel: NotasViewModel,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     backdrop: Backdrop? = null,
     onDismiss: () -> Unit,
     onGroupsApplied: () -> Unit
 ) {
+    val activeCourse = course ?: return
+
     val focusManager = LocalFocusManager.current
     var customPrompt by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
     var analysisResult by remember { mutableStateOf<CopilotAnalysisResult?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var pendingApply by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val groupsListState = rememberLazyListState()
+    val headerScrollOffset = remember(groupsListState) {
+        derivedStateOf {
+            if (groupsListState.firstVisibleItemIndex == 0) {
+                groupsListState.firstVisibleItemScrollOffset.toFloat()
+            } else {
+                10_000f
+            }
+        }
+    }
 
     fun triggerAnalysis() {
         isLoading = true
         errorMessage = null
         viewModel.analyzeCourseWithCopilot(
-            courseId = course.id,
+            courseId = activeCourse.id,
             userPromptOverride = customPrompt.takeIf { it.isNotBlank() },
             onSuccess = { result ->
                 analysisResult = result
@@ -84,8 +104,10 @@ fun CopilotGroupAnalysisSheet(
         )
     }
 
-    LaunchedEffect(course.id) {
-        triggerAnalysis()
+    LaunchedEffect(show, activeCourse.id) {
+        if (show) {
+            triggerAnalysis()
+        }
     }
 
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
@@ -123,7 +145,7 @@ fun CopilotGroupAnalysisSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = course.name,
+                text = activeCourse.name,
                 fontSize = 13.sp,
                 color = onSurfaceVariantColor,
                 maxLines = 1,
@@ -167,6 +189,7 @@ fun CopilotGroupAnalysisSheet(
                 val groups = result?.groups.orEmpty()
 
                 LazyColumn(
+                    state = groupsListState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = 300.dp),
@@ -299,9 +322,17 @@ fun CopilotGroupAnalysisSheet(
                     TextButton(
                         text = stringResource(Res.string.groups_copilot_apply_btn),
                         onClick = {
-                            viewModel.applyCopilotProposedGroups(course.id, groups)
-                            onGroupsApplied()
-                            onDismiss()
+                            val applyAction = {
+                                viewModel.applyCopilotProposedGroups(activeCourse.id, groups)
+                                onGroupsApplied()
+                            }
+                            if (themeStyle == AppThemeStyle.MIUIX) {
+                                pendingApply = applyAction
+                                onDismiss()
+                            } else {
+                                applyAction()
+                                onDismiss()
+                            }
                         },
                         modifier = Modifier.weight(1.4f),
                         colors = ButtonDefaults.textButtonColorsPrimary()
@@ -311,19 +342,41 @@ fun CopilotGroupAnalysisSheet(
         }
     }
 
+    val finishApply: () -> Unit = {
+        val action = pendingApply
+        pendingApply = null
+        action?.invoke()
+    }
+
     if (isMiuix) {
         GlassBottomSheet(
             title = stringResource(Res.string.groups_create_copilot_title),
-            show = true,
+            show = show,
             onDismissRequest = onDismiss,
             backdrop = backdrop,
-            content = sheetContent
+            progressiveBlur = true,
+            scrollOffset = { headerScrollOffset.value },
+            onDismissFinished = finishApply,
+            startAction = {
+                val dismissState = LocalDismissState.current
+                GlassSheetHeaderAction(
+                    onClick = { dismissState?.invoke() ?: onDismiss() },
+                    imageVector = MiuixIcons.Glass.Close,
+                    contentDescription = stringResource(Res.string.close),
+                )
+            },
+            content = { innerPadding ->
+                Box(Modifier.padding(innerPadding)) {
+                    sheetContent()
+                }
+            }
         )
     } else {
         WindowBottomSheet(
             title = stringResource(Res.string.groups_create_copilot_title),
-            show = true,
+            show = show,
             onDismissRequest = onDismiss,
+            onDismissFinished = finishApply,
             backgroundColor = backgroundColor,
             dragHandleColor = dragHandleColor,
             content = sheetContent

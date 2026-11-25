@@ -77,7 +77,7 @@ val openSourceLicenseSections: List<LicenseSection> = listOf(
             ),
             LicenseEntry(
                 nameRes = Res.string.licenses_lib_miuix,
-                version = "0.9.5-65518452-SNAPSHOT",
+                version = "0.9.5-rc01",
                 kind = LicenseKind.APACHE_2_0,
                 url = "https://github.com/compose-miuix-ui/miuix"
             ),

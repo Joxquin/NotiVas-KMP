@@ -40,7 +40,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,17 +54,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.components.BackHandler
+import me.joxquin.notivas.ui.components.miuix.GlassSheetHeaderAction
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
+import top.yukonga.miuix.kmp.icon.glass.Close as GlassClose
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -102,6 +104,16 @@ fun AssignmentQuickSubmenuSheet(
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var showConfirmCompleteDialog by remember { mutableStateOf(false) }
     var showCustomReminderSheet by remember { mutableStateOf(false) }
+    val sheetListState = rememberLazyListState()
+    val headerScrollOffset = remember(sheetListState) {
+        derivedStateOf {
+            if (sheetListState.firstVisibleItemIndex == 0) {
+                sheetListState.firstVisibleItemScrollOffset.toFloat()
+            } else {
+                10_000f
+            }
+        }
+    }
 
     if (showConfirmCompleteDialog) {
         if (themeStyle == AppThemeStyle.MIUIX) {
@@ -162,19 +174,17 @@ fun AssignmentQuickSubmenuSheet(
         }
     }
 
-    if (showCustomReminderSheet) {
-        CustomReminderBottomSheet(
-            show = showCustomReminderSheet,
-            onDismissRequest = { showCustomReminderSheet = false },
-            assignment = item.assignment,
-            courseName = item.courseName,
-            themeStyle = themeStyle,
-            backdrop = backdrop,
-            onReminderSet = {
-                onDismissRequest()
-            }
-        )
-    }
+    CustomReminderBottomSheet(
+        show = showCustomReminderSheet,
+        onDismissRequest = { showCustomReminderSheet = false },
+        assignment = item.assignment,
+        courseName = item.courseName,
+        themeStyle = themeStyle,
+        backdrop = backdrop,
+        onReminderSet = {
+            onDismissRequest()
+        }
+    )
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         GlassBottomSheet(
@@ -182,6 +192,8 @@ fun AssignmentQuickSubmenuSheet(
             show = isVisible,
             onDismissRequest = onDismissRequest,
             backdrop = backdrop,
+            progressiveBlur = true,
+            scrollOffset = { headerScrollOffset.value },
             onDismissFinished = {
                 val action = pendingAction
                 pendingAction = null
@@ -192,19 +204,17 @@ fun AssignmentQuickSubmenuSheet(
             },
             startAction = {
                 val dismissState = LocalDismissState.current
-                MiuixIconButton(
-                    onClick = { dismissState?.invoke() }
-                ) {
-                    top.yukonga.miuix.kmp.basic.Icon(
-                        imageVector = MiuixIcons.MiuixClose,
-                        contentDescription = stringResource(Res.string.close),
-                        tint = MiuixTheme.colorScheme.onSurface
-                    )
-                }
+                GlassSheetHeaderAction(
+                    onClick = { dismissState?.invoke() ?: onDismissRequest() },
+                    imageVector = MiuixIcons.Glass.GlassClose,
+                    contentDescription = stringResource(Res.string.close),
+                )
             },
             modifier = modifier
-        ) {
+        ) { innerPadding ->
             LazyColumn(
+                state = sheetListState,
+                contentPadding = PaddingValues(top = innerPadding.calculateTopPadding()),
                 modifier = Modifier
                     .fillMaxWidth()
                     .scrollEndHaptic()

@@ -202,25 +202,23 @@ fun AssignmentDraftScreen(
 
     val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
 
-    if (showTemplatePicker) {
-        me.joxquin.notivas.ui.dashboard.components.draft.ModuleTemplatePickerSheet(
-            courseName = courseName,
-            templates = courseTemplates,
-            isLoading = isLoadingTemplates,
-            currentModuleName = currentAssignmentModuleName,
-            themeStyle = themeStyle,
-            backdrop = backdrop,
-            onSelectTemplate = { selectedCandidate ->
-                handleDismissTemplatePicker()
-                viewModel?.startOrCloneDraft(
-                    assignment = assignment,
-                    courseName = courseName,
-                    templateCandidate = selectedCandidate
-                )
-            },
-            onDismissRequest = handleDismissTemplatePicker
-        )
-    }
+    me.joxquin.notivas.ui.dashboard.components.draft.ModuleTemplatePickerSheet(
+        show = showTemplatePicker,
+        courseName = courseName,
+        templates = courseTemplates,
+        isLoading = isLoadingTemplates,
+        currentModuleName = currentAssignmentModuleName,
+        themeStyle = themeStyle,
+        backdrop = backdrop,
+        onSelectTemplate = { selectedCandidate ->
+            viewModel?.startOrCloneDraft(
+                assignment = assignment,
+                courseName = courseName,
+                templateCandidate = selectedCandidate
+            )
+        },
+        onDismissRequest = handleDismissTemplatePicker
+    )
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val scrollBehavior = MiuixScrollBehavior()

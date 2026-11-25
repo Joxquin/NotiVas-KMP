@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -22,8 +24,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton as M3TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -39,6 +43,7 @@ import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.ui.components.miuix.GlassSheetHeaderAction
 import me.joxquin.notivas.ui.navigation.miuix.LocalMiuixSnackbarHostState
 import me.joxquin.notivas.util.DateTimeUtil
 import me.joxquin.notivas.util.PlatformAlarmScheduler
@@ -52,6 +57,10 @@ import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.glass.Close
+import top.yukonga.miuix.kmp.icon.glass.Ok
+import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.foundation.layout.navigationBarsPadding
 
@@ -66,7 +75,11 @@ fun CustomReminderBottomSheet(
     backdrop: Backdrop? = null,
     onReminderSet: () -> Unit
 ) {
-    if (!show) return
+    var pendingSave by remember { mutableStateOf(false) }
+    val reminderScrollState = rememberScrollState()
+    val headerScrollOffset = remember(reminderScrollState) {
+        derivedStateOf { reminderScrollState.value.toFloat() }
+    }
 
     val initialDate = remember { DateTimeUtil.nowLocalDate() }
     val nowHour = remember { DateTimeUtil.nowLocalHour() }
@@ -196,7 +209,11 @@ fun CustomReminderBottomSheet(
                     )
                 }
             }
-            onReminderSet()
+            if (themeStyle == AppThemeStyle.MIUIX) {
+                pendingSave = true
+            } else {
+                onReminderSet()
+            }
             onDismissRequest()
         }
     }
@@ -207,11 +224,36 @@ fun CustomReminderBottomSheet(
             show = show,
             onDismissRequest = onDismissRequest,
             backdrop = backdrop,
-            title = stringResource(Res.string.custom_reminder_title)
-        ) {
+            progressiveBlur = true,
+            scrollOffset = { headerScrollOffset.value },
+            title = stringResource(Res.string.custom_reminder_title),
+            onDismissFinished = {
+                if (pendingSave) {
+                    pendingSave = false
+                    onReminderSet()
+                }
+            },
+            startAction = {
+                val dismissState = LocalDismissState.current
+                GlassSheetHeaderAction(
+                    onClick = { dismissState?.invoke() ?: onDismissRequest() },
+                    imageVector = MiuixIcons.Glass.Close,
+                    contentDescription = stringResource(Res.string.close),
+                )
+            },
+            endAction = {
+                GlassSheetHeaderAction(
+                    onClick = onConfirm,
+                    imageVector = MiuixIcons.Glass.Ok,
+                    contentDescription = stringResource(Res.string.custom_reminder_save),
+                )
+            }
+        ) { innerPadding ->
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(reminderScrollState)
+                    .padding(innerPadding)
                     .navigationBarsPadding()
                     .padding(bottom = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -379,7 +421,7 @@ fun CustomReminderBottomSheet(
                 }
             }
         }
-    } else {
+    } else if (show) {
         val mDividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         ModalBottomSheet(
             onDismissRequest = onDismissRequest

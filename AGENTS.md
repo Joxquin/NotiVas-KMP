@@ -321,7 +321,7 @@ Compose Multiplatform procesa los recursos de strings mediante un motor propio y
 10. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
 11. **¿Paquetes de materiales e imports correctos?** Importar `GlassShadows`, `GlassDefaults`, `RuntimeShader` e `isRuntimeShaderSupported` desde `top.yukonga.miuix.kmp.material.*` (no desde `.glass` ni `.blur`).
 12. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
-13. **¿Iconos en BottomSheet sin contenedor?** En `GlassBottomSheet`, usar exclusivamente `IconButton` de `top.yukonga.miuix.kmp.basic` para `startAction` o `endAction`. Prohibido usar `GlassIconButton` dentro de BottomSheets.
+13. **¿Iconos en BottomSheet sin contenedor?** En `GlassBottomSheet` con `progressiveBlur = true`, usar `GlassIconButton` con `MiuixIcons.Glass.*` en `startAction`/`endAction` para heredar el material, el backdrop y la animación del header, como en el ejemplo oficial de Miuix 0.9.5-rc01. En `WindowBottomSheet` y `ModalBottomSheet`, usar `IconButton` de `top.yukonga.miuix.kmp.basic`.
 
 <!-- graphify-rules-start (managed by `graphify init`) -->
 ## Use Graphify before grep

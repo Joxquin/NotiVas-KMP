@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,6 +33,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,18 +46,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.Course
+import me.joxquin.notivas.ui.components.miuix.GlassSheetHeaderAction
 import me.joxquin.notivas.ui.foros.DiscussionFilterTab
 import me.joxquin.notivas.ui.foros.DiscussionSortOption
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
 import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
 import top.yukonga.miuix.kmp.icon.extended.Ok
+import top.yukonga.miuix.kmp.icon.glass.Close as GlassClose
+import top.yukonga.miuix.kmp.icon.glass.Ok as GlassOk
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -84,38 +88,45 @@ fun ForosFilterBottomSheet(
     isWeeksReversed: Boolean = true,
     onWeeksReversedChange: (Boolean) -> Unit = {}
 ) {
+    val filterListState = rememberLazyListState()
+    val headerScrollOffset = remember(filterListState) {
+        derivedStateOf {
+            if (filterListState.firstVisibleItemIndex == 0) {
+                filterListState.firstVisibleItemScrollOffset.toFloat()
+            } else {
+                10_000f
+            }
+        }
+    }
+
     if (themeStyle == AppThemeStyle.MIUIX) {
         GlassBottomSheet(
             title = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_filter_sheet_title),
             show = show,
             onDismissRequest = onDismissRequest,
             backdrop = backdrop,
+            progressiveBlur = true,
+            scrollOffset = { headerScrollOffset.value },
             startAction = {
                 val dismissState = LocalDismissState.current
-                MiuixIconButton(
-                    onClick = { dismissState?.invoke() }
-                ) {
-                    top.yukonga.miuix.kmp.basic.Icon(
-                        imageVector = MiuixIcons.MiuixClose,
-                        contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.close),
-                        tint = MiuixTheme.colorScheme.onSurface
-                    )
-                }
+                GlassSheetHeaderAction(
+                    onClick = { dismissState?.invoke() ?: onDismissRequest() },
+                    imageVector = MiuixIcons.Glass.GlassClose,
+                    contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.close),
+                )
             },
             endAction = {
                 val dismissState = LocalDismissState.current
-                MiuixIconButton(
-                    onClick = { dismissState?.invoke() }
-                ) {
-                    top.yukonga.miuix.kmp.basic.Icon(
-                        imageVector = MiuixIcons.Ok,
-                        contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_action_done),
-                        tint = MiuixTheme.colorScheme.primary
-                    )
-                }
+                GlassSheetHeaderAction(
+                    onClick = { dismissState?.invoke() ?: onDismissRequest() },
+                    imageVector = MiuixIcons.Glass.GlassOk,
+                    contentDescription = org.jetbrains.compose.resources.stringResource(me.joxquin.notivas.shared.resources.Res.string.foros_action_done),
+                )
             }
-        ) {
+        ) { innerPadding ->
             LazyColumn(
+                state = filterListState,
+                contentPadding = PaddingValues(top = innerPadding.calculateTopPadding()),
                 modifier = Modifier
                     .fillMaxWidth()
                     .scrollEndHaptic()

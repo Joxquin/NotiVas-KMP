@@ -118,30 +118,28 @@ fun NotasScreen(
     val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
 
     // Modal de selección de método de creación
-    if (showCreationChoiceSheet) {
-        GroupCreationChoiceBottomSheet(
-            onDismiss = { showCreationChoiceSheet = false },
-            onSelectManual = { showManualCreateBottomSheet = true },
-            onSelectGitHub = { showGitHubImportDialog = true },
-            onSelectCopilot = { showCopilotAnalysisSheet = true },
-            themeStyle = themeStyle,
-            backdrop = backdrop
-        )
-    }
+    GroupCreationChoiceBottomSheet(
+        show = showCreationChoiceSheet,
+        onDismiss = { showCreationChoiceSheet = false },
+        onSelectManual = { showManualCreateBottomSheet = true },
+        onSelectGitHub = { showGitHubImportDialog = true },
+        onSelectCopilot = { showCopilotAnalysisSheet = true },
+        themeStyle = themeStyle,
+        backdrop = backdrop
+    )
 
     // Creación manual
-    if (showManualCreateBottomSheet) {
-        CreateGroupBottomSheet(
-            currentTotalWeight = uiState.totalConfiguredWeight,
-            themeStyle = themeStyle,
-            backdrop = backdrop,
-            onDismiss = { showManualCreateBottomSheet = false },
-            onSave = { name, weight, targetAssessments, dropLowest, minToDrop ->
-                viewModel.createGroupWithItems(name, weight, targetAssessments, dropLowest, minToDrop)
-                showManualCreateBottomSheet = false
-            }
-        )
-    }
+    CreateGroupBottomSheet(
+        show = showManualCreateBottomSheet,
+        currentTotalWeight = uiState.totalConfiguredWeight,
+        themeStyle = themeStyle,
+        backdrop = backdrop,
+        onDismiss = { showManualCreateBottomSheet = false },
+        onSave = { name, weight, targetAssessments, dropLowest, minToDrop ->
+            viewModel.createGroupWithItems(name, weight, targetAssessments, dropLowest, minToDrop)
+            showManualCreateBottomSheet = false
+        }
+    )
 
     // Importación de plantillas desde GitHub
     if (showGitHubImportDialog) {
@@ -160,16 +158,15 @@ fun NotasScreen(
     }
 
     // Generación con IA Copilot
-    if (showCopilotAnalysisSheet && activeCourse != null) {
-        CopilotGroupAnalysisSheet(
-            course = activeCourse,
-            viewModel = viewModel,
-            themeStyle = themeStyle,
-            backdrop = backdrop,
-            onDismiss = { showCopilotAnalysisSheet = false },
-            onGroupsApplied = { showCopilotAnalysisSheet = false }
-        )
-    }
+    CopilotGroupAnalysisSheet(
+        course = activeCourse,
+        show = showCopilotAnalysisSheet,
+        viewModel = viewModel,
+        themeStyle = themeStyle,
+        backdrop = backdrop,
+        onDismiss = { showCopilotAnalysisSheet = false },
+        onGroupsApplied = { showCopilotAnalysisSheet = false }
+    )
 
     val totalWeight = uiState.totalConfiguredWeight.roundToInt()
 

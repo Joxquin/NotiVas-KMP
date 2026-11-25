@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -29,17 +30,17 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.TemplateCandidate
 import me.joxquin.notivas.data.model.TemplateSourceType
 import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.ui.components.miuix.GlassSheetHeaderAction
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassBottomSheet
-import top.yukonga.miuix.kmp.icon.extended.Close as MiuixClose
+import top.yukonga.miuix.kmp.icon.glass.Close as GlassClose
 import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -49,6 +50,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModuleTemplatePickerSheet(
+    show: Boolean,
     courseName: String,
     templates: List<TemplateCandidate>,
     isLoading: Boolean,
@@ -60,8 +62,18 @@ fun ModuleTemplatePickerSheet(
 ) {
     val haptic = LocalHapticFeedback.current
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
-    val miuixListState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val materialListState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val miuixListState = rememberLazyListState()
+    val materialListState = rememberLazyListState()
+    var pendingTemplate by remember { mutableStateOf<TemplateCandidate?>(null) }
+    val headerScrollOffset = remember(miuixListState) {
+        derivedStateOf {
+            if (miuixListState.firstVisibleItemIndex == 0) {
+                miuixListState.firstVisibleItemScrollOffset.toFloat()
+            } else {
+                10_000f
+            }
+        }
+    }
 
     val grouped = remember(templates) {
         templates.groupBy { it.moduleName ?: "General" }
@@ -96,26 +108,28 @@ fun ModuleTemplatePickerSheet(
     if (isMiuix) {
         GlassBottomSheet(
             title = stringResource(Res.string.template_picker_title),
-            show = true,
+            show = show,
             onDismissRequest = onDismissRequest,
             backdrop = backdrop,
+            progressiveBlur = true,
+            scrollOffset = { headerScrollOffset.value },
+            onDismissFinished = {
+                val template = pendingTemplate
+                pendingTemplate = null
+                template?.let(onSelectTemplate)
+            },
             startAction = {
                 val dismissState = LocalDismissState.current
-                MiuixIconButton(
-                    onClick = {
-                        dismissState?.invoke() ?: onDismissRequest()
-                    }
-                ) {
-                    MiuixIcon(
-                        imageVector = MiuixIcons.MiuixClose,
-                        contentDescription = stringResource(Res.string.close),
-                        tint = MiuixTheme.colorScheme.onSurface
-                    )
-                }
+                GlassSheetHeaderAction(
+                    onClick = { dismissState?.invoke() ?: onDismissRequest() },
+                    imageVector = MiuixIcons.Glass.GlassClose,
+                    contentDescription = stringResource(Res.string.close),
+                )
             }
-        ) {
+        ) { innerPadding ->
             LazyColumn(
                 state = miuixListState,
+                contentPadding = PaddingValues(top = innerPadding.calculateTopPadding()),
                 modifier = Modifier
                     .fillMaxWidth()
                     .scrollEndHaptic()
@@ -241,7 +255,8 @@ fun ModuleTemplatePickerSheet(
                                             template = template,
                                             onClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                                onSelectTemplate(template)
+                                                pendingTemplate = template
+                                                onDismissRequest()
                                             }
                                         )
                                     }
@@ -263,8 +278,13 @@ fun ModuleTemplatePickerSheet(
         }
     } else {
         WindowBottomSheet(
-            show = true,
+            show = show,
             onDismissRequest = onDismissRequest,
+            onDismissFinished = {
+                val template = pendingTemplate
+                pendingTemplate = null
+                template?.let(onSelectTemplate)
+            },
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow,
             dragHandleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
             insideMargin = DpSize(0.dp, 0.dp),
@@ -454,7 +474,8 @@ fun ModuleTemplatePickerSheet(
                                             template = template,
                                             onClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                                onSelectTemplate(template)
+                                                pendingTemplate = template
+                                                onDismissRequest()
                                             }
                                         )
                                     }
