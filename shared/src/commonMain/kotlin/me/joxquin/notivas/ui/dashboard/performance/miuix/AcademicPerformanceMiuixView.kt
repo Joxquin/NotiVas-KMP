@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import me.joxquin.notivas.ui.components.rememberStaggeredEntrance
+import me.joxquin.notivas.ui.components.staggeredEntrance
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -192,6 +195,8 @@ fun AcademicPerformanceMiuixView(
                 .background(MiuixTheme.colorScheme.surface)
                 .miuixBackdropModifier(backdrop)
         ) {
+            // Las tarjetas del desglose por asignatura entran una tras otra al abrir Rendimiento.
+            val entrance = rememberStaggeredEntrance()
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier
@@ -277,12 +282,13 @@ fun AcademicPerformanceMiuixView(
                     SmallTitle(text = stringResource(Res.string.performance_courses_breakdown).uppercase())
                 }
 
-                items(
+                itemsIndexed(
                     items = courseStats,
-                    key = { "miuix_course_${it.course.id}" }
-                ) { stat ->
+                    key = { _, stat -> "miuix_course_${stat.course.id}" }
+                ) { index, stat ->
                     MiuixCourseItemCard(
                         courseStat = stat,
+                        modifier = Modifier.staggeredEntrance(index, entrance),
                         primaryColor = primaryColor,
                         completedColor = completedColor,
                         overdueColor = overdueColor,

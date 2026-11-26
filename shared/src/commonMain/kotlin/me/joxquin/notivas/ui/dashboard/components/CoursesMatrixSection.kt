@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import me.joxquin.notivas.data.model.Course
+import me.joxquin.notivas.ui.components.staggeredEntrance
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.course_pending_format
 import me.joxquin.notivas.shared.resources.course_pending_one
@@ -151,16 +152,19 @@ fun CoursesMatrixSection(
         MaterialCourseHeader(totalCourses = displayCourses.size)
 
         val coursePairs = displayCourses.chunked(2)
+        // Las filas de cursos entran una tras otra la primera vez que se ve Inicio.
+        val entrance = me.joxquin.notivas.ui.components.rememberStaggeredEntrance()
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            coursePairs.forEach { pair ->
+            coursePairs.forEachIndexed { index, pair ->
                 MaterialCourseRowItem(
                     firstCourse = pair[0],
                     secondCourse = pair.getOrNull(1),
                     courseStats = courseStats,
-                    onCourseClick = onCourseClick
+                    onCourseClick = onCourseClick,
+                    modifier = Modifier.staggeredEntrance(index, entrance)
                 )
             }
         }

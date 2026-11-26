@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +62,8 @@ import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.components.CardListSkeleton
+import me.joxquin.notivas.ui.components.rememberStaggeredEntrance
+import me.joxquin.notivas.ui.components.staggeredEntrance
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
@@ -150,6 +153,8 @@ fun CourseModulesScreen(
                             )
                         }
                     } else Box(modifier = Modifier.fillMaxSize()) {
+                        // Al terminar el esqueleto, los módulos entran uno tras otro.
+                        val entrance = rememberStaggeredEntrance()
                         LazyColumn(
                             state = listState,
                             contentPadding = contentPadding,
@@ -157,10 +162,11 @@ fun CourseModulesScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.miuixPageScrollModifiers(scrollBehavior)
                         ) {
-                            items(uiState.modules, key = { it.id }) { module ->
+                            itemsIndexed(uiState.modules, key = { _, module -> module.id }) { index, module ->
                                 ModuleExpandableCard(
                                     module = module,
                                     isMiuix = true,
+                                    modifier = Modifier.staggeredEntrance(index, entrance),
                                     onToggleExpand = { viewModel.toggleModuleExpanded(module.id) },
                                     onItemClick = { item ->
                                         handleItemClick(
@@ -252,15 +258,18 @@ fun CourseModulesScreen(
                             )
                         }
                     } else {
+                        // Al terminar el esqueleto, los módulos entran uno tras otro.
+                        val entrance = rememberStaggeredEntrance()
                         LazyColumn(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(uiState.modules, key = { it.id }) { module ->
+                            itemsIndexed(uiState.modules, key = { _, module -> module.id }) { index, module ->
                                 ModuleExpandableCard(
                                     module = module,
                                     isMiuix = false,
+                                    modifier = Modifier.staggeredEntrance(index, entrance),
                                     onToggleExpand = { viewModel.toggleModuleExpanded(module.id) },
                                     onItemClick = { item ->
                                         handleItemClick(

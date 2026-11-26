@@ -27,7 +27,7 @@ fun animatedCountUp(target: Double, durationMillis: Int = 900): Double {
     var lastShown by rememberSaveable { mutableStateOf<Double?>(null) }
     val animatable = remember { Animatable((lastShown ?: 0.0).toFloat()) }
     var settled by remember { mutableStateOf(lastShown == target) }
-    val ready = LocalCountUpReady.current
+    val ready = LocalEntranceAnimationsReady.current
 
     LaunchedEffect(target, ready) {
         if (lastShown == target) {
@@ -46,10 +46,11 @@ fun animatedCountUp(target: Double, durationMillis: Int = 900): Double {
 
 /**
  * false mientras la animación de arranque (el birrete que vuela a la barra) tapa la app. En el Redmi el
- * promedio de Inicio terminaba de subir debajo de esa animación y aparecía ya fijo. App.kt lo provee con
+ * promedio de Inicio terminaba de subir debajo de esa animación y aparecía ya fijo. Lo usan los números
+ * que suben y las listas escalonadas para empezar cuando la app ya se ve. App.kt lo provee con
  * hasStartupSplashRun; fuera de ese caso vale true.
  */
-val LocalCountUpReady = compositionLocalOf { true }
+val LocalEntranceAnimationsReady = compositionLocalOf { true }
 
 /** Un decimal truncado, el mismo formato de los promedios en toda la app (16.78 -> "16.7"); ver GradeInsights.shown1. */
 fun formatAverageOneDecimal(value: Double): String = GradeInsights.shown1(value).toString()
