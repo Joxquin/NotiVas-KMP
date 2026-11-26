@@ -352,7 +352,9 @@ private fun MiuixHeroKpiCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = if (stats.overallAverage > 0.0) formatScoreMiuix(stats.overallAverage) else "--",
+                            text = if (stats.overallAverage > 0.0) {
+                                formatScoreMiuix(me.joxquin.notivas.ui.components.animatedCountUp(stats.overallAverage))
+                            } else "--",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             color = primaryColor
@@ -978,7 +980,7 @@ private fun MiuixCourseItemCard(
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "${formatScoreMiuix(score)} / 20",
+                            text = "${formatScoreMiuix(me.joxquin.notivas.ui.components.animatedCountUp(score))} / 20",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = badgeColor
@@ -1075,7 +1077,7 @@ private fun MiuixTaskCounterChip(
 }
 
 private fun formatScoreMiuix(value: Double): String {
-    val rounded = (value * 10).toLong() / 10.0
+    val rounded = me.joxquin.notivas.domain.grades.GradeInsights.shown1(value)
     return if (rounded % 1.0 == 0.0) {
         rounded.toLong().toString()
     } else {

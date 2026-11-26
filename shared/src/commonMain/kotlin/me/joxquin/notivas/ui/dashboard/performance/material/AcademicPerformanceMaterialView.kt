@@ -356,7 +356,9 @@ private fun MaterialHeroKpiCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = if (stats.overallAverage > 0.0) formatScoreMaterial(stats.overallAverage) else "--",
+                            text = if (stats.overallAverage > 0.0) {
+                                formatScoreMaterial(me.joxquin.notivas.ui.components.animatedCountUp(stats.overallAverage))
+                            } else "--",
                             style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
                             color = primaryColor
                         )
@@ -961,7 +963,7 @@ private fun MaterialCourseItemCard(
                         else overdueColor.copy(alpha = 0.12f)
                     ) {
                         Text(
-                            text = "${formatScoreMaterial(score)} / 20",
+                            text = "${formatScoreMaterial(me.joxquin.notivas.ui.components.animatedCountUp(score))} / 20",
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                             color = if (isPassing) completedColor else overdueColor,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -1055,7 +1057,7 @@ private fun MaterialTaskCounterChip(
 }
 
 private fun formatScoreMaterial(value: Double): String {
-    val rounded = (value * 10).toLong() / 10.0
+    val rounded = me.joxquin.notivas.domain.grades.GradeInsights.shown1(value)
     return if (rounded % 1.0 == 0.0) {
         rounded.toLong().toString()
     } else {

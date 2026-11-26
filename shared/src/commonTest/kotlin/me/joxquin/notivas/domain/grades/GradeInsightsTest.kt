@@ -107,6 +107,14 @@ class GradeInsightsTest {
     }
 
     @Test
+    fun simulatorFloatAveragesAreNotCutOneTenthShort() {
+        // El simulador calcula en Float: 16.8f llega como 16.7999992 y sin margen se mostraba 16.7.
+        assertEquals(16.8, GradeInsights.shown1(16.8f.toDouble()))
+        assertEquals(17.5, GradeInsights.shown1(17.5f.toDouble()))
+        assertEquals(13.6, GradeInsights.shown1(13.6f.toDouble()))
+    }
+
+    @Test
     fun neededGradeIsRoundedUpSoItIsNeverTooLow() {
         // (1200 - 11.5 * 45) / 55 = 12.4090...: con 12.4 no alcanzaría la meta, hace falta 12.5.
         assertEquals(12.5, GradeInsights.neededAverage(currentAverage = 11.5, evaluatedPercent = 45.0, target = 12.0).neededAverage)

@@ -138,13 +138,18 @@ fun App() {
                                 }
                             } else {
                                 Box(modifier = Modifier.fillMaxSize()) {
-                                    me.joxquin.notivas.ui.MainAppShell(
-                                        canvasRepository = canvasRepository,
-                                        copilotRepository = copilotRepository,
-                                        chatRepository = chatRepository,
-                                        preferencesManager = preferencesManager,
-                                        isEntranceTriggered = hasStartupSplashRun
-                                    )
+                                    // Los promedios que suben esperan a que termine la animación de arranque.
+                                    CompositionLocalProvider(
+                                        me.joxquin.notivas.ui.components.LocalCountUpReady provides hasStartupSplashRun
+                                    ) {
+                                        me.joxquin.notivas.ui.MainAppShell(
+                                            canvasRepository = canvasRepository,
+                                            copilotRepository = copilotRepository,
+                                            chatRepository = chatRepository,
+                                            preferencesManager = preferencesManager,
+                                            isEntranceTriggered = hasStartupSplashRun
+                                        )
+                                    }
 
                                     if (!hasStartupSplashRun) {
                                         AppStartupSplash(

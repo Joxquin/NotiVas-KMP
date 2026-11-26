@@ -116,9 +116,14 @@ fun CourseHeroBannerCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Promedio
+                    // Promedio (sube animado; "S/C" u otro texto se muestra tal cual)
+                    val promedioValue = promedioFormatted.toDoubleOrNull()
                     MetricPill(
-                        value = promedioFormatted,
+                        value = promedioValue?.let {
+                            me.joxquin.notivas.ui.components.formatAverageOneDecimal(
+                                me.joxquin.notivas.ui.components.animatedCountUp(it)
+                            )
+                        } ?: promedioFormatted,
                         valueColor = primaryColor,
                         label = stringResource(Res.string.course_detail_stat_promedio),
                         labelColor = onSurfaceVariantColor,
@@ -128,8 +133,9 @@ fun CourseHeroBannerCard(
 
                     // Avance
                     val avanceColor = if (avancePercentage >= 70) primaryColor else onSurfaceColor
+                    val avanceShown = me.joxquin.notivas.ui.components.animatedCountUp(avancePercentage.toDouble()).toInt()
                     MetricPill(
-                        value = "$avancePercentage%",
+                        value = "$avanceShown%",
                         valueColor = avanceColor,
                         label = stringResource(Res.string.course_detail_stat_avance),
                         labelColor = onSurfaceVariantColor,

@@ -59,7 +59,10 @@ fun HeroSummaryCard(
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
 ) {
-    val formattedAvg = ((currentAverage * 10f).roundToInt() / 10f).toString()
+    // Sube animado y con el mismo truncado que Rendimiento (antes redondeaba: 16.85 salía 16.9 aquí y 16.8 allá).
+    val formattedAvg = me.joxquin.notivas.ui.components.formatAverageOneDecimal(
+        me.joxquin.notivas.ui.components.animatedCountUp(currentAverage.toDouble())
+    )
     val formattedProj = ((projectedGrade * 10f).roundToInt() / 10f).toString()
     val evaluatedPct = (progressRatio * 100f).roundToInt().coerceIn(0, 100)
 

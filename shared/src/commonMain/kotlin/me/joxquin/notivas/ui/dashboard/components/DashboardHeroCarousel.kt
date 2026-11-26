@@ -284,7 +284,9 @@ private fun PerformanceSlideContent(
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
                     val averageDisplay = overallAverage?.let {
-                        ((it * 10).toInt().toDouble() / 10).toString()
+                        me.joxquin.notivas.ui.components.formatAverageOneDecimal(
+                            me.joxquin.notivas.ui.components.animatedCountUp(it)
+                        )
                     } ?: "--"
                     Text(
                         text = averageDisplay,
