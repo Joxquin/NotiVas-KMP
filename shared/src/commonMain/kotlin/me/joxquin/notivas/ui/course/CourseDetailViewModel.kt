@@ -15,6 +15,7 @@ import me.joxquin.notivas.data.model.CanvasModuleItem
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.model.UserProfile
 import me.joxquin.notivas.data.repository.CanvasRepository
+import me.joxquin.notivas.domain.grades.GradeInsights
 import me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase
 import kotlin.math.roundToInt
 
@@ -109,22 +110,12 @@ class CourseDetailViewModel(
                 val assignments = repository.getAssignmentsForCourse(courseId).firstOrNull().orEmpty()
                 val groupsWithItems = repository.getSimulationGroupsWithItems(courseId).firstOrNull().orEmpty()
 
-                val summary = if (course != null && groupsWithItems.isNotEmpty()) {
-                    academicCalculatorUseCase.calculateCourseSummary(course, groupsWithItems)
-                } else null
-
-                val promedioStr = if (summary?.currentAverage != null) {
-                    val rounded = (summary.currentAverage * 10f).roundToInt() / 10f
-                    rounded.toString()
-                } else {
-                    val gradedAssignments = assignments.filter { it.score != null }
-                    if (gradedAssignments.isNotEmpty()) {
-                        val avg = gradedAssignments.map { (it.score!! / (it.pointsPossible ?: 20.0).coerceAtLeast(1.0)) * 20.0 }.average()
-                        ((avg * 10.0).roundToInt() / 10.0).toString()
-                    } else {
-                        "S/C"
-                    }
+                // Mismo cálculo y formato que Rendimiento, Inicio y el Copiloto (GradeInsights): antes este
+                // detalle redondeaba y tenía su propio promedio de Canvas, y CPS salía 16.9 aquí y 16.8 en Rendimiento.
+                val gradeSnapshot = course?.let {
+                    GradeInsights.snapshot(it, assignments, groupsWithItems, academicCalculatorUseCase)
                 }
+                val promedioStr = gradeSnapshot?.currentAverage?.let { GradeInsights.shown1(it).toString() } ?: "S/C"
 
                 // 3. Módulos de Canvas
                 val rawModules = repository.fetchCourseModules(courseId)

@@ -1055,7 +1055,7 @@ private fun MaterialTaskCounterChip(
 }
 
 private fun formatScoreMaterial(value: Double): String {
-    val rounded = (value * 10).toLong() / 10.0
+    val rounded = me.joxquin.notivas.domain.grades.GradeInsights.shown1(value)
     return if (rounded % 1.0 == 0.0) {
         rounded.toLong().toString()
     } else {

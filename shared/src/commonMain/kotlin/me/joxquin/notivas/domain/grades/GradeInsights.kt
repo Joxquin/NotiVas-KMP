@@ -154,8 +154,12 @@ object GradeInsights {
 
     fun round1(value: Double): Double = (value * 10.0).roundToInt() / 10.0
 
-    /** Un decimal truncado, como los promedios de Inicio y Rendimiento (16.78 -> 16.7), para que la IA diga la misma cifra. */
-    fun shown1(value: Double): Double = (value * 10.0).toLong() / 10.0
+    /**
+     * Un decimal truncado, el formato de los promedios en toda la app (16.78 -> 16.7), para que Inicio,
+     * Rendimiento, el curso, Notas y la IA digan la misma cifra. El margen de 1e-4 evita que un promedio
+     * del simulador en Float, como 16.8f (16.7999992 en Double), se muestre como 16.7.
+     */
+    fun shown1(value: Double): Double = ((value * 10.0) + 1e-4).toLong() / 10.0
 
     /** Un decimal hacia arriba (13.62 -> 13.7): la nota que hace falta nunca se informa por debajo de la real. */
     fun ceil1(value: Double): Double = ceil(value * 10.0 - 1e-6) / 10.0
