@@ -36,7 +36,8 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.ui.components.CardListSkeleton
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
@@ -128,60 +130,59 @@ fun CourseModulesScreen(
                     .fillMaxSize()
                     .miuixBackdropModifier(blurBackdrop)
             ) {
-                if (uiState.isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = MiuixTheme.colorScheme.primary,
-                            modifier = Modifier.size(36.dp)
-                        )
-                    }
-                } else if (uiState.modules.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.course_detail_empty_modules),
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                            fontSize = 14.sp
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = contentPadding,
-                        overscrollEffect = null,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.miuixPageScrollModifiers(scrollBehavior)
-                    ) {
-                        items(uiState.modules, key = { it.id }) { module ->
-                            ModuleExpandableCard(
-                                module = module,
-                                isMiuix = true,
-                                onToggleExpand = { viewModel.toggleModuleExpanded(module.id) },
-                                onItemClick = { item ->
-                                    handleItemClick(
-                                        item = item,
-                                        viewModel = viewModel,
-                                        uriHandler = uriHandler,
-                                        onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
-                                        onNavigateToForoDetail = onNavigateToForoDetail
-                                    )
-                                }
+                // Esqueleto con brillo mientras carga y fundido hacia la lista (antes, una rueda sola).
+                Crossfade(
+                    targetState = uiState.isLoading,
+                    animationSpec = tween(durationMillis = 320),
+                    label = "courseModulesMiuix"
+                ) { loading ->
+                    if (loading) {
+                        CardListSkeleton(themeStyle = AppThemeStyle.MIUIX, contentPadding = contentPadding)
+                    } else if (uiState.modules.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.course_detail_empty_modules),
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                fontSize = 14.sp
                             )
                         }
-                    }
+                    } else Box(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            state = listState,
+                            contentPadding = contentPadding,
+                            overscrollEffect = null,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.miuixPageScrollModifiers(scrollBehavior)
+                        ) {
+                            items(uiState.modules, key = { it.id }) { module ->
+                                ModuleExpandableCard(
+                                    module = module,
+                                    isMiuix = true,
+                                    onToggleExpand = { viewModel.toggleModuleExpanded(module.id) },
+                                    onItemClick = { item ->
+                                        handleItemClick(
+                                            item = item,
+                                            viewModel = viewModel,
+                                            uriHandler = uriHandler,
+                                            onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
+                                            onNavigateToForoDetail = onNavigateToForoDetail
+                                        )
+                                    }
+                                )
+                            }
+                        }
 
-                    VerticalScrollBar(
-                        adapter = rememberScrollBarAdapter(listState),
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .fillMaxHeight()
-                            .padding(innerPadding)
-                    )
+                        VerticalScrollBar(
+                            adapter = rememberScrollBarAdapter(listState),
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .fillMaxHeight()
+                                .padding(innerPadding)
+                        )
+                    }
                 }
             }
         }
@@ -229,48 +230,49 @@ fun CourseModulesScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                if (uiState.isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(36.dp)
+                Crossfade(
+                    targetState = uiState.isLoading,
+                    animationSpec = tween(durationMillis = 320),
+                    label = "courseModulesMaterial"
+                ) { loading ->
+                    if (loading) {
+                        CardListSkeleton(
+                            themeStyle = AppThemeStyle.MATERIAL,
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                         )
-                    }
-                } else if (uiState.modules.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.course_detail_empty_modules),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 14.sp
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(uiState.modules, key = { it.id }) { module ->
-                            ModuleExpandableCard(
-                                module = module,
-                                isMiuix = false,
-                                onToggleExpand = { viewModel.toggleModuleExpanded(module.id) },
-                                onItemClick = { item ->
-                                    handleItemClick(
-                                        item = item,
-                                        viewModel = viewModel,
-                                        uriHandler = uriHandler,
-                                        onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
-                                        onNavigateToForoDetail = onNavigateToForoDetail
-                                    )
-                                }
+                    } else if (uiState.modules.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.course_detail_empty_modules),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 14.sp
                             )
+                        }
+                    } else {
+                        LazyColumn(
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(uiState.modules, key = { it.id }) { module ->
+                                ModuleExpandableCard(
+                                    module = module,
+                                    isMiuix = false,
+                                    onToggleExpand = { viewModel.toggleModuleExpanded(module.id) },
+                                    onItemClick = { item ->
+                                        handleItemClick(
+                                            item = item,
+                                            viewModel = viewModel,
+                                            uriHandler = uriHandler,
+                                            onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
+                                            onNavigateToForoDetail = onNavigateToForoDetail
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
                 }
