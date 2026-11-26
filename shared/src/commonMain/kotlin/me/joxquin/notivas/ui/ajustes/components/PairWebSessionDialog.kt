@@ -3,27 +3,28 @@ package me.joxquin.notivas.ui.ajustes.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.maxLengthReject
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Devices
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularProgressIndicator as M3CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,24 +48,45 @@ import me.joxquin.notivas.shared.resources.pair_web_dialog_title
 import me.joxquin.notivas.shared.resources.pair_web_error_invalid_pin
 import me.joxquin.notivas.shared.resources.pair_web_input_placeholder
 import me.joxquin.notivas.shared.resources.pair_web_success
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
-import top.yukonga.miuix.kmp.basic.InputField as MiuixInputField
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.window.WindowDialog
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
+import top.yukonga.miuix.kmp.glass.GlassTextField
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun PairWebSessionDialog(
     themeStyle: AppThemeStyle,
     onDismissRequest: () -> Unit,
-    onAuthorizePairing: suspend (pin: String) -> Result<Unit>
+    onAuthorizePairing: suspend (pin: String) -> Result<Unit>,
+    show: Boolean = true,
+    backdrop: Backdrop? = null,
 ) {
-    var pin by remember { mutableStateOf("") }
+    val pinState = rememberTextFieldState()
+    val pin = pinState.text.toString()
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isSuccess by remember { mutableStateOf(false) }
+    var dismissed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(show) {
+        if (show) dismissed = false
+    }
+
+    val handleDismiss = {
+        dismissed = true
+        pinState.edit { replace(0, length, "") }
+        isLoading = false
+        errorMessage = null
+        isSuccess = false
+        onDismissRequest()
+    }
 
     val handleAuthorize = {
         if (pin.length == 6) {
@@ -72,112 +94,119 @@ fun PairWebSessionDialog(
             errorMessage = null
             scope.launch {
                 val res = onAuthorizePairing(pin)
-                isLoading = false
-                if (res.isSuccess) {
-                    isSuccess = true
-                } else {
-                    errorMessage = res.exceptionOrNull()?.message
+                if (!dismissed) {
+                    isLoading = false
+                    if (res.isSuccess) {
+                        isSuccess = true
+                    } else {
+                        errorMessage = res.exceptionOrNull()?.message
+                    }
                 }
             }
         }
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        WindowDialog(
-            show = true,
-            onDismissRequest = onDismissRequest,
+        GlassDialog(
+            show = show,
+            backdrop = backdrop,
+            onDismissRequest = handleDismiss,
             title = stringResource(Res.string.pair_web_dialog_title),
-            content = {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (isSuccess) {
+            summary = stringResource(Res.string.pair_web_dialog_desc),
+            onDismissFinished = handleDismiss,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (isSuccess) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.CheckCircle,
+                            contentDescription = null,
+                            tint = MiuixTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        MiuixText(
+                            text = stringResource(Res.string.pair_web_success),
+                            style = MiuixTheme.textStyles.main,
+                            color = MiuixTheme.colorScheme.onSurface
+                        )
+                    }
+                    GlassDialogActions {
+                        GlassDialogButton(
+                            onClick = handleDismiss,
+                            modifier = Modifier.weight(1f),
+                            role = GlassDialogButtonRole.Primary,
+                        ) {
+                            MiuixText(
+                                text = stringResource(Res.string.cancel),
+                                style = MiuixTheme.textStyles.button,
+                            )
+                        }
+                    }
+                } else {
+                    GlassTextField(
+                        state = pinState,
+                        label = stringResource(Res.string.pair_web_input_placeholder),
+                        useLabelAsPlaceholder = true,
+                        inputTransformation = PinInputTransformation,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        lineLimits = TextFieldLineLimits.SingleLine,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    if (errorMessage != null) {
+                        MiuixText(
+                            text = errorMessage ?: stringResource(Res.string.pair_web_error_invalid_pin),
+                            style = MiuixTheme.textStyles.body2,
+                            color = MiuixTheme.colorScheme.error
+                        )
+                    }
+
+                    if (isLoading) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.CheckCircle,
-                                contentDescription = null,
-                                tint = MiuixTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Text(
-                                text = stringResource(Res.string.pair_web_success),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MiuixTheme.colorScheme.onSurface
+                            MiuixCircularProgressIndicator(modifier = Modifier.size(16.dp), size = 16.dp)
+                            MiuixText(
+                                text = stringResource(Res.string.pair_web_authorizing),
+                                style = MiuixTheme.textStyles.body2,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                             )
                         }
-                        MiuixTextButton(
-                            text = stringResource(Res.string.cancel),
-                            onClick = onDismissRequest,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(Res.string.pair_web_dialog_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                        )
+                    }
 
-                        MiuixInputField(
-                            query = pin,
-                            onQueryChange = { if (it.length <= 6 && it.all { c -> c.isDigit() }) pin = it },
-                            onSearch = { handleAuthorize() },
-                            expanded = false,
-                            onExpandedChange = {},
-                            label = stringResource(Res.string.pair_web_input_placeholder),
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MiuixTheme.colorScheme.surfaceContainerHigh
-                        )
-
-                        if (errorMessage != null) {
-                            Text(
-                                text = errorMessage ?: stringResource(Res.string.pair_web_error_invalid_pin),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MiuixTheme.colorScheme.error
-                            )
-                        }
-
-                        if (isLoading) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                Text(
-                                    text = stringResource(Res.string.pair_web_authorizing),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                                )
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    GlassDialogActions {
+                        GlassDialogButton(
+                            onClick = handleDismiss,
+                            modifier = Modifier.weight(1f),
                         ) {
-                            MiuixTextButton(
+                            MiuixText(
                                 text = stringResource(Res.string.cancel),
-                                onClick = onDismissRequest,
-                                modifier = Modifier.weight(1f)
+                                style = MiuixTheme.textStyles.button,
                             )
-                            MiuixTextButton(
+                        }
+                        GlassDialogButton(
+                            onClick = { handleAuthorize() },
+                            modifier = Modifier.weight(1f),
+                            enabled = pin.length == 6 && !isLoading,
+                            role = GlassDialogButtonRole.Primary,
+                        ) {
+                            MiuixText(
                                 text = stringResource(Res.string.pair_web_action_authorize),
-                                onClick = { handleAuthorize() },
-                                modifier = Modifier.weight(1f),
-                                enabled = pin.length == 6 && !isLoading,
-                                colors = MiuixButtonDefaults.textButtonColorsPrimary()
+                                style = MiuixTheme.textStyles.button,
                             )
                         }
                     }
                 }
             }
-        )
-    } else {
+        }
+    } else if (themeStyle != AppThemeStyle.MIUIX && show) {
         AlertDialog(
             onDismissRequest = onDismissRequest,
             icon = {
@@ -210,7 +239,11 @@ fun PairWebSessionDialog(
 
                         OutlinedTextField(
                             value = pin,
-                            onValueChange = { if (it.length <= 6 && it.all { c -> c.isDigit() }) pin = it },
+                            onValueChange = { value ->
+                                pinState.edit {
+                                    replace(0, length, value.filter { it.isDigit() }.take(6))
+                                }
+                            },
                             placeholder = {
                                 Text(
                                     stringResource(Res.string.pair_web_input_placeholder),
@@ -242,7 +275,7 @@ fun PairWebSessionDialog(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                M3CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                                 Text(
                                     text = stringResource(Res.string.pair_web_authorizing),
                                     style = MaterialTheme.typography.bodySmall
@@ -277,3 +310,7 @@ fun PairWebSessionDialog(
     }
 }
 
+/** PIN de 6 dígitos: rechaza caracteres no numéricos y limita la longitud como en el ejemplo. */
+private val PinInputTransformation = InputTransformation {
+    if (!asCharSequence().all { it.isDigit() }) revertAllChanges()
+}.maxLengthReject(6)

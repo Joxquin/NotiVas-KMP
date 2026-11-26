@@ -64,12 +64,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.onboarding_alarms_desc
 import me.joxquin.notivas.shared.resources.onboarding_alarms_title
 import me.joxquin.notivas.shared.resources.onboarding_battery_desc
 import me.joxquin.notivas.shared.resources.onboarding_battery_title
 import me.joxquin.notivas.shared.resources.onboarding_domain_continue_btn
+import me.joxquin.notivas.shared.resources.onboarding_permissions_help_btn
+import me.joxquin.notivas.shared.resources.onboarding_permissions_help_desc
+import me.joxquin.notivas.shared.resources.onboarding_permissions_help_title
 import me.joxquin.notivas.shared.resources.onboarding_finish_btn
 import me.joxquin.notivas.shared.resources.onboarding_miui_autostart_btn
 import me.joxquin.notivas.shared.resources.onboarding_miui_battery_btn
@@ -77,10 +81,17 @@ import me.joxquin.notivas.shared.resources.onboarding_miui_desc
 import me.joxquin.notivas.shared.resources.onboarding_miui_title
 import me.joxquin.notivas.shared.resources.onboarding_notifications_desc
 import me.joxquin.notivas.shared.resources.onboarding_notifications_title
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import me.joxquin.notivas.ui.onboarding.components.OnboardingStepIndicator
 import me.joxquin.notivas.util.rememberBackgroundPermissionManager
 import me.joxquin.notivas.util.rememberNotificationPermissionLauncher
 import org.jetbrains.compose.resources.stringResource
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -88,7 +99,9 @@ import kotlin.math.sin
 @Composable
 fun OnboardingPermissionsScreen(
     onContinue: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null
 ) {
     val permissionManager = rememberBackgroundPermissionManager()
 
@@ -289,60 +302,128 @@ fun OnboardingPermissionsScreen(
         }
     }
 
-    if (showXiaomiDialog) {
-        AlertDialog(
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassDialog(
+            show = showXiaomiDialog,
+            backdrop = backdrop,
+            title = stringResource(Res.string.onboarding_miui_title),
+            summary = stringResource(Res.string.onboarding_miui_desc),
             onDismissRequest = { showXiaomiDialog = false },
-            title = {
-                Text(
-                    text = stringResource(Res.string.onboarding_miui_title),
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(Res.string.onboarding_miui_desc),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                Button(
+        ) {
+            GlassDialogActions {
+                GlassDialogButton(
                     onClick = {
-                        permissionManager.openMiuiAutostartSettings()
-                        showXiaomiDialog = false
-                    }
+                        if (showXiaomiDialog) {
+                            permissionManager.openMiuiAutostartSettings()
+                            showXiaomiDialog = false
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    role = GlassDialogButtonRole.Primary,
                 ) {
-                    Text(stringResource(Res.string.onboarding_miui_autostart_btn))
+                    MiuixText(
+                        text = stringResource(Res.string.onboarding_miui_autostart_btn),
+                        style = MiuixTheme.textStyles.button,
+                    )
                 }
-            },
-            dismissButton = {
-                OutlinedButton(
+                GlassDialogButton(
                     onClick = {
-                        permissionManager.openMiuiBatterySaverSettings()
-                        showXiaomiDialog = false
-                    }
+                        if (showXiaomiDialog) {
+                            permissionManager.openMiuiBatterySaverSettings()
+                            showXiaomiDialog = false
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
                 ) {
-                    Text(stringResource(Res.string.onboarding_miui_battery_btn))
+                    MiuixText(
+                        text = stringResource(Res.string.onboarding_miui_battery_btn),
+                        style = MiuixTheme.textStyles.button,
+                    )
                 }
             }
-        )
-    }
+        }
 
-    if (showHelpDialog) {
-        AlertDialog(
+        GlassDialog(
+            show = showHelpDialog,
+            backdrop = backdrop,
+            title = stringResource(Res.string.onboarding_permissions_help_title),
+            summary = stringResource(Res.string.onboarding_permissions_help_desc),
             onDismissRequest = { showHelpDialog = false },
-            title = { Text("¿Por que estos permisos?", fontWeight = FontWeight.Bold) },
-            text = {
-                Text(
-                    text = "NotiVas sincroniza tus tareas de Canvas LMS de forma autonoma y offline-first. Las notificaciones te alertan cuando un profesor publica una calificacion, mientras que las alarmas exactas te recuerdan entregar a tiempo antes de la hora limite.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showHelpDialog = false }) {
-                    Text("Entendido")
+        ) {
+            GlassDialogActions {
+                GlassDialogButton(
+                    onClick = { showHelpDialog = false },
+                    modifier = Modifier.weight(1f),
+                    role = GlassDialogButtonRole.Primary,
+                ) {
+                    MiuixText(
+                        text = stringResource(Res.string.onboarding_permissions_help_btn),
+                        style = MiuixTheme.textStyles.button,
+                    )
                 }
             }
-        )
+        }
+    } else {
+        if (showXiaomiDialog) {
+            AlertDialog(
+                onDismissRequest = { showXiaomiDialog = false },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.onboarding_miui_title),
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(Res.string.onboarding_miui_desc),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            permissionManager.openMiuiAutostartSettings()
+                            showXiaomiDialog = false
+                        }
+                    ) {
+                        Text(stringResource(Res.string.onboarding_miui_autostart_btn))
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        onClick = {
+                            permissionManager.openMiuiBatterySaverSettings()
+                            showXiaomiDialog = false
+                        }
+                    ) {
+                        Text(stringResource(Res.string.onboarding_miui_battery_btn))
+                    }
+                }
+            )
+        }
+
+        if (showHelpDialog) {
+            AlertDialog(
+                onDismissRequest = { showHelpDialog = false },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.onboarding_permissions_help_title),
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(Res.string.onboarding_permissions_help_desc),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { showHelpDialog = false }) {
+                        Text(stringResource(Res.string.onboarding_permissions_help_btn))
+                    }
+                }
+            )
+        }
     }
 }
 

@@ -252,6 +252,9 @@ fun MainAppShell(
 
     val updateRepository = remember { UpdateRepository() }
     var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    // Retener el último dato para que GlassDialog pueda completar su animación de salida.
+    var lastUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    if (activeUpdateInfo != null) lastUpdateInfo = activeUpdateInfo
 
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     LaunchedEffect(Unit) {
@@ -1861,25 +1864,29 @@ fun MainAppShell(
 }
 }
 
-    activeUpdateInfo?.let { info ->
+    lastUpdateInfo?.let { info ->
         UpdateDialog(
             updateInfo = info,
+            themeStyle = themeStyle,
+            backdrop = contentBackdrop,
+            show = activeUpdateInfo != null && info.isUpdateAvailable,
             onDismiss = { activeUpdateInfo = null }
         )
     }
 
-    if (showCatalogImportDialog) {
-        me.joxquin.notivas.ui.notas.components.ImportTemplateDialog(
-            onDismiss = { showCatalogImportDialog = false },
-            showApplyToAllToggle = true,
-            onApplyTemplate = { template, applyToAll ->
-                if (applyToAll) {
-                    notasViewModel.applyTemplateToAllCourses(template)
-                } else {
-                    notasViewModel.applyTemplate(template)
-                }
-                showCatalogImportDialog = false
+    me.joxquin.notivas.ui.notas.components.ImportTemplateDialog(
+        onDismiss = { showCatalogImportDialog = false },
+        showApplyToAllToggle = true,
+        themeStyle = themeStyle,
+        backdrop = contentBackdrop,
+        show = showCatalogImportDialog,
+        onApplyTemplate = { template, applyToAll ->
+            if (applyToAll) {
+                notasViewModel.applyTemplateToAllCourses(template)
+            } else {
+                notasViewModel.applyTemplate(template)
             }
-        )
-    }
+            showCatalogImportDialog = false
+        }
+    )
 }

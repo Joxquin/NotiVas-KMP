@@ -53,13 +53,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
+import me.joxquin.notivas.ui.components.miuix.GlassConfirmDialog
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.window.WindowDialog
 import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.*
 
@@ -75,6 +80,7 @@ fun GoogleDriveSettingsSection(
     onUnlink: () -> Unit,
     onClearCache: () -> Unit,
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
@@ -93,29 +99,65 @@ fun GoogleDriveSettingsSection(
         }
     )
 
-    // Diálogo de Error de Autenticación
-    if (authErrorMsg != null) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            WindowDialog(
-                show = authErrorMsg != null,
-                title = stringResource(Res.string.drive_auth_error_title),
-                summary = authErrorMsg ?: "",
-                onDismissRequest = { authErrorMsg = null },
-                content = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        MiuixTextButton(
-                            text = stringResource(Res.string.close),
-                            onClick = { authErrorMsg = null },
-                            modifier = Modifier.weight(1f),
-                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                        )
-                    }
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        // Diálogo de Error de Autenticación
+        GlassDialog(
+            show = authErrorMsg != null,
+            backdrop = backdrop,
+            onDismissRequest = { authErrorMsg = null },
+            title = stringResource(Res.string.drive_auth_error_title),
+            summary = authErrorMsg ?: "",
+        ) {
+            GlassDialogActions {
+                GlassDialogButton(
+                    onClick = { authErrorMsg = null },
+                    modifier = Modifier.weight(1f),
+                    role = GlassDialogButtonRole.Primary,
+                ) {
+                    MiuixText(
+                        text = stringResource(Res.string.close),
+                        style = MiuixTheme.textStyles.button,
+                    )
                 }
-            )
-        } else {
+            }
+        }
+
+        // Diálogo de Confirmación: Desvincular
+        GlassConfirmDialog(
+            show = showUnlinkDialog,
+            title = stringResource(Res.string.drive_unlink_dialog_title),
+            summary = stringResource(Res.string.drive_unlink_dialog_desc),
+            cancelLabel = stringResource(Res.string.cancel),
+            confirmLabel = stringResource(Res.string.drive_unlink_btn),
+            onDismissRequest = { showUnlinkDialog = false },
+            onConfirm = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                showUnlinkDialog = false
+                onUnlink()
+            },
+            backdrop = backdrop,
+            confirmRole = GlassDialogButtonRole.Destructive,
+        )
+
+        // Diálogo de Confirmación: Vaciar Caché
+        GlassConfirmDialog(
+            show = showClearCacheDialog,
+            title = stringResource(Res.string.drive_clear_cache_dialog_title),
+            summary = stringResource(Res.string.drive_clear_cache_dialog_desc),
+            cancelLabel = stringResource(Res.string.cancel),
+            confirmLabel = stringResource(Res.string.drive_clear_cache_btn),
+            onDismissRequest = { showClearCacheDialog = false },
+            onConfirm = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                showClearCacheDialog = false
+                onClearCache()
+            },
+            backdrop = backdrop,
+            confirmRole = GlassDialogButtonRole.Destructive,
+        )
+    } else {
+        // Diálogo de Error de Autenticación
+        if (authErrorMsg != null) {
             AlertDialog(
                 onDismissRequest = { authErrorMsg = null },
                 icon = {
@@ -148,44 +190,9 @@ fun GoogleDriveSettingsSection(
                 }
             )
         }
-    }
 
-    // Diálogo de Confirmación: Desvincular
-    if (showUnlinkDialog) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            WindowDialog(
-                show = showUnlinkDialog,
-                title = stringResource(Res.string.drive_unlink_dialog_title),
-                summary = stringResource(Res.string.drive_unlink_dialog_desc),
-                onDismissRequest = { showUnlinkDialog = false },
-                content = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MiuixTextButton(
-                            text = stringResource(Res.string.cancel),
-                            onClick = { showUnlinkDialog = false },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(Modifier.width(16.dp))
-                        MiuixTextButton(
-                            text = stringResource(Res.string.drive_unlink_btn),
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                showUnlinkDialog = false
-                                onUnlink()
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = MiuixButtonDefaults.textButtonColors(
-                                color = MiuixTheme.colorScheme.errorContainer,
-                                textColor = MiuixTheme.colorScheme.onErrorContainer
-                            )
-                        )
-                    }
-                }
-            )
-        } else {
+        // Diálogo de Confirmación: Desvincular
+        if (showUnlinkDialog) {
             AlertDialog(
                 onDismissRequest = { showUnlinkDialog = false },
                 icon = {
@@ -230,41 +237,9 @@ fun GoogleDriveSettingsSection(
                 }
             )
         }
-    }
 
-    // Diálogo de Confirmación: Vaciar Caché
-    if (showClearCacheDialog) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            WindowDialog(
-                show = showClearCacheDialog,
-                title = stringResource(Res.string.drive_clear_cache_dialog_title),
-                summary = stringResource(Res.string.drive_clear_cache_dialog_desc),
-                onDismissRequest = { showClearCacheDialog = false },
-                content = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MiuixTextButton(
-                            text = stringResource(Res.string.cancel),
-                            onClick = { showClearCacheDialog = false },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(Modifier.width(16.dp))
-                        MiuixTextButton(
-                            text = stringResource(Res.string.drive_clear_cache_btn),
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                showClearCacheDialog = false
-                                onClearCache()
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                        )
-                    }
-                }
-            )
-        } else {
+        // Diálogo de Confirmación: Vaciar Caché
+        if (showClearCacheDialog) {
             AlertDialog(
                 onDismissRequest = { showClearCacheDialog = false },
                 icon = {

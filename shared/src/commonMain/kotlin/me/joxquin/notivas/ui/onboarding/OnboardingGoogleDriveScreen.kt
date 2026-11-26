@@ -77,12 +77,15 @@ import me.joxquin.notivas.shared.resources.onboarding_skip_dialog_title
 import me.joxquin.notivas.shared.resources.onboarding_skip_dialog_desc
 import me.joxquin.notivas.shared.resources.onboarding_skip_dialog_btn_confirm
 import me.joxquin.notivas.shared.resources.onboarding_skip_dialog_btn_cancel
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import me.joxquin.notivas.ui.onboarding.components.OnboardingStepIndicator
 import me.joxquin.notivas.util.rememberGoogleAuthLauncher
 import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.window.WindowDialog
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -322,37 +325,65 @@ fun OnboardingGoogleDriveScreen(
         }
     }
 
-    // Diálogo informativo sobre el modo de funcionamiento sin cuenta vinculada
-    if (showSkipWarningDialog) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            WindowDialog(
-                show = true,
-                title = stringResource(Res.string.onboarding_skip_dialog_title),
-                summary = stringResource(Res.string.onboarding_skip_dialog_desc),
-                onDismissRequest = { showSkipWarningDialog = false },
-                content = {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        MiuixTextButton(
-                            text = stringResource(Res.string.onboarding_skip_dialog_btn_confirm),
-                            onClick = {
-                                showSkipWarningDialog = false
-                                onFinish()
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                        )
-                        MiuixTextButton(
-                            text = stringResource(Res.string.onboarding_skip_dialog_btn_cancel),
-                            onClick = { showSkipWarningDialog = false },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassDialog(
+            show = showSkipWarningDialog,
+            backdrop = null,
+            title = stringResource(Res.string.onboarding_skip_dialog_title),
+            summary = stringResource(Res.string.onboarding_skip_dialog_desc),
+            onDismissRequest = { showSkipWarningDialog = false },
+        ) {
+            GlassDialogActions {
+                GlassDialogButton(
+                    onClick = {
+                        if (showSkipWarningDialog) {
+                            showSkipWarningDialog = false
+                            onFinish()
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    role = GlassDialogButtonRole.Primary,
+                ) {
+                    MiuixText(
+                        text = stringResource(Res.string.onboarding_skip_dialog_btn_confirm),
+                        style = MiuixTheme.textStyles.button,
+                    )
                 }
-            )
-        } else {
+                GlassDialogButton(
+                    onClick = { showSkipWarningDialog = false },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    MiuixText(
+                        text = stringResource(Res.string.onboarding_skip_dialog_btn_cancel),
+                        style = MiuixTheme.textStyles.button,
+                    )
+                }
+            }
+        }
+
+        GlassDialog(
+            show = authErrorMsg != null,
+            backdrop = null,
+            title = stringResource(Res.string.drive_auth_error_title),
+            summary = authErrorMsg,
+            onDismissRequest = { authErrorMsg = null },
+        ) {
+            GlassDialogActions {
+                GlassDialogButton(
+                    onClick = { authErrorMsg = null },
+                    modifier = Modifier.weight(1f),
+                    role = GlassDialogButtonRole.Primary,
+                ) {
+                    MiuixText(
+                        text = stringResource(Res.string.close),
+                        style = MiuixTheme.textStyles.button,
+                    )
+                }
+            }
+        }
+    } else {
+        // Diálogo informativo sobre el modo de funcionamiento sin cuenta vinculada
+        if (showSkipWarningDialog) {
             AlertDialog(
                 onDismissRequest = { showSkipWarningDialog = false },
                 icon = {
@@ -395,30 +426,8 @@ fun OnboardingGoogleDriveScreen(
                 }
             )
         }
-    }
 
-    if (authErrorMsg != null) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            WindowDialog(
-                show = true,
-                title = stringResource(Res.string.drive_auth_error_title),
-                summary = authErrorMsg ?: "",
-                onDismissRequest = { authErrorMsg = null },
-                content = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        MiuixTextButton(
-                            text = stringResource(Res.string.close),
-                            onClick = { authErrorMsg = null },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                        )
-                    }
-                }
-            )
-        } else {
+        if (authErrorMsg != null) {
             AlertDialog(
                 onDismissRequest = { authErrorMsg = null },
                 icon = {

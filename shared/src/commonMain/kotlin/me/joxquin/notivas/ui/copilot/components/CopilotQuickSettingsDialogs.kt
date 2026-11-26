@@ -37,19 +37,23 @@ import me.joxquin.notivas.shared.resources.close
 import me.joxquin.notivas.shared.resources.copilot_custom_instructions_desc
 import me.joxquin.notivas.shared.resources.copilot_custom_instructions_placeholder
 import me.joxquin.notivas.shared.resources.copilot_custom_instructions_title
-import me.joxquin.notivas.shared.resources.copilot_model_label
 import me.joxquin.notivas.shared.resources.copilot_provider_dialog_desc
 import me.joxquin.notivas.shared.resources.copilot_provider_dialog_title
 import me.joxquin.notivas.shared.resources.openrouter_model_dialog_desc
 import me.joxquin.notivas.shared.resources.openrouter_model_dialog_title
 import me.joxquin.notivas.shared.resources.save
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.basic.RadioButton as MiuixRadioButton
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
@@ -79,93 +83,119 @@ fun CopilotProviderPickerDialog(
     currentProvider: CopilotProvider,
     onProviderSelected: (CopilotProvider) -> Unit,
     onDismiss: () -> Unit,
-    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
+    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
 ) {
-    if (!visible) return
-
     val providerOptions = listOf(
         CopilotProvider.OPENROUTER to ("OpenRouter" to "openrouter.ai (Multi-proveedor)"),
         CopilotProvider.GOOGLE_AI_STUDIO to ("Google AI Studio" to "aistudio.google.com (Gemini Oficial)")
     )
 
-    val containerColor = if (themeStyle == AppThemeStyle.MIUIX) {
-        MiuixTheme.colorScheme.surfaceContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
-                contentDescription = null,
-                tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-            )
-        },
-        title = {
-            Text(
-                text = stringResource(Res.string.copilot_provider_dialog_title),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-            )
-        },
-        text = {
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassDialog(
+            show = visible,
+            backdrop = backdrop,
+            title = stringResource(Res.string.copilot_provider_dialog_title),
+            summary = stringResource(Res.string.copilot_provider_dialog_desc),
+            onDismissRequest = onDismiss,
+        ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(Res.string.copilot_provider_dialog_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-
                 providerOptions.forEach { (provider, info) ->
                     val (title, subtitle) = info
                     val isSelected = provider == currentProvider
-
-                    if (themeStyle == AppThemeStyle.MIUIX) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.defaultColors(
-                                color = if (isSelected) MiuixTheme.colorScheme.surfaceContainerHighest else MiuixTheme.colorScheme.surfaceContainerHigh
-                            ),
-                            pressFeedbackType = PressFeedbackType.Sink,
-                            onClick = {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.defaultColors(
+                            color = if (isSelected) MiuixTheme.colorScheme.surfaceContainerHighest else MiuixTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        pressFeedbackType = PressFeedbackType.Sink,
+                        onClick = {
+                            if (visible) {
                                 onProviderSelected(provider)
                                 onDismiss()
                             }
+                        }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                RadioButton(
-                                    selected = isSelected,
-                                    onClick = {
+                            MiuixRadioButton(
+                                selected = isSelected,
+                                onClick = {
+                                    if (visible) {
                                         onProviderSelected(provider)
                                         onDismiss()
                                     }
-                                )
-                                Column {
-                                    Text(
-                                        text = title,
-                                        style = MaterialTheme.typography.bodyLarge.copy(
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                        ),
-                                        color = if (isSelected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = subtitle,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                                    )
                                 }
+                            )
+                            Column {
+                                MiuixText(
+                                    text = title,
+                                    style = MiuixTheme.textStyles.body1.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    ),
+                                    color = if (isSelected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface
+                                )
+                                MiuixText(
+                                    text = subtitle,
+                                    style = MiuixTheme.textStyles.body2,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                )
                             }
                         }
-                    } else {
+                    }
+                }
+                GlassDialogActions {
+                    GlassDialogButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = onDismiss,
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.close),
+                            style = MiuixTheme.textStyles.button,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (themeStyle != AppThemeStyle.MIUIX && visible) {
+        val containerColor = MaterialTheme.colorScheme.surfaceContainer
+
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(Res.string.copilot_provider_dialog_title),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(Res.string.copilot_provider_dialog_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+
+                    providerOptions.forEach { (provider, info) ->
+                        val (title, subtitle) = info
+                        val isSelected = provider == currentProvider
+
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
@@ -209,23 +239,16 @@ fun CopilotProviderPickerDialog(
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            if (themeStyle == AppThemeStyle.MIUIX) {
-                MiuixTextButton(
-                    text = stringResource(Res.string.close),
-                    onClick = onDismiss
-                )
-            } else {
+            },
+            confirmButton = {},
+            dismissButton = {
                 androidx.compose.material3.TextButton(onClick = onDismiss) {
                     Text(stringResource(Res.string.close))
                 }
-            }
-        },
-        containerColor = containerColor
-    )
+            },
+            containerColor = containerColor
+        )
+    }
 }
 
 @Composable
@@ -235,81 +258,107 @@ fun CopilotModelPickerDialog(
     currentModel: String,
     onModelSelected: (String) -> Unit,
     onDismiss: () -> Unit,
-    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
+    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
 ) {
-    if (!visible) return
-
     val models = if (provider == CopilotProvider.OPENROUTER) OPENROUTER_MODELS else GOOGLE_AI_STUDIO_MODELS
-    val containerColor = if (themeStyle == AppThemeStyle.MIUIX) {
-        MiuixTheme.colorScheme.surfaceContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
-    }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Psychology,
-                contentDescription = null,
-                tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-            )
-        },
-        title = {
-            Text(
-                text = stringResource(Res.string.openrouter_model_dialog_title),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-            )
-        },
-        text = {
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassDialog(
+            show = visible,
+            backdrop = backdrop,
+            title = stringResource(Res.string.openrouter_model_dialog_title),
+            summary = stringResource(Res.string.openrouter_model_dialog_desc),
+            onDismissRequest = onDismiss,
+        ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(Res.string.openrouter_model_dialog_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-
                 models.forEach { (modelId, label) ->
                     val isSelected = modelId == currentModel
-
-                    if (themeStyle == AppThemeStyle.MIUIX) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.defaultColors(
-                                color = if (isSelected) MiuixTheme.colorScheme.surfaceContainerHighest else MiuixTheme.colorScheme.surfaceContainerHigh
-                            ),
-                            pressFeedbackType = PressFeedbackType.Sink,
-                            onClick = {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.defaultColors(
+                            color = if (isSelected) MiuixTheme.colorScheme.surfaceContainerHighest else MiuixTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        pressFeedbackType = PressFeedbackType.Sink,
+                        onClick = {
+                            if (visible) {
                                 onModelSelected(modelId)
                                 onDismiss()
                             }
+                        }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                RadioButton(
-                                    selected = isSelected,
-                                    onClick = {
+                            MiuixRadioButton(
+                                selected = isSelected,
+                                onClick = {
+                                    if (visible) {
                                         onModelSelected(modelId)
                                         onDismiss()
                                     }
-                                )
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                    ),
-                                    color = if (isSelected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface
-                                )
-                            }
+                                }
+                            )
+                            MiuixText(
+                                text = label,
+                                style = MiuixTheme.textStyles.body1.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                ),
+                                color = if (isSelected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface
+                            )
                         }
-                    } else {
+                    }
+                }
+                GlassDialogActions {
+                    GlassDialogButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = onDismiss,
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.close),
+                            style = MiuixTheme.textStyles.button,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (themeStyle != AppThemeStyle.MIUIX && visible) {
+        val containerColor = MaterialTheme.colorScheme.surfaceContainer
+
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Psychology,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(Res.string.openrouter_model_dialog_title),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(Res.string.openrouter_model_dialog_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+
+                    models.forEach { (modelId, label) ->
+                        val isSelected = modelId == currentModel
+
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
@@ -346,23 +395,16 @@ fun CopilotModelPickerDialog(
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            if (themeStyle == AppThemeStyle.MIUIX) {
-                MiuixTextButton(
-                    text = stringResource(Res.string.close),
-                    onClick = onDismiss
-                )
-            } else {
+            },
+            confirmButton = {},
+            dismissButton = {
                 androidx.compose.material3.TextButton(onClick = onDismiss) {
                     Text(stringResource(Res.string.close))
                 }
-            }
-        },
-        containerColor = containerColor
-    )
+            },
+            containerColor = containerColor
+        )
+    }
 }
 
 @Composable
@@ -371,55 +413,88 @@ fun CopilotCustomInstructionsDialog(
     initialInstructions: String,
     onSaveInstructions: (String) -> Unit,
     onDismiss: () -> Unit,
-    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL
+    themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
+    backdrop: Backdrop? = null,
 ) {
-    if (!visible) return
-
     var instructionsText by remember(initialInstructions, visible) {
         mutableStateOf(initialInstructions)
     }
 
-    val containerColor = if (themeStyle == AppThemeStyle.MIUIX) {
-        MiuixTheme.colorScheme.surfaceContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassDialog(
+            show = visible,
+            backdrop = backdrop,
+            title = stringResource(Res.string.copilot_custom_instructions_title),
+            summary = stringResource(Res.string.copilot_custom_instructions_desc),
+            onDismissRequest = onDismiss,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                MiuixTextField(
+                    value = instructionsText,
+                    onValueChange = { instructionsText = it },
+                    label = stringResource(Res.string.copilot_custom_instructions_title),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp),
+                    colors = MiuixTextFieldDefaults.textFieldColors()
+                )
+                GlassDialogActions {
+                    GlassDialogButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = onDismiss,
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.cancel),
+                            style = MiuixTheme.textStyles.button,
+                        )
+                    }
+                    GlassDialogButton(
+                        modifier = Modifier.weight(1f),
+                        role = GlassDialogButtonRole.Primary,
+                        onClick = {
+                            if (visible) {
+                                onSaveInstructions(instructionsText.trim())
+                                onDismiss()
+                            }
+                        },
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.save),
+                            style = MiuixTheme.textStyles.button,
+                        )
+                    }
+                }
+            }
+        }
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Tune,
-                contentDescription = null,
-                tint = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-            )
-        },
-        title = {
-            Text(
-                text = stringResource(Res.string.copilot_custom_instructions_title),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = stringResource(Res.string.copilot_custom_instructions_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+    if (themeStyle != AppThemeStyle.MIUIX && visible) {
+        val containerColor = MaterialTheme.colorScheme.surfaceContainer
 
-                if (themeStyle == AppThemeStyle.MIUIX) {
-                    MiuixTextField(
-                        value = instructionsText,
-                        onValueChange = { instructionsText = it },
-                        label = stringResource(Res.string.copilot_custom_instructions_title),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(130.dp),
-                        colors = MiuixTextFieldDefaults.textFieldColors()
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Tune,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(Res.string.copilot_custom_instructions_title),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = stringResource(Res.string.copilot_custom_instructions_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
+
                     OutlinedTextField(
                         value = instructionsText,
                         onValueChange = { instructionsText = it },
@@ -431,19 +506,8 @@ fun CopilotCustomInstructionsDialog(
                         shape = RoundedCornerShape(12.dp)
                     )
                 }
-            }
-        },
-        confirmButton = {
-            if (themeStyle == AppThemeStyle.MIUIX) {
-                MiuixTextButton(
-                    text = stringResource(Res.string.save),
-                    onClick = {
-                        onSaveInstructions(instructionsText.trim())
-                        onDismiss()
-                    },
-                    colors = ButtonDefaults.textButtonColorsPrimary()
-                )
-            } else {
+            },
+            confirmButton = {
                 androidx.compose.material3.TextButton(
                     onClick = {
                         onSaveInstructions(instructionsText.trim())
@@ -452,20 +516,13 @@ fun CopilotCustomInstructionsDialog(
                 ) {
                     Text(stringResource(Res.string.save))
                 }
-            }
-        },
-        dismissButton = {
-            if (themeStyle == AppThemeStyle.MIUIX) {
-                MiuixTextButton(
-                    text = stringResource(Res.string.cancel),
-                    onClick = onDismiss
-                )
-            } else {
+            },
+            dismissButton = {
                 androidx.compose.material3.TextButton(onClick = onDismiss) {
                     Text(stringResource(Res.string.cancel))
                 }
-            }
-        },
-        containerColor = containerColor
-    )
+            },
+            containerColor = containerColor
+        )
+    }
 }

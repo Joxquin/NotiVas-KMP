@@ -66,6 +66,7 @@ import me.joxquin.notivas.ui.ajustes.LicenseEntry
 import me.joxquin.notivas.ui.ajustes.LicenseKind
 import me.joxquin.notivas.ui.ajustes.openSourceLicenseSections
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
@@ -80,12 +81,13 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.window.WindowDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +104,7 @@ fun AjustesLicensesScreen(
     var loadFailed by remember { mutableStateOf(false) }
     var dialogEntry by remember { mutableStateOf<LicenseEntry?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    val backdrop = rememberMiuixBlurBackdrop()
 
     val appEntry = remember(appVersion.versionName) {
         LicenseEntry(
@@ -137,7 +140,6 @@ fun AjustesLicensesScreen(
     }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
         val isWideScreen = LocalIsWideScreen.current
 
@@ -318,11 +320,12 @@ fun AjustesLicensesScreen(
     val dialogText = entry?.let { licenseTexts[it.kind.assetPath] }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        WindowDialog(
+        GlassDialog(
             show = showDialog,
+            backdrop = backdrop,
+            onDismissRequest = { showDialog = false },
             title = if (entry != null) stringResource(entry.nameRes) else null,
             summary = dialogSummary,
-            onDismissRequest = { showDialog = false }
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -332,20 +335,26 @@ fun AjustesLicensesScreen(
                     text = dialogText,
                     loadFailed = loadFailed
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    MiuixTextButton(
-                        text = stringResource(Res.string.licenses_open_github),
+                GlassDialogActions {
+                    GlassDialogButton(
                         onClick = { entry?.let { openUrl(it.url) } },
-                        modifier = Modifier.weight(1f)
-                    )
-                    MiuixTextButton(
-                        text = stringResource(Res.string.licenses_close),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.licenses_open_github),
+                            style = MiuixTheme.textStyles.button,
+                        )
+                    }
+                    GlassDialogButton(
                         onClick = { showDialog = false },
-                        modifier = Modifier.weight(1f)
-                    )
+                        modifier = Modifier.weight(1f),
+                        role = GlassDialogButtonRole.Primary,
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.licenses_close),
+                            style = MiuixTheme.textStyles.button,
+                        )
+                    }
                 }
             }
         }

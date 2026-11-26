@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.ui.components.BackHandler
+import me.joxquin.notivas.ui.components.miuix.GlassConfirmDialog
 import me.joxquin.notivas.ui.components.miuix.GlassSheetHeaderAction
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import org.jetbrains.compose.resources.stringResource
@@ -69,7 +70,6 @@ import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
-import top.yukonga.miuix.kmp.window.WindowDialog
 import androidx.compose.foundation.layout.navigationBarsPadding
 
 import androidx.compose.runtime.getValue
@@ -102,6 +102,7 @@ fun AssignmentQuickSubmenuSheet(
     val coroutineScope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var pendingCompleteAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var showConfirmCompleteDialog by remember { mutableStateOf(false) }
     var showCustomReminderSheet by remember { mutableStateOf(false) }
     val sheetListState = rememberLazyListState()
@@ -115,63 +116,52 @@ fun AssignmentQuickSubmenuSheet(
         }
     }
 
-    if (showConfirmCompleteDialog) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            WindowDialog(
-                show = showConfirmCompleteDialog,
-                title = stringResource(Res.string.task_mark_completed_dialog_title),
-                summary = stringResource(Res.string.task_mark_completed_dialog_desc),
-                onDismissRequest = { showConfirmCompleteDialog = false },
-                content = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        top.yukonga.miuix.kmp.basic.TextButton(
-                            text = stringResource(Res.string.task_mark_completed_dialog_cancel),
-                            onClick = { showConfirmCompleteDialog = false },
-                            modifier = Modifier.weight(1f),
-                            colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.textButtonColors(
-                                color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                                textColor = MiuixTheme.colorScheme.onSurface
-                            )
-                        )
-                        top.yukonga.miuix.kmp.basic.TextButton(
-                            text = stringResource(Res.string.task_mark_completed_dialog_confirm),
-                            onClick = {
-                                showConfirmCompleteDialog = false
-                                onMarkCompleted?.invoke(item.assignment.id)
-                                onDismissRequest()
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.textButtonColorsPrimary()
-                        )
-                    }
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassConfirmDialog(
+            show = showConfirmCompleteDialog,
+            title = stringResource(Res.string.task_mark_completed_dialog_title),
+            summary = stringResource(Res.string.task_mark_completed_dialog_desc),
+            cancelLabel = stringResource(Res.string.task_mark_completed_dialog_cancel),
+            confirmLabel = stringResource(Res.string.task_mark_completed_dialog_confirm),
+            onDismissRequest = { showConfirmCompleteDialog = false },
+            onConfirm = {
+                pendingCompleteAction = {
+                    onMarkCompleted?.invoke(item.assignment.id)
+                    onDismissRequest()
                 }
-            )
-        } else {
-            AlertDialog(
-                onDismissRequest = { showConfirmCompleteDialog = false },
-                title = { Text(stringResource(Res.string.task_mark_completed_dialog_title)) },
-                text = { Text(stringResource(Res.string.task_mark_completed_dialog_desc)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showConfirmCompleteDialog = false
-                            onMarkCompleted?.invoke(item.assignment.id)
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(stringResource(Res.string.task_mark_completed_dialog_confirm))
+                showConfirmCompleteDialog = false
+            },
+            backdrop = backdrop,
+            onDismissFinished = {
+                val action = pendingCompleteAction
+                pendingCompleteAction = null
+                action?.invoke()
+            }
+        )
+    }
+
+    if (themeStyle != AppThemeStyle.MIUIX && showConfirmCompleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmCompleteDialog = false },
+            title = { Text(stringResource(Res.string.task_mark_completed_dialog_title)) },
+            text = { Text(stringResource(Res.string.task_mark_completed_dialog_desc)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirmCompleteDialog = false
+                        onMarkCompleted?.invoke(item.assignment.id)
+                        onDismissRequest()
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showConfirmCompleteDialog = false }) {
-                        Text(stringResource(Res.string.task_mark_completed_dialog_cancel))
-                    }
+                ) {
+                    Text(stringResource(Res.string.task_mark_completed_dialog_confirm))
                 }
-            )
-        }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmCompleteDialog = false }) {
+                    Text(stringResource(Res.string.task_mark_completed_dialog_cancel))
+                }
+            }
+        )
     }
 
     CustomReminderBottomSheet(

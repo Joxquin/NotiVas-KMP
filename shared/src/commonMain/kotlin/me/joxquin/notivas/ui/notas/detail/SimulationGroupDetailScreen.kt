@@ -67,8 +67,10 @@ import me.joxquin.notivas.data.model.SimulationItem
 import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.GlassConfirmDialog
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
@@ -124,20 +126,41 @@ fun SimulationGroupDetailScreen(
     var itemToDelete by remember { mutableStateOf<SimulationItem?>(null) }
 
     val lazyListState = rememberLazyListState()
+    val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
 
     // Dialogs
-    if (showEditDialog) {
-        EditGroupDialog(
-            group = group,
-            onDismiss = { showEditDialog = false },
-            onConfirm = { updatedGroup ->
-                viewModel.updateSimulationGroup(updatedGroup)
-                showEditDialog = false
-            }
-        )
-    }
+    EditGroupDialog(
+        group = group,
+        onDismiss = { showEditDialog = false },
+        onConfirm = { updatedGroup ->
+            viewModel.updateSimulationGroup(updatedGroup)
+            showEditDialog = false
+        },
+        themeStyle = themeStyle,
+        show = showEditDialog,
+        backdrop = backdrop,
+    )
 
-    if (showDeleteConfirmDialog) {
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassConfirmDialog(
+            show = showDeleteConfirmDialog,
+            title = stringResource(Res.string.group_dialog_delete_title),
+            summary = stringResource(Res.string.group_dialog_delete_message, group.name),
+            cancelLabel = stringResource(Res.string.cancel),
+            confirmLabel = stringResource(Res.string.group_dialog_delete_confirm),
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            onConfirm = {
+                if (!isDeleted) {
+                    isDeleted = true
+                    showDeleteConfirmDialog = false
+                    viewModel.deleteSimulationGroup(group)
+                    onBack()
+                }
+            },
+            confirmRole = GlassDialogButtonRole.Destructive,
+            backdrop = backdrop,
+        )
+    } else if (showDeleteConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             title = {
@@ -175,8 +198,28 @@ fun SimulationGroupDetailScreen(
         )
     }
 
-    if (itemToDelete != null) {
-        val targetItem = itemToDelete!!
+    val itemToDeleteTarget = itemToDelete
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassConfirmDialog(
+            show = itemToDeleteTarget != null,
+            title = stringResource(Res.string.group_item_delete_confirm_title),
+            summary = itemToDeleteTarget?.name?.let {
+                stringResource(Res.string.group_item_delete_confirm_message, it)
+            },
+            cancelLabel = stringResource(Res.string.cancel),
+            confirmLabel = stringResource(Res.string.delete),
+            onDismissRequest = { itemToDelete = null },
+            onConfirm = {
+                if (itemToDeleteTarget != null) {
+                    viewModel.deleteSimulationItem(itemToDeleteTarget)
+                    itemToDelete = null
+                }
+            },
+            confirmRole = GlassDialogButtonRole.Destructive,
+            backdrop = backdrop,
+        )
+    } else if (itemToDeleteTarget != null) {
+        val targetItem = itemToDeleteTarget
         AlertDialog(
             onDismissRequest = { itemToDelete = null },
             title = {
@@ -210,38 +253,42 @@ fun SimulationGroupDetailScreen(
         )
     }
 
-    if (showAddAssignmentDialog) {
-        AddAssignmentDialog(
-            groupName = group.name,
-            availableAssignments = uiState.availableCourseAssignments,
-            onDismiss = { showAddAssignmentDialog = false },
-            onAddExisting = { assignment ->
-                viewModel.addExistingAssignmentToGroup(group.id, assignment)
-                showAddAssignmentDialog = false
-            },
-            onAddPlaceholder = { name, initialScore ->
-                viewModel.addPlaceholderItemToGroup(group.id, name, initialScore)
-                showAddAssignmentDialog = false
-            }
-        )
-    }
+    AddAssignmentDialog(
+        groupName = group.name,
+        availableAssignments = uiState.availableCourseAssignments,
+        onDismiss = { showAddAssignmentDialog = false },
+        onAddExisting = { assignment ->
+            viewModel.addExistingAssignmentToGroup(group.id, assignment)
+            showAddAssignmentDialog = false
+        },
+        onAddPlaceholder = { name, initialScore ->
+            viewModel.addPlaceholderItemToGroup(group.id, name, initialScore)
+            showAddAssignmentDialog = false
+        },
+        themeStyle = themeStyle,
+        show = showAddAssignmentDialog,
+        backdrop = backdrop,
+    )
 
-    if (selectedItemForLink != null) {
-        val targetItem = selectedItemForLink!!
-        LinkPlaceholderDialog(
-            placeholderItem = targetItem,
-            availableAssignments = uiState.availableCourseAssignments,
-            onDismiss = { selectedItemForLink = null },
-            onLink = { assignment ->
+    val linkTargetItem = selectedItemForLink
+    LinkPlaceholderDialog(
+        placeholderItem = linkTargetItem ?: SimulationItem(groupId = group.id, name = ""),
+        availableAssignments = uiState.availableCourseAssignments,
+        onDismiss = { selectedItemForLink = null },
+        onLink = { assignment ->
+            if (linkTargetItem != null) {
                 viewModel.linkSimulationItem(
-                    itemId = targetItem.id,
+                    itemId = linkTargetItem.id,
                     assignmentId = assignment.id,
                     name = assignment.name
                 )
                 selectedItemForLink = null
             }
-        )
-    }
+        },
+        themeStyle = themeStyle,
+        show = selectedItemForLink != null,
+        backdrop = backdrop,
+    )
 
     val weightPct = group.weightPercentage.roundToInt()
     val formattedAvg = ((groupModel.groupAverage * 10f).roundToInt() / 10f).toString()
@@ -249,7 +296,6 @@ fun SimulationGroupDetailScreen(
     val formattedContribution = ((contributionPts * 10f).roundToInt() / 10f).toString()
 
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
 
         top.yukonga.miuix.kmp.basic.Scaffold(

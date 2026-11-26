@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -92,6 +91,7 @@ import me.joxquin.notivas.shared.resources.settings_token_title
 import me.joxquin.notivas.shared.resources.sync
 import me.joxquin.notivas.ui.ajustes.components.PairWebSessionDialog
 import me.joxquin.notivas.ui.ajustes.components.SettingsProfileHeroHeader
+import me.joxquin.notivas.ui.components.miuix.GlassConfirmDialog
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
 import top.yukonga.miuix.kmp.glass.GlassIconButton
@@ -101,18 +101,16 @@ import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.profile.ProfileViewModel
 import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Refresh
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
 fun AjustesHeaderSection(
@@ -155,97 +153,78 @@ fun AjustesScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showPairWebDialog by remember { mutableStateOf(false) }
+    val backdrop = rememberMiuixBlurBackdrop()
 
-    if (showPairWebDialog) {
-        PairWebSessionDialog(
-            themeStyle = themeStyle,
-            onDismissRequest = { showPairWebDialog = false },
-            onAuthorizePairing = { pin -> viewModel.pairWebSession(pin) }
+    PairWebSessionDialog(
+        themeStyle = themeStyle,
+        show = showPairWebDialog,
+        backdrop = backdrop.takeIf { themeStyle == AppThemeStyle.MIUIX },
+        onDismissRequest = { showPairWebDialog = false },
+        onAuthorizePairing = { pin -> viewModel.pairWebSession(pin) }
+    )
+
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassConfirmDialog(
+            show = showLogoutDialog,
+            title = stringResource(Res.string.logout_dialog_title),
+            summary = stringResource(Res.string.logout_dialog_text),
+            cancelLabel = stringResource(Res.string.cancel),
+            confirmLabel = stringResource(Res.string.logout_confirm),
+            onDismissRequest = { showLogoutDialog = false },
+            onConfirm = {
+                showLogoutDialog = false
+                viewModel.logout()
+            },
+            backdrop = backdrop,
+            confirmRole = GlassDialogButtonRole.Destructive,
         )
-    }
-
-    if (showLogoutDialog) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            WindowDialog(
-                show = showLogoutDialog,
-                title = stringResource(Res.string.logout_dialog_title),
-                summary = stringResource(Res.string.logout_dialog_text),
-                onDismissRequest = { showLogoutDialog = false },
-                content = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MiuixTextButton(
-                            text = stringResource(Res.string.cancel),
-                            onClick = { showLogoutDialog = false },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(Modifier.width(16.dp))
-                        MiuixTextButton(
-                            text = stringResource(Res.string.logout_confirm),
-                            onClick = {
-                                showLogoutDialog = false
-                                viewModel.logout()
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = MiuixButtonDefaults.textButtonColors(
-                                color = MiuixTheme.colorScheme.errorContainer,
-                                textColor = MiuixTheme.colorScheme.onErrorContainer
-                            )
-                        )
-                    }
+    } else if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(Res.string.logout_dialog_title),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(Res.string.logout_dialog_text),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        viewModel.logout()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(Res.string.logout_confirm))
                 }
-            )
-        } else {
-            AlertDialog(
-                onDismissRequest = { showLogoutDialog = false },
-                icon = {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Logout,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                },
-                title = {
-                    Text(
-                        text = stringResource(Res.string.logout_dialog_title),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                },
-                text = {
-                    Text(
-                        text = stringResource(Res.string.logout_dialog_text),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            showLogoutDialog = false
-                            viewModel.logout()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text(stringResource(Res.string.logout_confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showLogoutDialog = false }) {
-                        Text(stringResource(Res.string.cancel))
-                    }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text(stringResource(Res.string.cancel))
                 }
-            )
-        }
+            }
+        )
     }
 
     // ─── MODO MIUIX ─────────────────────────────────────────────────────────
     if (themeStyle == AppThemeStyle.MIUIX) {
-        val backdrop = rememberMiuixBlurBackdrop()
         val scrollBehavior = MiuixScrollBehavior()
 
         top.yukonga.miuix.kmp.basic.Scaffold(

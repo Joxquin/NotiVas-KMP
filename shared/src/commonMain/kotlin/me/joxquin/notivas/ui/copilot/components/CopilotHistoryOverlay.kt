@@ -94,6 +94,7 @@ import me.joxquin.notivas.shared.resources.cancel
 import me.joxquin.notivas.shared.resources.copilot_action_delete
 import me.joxquin.notivas.shared.resources.copilot_action_rename
 import me.joxquin.notivas.shared.resources.copilot_btn_cancel
+import me.joxquin.notivas.shared.resources.copilot_delete_query_confirm_message
 import me.joxquin.notivas.shared.resources.copilot_btn_new_query
 import me.joxquin.notivas.shared.resources.copilot_btn_save
 import me.joxquin.notivas.shared.resources.copilot_history_empty_hint
@@ -105,20 +106,21 @@ import me.joxquin.notivas.shared.resources.copilot_rename_query_title
 import me.joxquin.notivas.shared.resources.copilot_tokens_count
 import me.joxquin.notivas.shared.resources.delete
 import me.joxquin.notivas.ui.components.BackHandler
+import me.joxquin.notivas.ui.components.miuix.GlassConfirmDialog
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import me.joxquin.notivas.ui.components.miuix.SearchModeEasing
 import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
-import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.glass.BookOutline
 import top.yukonga.miuix.kmp.icon.glass.Close as GlassClose
@@ -169,146 +171,133 @@ fun CopilotHistoryOverlay(
     }
 
     // Dialogo para renombrar sesion
-    if (sessionToRename != null) {
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            AlertDialog(
-                onDismissRequest = { sessionToRename = null },
-                title = {
-                    MiuixText(
-                        text = stringResource(Res.string.copilot_rename_query_title),
-                        style = MiuixTheme.textStyles.title3,
-                        color = MiuixTheme.colorScheme.onSurface
-                    )
-                },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        MiuixTextField(
-                            value = renameText,
-                            onValueChange = { renameText = it },
-                            modifier = Modifier.fillMaxWidth()
+    val renameShow = sessionToRename != null
+    val deleteShow = sessionToDelete != null
+
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        val renameSession = sessionToRename
+        GlassDialog(
+            show = renameShow,
+            backdrop = backdrop,
+            title = stringResource(Res.string.copilot_rename_query_title),
+            onDismissRequest = { sessionToRename = null },
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                MiuixTextField(
+                    value = renameText,
+                    onValueChange = { renameText = it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                GlassDialogActions {
+                    GlassDialogButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = { sessionToRename = null },
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.copilot_btn_cancel),
+                            style = MiuixTheme.textStyles.button,
                         )
                     }
-                },
-                confirmButton = {
-                    MiuixTextButton(
-                        text = stringResource(Res.string.copilot_btn_save),
+                    GlassDialogButton(
+                        modifier = Modifier.weight(1f),
+                        role = GlassDialogButtonRole.Primary,
                         onClick = {
-                            val session = sessionToRename
-                            if (session != null && renameText.isNotBlank()) {
-                                onRenameSession(session.id, renameText.trim())
+                            if (renameShow && renameSession != null && renameText.isNotBlank()) {
+                                onRenameSession(renameSession.id, renameText.trim())
                             }
-                            sessionToRename = null
+                            if (renameShow) {
+                                sessionToRename = null
+                            }
                         },
-                        colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                    )
-                },
-                dismissButton = {
-                    MiuixTextButton(
-                        text = stringResource(Res.string.copilot_btn_cancel),
-                        onClick = { sessionToRename = null }
-                    )
-                }
-            )
-        } else {
-            AlertDialog(
-                onDismissRequest = { sessionToRename = null },
-                title = { Text(stringResource(Res.string.copilot_rename_query_title)) },
-                text = {
-                    OutlinedTextField(
-                        value = renameText,
-                        onValueChange = { renameText = it },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            val session = sessionToRename
-                            if (session != null && renameText.isNotBlank()) {
-                                onRenameSession(session.id, renameText.trim())
-                            }
-                            sessionToRename = null
-                        }
                     ) {
-                        Text(stringResource(Res.string.copilot_btn_save))
-                    }
-                },
-                dismissButton = {
-                    M3TextButton(onClick = { sessionToRename = null }) {
-                        Text(stringResource(Res.string.copilot_btn_cancel))
+                        MiuixText(
+                            text = stringResource(Res.string.copilot_btn_save),
+                            style = MiuixTheme.textStyles.button,
+                        )
                     }
                 }
-            )
+            }
         }
+    } else if (renameShow) {
+        AlertDialog(
+            onDismissRequest = { sessionToRename = null },
+            title = { Text(stringResource(Res.string.copilot_rename_query_title)) },
+            text = {
+                OutlinedTextField(
+                    value = renameText,
+                    onValueChange = { renameText = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val session = sessionToRename
+                        if (session != null && renameText.isNotBlank()) {
+                            onRenameSession(session.id, renameText.trim())
+                        }
+                        sessionToRename = null
+                    }
+                ) {
+                    Text(stringResource(Res.string.copilot_btn_save))
+                }
+            },
+            dismissButton = {
+                M3TextButton(onClick = { sessionToRename = null }) {
+                    Text(stringResource(Res.string.copilot_btn_cancel))
+                }
+            }
+        )
     }
 
     // Dialogo para confirmar eliminacion de sesion
-    if (sessionToDelete != null) {
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        val deleteSession = sessionToDelete
+        GlassConfirmDialog(
+            show = deleteShow,
+            backdrop = backdrop,
+            title = stringResource(Res.string.copilot_action_delete),
+            summary = deleteSession?.title?.let {
+                stringResource(Res.string.copilot_delete_query_confirm_message, it)
+            },
+            cancelLabel = stringResource(Res.string.copilot_btn_cancel),
+            confirmLabel = stringResource(Res.string.delete),
+            onDismissRequest = { sessionToDelete = null },
+            onConfirm = {
+                if (deleteShow && deleteSession != null) {
+                    onDeleteSession(deleteSession.id)
+                    sessionToDelete = null
+                }
+            },
+            confirmRole = GlassDialogButtonRole.Destructive,
+        )
+    } else if (deleteShow) {
         val session = sessionToDelete!!
-        if (themeStyle == AppThemeStyle.MIUIX) {
-            AlertDialog(
-                onDismissRequest = { sessionToDelete = null },
-                title = {
-                    MiuixText(
-                        text = stringResource(Res.string.copilot_action_delete),
-                        style = MiuixTheme.textStyles.title3,
-                        color = MiuixTheme.colorScheme.error
+        AlertDialog(
+            onDismissRequest = { sessionToDelete = null },
+            title = { Text(stringResource(Res.string.copilot_action_delete)) },
+            text = { Text(stringResource(Res.string.copilot_delete_query_confirm_message, session.title)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteSession(session.id)
+                        sessionToDelete = null
+                    },
+                    colors = M3ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
                     )
-                },
-                text = {
-                    MiuixText(
-                        text = "¿Deseas eliminar permanentemente esta consulta: \"${session.title}\"?",
-                        style = MiuixTheme.textStyles.body2,
-                        color = MiuixTheme.colorScheme.onSurface
-                    )
-                },
-                confirmButton = {
-                    MiuixTextButton(
-                        text = stringResource(Res.string.delete),
-                        onClick = {
-                            onDeleteSession(session.id)
-                            sessionToDelete = null
-                        },
-                        colors = MiuixButtonDefaults.textButtonColors(
-                            color = MiuixTheme.colorScheme.errorContainer,
-                            textColor = MiuixTheme.colorScheme.onErrorContainer
-                        )
-                    )
-                },
-                dismissButton = {
-                    MiuixTextButton(
-                        text = stringResource(Res.string.copilot_btn_cancel),
-                        onClick = { sessionToDelete = null }
-                    )
+                ) {
+                    Text(stringResource(Res.string.delete))
                 }
-            )
-        } else {
-            AlertDialog(
-                onDismissRequest = { sessionToDelete = null },
-                title = { Text(stringResource(Res.string.copilot_action_delete)) },
-                text = { Text("¿Deseas eliminar permanentemente esta consulta: \"${session.title}\"?") },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            onDeleteSession(session.id)
-                            sessionToDelete = null
-                        },
-                        colors = M3ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text(stringResource(Res.string.delete))
-                    }
-                },
-                dismissButton = {
-                    M3TextButton(onClick = { sessionToDelete = null }) {
-                        Text(stringResource(Res.string.copilot_btn_cancel))
-                    }
+            },
+            dismissButton = {
+                M3TextButton(onClick = { sessionToDelete = null }) {
+                    Text(stringResource(Res.string.copilot_btn_cancel))
                 }
-            )
-        }
+            }
+        )
     }
 
     BackHandler(enabled = expanded) {

@@ -1,5 +1,6 @@
 package me.joxquin.notivas.ui.ajustes.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,8 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,8 +57,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.repository.OpenRouterAccountBalance
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
+import top.yukonga.miuix.kmp.basic.RadioButton as MiuixRadioButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
+import top.yukonga.miuix.kmp.glass.GlassTextField
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -94,6 +108,10 @@ import me.joxquin.notivas.shared.resources.copilot_provider_title
 import me.joxquin.notivas.shared.resources.copilot_provider_summary
 import me.joxquin.notivas.shared.resources.copilot_provider_dialog_title
 import me.joxquin.notivas.shared.resources.copilot_provider_dialog_desc
+import me.joxquin.notivas.shared.resources.copilot_provider_openrouter_label
+import me.joxquin.notivas.shared.resources.copilot_provider_google_ai_studio_label
+import me.joxquin.notivas.shared.resources.copilot_model_analysis_gemini_compatible
+import me.joxquin.notivas.shared.resources.copilot_model_analysis_custom_compatible
 import me.joxquin.notivas.shared.resources.google_ai_studio_api_key_title
 import me.joxquin.notivas.shared.resources.google_ai_studio_api_key_desc_not_set
 import me.joxquin.notivas.shared.resources.google_ai_studio_api_key_dialog_title
@@ -134,6 +152,9 @@ fun CopilotSettingsSection(
     var showGoogleAiStudioModelDialog by remember { mutableStateOf(false) }
     var showProviderDialog by remember { mutableStateOf(false) }
     var modelInfoResult by remember { mutableStateOf<me.joxquin.notivas.data.model.CustomModelAnalysisResult?>(null) }
+    // Resolver los textos fuera de los callbacks no composables de los diálogos.
+    val geminiCompatibleMessage = stringResource(Res.string.copilot_model_analysis_gemini_compatible)
+    val customCompatibleMessage = stringResource(Res.string.copilot_model_analysis_custom_compatible)
 
     val openRouterModels = remember {
         listOf(
@@ -165,6 +186,119 @@ fun CopilotSettingsSection(
     val notConfiguredLabel = stringResource(Res.string.openrouter_api_key_desc_not_set)
     val notConfiguredGoogleLabel = stringResource(Res.string.google_ai_studio_api_key_desc_not_set)
 
+    if (themeStyle == AppThemeStyle.MIUIX) {
+        GlassProviderPickerDialog(
+            show = showProviderDialog,
+            backdrop = backdrop,
+            currentProvider = provider,
+            options = listOf(
+                CopilotProvider.OPENROUTER to stringResource(Res.string.copilot_provider_openrouter_label),
+                CopilotProvider.GOOGLE_AI_STUDIO to stringResource(Res.string.copilot_provider_google_ai_studio_label),
+            ),
+            onProviderSelected = { option ->
+                onProviderChange(option)
+                showProviderDialog = false
+            },
+            onDismissRequest = { showProviderDialog = false },
+        )
+
+        GlassApiKeyDialog(
+            show = showGoogleAiStudioApiKeyDialog,
+            backdrop = backdrop,
+            title = stringResource(Res.string.google_ai_studio_api_key_dialog_title),
+            summary = stringResource(Res.string.google_ai_studio_api_key_dialog_desc),
+            fieldLabel = stringResource(Res.string.google_ai_studio_api_key_title),
+            currentKey = googleAiStudioApiKey,
+            showDelete = !googleAiStudioApiKey.isNullOrBlank(),
+            onSave = { value ->
+                onGoogleAiStudioApiKeyChange(value.trim().ifBlank { null })
+                showGoogleAiStudioApiKeyDialog = false
+            },
+            onDelete = {
+                onGoogleAiStudioApiKeyChange(null)
+                showGoogleAiStudioApiKeyDialog = false
+            },
+            onDismissRequest = { showGoogleAiStudioApiKeyDialog = false },
+        )
+
+        GlassModelPickerDialog(
+            show = showGoogleAiStudioModelDialog,
+            backdrop = backdrop,
+            title = stringResource(Res.string.google_ai_studio_model_dialog_title),
+            summary = stringResource(Res.string.google_ai_studio_model_dialog_desc),
+            customFieldLabel = stringResource(Res.string.google_ai_studio_custom_model_hint),
+            models = googleAiStudioModels,
+            currentModel = googleAiStudioModel,
+            onSave = { finalModel, isCustom ->
+                if (finalModel.isNotBlank()) {
+                    onGoogleAiStudioModelChange(finalModel)
+                    if (isCustom) {
+                        val clean = finalModel.lowercase()
+                        val isKnown = clean.startsWith("gemini-")
+                        modelInfoResult = me.joxquin.notivas.data.model.CustomModelAnalysisResult(
+                            modelId = finalModel,
+                            name = finalModel,
+                            contextLength = if (clean.contains("1.5") || clean.contains("2.0") || clean.contains("2.5") || clean.contains("3.0") || clean.contains("3.1") || clean.contains("3.5")) 1000000 else 32768,
+                            isMultimodal = isKnown,
+                            supportsFunctionCalling = true,
+                            status = if (isKnown) me.joxquin.notivas.data.model.ModelCompatibilityStatus.OPTIMAL else me.joxquin.notivas.data.model.ModelCompatibilityStatus.COMPATIBLE,
+                            message = if (isKnown) geminiCompatibleMessage else customCompatibleMessage
+                        )
+                    }
+                }
+                showGoogleAiStudioModelDialog = false
+            },
+            onDismissRequest = { showGoogleAiStudioModelDialog = false },
+        )
+
+        GlassApiKeyDialog(
+            show = showApiKeyDialog,
+            backdrop = backdrop,
+            title = stringResource(Res.string.openrouter_api_key_dialog_title),
+            summary = stringResource(Res.string.openrouter_api_key_dialog_desc),
+            fieldLabel = stringResource(Res.string.openrouter_api_key_title),
+            currentKey = apiKey,
+            showDelete = !apiKey.isNullOrBlank(),
+            onSave = { value ->
+                onApiKeyChange(value.trim().ifBlank { null })
+                showApiKeyDialog = false
+            },
+            onDelete = {
+                onApiKeyChange(null)
+                showApiKeyDialog = false
+            },
+            onDismissRequest = { showApiKeyDialog = false },
+        )
+
+        GlassModelInfoDialog(
+            show = modelInfoResult != null,
+            info = modelInfoResult,
+            backdrop = backdrop,
+            onDismissRequest = { modelInfoResult = null },
+        )
+
+        GlassModelPickerDialog(
+            show = showModelDialog,
+            backdrop = backdrop,
+            title = stringResource(Res.string.openrouter_model_dialog_title),
+            summary = stringResource(Res.string.openrouter_model_dialog_desc),
+            customFieldLabel = stringResource(Res.string.openrouter_custom_model_hint),
+            models = openRouterModels,
+            currentModel = selectedModel,
+            onSave = { finalModel, isCustom ->
+                if (finalModel.isNotBlank()) {
+                    onModelChange(finalModel)
+                    if (isCustom && onAnalyzeModel != null) {
+                        val result = onAnalyzeModel(finalModel)
+                        modelInfoResult = result
+                    }
+                }
+                showModelDialog = false
+            },
+            onDismissRequest = { showModelDialog = false },
+        )
+    }
+
     val openRouterKeyMasked = if (apiKey.isNullOrBlank()) {
         notConfiguredLabel
     } else {
@@ -188,7 +322,7 @@ fun CopilotSettingsSection(
     }
 
     // Dialog: Proveedor de IA (Material 3)
-    if (showProviderDialog) {
+    if (themeStyle != AppThemeStyle.MIUIX && showProviderDialog) {
         val providerOptions = listOf(
             CopilotProvider.OPENROUTER to "OpenRouter",
             CopilotProvider.GOOGLE_AI_STUDIO to "Google AI Studio"
@@ -286,7 +420,7 @@ fun CopilotSettingsSection(
     }
 
     // Dialog: Configurar API Key Google AI Studio
-    if (showGoogleAiStudioApiKeyDialog) {
+    if (themeStyle != AppThemeStyle.MIUIX && showGoogleAiStudioApiKeyDialog) {
         var inputKey by remember { mutableStateOf(googleAiStudioApiKey ?: "") }
         var isPasswordVisible by remember { mutableStateOf(false) }
 
@@ -371,7 +505,7 @@ fun CopilotSettingsSection(
     }
 
     // Dialog: Seleccionar Modelo Google AI Studio
-    if (showGoogleAiStudioModelDialog) {
+    if (themeStyle != AppThemeStyle.MIUIX && showGoogleAiStudioModelDialog) {
         var selectedOption by remember { mutableStateOf(googleAiStudioModel) }
         var isCustom by remember {
             mutableStateOf(googleAiStudioModels.none { it.first == googleAiStudioModel })
@@ -486,11 +620,7 @@ fun CopilotSettingsSection(
                                     isMultimodal = isKnown,
                                     supportsFunctionCalling = true,
                                     status = if (isKnown) me.joxquin.notivas.data.model.ModelCompatibilityStatus.OPTIMAL else me.joxquin.notivas.data.model.ModelCompatibilityStatus.COMPATIBLE,
-                                    message = if (isKnown) {
-                                        "100% Compatible: Modelo Gemini oficial de Google AI Studio con soporte nativo de visión, documentos y 1M+ tokens de contexto."
-                                    } else {
-                                        "Modelo personalizado configurado para Google AI Studio. Asegurate de que el endpoint sea compatible."
-                                    }
+                                    message = if (isKnown) geminiCompatibleMessage else customCompatibleMessage
                                 )
                             }
                         }
@@ -512,7 +642,7 @@ fun CopilotSettingsSection(
     }
 
     // Dialog: Configurar API Key
-    if (showApiKeyDialog) {
+    if (themeStyle != AppThemeStyle.MIUIX && showApiKeyDialog) {
         var inputKey by remember { mutableStateOf(apiKey ?: "") }
         var isPasswordVisible by remember { mutableStateOf(false) }
 
@@ -597,7 +727,7 @@ fun CopilotSettingsSection(
     }
 
     // Dialog flotante de informacion del modelo
-    if (modelInfoResult != null) {
+    if (themeStyle != AppThemeStyle.MIUIX && modelInfoResult != null) {
         val info = modelInfoResult!!
         val infoContainerColor = when (info.status) {
             me.joxquin.notivas.data.model.ModelCompatibilityStatus.OPTIMAL ->
@@ -675,7 +805,7 @@ fun CopilotSettingsSection(
     }
 
     // Dialog: Seleccionar Modelo LLM
-    if (showModelDialog) {
+    if (themeStyle != AppThemeStyle.MIUIX && showModelDialog) {
         val coroutineScope = rememberCoroutineScope()
         var selectedOption by remember { mutableStateOf(selectedModel) }
         var isCustom by remember {
@@ -1471,6 +1601,383 @@ fun CopilotSettingsSection(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlassProviderPickerDialog(
+    show: Boolean,
+    backdrop: Backdrop?,
+    currentProvider: CopilotProvider,
+    options: List<Pair<CopilotProvider, String>>,
+    onProviderSelected: (CopilotProvider) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    GlassDialog(
+        show = show,
+        backdrop = backdrop,
+        onDismissRequest = onDismissRequest,
+        title = stringResource(Res.string.copilot_provider_dialog_title),
+        summary = stringResource(Res.string.copilot_provider_dialog_desc),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 280.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            options.forEach { (option, label) ->
+                val selected = option == currentProvider
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (selected) {
+                                MiuixTheme.colorScheme.primaryContainer
+                            } else {
+                                MiuixTheme.colorScheme.surfaceContainerHigh
+                            }
+                        )
+                        .clickable { onProviderSelected(option) }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    MiuixRadioButton(
+                        selected = selected,
+                        onClick = { onProviderSelected(option) },
+                    )
+                    MiuixText(
+                        text = label,
+                        style = MiuixTheme.textStyles.main,
+                        color = if (selected) {
+                            MiuixTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MiuixTheme.colorScheme.onSurface
+                        },
+                    )
+                }
+            }
+        }
+        GlassDialogActions {
+            GlassDialogButton(
+                onClick = onDismissRequest,
+                modifier = Modifier.weight(1f),
+            ) {
+                MiuixText(
+                    text = stringResource(Res.string.close),
+                    style = MiuixTheme.textStyles.button,
+                )
+            }
+        }
+    }
+}
+
+@Suppress("DEPRECATION")
+@Composable
+private fun GlassApiKeyDialog(
+    show: Boolean,
+    backdrop: Backdrop?,
+    title: String,
+    summary: String,
+    fieldLabel: String,
+    currentKey: String?,
+    showDelete: Boolean,
+    onSave: (String) -> Unit,
+    onDelete: () -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    var inputKey by remember(show) { mutableStateOf(currentKey ?: "") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+
+    GlassDialog(
+        show = show,
+        backdrop = backdrop,
+        onDismissRequest = onDismissRequest,
+        title = title,
+        summary = summary,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            GlassTextField(
+                value = inputKey,
+                onValueChange = { inputKey = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = fieldLabel,
+                useLabelAsPlaceholder = true,
+                singleLine = true,
+                visualTransformation = if (isPasswordVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
+                trailingIcon = {
+                    MiuixIconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        MiuixIcon(
+                            imageVector = if (isPasswordVisible) {
+                                Icons.Default.VisibilityOff
+                            } else {
+                                Icons.Default.Visibility
+                            },
+                            contentDescription = null,
+                        )
+                    }
+                },
+            )
+        }
+        GlassDialogActions {
+            if (showDelete) {
+                GlassDialogButton(
+                    onClick = onDelete,
+                    modifier = Modifier.weight(1f),
+                    role = GlassDialogButtonRole.Destructive,
+                ) {
+                    MiuixText(
+                        text = stringResource(Res.string.delete),
+                        style = MiuixTheme.textStyles.button,
+                    )
+                }
+            }
+            GlassDialogButton(
+                onClick = onDismissRequest,
+                modifier = Modifier.weight(1f),
+            ) {
+                MiuixText(
+                    text = stringResource(Res.string.cancel),
+                    style = MiuixTheme.textStyles.button,
+                )
+            }
+            GlassDialogButton(
+                onClick = { onSave(inputKey) },
+                modifier = Modifier.weight(1f),
+                role = GlassDialogButtonRole.Primary,
+            ) {
+                MiuixText(
+                    text = stringResource(Res.string.save),
+                    style = MiuixTheme.textStyles.button,
+                )
+            }
+        }
+    }
+}
+
+@Suppress("DEPRECATION")
+@Composable
+private fun GlassModelPickerDialog(
+    show: Boolean,
+    backdrop: Backdrop?,
+    title: String,
+    summary: String,
+    customFieldLabel: String,
+    models: List<Pair<String, String>>,
+    currentModel: String,
+    onSave: suspend (modelId: String, isCustom: Boolean) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    var selectedOption by remember(show) { mutableStateOf(currentModel) }
+    var isCustom by remember(show) { mutableStateOf(models.none { it.first == currentModel }) }
+    var customInput by remember(show) { mutableStateOf(if (isCustom) currentModel else "") }
+    var isSaving by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val dismiss = {
+        if (!isSaving) onDismissRequest()
+    }
+
+    GlassDialog(
+        show = show,
+        backdrop = backdrop,
+        onDismissRequest = dismiss,
+        title = title,
+        summary = summary,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 360.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            models.forEach { (modelId, label) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = !isSaving) {
+                            isCustom = false
+                            selectedOption = modelId
+                        }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    MiuixRadioButton(
+                        selected = !isCustom && selectedOption == modelId,
+                        onClick = {
+                            isCustom = false
+                            selectedOption = modelId
+                        },
+                        enabled = !isSaving,
+                    )
+                    MiuixText(
+                        text = label,
+                        style = MiuixTheme.textStyles.main,
+                        color = MiuixTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(enabled = !isSaving) { isCustom = true }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MiuixRadioButton(
+                    selected = isCustom,
+                    onClick = { isCustom = true },
+                    enabled = !isSaving,
+                )
+                MiuixText(
+                    text = stringResource(Res.string.openrouter_custom_model_title),
+                    style = MiuixTheme.textStyles.main,
+                    color = MiuixTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+
+            if (isCustom) {
+                GlassTextField(
+                    value = customInput,
+                    onValueChange = { customInput = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = customFieldLabel,
+                    useLabelAsPlaceholder = true,
+                    singleLine = true,
+                    enabled = !isSaving,
+                )
+            }
+        }
+        GlassDialogActions {
+            GlassDialogButton(
+                onClick = dismiss,
+                modifier = Modifier.weight(1f),
+                enabled = !isSaving,
+            ) {
+                MiuixText(
+                    text = stringResource(Res.string.cancel),
+                    style = MiuixTheme.textStyles.button,
+                )
+            }
+            GlassDialogButton(
+                onClick = {
+                    val finalModel = if (isCustom) customInput.trim() else selectedOption
+                    scope.launch {
+                        isSaving = true
+                        try {
+                            onSave(finalModel, isCustom)
+                        } finally {
+                            isSaving = false
+                        }
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                enabled = !isSaving,
+                role = GlassDialogButtonRole.Primary,
+            ) {
+                if (isSaving) {
+                    MiuixCircularProgressIndicator(modifier = Modifier.size(16.dp), size = 16.dp)
+                    Spacer(Modifier.size(8.dp))
+                }
+                MiuixText(
+                    text = if (isSaving) {
+                        stringResource(Res.string.openrouter_analyzing_model)
+                    } else {
+                        stringResource(Res.string.save)
+                    },
+                    style = MiuixTheme.textStyles.button,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlassModelInfoDialog(
+    show: Boolean,
+    info: me.joxquin.notivas.data.model.CustomModelAnalysisResult?,
+    backdrop: Backdrop?,
+    onDismissRequest: () -> Unit,
+) {
+    GlassDialog(
+        show = show,
+        backdrop = backdrop,
+        onDismissRequest = onDismissRequest,
+        title = stringResource(Res.string.openrouter_model_info_title),
+        summary = info?.name,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (info != null) {
+                val containerColor = when (info.status) {
+                    me.joxquin.notivas.data.model.ModelCompatibilityStatus.OPTIMAL ->
+                        MiuixTheme.colorScheme.primaryContainer
+                    me.joxquin.notivas.data.model.ModelCompatibilityStatus.COMPATIBLE ->
+                        MiuixTheme.colorScheme.surfaceContainerHigh
+                    me.joxquin.notivas.data.model.ModelCompatibilityStatus.INCOMPATIBLE,
+                    me.joxquin.notivas.data.model.ModelCompatibilityStatus.NOT_FOUND ->
+                        MiuixTheme.colorScheme.errorContainer
+                    me.joxquin.notivas.data.model.ModelCompatibilityStatus.ERROR ->
+                        MiuixTheme.colorScheme.errorContainer
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(containerColor)
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    MiuixText(
+                        text = info.name,
+                        style = MiuixTheme.textStyles.subtitle,
+                        color = MiuixTheme.colorScheme.onSurface,
+                    )
+                    if (info.contextLength != null && info.contextLength > 0) {
+                        MiuixText(
+                            text = stringResource(Res.string.openrouter_model_context, info.contextLength),
+                            style = MiuixTheme.textStyles.footnote1,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        )
+                    }
+                    MiuixText(
+                        text = info.message,
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
+        GlassDialogActions {
+            GlassDialogButton(
+                onClick = onDismissRequest,
+                modifier = Modifier.weight(1f),
+                role = GlassDialogButtonRole.Primary,
+            ) {
+                MiuixText(
+                    text = stringResource(Res.string.close),
+                    style = MiuixTheme.textStyles.button,
+                )
             }
         }
     }

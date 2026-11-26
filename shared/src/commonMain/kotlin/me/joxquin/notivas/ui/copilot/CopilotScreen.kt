@@ -147,6 +147,9 @@ fun CopilotScreen(
     var showModelDialog by remember { mutableStateOf(false) }
     var showCustomInstructionsDialog by remember { mutableStateOf(false) }
 
+    // Backdrop compartido por los diálogos glass y la página Miuix.
+    val backdrop = rememberMiuixBlurBackdrop(withSurfaceBackground = false)
+
     // Auto-scroll al final con cada mensaje nuevo o respuesta recibida
     LaunchedEffect(uiState.messages.size, uiState.isLoading) {
         if (uiState.messages.isNotEmpty()) {
@@ -160,7 +163,8 @@ fun CopilotScreen(
         currentProvider = uiState.provider,
         onProviderSelected = { viewModel.setProvider(it) },
         onDismiss = { showProviderDialog = false },
-        themeStyle = themeStyle
+        themeStyle = themeStyle,
+        backdrop = backdrop
     )
 
     CopilotModelPickerDialog(
@@ -169,7 +173,8 @@ fun CopilotScreen(
         currentModel = uiState.currentModel,
         onModelSelected = { viewModel.setModel(it) },
         onDismiss = { showModelDialog = false },
-        themeStyle = themeStyle
+        themeStyle = themeStyle,
+        backdrop = backdrop
     )
 
     CopilotCustomInstructionsDialog(
@@ -177,7 +182,8 @@ fun CopilotScreen(
         initialInstructions = uiState.customInstructions,
         onSaveInstructions = { viewModel.setCustomInstructions(it) },
         onDismiss = { showCustomInstructionsDialog = false },
-        themeStyle = themeStyle
+        themeStyle = themeStyle,
+        backdrop = backdrop
     )
 
     if (themeStyle == AppThemeStyle.MIUIX) {
@@ -214,7 +220,6 @@ fun CopilotScreen(
             label = "copilotMiuixAuraAlpha"
         )
 
-        val backdrop = rememberMiuixBlurBackdrop(withSurfaceBackground = false)
         val menuAnchor = rememberGlassPopupAnchor()
 
         var activeSubmenu by remember { mutableStateOf<CopilotQuickMenuSubmenu?>(null) }
@@ -590,7 +595,8 @@ fun CopilotScreen(
                 onNewSession = { viewModel.startNewSession() },
                 onRenameSession = { id, title -> viewModel.renameSession(id, title) },
                 onDeleteSession = { viewModel.deleteSession(it) },
-                themeStyle = AppThemeStyle.MIUIX
+                themeStyle = AppThemeStyle.MIUIX,
+                backdrop = backdrop
             )
         }
         return
@@ -849,7 +855,8 @@ fun CopilotScreen(
             onNewSession = { viewModel.startNewSession() },
             onRenameSession = { id, title -> viewModel.renameSession(id, title) },
             onDeleteSession = { viewModel.deleteSession(it) },
-            themeStyle = AppThemeStyle.MATERIAL
+            themeStyle = AppThemeStyle.MATERIAL,
+            backdrop = null
         )
     }
 }

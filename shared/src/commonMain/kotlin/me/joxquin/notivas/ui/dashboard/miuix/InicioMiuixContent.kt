@@ -459,14 +459,15 @@ fun InicioMiuixContent(
             }
         )
 
-        if (showQuickRelogin) {
-            QuickReloginSheet(
-                universityUrl = universityUrl,
-                onDismiss = { viewModel.closeQuickRelogin() },
-                onSuccess = { cookies, csrfToken ->
-                    viewModel.onReloginSuccess(cookies, csrfToken)
-                }
-            )
-        }
+        QuickReloginSheet(
+            universityUrl = universityUrl,
+            onDismiss = { viewModel.closeQuickRelogin() },
+            onSuccess = { cookies, csrfToken ->
+                viewModel.onReloginSuccess(cookies, csrfToken)
+            },
+            themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+            backdrop = backdrop,
+            show = showQuickRelogin
+        )
     }
 }

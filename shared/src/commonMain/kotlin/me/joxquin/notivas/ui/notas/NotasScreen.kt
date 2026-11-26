@@ -142,20 +142,21 @@ fun NotasScreen(
     )
 
     // Importación de plantillas desde GitHub
-    if (showGitHubImportDialog) {
-        ImportTemplateDialog(
-            onDismiss = { showGitHubImportDialog = false },
-            showApplyToAllToggle = true,
-            onApplyTemplate = { template, applyToAll ->
-                if (applyToAll) {
-                    viewModel.applyTemplateToAllCourses(template)
-                } else {
-                    viewModel.applyTemplate(template)
-                }
-                showGitHubImportDialog = false
+    ImportTemplateDialog(
+        onDismiss = { showGitHubImportDialog = false },
+        showApplyToAllToggle = true,
+        onApplyTemplate = { template, applyToAll ->
+            if (applyToAll) {
+                viewModel.applyTemplateToAllCourses(template)
+            } else {
+                viewModel.applyTemplate(template)
             }
-        )
-    }
+            showGitHubImportDialog = false
+        },
+        themeStyle = themeStyle,
+        show = showGitHubImportDialog,
+        backdrop = backdrop,
+    )
 
     // Generación con IA Copilot
     CopilotGroupAnalysisSheet(

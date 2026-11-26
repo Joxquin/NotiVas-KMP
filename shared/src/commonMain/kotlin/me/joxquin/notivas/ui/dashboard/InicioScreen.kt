@@ -397,14 +397,15 @@ fun InicioScreen(
             }
         )
 
-        if (showQuickRelogin) {
-            QuickReloginSheet(
-                universityUrl = universityUrl,
-                onDismiss = { viewModel.closeQuickRelogin() },
-                onSuccess = { cookies, csrfToken ->
-                    viewModel.onReloginSuccess(cookies, csrfToken)
-                }
-            )
-        }
+        QuickReloginSheet(
+            universityUrl = universityUrl,
+            onDismiss = { viewModel.closeQuickRelogin() },
+            onSuccess = { cookies, csrfToken ->
+                viewModel.onReloginSuccess(cookies, csrfToken)
+            },
+            themeStyle = AppThemeStyle.MATERIAL,
+            backdrop = null,
+            show = themeStyle != AppThemeStyle.MIUIX && showQuickRelogin
+        )
     }
 }

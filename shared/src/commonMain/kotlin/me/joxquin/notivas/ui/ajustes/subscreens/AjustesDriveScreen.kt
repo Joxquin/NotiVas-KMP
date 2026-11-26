@@ -103,7 +103,8 @@ fun AjustesDriveScreen(
                             onAuthSuccess = onAuthSuccess,
                             onUnlink = onUnlink,
                             onClearCache = onClearCache,
-                            themeStyle = AppThemeStyle.MIUIX
+                            themeStyle = AppThemeStyle.MIUIX,
+                            backdrop = backdrop
                         )
                     }
                 }

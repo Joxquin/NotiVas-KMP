@@ -180,7 +180,8 @@ fun OnboardingFlow(
             OnboardingPermissionsScreen(
                 onContinue = {
                     onboardingNavigator.push(OnboardingRoute.GoogleDrive)
-                }
+                },
+                themeStyle = themeStyle
             )
         }
 

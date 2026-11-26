@@ -50,12 +50,15 @@ import me.joxquin.notivas.shared.resources.onboarding_token_dialog_desc
 import me.joxquin.notivas.shared.resources.onboarding_token_dialog_btn_generate
 import me.joxquin.notivas.shared.resources.onboarding_token_dialog_btn_cookies
 import me.joxquin.notivas.ui.components.CanvasLoginWebView
+import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import me.joxquin.notivas.ui.onboarding.components.OnboardingStepIndicator
 import me.joxquin.notivas.getPlatform
 import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.window.WindowDialog
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.glass.GlassDialog
+import top.yukonga.miuix.kmp.glass.GlassDialogButton
+import top.yukonga.miuix.kmp.glass.GlassDialogButtonRole
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,97 +208,98 @@ fun OnboardingWebLoginScreen(
         }
 
         // Diálogo de consentimiento para generar el token de estudiante permanente
-        if (pendingLoginCredentials != null) {
-            val (cookies, csrf) = pendingLoginCredentials!!
-            if (themeStyle == AppThemeStyle.MIUIX) {
-                WindowDialog(
-                    show = true,
-                    title = stringResource(Res.string.onboarding_token_dialog_title),
-                    summary = stringResource(Res.string.onboarding_token_dialog_desc),
-                    onDismissRequest = { pendingLoginCredentials = null },
-                    content = {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
-                        ) {
-                            MiuixTextButton(
-                                text = stringResource(Res.string.onboarding_token_dialog_btn_generate),
-                                onClick = {
-                                    val creds = pendingLoginCredentials
-                                    pendingLoginCredentials = null
-                                    if (creds != null) {
-                                        onLoginSuccess(creds.first, creds.second, true)
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = MiuixButtonDefaults.textButtonColorsPrimary()
-                            )
-                            MiuixTextButton(
-                                text = stringResource(Res.string.onboarding_token_dialog_btn_cookies),
-                                onClick = {
-                                    val creds = pendingLoginCredentials
-                                    pendingLoginCredentials = null
-                                    if (creds != null) {
-                                        onLoginSuccess(creds.first, creds.second, false)
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                )
-            } else {
-                androidx.compose.material3.AlertDialog(
-                    onDismissRequest = { pendingLoginCredentials = null },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Key,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    },
-                    title = {
-                        Text(
-                            text = stringResource(Res.string.onboarding_token_dialog_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    text = {
-                        Text(
-                            text = stringResource(Res.string.onboarding_token_dialog_desc),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    confirmButton = {
-                        androidx.compose.material3.Button(
-                            onClick = {
-                                val creds = pendingLoginCredentials
+        if (themeStyle == AppThemeStyle.MIUIX) {
+            val creds = pendingLoginCredentials
+            GlassDialog(
+                show = creds != null,
+                backdrop = null,
+                title = stringResource(Res.string.onboarding_token_dialog_title),
+                summary = stringResource(Res.string.onboarding_token_dialog_desc),
+                onDismissRequest = { pendingLoginCredentials = null },
+            ) {
+                GlassDialogActions {
+                    GlassDialogButton(
+                        onClick = {
+                            if (creds != null) {
                                 pendingLoginCredentials = null
-                                if (creds != null) {
-                                    onLoginSuccess(creds.first, creds.second, true)
-                                }
+                                onLoginSuccess(creds.first, creds.second, true)
                             }
-                        ) {
-                            Text(stringResource(Res.string.onboarding_token_dialog_btn_generate))
-                        }
-                    },
-                    dismissButton = {
-                        androidx.compose.material3.TextButton(
-                            onClick = {
-                                val creds = pendingLoginCredentials
-                                pendingLoginCredentials = null
-                                if (creds != null) {
-                                    onLoginSuccess(creds.first, creds.second, false)
-                                }
-                            }
-                        ) {
-                            Text(stringResource(Res.string.onboarding_token_dialog_btn_cookies))
-                        }
+                        },
+                        modifier = Modifier.weight(1f),
+                        role = GlassDialogButtonRole.Primary,
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.onboarding_token_dialog_btn_generate),
+                            style = MiuixTheme.textStyles.button,
+                        )
                     }
-                )
+                    GlassDialogButton(
+                        onClick = {
+                            if (creds != null) {
+                                pendingLoginCredentials = null
+                                onLoginSuccess(creds.first, creds.second, false)
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        MiuixText(
+                            text = stringResource(Res.string.onboarding_token_dialog_btn_cookies),
+                            style = MiuixTheme.textStyles.button,
+                        )
+                    }
+                }
             }
+        } else if (pendingLoginCredentials != null) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { pendingLoginCredentials = null },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Key,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.onboarding_token_dialog_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(Res.string.onboarding_token_dialog_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            val creds = pendingLoginCredentials
+                            pendingLoginCredentials = null
+                            if (creds != null) {
+                                onLoginSuccess(creds.first, creds.second, true)
+                            }
+                        }
+                    ) {
+                        Text(stringResource(Res.string.onboarding_token_dialog_btn_generate))
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            val creds = pendingLoginCredentials
+                            pendingLoginCredentials = null
+                            if (creds != null) {
+                                onLoginSuccess(creds.first, creds.second, false)
+                            }
+                        }
+                    ) {
+                        Text(stringResource(Res.string.onboarding_token_dialog_btn_cookies))
+                    }
+                }
+            )
         }
     }
 }
