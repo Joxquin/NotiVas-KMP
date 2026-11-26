@@ -109,7 +109,12 @@ private val P_CLOSE_REGEX = Regex("""(?is)</p>""")
 private val P_OPEN_REGEX = Regex("""(?is)<p[^>]*>""")
 private val BOLD_TAG_REGEX = Regex("""(?is)<(?:strong|b)[^>]*>(.*?)</(?:strong|b)>""")
 private val ITALIC_TAG_REGEX = Regex("""(?is)<(?:em|i)[^>]*>(.*?)</(?:em|i)>""")
-private val BULLET_LABEL_SPLIT_REGEX = Regex("""^(?:\*\*(.*?)(?::\*\*|\*\*:)|(.*?):)\s*(.*)$""", RegexOption.DOT_MATCHES_ALL)
+// Etiqueta de una viñeta: "**Etiqueta.** texto" (1), "**Etiqueta:** texto" (2) o "Etiqueta: texto" (3); el resto es el valor (4).
+// La primera alternativa no cruza otra negrita ni admite ":" para no cambiar los casos que ya funcionaban.
+private val BULLET_LABEL_SPLIT_REGEX = Regex(
+    """^(?:\*\*\s*([^*:\n]{1,80}?)\s*\.\s*\*\*|\*\*(.*?)(?::\*\*|\*\*:)|(.*?):)\s*(.*)$""",
+    RegexOption.DOT_MATCHES_ALL
+)
 private val INLINE_MARKDOWN_LINK_REGEX = Regex("""(\*\*([^*]+)\*\*)|(\[([^\]]+)\]\(([^)]+)\))|(`([^`]+)`)|(\*([^*]+)\*)""")
 private val IMG_REGEX = Regex("""(?i)<img[^>]+src=["']([^"']+)["'][^>]*>""")
 private val WHITESPACE_REGEX = Regex("""\s+""")
@@ -997,8 +1002,14 @@ internal fun parseConsignaBulletItem(liHtml: String, indexStr: String?, baseUrl:
     val label: String
     val value: String
     if (match != null) {
-        val rawLabel = (match.groups[1]?.value ?: match.groups[2]?.value ?: "").replace("**", "").replace("*", "").trim()
-        val rawValue = match.groups[3]?.value?.trim() ?: ""
+        val labelSource = match.groups[1]?.value ?: match.groups[2]?.value ?: match.groups[3]?.value ?: ""
+        val rawLabel = labelSource.replace("**", "").replace("*", "").trim()
+        var rawValue = match.groups[4]?.value?.trim() ?: ""
+        // "<strong><span>Etiqueta:</span></strong>" llega como "** Etiqueta: ** texto": el "**" que cierra la
+        // negrita quedaba al inicio del valor y se emparejaba con la siguiente negrita, desarmando el formato.
+        if (match.groups[3] != null && labelSource.trimStart().startsWith("**") && rawValue.startsWith("**")) {
+            rawValue = rawValue.removePrefix("**").trimStart()
+        }
         label = rawLabel
         value = rawValue
     } else {
