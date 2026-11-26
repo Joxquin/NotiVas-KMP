@@ -15,7 +15,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.shared.resources.*
+import me.joxquin.notivas.ui.components.CourseDetailSkeleton
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
@@ -119,61 +121,63 @@ fun CourseDetailScreen(
                     .fillMaxSize()
                     .miuixBackdropModifier(blurBackdrop)
             ) {
-                if (uiState.isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = MiuixTheme.colorScheme.primary)
-                    }
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = contentPadding,
-                        overscrollEffect = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .miuixPageScrollModifiers(scrollBehavior),
-                        verticalArrangement = Arrangement.spacedBy(18.dp)
-                    ) {
-                        // 1. Course Hero Banner Card
-                        item {
-                            CourseHeroBannerCard(
-                                course = uiState.course,
-                                departmentTag = uiState.departmentTag,
-                                professorName = uiState.professorName,
-                                promedioFormatted = uiState.promedioFormatted,
-                                avancePercentage = uiState.avancePercentage,
-                                completedModulesCount = uiState.completedModulesCount,
-                                totalModulesCount = uiState.totalModulesCount,
-                                themeStyle = AppThemeStyle.MIUIX
-                            )
+                // Esqueleto con brillo mientras carga y fundido hacia el contenido real (antes, una rueda sola).
+                Crossfade(
+                    targetState = uiState.isLoading,
+                    animationSpec = tween(durationMillis = 320),
+                    label = "courseDetailMiuix"
+                ) { loading ->
+                    if (loading) {
+                        CourseDetailSkeleton(themeStyle = AppThemeStyle.MIUIX, contentPadding = contentPadding)
+                    } else Box(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            state = listState,
+                            contentPadding = contentPadding,
+                            overscrollEffect = null,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .miuixPageScrollModifiers(scrollBehavior),
+                            verticalArrangement = Arrangement.spacedBy(18.dp)
+                        ) {
+                            // 1. Course Hero Banner Card
+                            item {
+                                CourseHeroBannerCard(
+                                    course = uiState.course,
+                                    departmentTag = uiState.departmentTag,
+                                    professorName = uiState.professorName,
+                                    promedioFormatted = uiState.promedioFormatted,
+                                    avancePercentage = uiState.avancePercentage,
+                                    completedModulesCount = uiState.completedModulesCount,
+                                    totalModulesCount = uiState.totalModulesCount,
+                                    themeStyle = AppThemeStyle.MIUIX
+                                )
+                            }
+
+                            // 2. Ruta de Aprendizaje (Tarjeta única interactiva con semana activa incrustada)
+                            item {
+                                CourseLearningRoadmapCard(
+                                    activeModule = uiState.activeModule ?: uiState.modules.firstOrNull(),
+                                    totalModulesCount = uiState.totalModulesCount,
+                                    themeStyle = AppThemeStyle.MIUIX,
+                                    onClick = onNavigateToAllModules,
+                                    onItemClick = { item ->
+                                        viewModel.openItem(
+                                            item = item,
+                                            uriHandler = uriHandler,
+                                            onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
+                                            onNavigateToForoDetail = onNavigateToForoDetail
+                                        )
+                                    }
+                                )
+                            }
                         }
 
-                        // 2. Ruta de Aprendizaje (Tarjeta única interactiva con semana activa incrustada)
-                        item {
-                            CourseLearningRoadmapCard(
-                                activeModule = uiState.activeModule ?: uiState.modules.firstOrNull(),
-                                totalModulesCount = uiState.totalModulesCount,
-                                themeStyle = AppThemeStyle.MIUIX,
-                                onClick = onNavigateToAllModules,
-                                onItemClick = { item ->
-                                    viewModel.openItem(
-                                        item = item,
-                                        uriHandler = uriHandler,
-                                        onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
-                                        onNavigateToForoDetail = onNavigateToForoDetail
-                                    )
-                                }
-                            )
-                        }
+                        VerticalScrollBar(
+                            adapter = rememberScrollBarAdapter(listState),
+                            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                            trackPadding = contentPadding
+                        )
                     }
-
-                    VerticalScrollBar(
-                        adapter = rememberScrollBarAdapter(listState),
-                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                        trackPadding = contentPadding
-                    )
                 }
             }
         }
@@ -217,54 +221,56 @@ fun CourseDetailScreen(
             },
             containerColor = MaterialTheme.colorScheme.surface
         ) { paddingValues ->
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(
-                        top = paddingValues.calculateTopPadding() + 8.dp,
-                        bottom = paddingValues.calculateBottomPadding() + 24.dp,
-                        start = 16.dp,
-                        end = 16.dp
-                    ),
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(18.dp)
-                ) {
-                    // 1. Course Hero Banner Card
-                    item {
-                        CourseHeroBannerCard(
-                            course = uiState.course,
-                            departmentTag = uiState.departmentTag,
-                            professorName = uiState.professorName,
-                            promedioFormatted = uiState.promedioFormatted,
-                            avancePercentage = uiState.avancePercentage,
-                            completedModulesCount = uiState.completedModulesCount,
-                            totalModulesCount = uiState.totalModulesCount,
-                            themeStyle = AppThemeStyle.MATERIAL
-                        )
-                    }
+            val listPadding = PaddingValues(
+                top = paddingValues.calculateTopPadding() + 8.dp,
+                bottom = paddingValues.calculateBottomPadding() + 24.dp,
+                start = 16.dp,
+                end = 16.dp
+            )
+            Crossfade(
+                targetState = uiState.isLoading,
+                animationSpec = tween(durationMillis = 320),
+                label = "courseDetailMaterial"
+            ) { loading ->
+                if (loading) {
+                    CourseDetailSkeleton(themeStyle = AppThemeStyle.MATERIAL, contentPadding = listPadding)
+                } else {
+                    LazyColumn(
+                        contentPadding = listPadding,
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                    ) {
+                        // 1. Course Hero Banner Card
+                        item {
+                            CourseHeroBannerCard(
+                                course = uiState.course,
+                                departmentTag = uiState.departmentTag,
+                                professorName = uiState.professorName,
+                                promedioFormatted = uiState.promedioFormatted,
+                                avancePercentage = uiState.avancePercentage,
+                                completedModulesCount = uiState.completedModulesCount,
+                                totalModulesCount = uiState.totalModulesCount,
+                                themeStyle = AppThemeStyle.MATERIAL
+                            )
+                        }
 
-                    // 2. Ruta de Aprendizaje (Tarjeta única interactiva con semana activa incrustada)
-                    item {
-                        CourseLearningRoadmapCard(
-                            activeModule = uiState.activeModule ?: uiState.modules.firstOrNull(),
-                            totalModulesCount = uiState.totalModulesCount,
-                            themeStyle = AppThemeStyle.MATERIAL,
-                            onClick = onNavigateToAllModules,
-                            onItemClick = { item ->
-                                viewModel.openItem(
-                                    item = item,
-                                    uriHandler = uriHandler,
-                                    onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
-                                    onNavigateToForoDetail = onNavigateToForoDetail
-                                )
-                            }
-                        )
+                        // 2. Ruta de Aprendizaje (Tarjeta única interactiva con semana activa incrustada)
+                        item {
+                            CourseLearningRoadmapCard(
+                                activeModule = uiState.activeModule ?: uiState.modules.firstOrNull(),
+                                totalModulesCount = uiState.totalModulesCount,
+                                themeStyle = AppThemeStyle.MATERIAL,
+                                onClick = onNavigateToAllModules,
+                                onItemClick = { item ->
+                                    viewModel.openItem(
+                                        item = item,
+                                        uriHandler = uriHandler,
+                                        onNavigateToAssignmentDraft = onNavigateToAssignmentDraft,
+                                        onNavigateToForoDetail = onNavigateToForoDetail
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }

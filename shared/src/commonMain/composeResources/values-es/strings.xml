@@ -655,6 +655,7 @@
 
     <!-- Course Detail Screen (Stitch Redesign) -->
     <string name="course_detail_screen_title">Detalle del Curso</string>
+    <string name="content_loading">Cargando contenido</string>
     <string name="course_detail_learning_path">Ruta de Aprendizaje</string>
     <string name="course_detail_stat_promedio">Promedio</string>
     <string name="course_detail_stat_avance">Avance</string>
