@@ -952,7 +952,7 @@
     <string name="import_template_title">Import syllabus template</string>
     <string name="import_template_summary">Select an official template to automatically generate groups and link your Canvas assignments.</string>
     <string name="import_template_weeks_format">%1$d weeks</string>
-    <string name="import_template_group_weight_format">%1$s: %2$d%%</string>
+    <string name="import_template_group_weight_format">%1$s: %2$d%</string>
     <string name="import_template_apply_all_title">Apply to all courses</string>
     <string name="import_template_apply_all_desc">Replace evaluation groups in all your active courses</string>
     <string name="import_template_apply_all_action">Apply to all</string>
