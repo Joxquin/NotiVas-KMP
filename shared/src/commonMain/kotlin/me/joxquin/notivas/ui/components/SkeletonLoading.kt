@@ -214,7 +214,7 @@ fun CardListSkeleton(
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(18.dp).skeleton(shimmer, CircleShape))
                     Spacer(modifier = Modifier.width(12.dp))
-                    Box(
+                    Column(
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 24.dp)
@@ -225,6 +225,17 @@ fun CardListSkeleton(
                                 .height(14.dp)
                                 .skeleton(shimmer)
                         )
+                        // La mayoría de los títulos reales ocupan dos líneas ("SEMANA 3: Control de Versiones
+                        // Avanzados."): sin la segunda, la lista se encogía al aparecer el contenido.
+                        if (index % 3 != 0) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.4f)
+                                    .height(12.dp)
+                                    .skeleton(shimmer)
+                            )
+                        }
                     }
                     Box(modifier = Modifier.size(20.dp).skeleton(shimmer, CircleShape))
                 }
