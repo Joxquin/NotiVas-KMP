@@ -98,6 +98,7 @@ fun ForosCardItem(
     }
 
     val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+    val verifiedColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
     val authorName = topic.author?.displayName ?: topic.userName ?: stringResource(Res.string.foros_author_default)
     val repliesCount = topic.discussionSubentryCount ?: 0
 
@@ -230,13 +231,13 @@ fun ForosCardItem(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF4CAF50).copy(alpha = 0.2f)),
+                                .background(verifiedColor.copy(alpha = 0.2f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Verified,
                                 contentDescription = null,
-                                tint = Color(0xFF4CAF50),
+                                tint = verifiedColor,
                                 modifier = Modifier.size(15.dp)
                             )
                         }

@@ -78,7 +78,7 @@ fun CourseLearningRoadmapCard(
     else MaterialTheme.colorScheme.primary
 
     val successColor = if (isMiuix) MiuixTheme.colorScheme.primary
-    else Color(0xFF4CAF50)
+    else MaterialTheme.colorScheme.secondary
 
     val content = @Composable {
         Column(
