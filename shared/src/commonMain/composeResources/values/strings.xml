@@ -970,4 +970,16 @@
     <string name="copilot_model_label_gemini_31_pro_preview">Gemini 3.1 Pro</string>
     <string name="copilot_model_analysis_gemini_compatible">100% Compatible: Official Gemini model from Google AI Studio with native vision, documents and 1M+ context tokens.</string>
     <string name="copilot_model_analysis_custom_compatible">Custom model configured for Google AI Studio. Make sure the endpoint is compatible.</string>
+    <string name="draft_export_sheet_title">Submission format</string>
+    <string name="draft_export_sheet_subtitle">Your Google Docs draft (.gdoc) will be converted before uploading to Canvas.</string>
+    <string name="draft_export_sheet_allowed_hint">Allowed formats for this assignment: %1$s</string>
+    <string name="draft_export_pdf_title">PDF Document (.pdf)</string>
+    <string name="draft_export_pdf_desc">Fixed layout ideal for reading and grading.</string>
+    <string name="draft_export_docx_title">Microsoft Word (.docx)</string>
+    <string name="draft_export_docx_desc">Editable document compatible with Microsoft Word.</string>
+    <string name="draft_export_recommended_badge">Recommended</string>
+    <string name="draft_export_not_allowed_badge">Not allowed</string>
+    <string name="draft_export_cancel">Cancel</string>
+    <string name="draft_export_send_format">Send %1$s</string>
+    <string name="draft_export_send">Send</string>
 </resources>

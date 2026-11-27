@@ -59,6 +59,7 @@ class GoogleDriveApiService(
         const val MIME_TYPE_GSHEET = "application/vnd.google-apps.spreadsheet"
         const val MIME_TYPE_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         const val MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        const val MIME_TYPE_PDF = "application/pdf"
     }
 
     private fun apiUrl(endpoint: String): String = resolveApiUrl(endpoint)
@@ -596,6 +597,66 @@ class GoogleDriveApiService(
                 throw e
             } catch (e: Throwable) {
                 println("[GoogleDriveApiService] exportFileContentAsText excepcion intento $attempt: ${e.message}")
+                if (attempt == 1) {
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                }
+            }
+        }
+        return null
+    }
+
+    /**
+     * Exporta un documento de Google Drive (p. ej. .gdoc) al formato binario solicitado (PDF o DOCX).
+     * Si el archivo en Drive ya es un archivo binario no nativo, intenta descargarlo directamente con alt=media.
+     */
+    suspend fun exportFileAsBytes(
+        fileId: String,
+        targetMimeType: String,
+        initialToken: String? = null
+    ): ByteArray? {
+        var token = getValidAccessToken(initialToken)
+        if (token.isNullOrBlank()) {
+            token = getValidAccessToken(null, forceRefresh = true) ?: return null
+        }
+
+        for (attempt in 1..2) {
+            try {
+                // 1. Exportación oficial para documentos nativos de Google (Docs/Sheets)
+                val response = httpClient.get(apiUrl("$DRIVE_FILES_API/$fileId/export")) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    parameter("mimeType", targetMimeType)
+                }
+                val status = response.status.value
+                if (status in 200..299) {
+                    val bytes = response.body<ByteArray>()
+                    if (bytes.isNotEmpty()) return bytes
+                } else if (status == 401 && attempt == 1) {
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    println("[GoogleDriveApiService] exportFileAsBytes: files.export HTTP $status, probando alt=media...")
+                }
+
+                // 2. Fallback para archivos ya binarios en Drive
+                val mediaResponse = httpClient.get(apiUrl("$DRIVE_FILES_API/$fileId")) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    parameter("alt", "media")
+                    parameter("supportsAllDrives", true)
+                }
+                val mediaStatus = mediaResponse.status.value
+                if (mediaStatus in 200..299) {
+                    val bytes = mediaResponse.body<ByteArray>()
+                    if (bytes.isNotEmpty()) return bytes
+                } else if (mediaStatus == 401 && attempt == 1) {
+                    token = getValidAccessToken(null, forceRefresh = true) ?: return null
+                    continue
+                } else {
+                    println("[GoogleDriveApiService] exportFileAsBytes: alt=media HTTP $mediaStatus")
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                println("[GoogleDriveApiService] exportFileAsBytes excepcion intento $attempt: ${e.message}")
                 if (attempt == 1) {
                     token = getValidAccessToken(null, forceRefresh = true) ?: return null
                 }

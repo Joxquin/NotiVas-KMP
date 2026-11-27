@@ -177,12 +177,7 @@ fun AssignmentDraftScreen(
     }
 
     val handleSubmitDraftToCanvas: () -> Unit = {
-        val targetUrl = draftInfo?.driveUrl.orEmpty()
-        viewModel?.submitDraftToCanvas(
-            assignment = assignment,
-            driveUrl = targetUrl,
-            onSuccess = onOpenCanvas
-        ) ?: onOpenCanvas()
+        viewModel?.refreshData()
     }
 
     val handleExploreTemplates: () -> Unit = {

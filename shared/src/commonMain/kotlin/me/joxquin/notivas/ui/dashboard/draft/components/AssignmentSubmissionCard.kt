@@ -179,6 +179,7 @@ fun AssignmentSubmissionCard(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var successMessage by remember { mutableStateOf<String?>(null) }
     var showAiReviewSheet by remember { mutableStateOf(false) }
+    var showExportFormatSheet by remember { mutableStateOf(false) }
 
     val effectiveAllowedExtensions: List<String> = remember(assignment.allowedExtensions) {
         assignment.allowedExtensions
@@ -1669,7 +1670,12 @@ fun AssignmentSubmissionCard(
                         .clickable(enabled = canSubmit && !isSubmitting) {
                             if (selectedTab == SubmissionTab.DRIVE && isDriveConnected) {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onSubmitDraftToCanvas()
+                                if (isDraftActive) {
+                                    errorMessage = null
+                                    showExportFormatSheet = true
+                                } else {
+                                    errorMessage = "Primero crea un borrador en Google Drive."
+                                }
                             } else {
                                 handleSubmitDirect()
                             }
@@ -2779,7 +2785,12 @@ fun AssignmentSubmissionCard(
                 Button(
                     onClick = {
                         if (selectedTab == SubmissionTab.DRIVE && isDriveConnected) {
-                            onSubmitDraftToCanvas()
+                            if (isDraftActive) {
+                                errorMessage = null
+                                showExportFormatSheet = true
+                            } else {
+                                errorMessage = "Primero crea un borrador en Google Drive."
+                            }
                         } else {
                             handleSubmitDirect()
                         }
@@ -2837,6 +2848,39 @@ fun AssignmentSubmissionCard(
         themeStyle = themeStyle,
         backdrop = backdrop,
         onDismissRequest = { showAiReviewSheet = false }
+    )
+
+    DraftExportFormatBottomSheet(
+        show = showExportFormatSheet,
+        allowedExtensions = effectiveAllowedExtensions,
+        themeStyle = themeStyle,
+        backdrop = backdrop,
+        onDismissRequest = { showExportFormatSheet = false },
+        onConfirmExport = { selectedFormat ->
+            showExportFormatSheet = false
+            if (viewModel == null) {
+                errorMessage = "Servicio no disponible"
+                return@DraftExportFormatBottomSheet
+            }
+            isSubmitting = true
+            errorMessage = null
+            viewModel.submitDraftToCanvas(
+                assignment = assignment,
+                driveUrl = draftInfo?.driveUrl.orEmpty(),
+                exportFormat = selectedFormat,
+                comment = commentText.trim().ifBlank { null },
+                onSuccess = {
+                    isSubmitting = false
+                    successMessage = "Tarea entregada en ${selectedFormat.displayName} a Canvas"
+                    commentText = ""
+                    onSubmitSuccess()
+                },
+                onError = { err ->
+                    isSubmitting = false
+                    errorMessage = err.ifBlank { "Error al procesar la entrega" }
+                }
+            )
+        }
     )
 }
 

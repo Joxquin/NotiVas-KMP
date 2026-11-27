@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.data.local.PreferencesManager
+import me.joxquin.notivas.data.remote.GoogleDriveApiService
 import me.joxquin.notivas.ui.components.miuix.SearchStatus
 import me.joxquin.notivas.data.local.db.dao.SimulationDao
 import me.joxquin.notivas.data.model.Assignment
@@ -36,6 +37,23 @@ import me.joxquin.notivas.di.AppModule
 import me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase
 import me.joxquin.notivas.util.DateComponents
 import me.joxquin.notivas.util.DateTimeUtil
+
+enum class DraftExportFormat(
+    val extension: String,
+    val mimeType: String,
+    val displayName: String
+) {
+    PDF(
+        extension = "pdf",
+        mimeType = GoogleDriveApiService.MIME_TYPE_PDF,
+        displayName = "PDF"
+    ),
+    DOCX(
+        extension = "docx",
+        mimeType = GoogleDriveApiService.MIME_TYPE_DOCX,
+        displayName = "DOCX"
+    )
+}
 
 enum class SyncStatus {
     SYNCING,
@@ -679,56 +697,88 @@ class DashboardViewModel(
 
     /**
      * Despacho Formal a Canvas LMS.
-     * Envía la entrega al endpoint de Canvas, actualiza localmente y retira la tarea de la lista de urgentes.
+     * Convierte el borrador de Google Drive al formato seleccionado (PDF o DOCX),
+     * lo sube como archivo adjunto (online_upload) sin enviar enlaces, actualiza localmente y refresca la lista.
      */
     fun submitDraftToCanvas(
         assignment: Assignment,
         driveUrl: String,
+        exportFormat: DraftExportFormat,
+        comment: String? = null,
         onSuccess: () -> Unit = {},
         onError: (String) -> Unit = {}
     ) {
-        if (driveUrl.isBlank() || driveUrl.contains("sample_")) {
-            val errorMsg = "No se puede entregar: el enlace del borrador no es válido o no se ha sincronizado."
+        if (driveUrl.contains("sample_")) {
+            val errorMsg = "No se puede entregar: el borrador aún no se ha sincronizado con Google Drive."
             _uiEffect.tryEmit(UiEffect.ShowToast(errorMsg))
             onError(errorMsg)
             return
         }
 
         viewModelScope.launch {
-            // Actualizar nombre del archivo en Google Drive usando HTTP PATCH explícito
             val currentDraft = repository.getAssignmentDraft(assignment.id)
-            val fileId = currentDraft?.driveFileId
-            if (!fileId.isNullOrBlank()) {
-                val updatedTitle = "[ENTREGADO] ${assignment.name.take(40)}"
-                googleDriveApiService.updateFileName(fileId, updatedTitle)
+            val fileId = currentDraft?.driveFileId?.takeIf { it.isNotBlank() }
+                ?: extractDriveFileIdFromUrl(driveUrl)
+
+            if (fileId.isNullOrBlank()) {
+                val errorMsg = "No se encontró el archivo del borrador en Google Drive."
+                _uiEffect.tryEmit(UiEffect.ShowToast(errorMsg))
+                onError(errorMsg)
+                return@launch
             }
+
+            val exportedBytes = googleDriveApiService.exportFileAsBytes(
+                fileId = fileId,
+                targetMimeType = exportFormat.mimeType
+            )
+            if (exportedBytes == null || exportedBytes.isEmpty()) {
+                val errorMsg = "No se pudo convertir el borrador a ${exportFormat.displayName}."
+                _uiEffect.tryEmit(UiEffect.ShowToast(errorMsg))
+                onError(errorMsg)
+                return@launch
+            }
+
+            val baseFileName = assignment.name
+                .replace(Regex("""[^\p{L}\p{N}._\- ]"""), "")
+                .trim()
+                .ifBlank { "Entrega_${assignment.id}" }
+                .take(60)
+            val uploadFileName = "$baseFileName.${exportFormat.extension}"
 
             val result = repository.submitAssignment(
                 courseId = assignment.courseId,
                 assignmentId = assignment.id,
-                submissionType = "online_url",
-                url = driveUrl,
-                bodyText = "Entrega de borrador desde NotiVas: $driveUrl"
+                submissionType = "online_upload",
+                fileBytes = exportedBytes,
+                fileName = uploadFileName,
+                mimeType = exportFormat.mimeType,
+                comment = comment
             )
-            result.onSuccess {
-                // Actualizar draft local a SUBMITTED
-                val currentDraft = repository.getAssignmentDraft(assignment.id)
-                if (currentDraft != null) {
+            result.onSuccess { subDetails ->
+                val updatedTitle = "[ENTREGADO] ${assignment.name.take(40)}"
+                googleDriveApiService.updateFileName(fileId, updatedTitle)
+
+                val latestDraft = repository.getAssignmentDraft(assignment.id)
+                if (latestDraft != null) {
                     repository.saveAssignmentDraft(
-                        currentDraft.copy(
+                        latestDraft.copy(
                             draftStatus = me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusEnum.SUBMITTED.name
                         )
                     )
                 }
-                // Actualizar selección activa si coincide
                 _selectedAssignmentForDraft.value?.let { current ->
                     if (current.assignment.id == assignment.id) {
                         _selectedAssignmentForDraft.value = current.copy(
-                            assignment = current.assignment.copy(isCompleted = true, status = "completed")
+                            assignment = current.assignment.copy(
+                                isCompleted = true,
+                                status = "completed",
+                                submittedAt = subDetails.submittedAt ?: DateTimeUtil.nowLocalDate().toIsoDateString()
+                            )
                         )
                     }
                 }
-                _uiEffect.tryEmit(UiEffect.ShowToast("Entrega enviada exitosamente a Canvas"))
+                refreshData()
+                _uiEffect.tryEmit(UiEffect.ShowToast("Entrega enviada en ${exportFormat.displayName} a Canvas"))
                 onSuccess()
             }.onFailure { error ->
                 val errorMsg = error.message ?: "Error al enviar la entrega a Canvas"
@@ -736,6 +786,13 @@ class DashboardViewModel(
                 onError(errorMsg)
             }
         }
+    }
+
+    private fun extractDriveFileIdFromUrl(url: String): String? {
+        if (url.isBlank()) return null
+        val match = Regex("""/d/([a-zA-Z0-9_-]+)""").find(url)
+            ?: Regex("""[?&]id=([a-zA-Z0-9_-]+)""").find(url)
+        return match?.groupValues?.getOrNull(1)
     }
 
     fun submitAssignmentDirect(

@@ -970,4 +970,16 @@
     <string name="copilot_model_label_gemini_31_pro_preview">Gemini 3.1 Pro</string>
     <string name="copilot_model_analysis_gemini_compatible">100% Compatible: Modelo Gemini oficial de Google AI Studio con soporte nativo de visión, documentos y 1M+ tokens de contexto.</string>
     <string name="copilot_model_analysis_custom_compatible">Modelo personalizado configurado para Google AI Studio. Asegúrate de que el endpoint sea compatible.</string>
+    <string name="draft_export_sheet_title">Formato de entrega</string>
+    <string name="draft_export_sheet_subtitle">Tu borrador de Google Docs (.gdoc) se convertirá antes de enviarse a Canvas.</string>
+    <string name="draft_export_sheet_allowed_hint">Formatos permitidos por esta tarea: %1$s</string>
+    <string name="draft_export_pdf_title">Documento PDF (.pdf)</string>
+    <string name="draft_export_pdf_desc">Formato fijo ideal para lectura y revisión docente.</string>
+    <string name="draft_export_docx_title">Microsoft Word (.docx)</string>
+    <string name="draft_export_docx_desc">Documento editable compatible con Microsoft Word.</string>
+    <string name="draft_export_recommended_badge">Recomendado</string>
+    <string name="draft_export_not_allowed_badge">No permitido</string>
+    <string name="draft_export_cancel">Cancelar</string>
+    <string name="draft_export_send_format">Enviar %1$s</string>
+    <string name="draft_export_send">Enviar</string>
 </resources>
