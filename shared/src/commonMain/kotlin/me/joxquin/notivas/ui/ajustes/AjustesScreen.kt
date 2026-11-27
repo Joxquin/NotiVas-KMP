@@ -319,11 +319,6 @@ fun AjustesScreen(
                     } else {
                         "Sin vincular"
                     }
-                    val tokenSummary = if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
-                        stringResource(Res.string.settings_token_summary_web)
-                    } else {
-                        stringResource(Res.string.settings_token_summary_token)
-                    }
 
                     groupedCardItems(
                         keyPrefix = "settings_categories",
@@ -357,6 +352,11 @@ fun AjustesScreen(
                                 )
                             },
                             CardItem("token") {
+                                val tokenSummary = if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
+                                    stringResource(Res.string.settings_token_summary_web)
+                                } else {
+                                    stringResource(Res.string.settings_token_summary_token)
+                                }
                                 ArrowPreference(
                                     title = stringResource(Res.string.settings_token_title),
                                     summary = tokenSummary,
