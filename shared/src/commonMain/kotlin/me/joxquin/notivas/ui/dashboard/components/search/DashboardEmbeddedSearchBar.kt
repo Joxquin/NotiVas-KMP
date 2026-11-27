@@ -91,6 +91,7 @@ import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.basic.Search
 import top.yukonga.miuix.kmp.icon.basic.SearchCleanup
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * Cápsula ancla en el Feed que reporta su posición Y en la ventana global
@@ -147,7 +148,7 @@ fun DashboardSearchBarAnchor(
                 leadingIcon = {
                     top.yukonga.miuix.kmp.basic.Icon(
                         imageVector = MiuixIcons.Basic.Search,
-                        contentDescription = "Buscar",
+                        contentDescription = stringResource(Res.string.search),
                         modifier = Modifier
                             .size(44.dp)
                             .padding(start = 16.dp, end = 8.dp),
@@ -417,7 +418,7 @@ fun DashboardAnimatedSearchOverlay(
                             leadingIcon = {
                                 top.yukonga.miuix.kmp.basic.Icon(
                                     imageVector = MiuixIcons.Basic.Search,
-                                    contentDescription = "Buscar",
+                                    contentDescription = stringResource(Res.string.search),
                                     modifier = Modifier
                                         .size(44.dp)
                                         .padding(start = 16.dp, end = 8.dp),
@@ -428,7 +429,7 @@ fun DashboardAnimatedSearchOverlay(
                                 if (query.isNotEmpty()) {
                                     top.yukonga.miuix.kmp.basic.Icon(
                                         imageVector = MiuixIcons.Basic.SearchCleanup,
-                                        contentDescription = "Limpiar",
+                                        contentDescription = stringResource(Res.string.clear),
                                         tint = MiuixTheme.colorScheme.onSurface,
                                         modifier = Modifier
                                             .size(44.dp)
@@ -506,7 +507,7 @@ fun DashboardAnimatedSearchOverlay(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
+                                contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -579,7 +580,7 @@ fun DashboardAnimatedSearchOverlay(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
-                                            contentDescription = "Limpiar",
+                                            contentDescription = stringResource(Res.string.clear),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(18.dp)
                                         )

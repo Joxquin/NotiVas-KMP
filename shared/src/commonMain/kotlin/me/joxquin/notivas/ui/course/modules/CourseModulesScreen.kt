@@ -213,7 +213,7 @@ fun CourseModulesScreen(
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
+                                contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -341,7 +341,7 @@ private fun ModuleExpandableCard(
                 } else if (module.isCompleted) {
                     Icon(
                         imageVector = Icons.Filled.Check,
-                        contentDescription = "Completado",
+                        contentDescription = stringResource(Res.string.cd_completed),
                         tint = successColor,
                         modifier = Modifier.size(20.dp)
                     )

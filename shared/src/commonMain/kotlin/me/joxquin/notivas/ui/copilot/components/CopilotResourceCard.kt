@@ -46,6 +46,8 @@ import me.joxquin.notivas.util.CanvasDeepLinkHandler
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 enum class ResourceCardType {
     ASSIGNMENT,
@@ -301,7 +303,7 @@ private fun ResourceCardBody(
                     ) {
                         Icon(
                             imageVector = Icons.Default.OpenInBrowser,
-                            contentDescription = "Abrir en Canvas o Navegador Web",
+                            contentDescription = stringResource(Res.string.cd_open_in_browser),
                             tint = onSurfaceSecondaryColor,
                             modifier = Modifier.size(16.dp)
                         )

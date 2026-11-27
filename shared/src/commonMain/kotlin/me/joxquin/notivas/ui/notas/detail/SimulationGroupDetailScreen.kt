@@ -318,7 +318,7 @@ fun SimulationGroupDetailScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = "Editar",
+                                    contentDescription = stringResource(Res.string.cd_edit),
                                     tint = MiuixTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -329,7 +329,7 @@ fun SimulationGroupDetailScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.DeleteOutline,
-                                    contentDescription = "Eliminar",
+                                    contentDescription = stringResource(Res.string.delete),
                                     tint = MiuixTheme.colorScheme.error,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -529,7 +529,7 @@ fun SimulationGroupDetailScreen(
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
+                                contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -538,14 +538,14 @@ fun SimulationGroupDetailScreen(
                         IconButton(onClick = { showEditDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Editar",
+                                contentDescription = stringResource(Res.string.cd_edit),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                         IconButton(onClick = { showDeleteConfirmDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = "Eliminar",
+                                contentDescription = stringResource(Res.string.delete),
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -825,7 +825,7 @@ private fun GroupItemMiuixCard(
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
-                        contentDescription = "Eliminar",
+                        contentDescription = stringResource(Res.string.delete),
                         tint = MiuixTheme.colorScheme.error,
                         modifier = Modifier.size(18.dp)
                     )
@@ -937,7 +937,7 @@ private fun GroupItemMaterialCard(
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
-                        contentDescription = "Eliminar",
+                        contentDescription = stringResource(Res.string.delete),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(18.dp)
                     )

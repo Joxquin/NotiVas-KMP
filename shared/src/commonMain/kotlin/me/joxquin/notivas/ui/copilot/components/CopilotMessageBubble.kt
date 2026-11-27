@@ -81,6 +81,8 @@ import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.util.DateTimeUtil
 import me.joxquin.notivas.util.MathFormatter
 import me.joxquin.notivas.util.PlatformShareHandler
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 private val CARD_TAG_REGEX = Regex("""(?:\s*[-•*]?\s*)?::card\[(.*?)\]::\s*""")
 private val CARD_PROP_REGEX = Regex("""(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^,\s\]]+))""")
@@ -226,7 +228,7 @@ fun CopilotMessageBubble(
                                     ) {
                                         Icon(
                                             imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                            contentDescription = "Copiar mensaje",
+                                            contentDescription = stringResource(Res.string.cd_copy_message),
                                             tint = MiuixTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
                                             modifier = Modifier.size(12.dp)
                                         )
@@ -294,7 +296,7 @@ fun CopilotMessageBubble(
                                     ) {
                                         Icon(
                                             imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                            contentDescription = "Copiar mensaje",
+                                            contentDescription = stringResource(Res.string.cd_copy_message),
                                             tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
                                             modifier = Modifier.size(12.dp)
                                         )

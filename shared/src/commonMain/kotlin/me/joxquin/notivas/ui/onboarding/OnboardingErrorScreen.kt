@@ -57,6 +57,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +87,7 @@ fun OnboardingErrorScreen(
                 IconButton(onClick = onChangeDomain) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Atras",
+                        contentDescription = stringResource(Res.string.back),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -97,7 +99,7 @@ fun OnboardingErrorScreen(
                     TextButton(onClick = onHelpClick) {
                         Icon(
                             imageVector = Icons.Default.HelpOutline,
-                            contentDescription = "Ayuda",
+                            contentDescription = stringResource(Res.string.cd_help),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -146,7 +148,7 @@ fun OnboardingErrorScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CloudOff,
-                        contentDescription = "Error de conexion",
+                        contentDescription = stringResource(Res.string.cd_connection_error),
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.error
                     )
@@ -206,7 +208,7 @@ fun OnboardingErrorScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ContentPaste,
-                                contentDescription = "Pegar",
+                                contentDescription = stringResource(Res.string.cd_paste),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(14.dp)
                             )

@@ -87,7 +87,7 @@ fun GreetingSection(
             // Avatar Circular Material You con foto o iniciales
             AsyncAvatarImage(
                 url = profile?.avatarUrl,
-                contentDescription = "Foto de perfil",
+                contentDescription = stringResource(Res.string.student_avatar_cd),
                 modifier = Modifier
                     .size(46.dp)
                     .clickable(onClick = onAvatarClick),
