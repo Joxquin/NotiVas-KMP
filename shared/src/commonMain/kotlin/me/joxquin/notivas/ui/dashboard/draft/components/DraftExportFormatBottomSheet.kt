@@ -51,7 +51,7 @@ import me.joxquin.notivas.shared.resources.draft_export_sheet_subtitle
 import me.joxquin.notivas.shared.resources.draft_export_sheet_title
 import me.joxquin.notivas.ui.components.miuix.GlassSheetHeaderAction
 import me.joxquin.notivas.ui.dashboard.DraftExportFormat
-import me.joxquin.notivas.ui.theme.AppThemeStyle
+import me.joxquin.notivas.data.local.AppThemeStyle
 import org.jetbrains.compose.resources.stringResource
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
