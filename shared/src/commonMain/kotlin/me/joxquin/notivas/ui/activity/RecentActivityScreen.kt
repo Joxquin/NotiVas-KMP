@@ -717,20 +717,23 @@ private fun EmptyActivityPlaceholder(isMiuix: Boolean) {
 
 private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
+@Composable
 private fun formatRelativeTime(timestamp: Long): String {
-    if (timestamp <= 0L) return "Reciente"
+    if (timestamp <= 0L) return stringResource(Res.string.activity_time_recent)
     val now = me.joxquin.notivas.util.DateTimeUtil.nowEpochMillis()
     val diff = (now - timestamp).coerceAtLeast(0L)
     val mins = diff / (60 * 1000)
     val hours = diff / (3600 * 1000)
     val days = diff / (24 * 3600 * 1000)
 
+    // Un solo formato ("Hace 5 min", "Hace 3 h", "Ayer", "Hace 2 días"). Antes decía
+    // "Hoy, hace 23 h" aunque hubiera sido ayer, y los textos estaban fijos en español.
     return when {
-        mins < 5 -> "Hace un momento"
-        mins < 60 -> "Hace $mins min"
-        hours < 24 -> "Hoy, hace $hours h"
-        days == 1L -> "Ayer"
-        days < 7 -> "Hace $days días"
-        else -> "Hace más de 1 semana"
+        mins < 5 -> stringResource(Res.string.activity_time_just_now)
+        mins < 60 -> stringResource(Res.string.activity_time_minutes_format, mins.toInt())
+        hours < 24 -> stringResource(Res.string.activity_time_hours_format, hours.toInt())
+        days == 1L -> stringResource(Res.string.activity_time_yesterday)
+        days < 7 -> stringResource(Res.string.activity_time_days_format, days.toInt())
+        else -> stringResource(Res.string.activity_time_over_week)
     }
 }

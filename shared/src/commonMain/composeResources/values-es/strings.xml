@@ -51,6 +51,13 @@
     <string name="copilot_suggestion_research_q">Buscar artículos científicos y tesis en la web sobre un tema</string>
     <string name="course_modules_empty_module">Este módulo no contiene elementos.</string>
     <string name="dashboard_weighted_average">Promedio Ponderado</string>
+    <string name="activity_time_recent">Reciente</string>
+    <string name="activity_time_just_now">Hace un momento</string>
+    <string name="activity_time_minutes_format">Hace %1$d min</string>
+    <string name="activity_time_hours_format">Hace %1$d h</string>
+    <string name="activity_time_yesterday">Ayer</string>
+    <string name="activity_time_days_format">Hace %1$d días</string>
+    <string name="activity_time_over_week">Hace más de una semana</string>
     <string name="search">Buscar</string>
     <string name="clear">Limpiar</string>
     <string name="selected">Seleccionado</string>
