@@ -33,6 +33,8 @@ openspec
 .env*
 !.env.example
 *.zip
+*.apk
+*.aab
 build-output/
 
 # Configuración de Firebase: se pide al dueño del proyecto, no se sube
