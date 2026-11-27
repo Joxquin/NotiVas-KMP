@@ -11,6 +11,7 @@ import me.joxquin.notivas.data.remote.OpenRouterApiService
 import me.joxquin.notivas.data.repository.CanvasRepository
 import me.joxquin.notivas.data.repository.CopilotChatRepository
 import me.joxquin.notivas.data.repository.CopilotRepository
+import me.joxquin.notivas.data.repository.SimulationRepository
 import me.joxquin.notivas.domain.usecase.CalculateWhatIfGradeUseCase
 import me.joxquin.notivas.domain.usecase.GetUrgentAssignmentsUseCase
 import me.joxquin.notivas.security.SecureTokenVault
@@ -42,6 +43,10 @@ object AppModule {
     
     val copilotChatRepository: CopilotChatRepository by lazy {
         CopilotChatRepository(localStore)
+    }
+
+    val simulationRepository: SimulationRepository by lazy {
+        SimulationRepository(simulationDao)
     }
 
     // Respaldo en la nube del simulador; solo se activa si la plataforma instala un CloudBackend.

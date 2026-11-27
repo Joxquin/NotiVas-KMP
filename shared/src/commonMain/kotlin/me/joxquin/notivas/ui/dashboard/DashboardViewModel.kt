@@ -23,7 +23,6 @@ import org.jetbrains.compose.resources.StringResource
 import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.ui.components.miuix.SearchStatus
-import me.joxquin.notivas.data.local.db.dao.SimulationDao
 import me.joxquin.notivas.data.model.Assignment
 import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.data.model.AcademicPerformanceStats
@@ -32,6 +31,7 @@ import me.joxquin.notivas.data.model.DayTaskStatus
 import me.joxquin.notivas.data.model.GradePerformanceLevel
 import me.joxquin.notivas.data.model.UserProfile
 import me.joxquin.notivas.data.repository.CanvasRepository
+import me.joxquin.notivas.data.repository.SimulationRepository
 import me.joxquin.notivas.di.AppModule
 import me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase
 import me.joxquin.notivas.util.DateComponents
@@ -88,7 +88,7 @@ data class DashboardUiState(
 class DashboardViewModel(
     private val repository: CanvasRepository = AppModule.canvasRepository,
     private val preferencesManager: PreferencesManager = AppModule.preferencesManager,
-    private val simulationDao: SimulationDao = AppModule.simulationDao,
+    private val simulationRepository: SimulationRepository = AppModule.simulationRepository,
     private val academicCalculatorUseCase: AcademicCalculatorUseCase = AppModule.academicCalculatorUseCase,
     private val localStore: me.joxquin.notivas.data.local.InMemoryLocalStore = AppModule.localStore
 ) : ViewModel() {
@@ -987,9 +987,9 @@ class DashboardViewModel(
         combine(
             courses,
             repository.allAssignments,
-            simulationDao.observeAllGroupsWithItems()
-        ) { courseList, assignmentList, allGroupRelations ->
-            val relationsByCourse = allGroupRelations.groupBy { it.group.courseId }
+            simulationRepository.observeAllGroupsWithItems()
+        ) { courseList, assignmentList, allGroups ->
+            val groupsByCourse = allGroups.groupBy { it.group.courseId }
 
             courseList.map { course ->
                 val courseAssignments = assignmentList.filter { it.courseId == course.id }
@@ -997,7 +997,7 @@ class DashboardViewModel(
                 val completed = courseAssignments.count { it.status == "completed" }
                 val missing = courseAssignments.count { it.status == "missing" }
 
-                val groups = relationsByCourse[course.id]?.map { it.toDomain() } ?: emptyList()
+                val groups = groupsByCourse[course.id].orEmpty()
                 // Grupos sin ninguna nota real (plantillas o datos de prueba) no dan promedio: antes el curso
                 // aparecía sin nota en Rendimiento aunque Canvas sí tenía calificaciones. Se usa Canvas como en
                 // el Estado A, igual que el Copiloto (GradeInsights).
@@ -1087,15 +1087,15 @@ class DashboardViewModel(
     val unconfiguredBannerState: StateFlow<Triple<Int, Course?, Boolean>> =
         combine(
             courses,
-            simulationDao.observeAllGroupsWithItems(),
+            simulationRepository.observeAllGroupsWithItems(),
             preferencesManager.unconfiguredCoursesBannerDismissedUntil,
             _bannerDismissedLocally
-        ) { courseList, allGroupRelations, dismissedUntil, locallyDismissed ->
+        ) { courseList, allGroups, dismissedUntil, locallyDismissed ->
             if (locallyDismissed) {
                 Triple(0, null, false)
             } else {
-                val relationsByCourse = allGroupRelations.groupBy { it.group.courseId }
-                val unconfigured = courseList.filter { relationsByCourse[it.id].isNullOrEmpty() }
+                val groupsByCourse = allGroups.groupBy { it.group.courseId }
+                val unconfigured = courseList.filter { groupsByCourse[it.id].isNullOrEmpty() }
                 val count = unconfigured.size
                 val first = unconfigured.firstOrNull()
                 val isSnoozed = DateTimeUtil.nowEpochMillis() < dismissedUntil
