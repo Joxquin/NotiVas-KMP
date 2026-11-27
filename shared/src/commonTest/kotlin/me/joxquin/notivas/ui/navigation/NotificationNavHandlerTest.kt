@@ -47,4 +47,14 @@ class NotificationNavHandlerTest {
         assertEquals(NotificationNavTarget.RecentActivity, consumed)
         assertNull(NotificationNavHandler.pendingTarget.value)
     }
+
+    @Test
+    fun testCopilotTargetNavigation() {
+        NotificationNavHandler.navigateTo(NotificationNavTarget.Copilot)
+        assertEquals(NotificationNavTarget.Copilot, NotificationNavHandler.pendingTarget.value)
+
+        val consumed = NotificationNavHandler.consumePendingTarget()
+        assertEquals(NotificationNavTarget.Copilot, consumed)
+        assertNull(NotificationNavHandler.pendingTarget.value)
+    }
 }

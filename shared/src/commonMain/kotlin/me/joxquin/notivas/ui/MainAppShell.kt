@@ -338,7 +338,11 @@ fun MainAppShell(
     val isWideScreen = shouldShowSplitPane()
     val pendingNavTarget by NotificationNavHandler.pendingTarget.collectAsState()
 
-    fun navigateToTarget(target: NotificationNavTarget, navigator: MiuixNavigator) {
+    fun navigateToTarget(
+        target: NotificationNavTarget,
+        navigator: MiuixNavigator,
+        onSelectCopilotTab: () -> Unit
+    ) {
         when (target) {
             is NotificationNavTarget.Assignment -> {
                 coroutineScope.launch {
@@ -369,6 +373,12 @@ fun MainAppShell(
             is NotificationNavTarget.Schedule -> {
                 navigator.push(MiuixRoute.Schedule)
             }
+            is NotificationNavTarget.Copilot -> {
+                while (navigator.canPop) {
+                    navigator.pop()
+                }
+                onSelectCopilotTab()
+            }
             is NotificationNavTarget.Course -> {
                 navigator.push(MiuixRoute.CourseDetail(target.courseId))
             }
@@ -383,7 +393,9 @@ fun MainAppShell(
             if (!isEntranceTriggered) return@LaunchedEffect
             val target = pendingNavTarget ?: return@LaunchedEffect
             NotificationNavHandler.consumePendingTarget()
-            navigateToTarget(target, miuixNavigator)
+            navigateToTarget(target, miuixNavigator) {
+                mainPagerState.animateToPage(destinations.indexOf(MainDestination.Copilot))
+            }
         }
         val navCornerRadius = if (isWideScreen) 0.dp else rememberNavSystemCornerRadius()
         val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
@@ -1151,16 +1163,18 @@ fun MainAppShell(
         val materialBackStack = rememberNavBackStack<MiuixRoute>(MiuixRoute.Main)
         val materialNavigator = remember(materialBackStack) { MiuixNavigator(materialBackStack) }
 
+        var materialDestination by remember { mutableStateOf(MainDestination.Inicio) }
+        fun navigateToMaterial(destination: MainDestination) {
+            materialDestination = destination
+        }
+
         LaunchedEffect(pendingNavTarget, isEntranceTriggered) {
             if (!isEntranceTriggered) return@LaunchedEffect
             val target = pendingNavTarget ?: return@LaunchedEffect
             NotificationNavHandler.consumePendingTarget()
-            navigateToTarget(target, materialNavigator)
-        }
-
-        var materialDestination by remember { mutableStateOf(MainDestination.Inicio) }
-        fun navigateToMaterial(destination: MainDestination) {
-            materialDestination = destination
+            navigateToTarget(target, materialNavigator) {
+                materialDestination = MainDestination.Copilot
+            }
         }
 
         val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()

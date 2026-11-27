@@ -153,9 +153,30 @@ class ReminderWorker(
                 }
             }
 
+            notifyExpressiveWidgetUpdate(applicationContext)
             Result.success()
         } catch (_: Exception) {
             Result.retry()
+        }
+    }
+
+    private fun notifyExpressiveWidgetUpdate(context: Context) {
+        try {
+            val manager = android.appwidget.AppWidgetManager.getInstance(context)
+            val targetComponent = android.content.ComponentName(
+                context.packageName,
+                "me.joxquin.notivas.widget.NotiVasExpressiveWidgetReceiver"
+            )
+            val ids = manager.getAppWidgetIds(targetComponent)
+            if (ids.isNotEmpty()) {
+                val intent = android.content.Intent(android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
+                    setComponent(targetComponent)
+                    putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                }
+                context.sendBroadcast(intent)
+            }
+        } catch (_: Throwable) {
+            // No bloquear el worker si el launcher no tiene widgets activos
         }
     }
 }

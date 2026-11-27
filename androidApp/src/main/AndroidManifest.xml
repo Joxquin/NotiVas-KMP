@@ -49,6 +49,18 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name="me.joxquin.notivas.widget.NotiVasExpressiveWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_expressive_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/notivas_expressive_widget_info" />
+        </receiver>
     </application>
 
 </manifest>

@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">NotiVas</string>
+    <string name="widget_expressive_name">NotiVas Expressive</string>
+    <string name="widget_expressive_description">Average grade, Copilot shortcut, and today or tomorrow\'s pending tasks.</string>
+    <string name="widget_average_label">Overall avg</string>
+    <string name="widget_average_empty">--</string>
+    <string name="widget_average_courses_count">%1$d courses</string>
+    <string name="widget_copilot_label">Copilot</string>
+    <string name="widget_pending_title">Today &amp; Tomorrow</string>
+    <string name="widget_pending_today">Today</string>
+    <string name="widget_pending_tomorrow">Tomorrow</string>
+    <string name="widget_pending_empty">All caught up for today &amp; tomorrow</string>
+    <string name="widget_refresh_cd">Refresh widget</string>
+    <string name="widget_status_excellent">Excellent</string>
+    <string name="widget_status_passing">On track</string>
+    <string name="widget_status_at_risk">At risk</string>
 </resources>

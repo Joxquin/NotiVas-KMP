@@ -65,6 +65,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        me.joxquin.notivas.widget.NotiVasExpressiveWidgetUpdater.requestUpdate(applicationContext)
+    }
+
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -86,6 +91,7 @@ class MainActivity : ComponentActivity() {
             "forum" -> targetId?.let { NotificationNavTarget.Forum(it, secondaryId) }
             "recent_activity" -> NotificationNavTarget.RecentActivity
             "schedule" -> NotificationNavTarget.Schedule
+            "copilot" -> NotificationNavTarget.Copilot
             "course" -> targetId?.let { NotificationNavTarget.Course(it) }
             else -> null
         }

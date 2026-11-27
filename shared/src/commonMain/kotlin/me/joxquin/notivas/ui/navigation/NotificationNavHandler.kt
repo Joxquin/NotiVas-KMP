@@ -21,6 +21,7 @@ sealed interface NotificationNavTarget {
 
     data object RecentActivity : NotificationNavTarget
     data object Schedule : NotificationNavTarget
+    data object Copilot : NotificationNavTarget
     data class Course(val courseId: Long) : NotificationNavTarget
 }
 

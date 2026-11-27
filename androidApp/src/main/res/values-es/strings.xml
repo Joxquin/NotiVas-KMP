@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">NotiVas</string>
+    <string name="widget_expressive_name">NotiVas Expressive</string>
+    <string name="widget_expressive_description">Promedio general, acceso directo a Copilot y pendientes de hoy o mañana.</string>
+    <string name="widget_average_label">Promedio</string>
+    <string name="widget_average_empty">--</string>
+    <string name="widget_average_courses_count">%1$d cursos</string>
+    <string name="widget_copilot_label">Copilot</string>
+    <string name="widget_pending_title">Hoy y mañana</string>
+    <string name="widget_pending_today">Hoy</string>
+    <string name="widget_pending_tomorrow">Mañana</string>
+    <string name="widget_pending_empty">Todo al día para hoy y mañana</string>
+    <string name="widget_refresh_cd">Actualizar widget</string>
+    <string name="widget_status_excellent">Excelente</string>
+    <string name="widget_status_passing">Aprobado</string>
+    <string name="widget_status_at_risk">En riesgo</string>
+</resources>
