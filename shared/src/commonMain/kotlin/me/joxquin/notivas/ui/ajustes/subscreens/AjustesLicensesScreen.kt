@@ -66,9 +66,11 @@ import me.joxquin.notivas.ui.ajustes.LicenseEntry
 import me.joxquin.notivas.ui.ajustes.LicenseKind
 import me.joxquin.notivas.ui.ajustes.openSourceLicenseSections
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.CardItem
 import me.joxquin.notivas.ui.components.miuix.GlassDialogActions
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.groupedCardItems
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
@@ -144,6 +146,7 @@ fun AjustesLicensesScreen(
         val isWideScreen = LocalIsWideScreen.current
 
         MiuixScaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,
@@ -180,18 +183,20 @@ fun AjustesLicensesScreen(
                 ) {
                     item {
                         SmallTitle(text = stringResource(Res.string.licenses_app_section))
-                        MiuixCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp)
-                        ) {
-                            ArrowPreference(
-                                title = stringResource(appEntry.nameRes),
-                                summary = licenseSummaryText(appEntry.version, appEntry.kind),
-                                onClick = { openLicense(appEntry) }
-                            )
-                        }
                     }
+
+                    groupedCardItems(
+                        keyPrefix = "license_app",
+                        items = listOf(
+                            CardItem("app") {
+                                ArrowPreference(
+                                    title = stringResource(appEntry.nameRes),
+                                    summary = licenseSummaryText(appEntry.version, appEntry.kind),
+                                    onClick = { openLicense(appEntry) }
+                                )
+                            }
+                        )
+                    )
 
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -202,12 +207,12 @@ fun AjustesLicensesScreen(
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
                             SmallTitle(text = stringResource(section.category.titleRes))
-                            MiuixCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                            ) {
-                                section.entries.forEach { entry ->
+                        }
+
+                        groupedCardItems(
+                            keyPrefix = "license_${section.category.name}",
+                            items = section.entries.mapIndexed { index, entry ->
+                                CardItem("${index}_${entry.url}") {
                                     ArrowPreference(
                                         title = stringResource(entry.nameRes),
                                         summary = licenseSummaryText(entry.version, entry.kind),
@@ -215,7 +220,7 @@ fun AjustesLicensesScreen(
                                     )
                                 }
                             }
-                        }
+                        )
                     }
 
                     item {

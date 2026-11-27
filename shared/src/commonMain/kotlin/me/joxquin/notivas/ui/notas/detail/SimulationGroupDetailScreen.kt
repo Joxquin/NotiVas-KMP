@@ -299,6 +299,7 @@ fun SimulationGroupDetailScreen(
         val scrollBehavior = MiuixScrollBehavior()
 
         top.yukonga.miuix.kmp.basic.Scaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,

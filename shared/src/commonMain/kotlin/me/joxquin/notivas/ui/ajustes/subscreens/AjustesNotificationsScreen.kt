@@ -66,6 +66,7 @@ fun AjustesNotificationsScreen(
         val scrollBehavior = MiuixScrollBehavior()
 
         MiuixScaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,

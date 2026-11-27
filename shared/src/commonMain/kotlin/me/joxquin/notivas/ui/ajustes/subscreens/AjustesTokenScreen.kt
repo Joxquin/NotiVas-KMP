@@ -224,6 +224,7 @@ fun AjustesTokenScreen(
         val scrollBehavior = MiuixScrollBehavior()
 
         MiuixScaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,

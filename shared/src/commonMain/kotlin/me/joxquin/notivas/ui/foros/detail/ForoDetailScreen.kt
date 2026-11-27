@@ -149,6 +149,7 @@ fun ForoDetailScreen(
         val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
 
         top.yukonga.miuix.kmp.basic.Scaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,

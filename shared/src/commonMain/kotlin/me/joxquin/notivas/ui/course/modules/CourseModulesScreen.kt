@@ -102,6 +102,7 @@ fun CourseModulesScreen(
         val blurBackdrop = rememberMiuixBlurBackdrop()
 
         top.yukonga.miuix.kmp.basic.Scaffold(
+            popupHost = {},
             modifier = modifier.fillMaxSize(),
             topBar = {
                 MiuixBlurredBar(
