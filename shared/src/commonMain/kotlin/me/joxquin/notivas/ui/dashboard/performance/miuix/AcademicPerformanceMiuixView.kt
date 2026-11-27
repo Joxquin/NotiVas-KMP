@@ -110,6 +110,7 @@ import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * Vista nativa dedicada de Rendimiento Académico para Xiaomi HyperOS / Compose MIUIX UI.
@@ -540,7 +541,7 @@ private fun MiuixHeatmapCard(
                     GlassIconButton(onClick = onPreviousWeek) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Semana anterior",
+                            contentDescription = stringResource(Res.string.cd_previous_week),
                             tint = onSurfaceColor
                         )
                     }
@@ -557,7 +558,7 @@ private fun MiuixHeatmapCard(
                     GlassIconButton(onClick = onNextWeek) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "Semana siguiente",
+                            contentDescription = stringResource(Res.string.cd_next_week),
                             tint = onSurfaceColor
                         )
                     }

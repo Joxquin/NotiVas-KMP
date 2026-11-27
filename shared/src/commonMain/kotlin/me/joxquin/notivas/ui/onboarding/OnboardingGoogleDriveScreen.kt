@@ -89,6 +89,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun OnboardingGoogleDriveScreen(
@@ -132,7 +133,7 @@ fun OnboardingGoogleDriveScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Atras",
+                        contentDescription = stringResource(Res.string.back),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }

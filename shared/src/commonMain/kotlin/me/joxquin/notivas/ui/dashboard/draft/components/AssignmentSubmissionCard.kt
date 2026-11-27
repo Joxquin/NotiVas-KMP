@@ -1431,7 +1431,7 @@ fun AssignmentSubmissionCard(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.EditNote,
-                                            contentDescription = "Renombrar vía PATCH",
+                                            contentDescription = stringResource(Res.string.cd_rename_draft),
                                             tint = MiuixTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -1452,7 +1452,7 @@ fun AssignmentSubmissionCard(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.DeleteOutline,
-                                            contentDescription = "Cancelar borrador",
+                                            contentDescription = stringResource(Res.string.cd_cancel_draft),
                                             tint = MiuixTheme.colorScheme.error,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -2601,7 +2601,7 @@ fun AssignmentSubmissionCard(
                                     ) {
                                         Icon(
                                             Icons.Default.DeleteOutline,
-                                            contentDescription = "Cancelar borrador",
+                                            contentDescription = stringResource(Res.string.cd_cancel_draft),
                                             tint = MaterialTheme.colorScheme.error,
                                             modifier = Modifier.size(18.dp)
                                         )

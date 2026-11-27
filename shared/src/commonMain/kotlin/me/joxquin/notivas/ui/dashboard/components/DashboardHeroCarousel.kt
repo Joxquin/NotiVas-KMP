@@ -278,7 +278,7 @@ private fun PerformanceSlideContent(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "Promedio Ponderado",
+                    text = stringResource(Res.string.dashboard_weighted_average),
                     style = MaterialTheme.typography.labelSmall,
                     color = onVariantColor
                 )

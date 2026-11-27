@@ -219,7 +219,7 @@ fun CourseModulesScreen(
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
+                                contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -350,7 +350,7 @@ private fun ModuleExpandableCard(
                 } else if (module.isCompleted) {
                     Icon(
                         imageVector = Icons.Filled.Check,
-                        contentDescription = "Completado",
+                        contentDescription = stringResource(Res.string.cd_completed),
                         tint = successColor,
                         modifier = Modifier.size(20.dp)
                     )
@@ -446,7 +446,7 @@ private fun ModuleExpandableCard(
 
                     if (module.sections.isEmpty()) {
                         Text(
-                            text = "Este módulo no contiene elementos.",
+                            text = stringResource(Res.string.course_modules_empty_module),
                             fontSize = 12.sp,
                             color = onSurfaceVariantColor,
                             modifier = Modifier.padding(vertical = 8.dp)

@@ -103,6 +103,7 @@ import me.joxquin.notivas.shared.resources.performance_weekly
 import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import me.joxquin.notivas.util.DateComponents
 import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * Vista nativa dedicada de Rendimiento Académico para Material 3 Expressive.
@@ -559,7 +560,7 @@ private fun MaterialHeatmapCard(
                     IconButton(onClick = onPreviousWeek) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Semana anterior",
+                            contentDescription = stringResource(Res.string.cd_previous_week),
                             tint = onSurfaceColor
                         )
                     }
@@ -575,7 +576,7 @@ private fun MaterialHeatmapCard(
                     IconButton(onClick = onNextWeek) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "Semana siguiente",
+                            contentDescription = stringResource(Res.string.cd_next_week),
                             tint = onSurfaceColor
                         )
                     }

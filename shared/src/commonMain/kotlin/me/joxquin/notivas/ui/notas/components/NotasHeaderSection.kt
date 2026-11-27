@@ -69,6 +69,7 @@ import org.jetbrains.compose.resources.stringResource
 import me.joxquin.notivas.shared.resources.Res
 import me.joxquin.notivas.shared.resources.notas_select_course
 import me.joxquin.notivas.shared.resources.notas_course_default
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun NotasHeaderSection(
@@ -225,7 +226,7 @@ fun NotasHeaderSection(
                     }
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Desplegar",
+                        contentDescription = stringResource(Res.string.cd_expand),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .size(28.dp)
@@ -278,7 +279,7 @@ fun NotasHeaderSection(
                                     if (isSelected) {
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Seleccionado",
+                                            contentDescription = stringResource(Res.string.selected),
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
