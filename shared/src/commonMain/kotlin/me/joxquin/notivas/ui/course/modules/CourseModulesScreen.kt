@@ -437,7 +437,7 @@ private fun ModuleExpandableCard(
 
                     if (module.sections.isEmpty()) {
                         Text(
-                            text = "Este módulo no contiene elementos.",
+                            text = stringResource(Res.string.course_modules_empty_module),
                             fontSize = 12.sp,
                             color = onSurfaceVariantColor,
                             modifier = Modifier.padding(vertical = 8.dp)

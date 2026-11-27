@@ -32,6 +32,8 @@ import me.joxquin.notivas.data.local.AppThemeStyle
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 data class QuickChipItem(
     val label: String,
@@ -49,27 +51,27 @@ fun CopilotQuickChipsRow(
     val isMiuix = themeStyle == AppThemeStyle.MIUIX
     val chips = listOf(
         QuickChipItem(
-            label = "Buscar en la web",
-            prompt = "Busca en la web fuentes académicas y artículos actualizados sobre este tema para mi informe.",
+            label = stringResource(Res.string.copilot_chip_web_label),
+            prompt = stringResource(Res.string.copilot_chip_web_prompt),
             icon = Icons.Default.Search,
             iconTint = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
         ),
         QuickChipItem(
-            label = "Buscar tesis / papers",
-            prompt = "Busca tesis universitarias y papers científicos relevantes en PDF sobre este tema con enlaces de referencia.",
+            label = stringResource(Res.string.copilot_chip_papers_label),
+            prompt = stringResource(Res.string.copilot_chip_papers_prompt),
             icon = Icons.AutoMirrored.Filled.MenuBook,
             iconTint = if (isMiuix) MiuixTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
         ),
         QuickChipItem(
-            label = "Estructurar informe",
-            prompt = "Sintetiza y estructura estos puntos clave en formato de informe académico universitario (introducción, desarrollo, metodología y conclusiones).",
+            label = stringResource(Res.string.copilot_chip_report_label),
+            prompt = stringResource(Res.string.copilot_chip_report_prompt),
             icon = Icons.Default.AutoAwesome,
             iconTint = if (isMiuix) MiuixTheme.colorScheme.onTertiaryContainer
             else MaterialTheme.colorScheme.secondary
         ),
         QuickChipItem(
-            label = "Explicar paso a paso",
-            prompt = "Explícame detalladamente paso a paso los conceptos y procedimientos teóricos y prácticos de este tema.",
+            label = stringResource(Res.string.copilot_chip_explain_label),
+            prompt = stringResource(Res.string.copilot_chip_explain_prompt),
             icon = Icons.Default.Psychology,
             iconTint = if (isMiuix) MiuixTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
         )

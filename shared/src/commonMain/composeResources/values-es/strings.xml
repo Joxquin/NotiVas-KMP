@@ -33,6 +33,24 @@
     <string name="cd_previous_week">Semana anterior</string>
     <string name="cd_next_week">Semana siguiente</string>
     <string name="cd_verified">Verificado</string>
+    <!-- Copilot and course texts moved out of the code -->
+    <string name="copilot_math_badge">Cálculo</string>
+    <string name="copilot_share">Compartir</string>
+    <string name="copilot_regenerate">Regenerar</string>
+    <string name="copilot_disclaimer">NotiVas Copilot es una IA y puede cometer errores.</string>
+    <string name="copilot_sources_canvas_format">Fuentes de Canvas LMS (%1$d)</string>
+    <string name="copilot_sources_consulted_format">Fuentes consultadas (%1$d)</string>
+    <string name="copilot_chip_web_label">Buscar en la web</string>
+    <string name="copilot_chip_web_prompt">Busca en la web fuentes académicas y artículos actualizados sobre este tema para mi informe.</string>
+    <string name="copilot_chip_papers_label">Buscar tesis / papers</string>
+    <string name="copilot_chip_papers_prompt">Busca tesis universitarias y papers científicos relevantes en PDF sobre este tema con enlaces de referencia.</string>
+    <string name="copilot_chip_report_label">Estructurar informe</string>
+    <string name="copilot_chip_report_prompt">Sintetiza y estructura estos puntos clave en formato de informe académico universitario (introducción, desarrollo, metodología y conclusiones).</string>
+    <string name="copilot_chip_explain_label">Explicar paso a paso</string>
+    <string name="copilot_chip_explain_prompt">Explícame detalladamente paso a paso los conceptos y procedimientos teóricos y prácticos de este tema.</string>
+    <string name="copilot_suggestion_research_q">Buscar artículos científicos y tesis en la web sobre un tema</string>
+    <string name="course_modules_empty_module">Este módulo no contiene elementos.</string>
+    <string name="dashboard_weighted_average">Promedio Ponderado</string>
     <string name="search">Buscar</string>
     <string name="clear">Limpiar</string>
     <string name="selected">Seleccionado</string>

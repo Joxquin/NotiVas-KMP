@@ -33,6 +33,24 @@
     <string name="cd_previous_week">Previous week</string>
     <string name="cd_next_week">Next week</string>
     <string name="cd_verified">Verified</string>
+    <!-- Copilot and course texts moved out of the code -->
+    <string name="copilot_math_badge">Calculation</string>
+    <string name="copilot_share">Share</string>
+    <string name="copilot_regenerate">Regenerate</string>
+    <string name="copilot_disclaimer">NotiVas Copilot is an AI and can make mistakes.</string>
+    <string name="copilot_sources_canvas_format">Canvas LMS sources (%1$d)</string>
+    <string name="copilot_sources_consulted_format">Sources consulted (%1$d)</string>
+    <string name="copilot_chip_web_label">Search the web</string>
+    <string name="copilot_chip_web_prompt">Search the web for academic sources and recent articles on this topic for my report.</string>
+    <string name="copilot_chip_papers_label">Find theses and papers</string>
+    <string name="copilot_chip_papers_prompt">Find university theses and relevant scientific papers in PDF on this topic, with reference links.</string>
+    <string name="copilot_chip_report_label">Structure a report</string>
+    <string name="copilot_chip_report_prompt">Summarize and structure these key points as a university academic report (introduction, body, methodology and conclusions).</string>
+    <string name="copilot_chip_explain_label">Explain step by step</string>
+    <string name="copilot_chip_explain_prompt">Explain the theoretical and practical concepts and procedures of this topic to me in detail, step by step.</string>
+    <string name="copilot_suggestion_research_q">Find scientific articles and theses on the web about a topic</string>
+    <string name="course_modules_empty_module">This module has no items.</string>
+    <string name="dashboard_weighted_average">Weighted average</string>
     <string name="search">Search</string>
     <string name="clear">Clear</string>
     <string name="selected">Selected</string>

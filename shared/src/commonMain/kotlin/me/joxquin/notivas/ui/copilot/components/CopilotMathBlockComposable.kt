@@ -126,7 +126,7 @@ fun CopilotMathBlockComposable(
                                     modifier = Modifier.size(13.dp)
                                 )
                                 Text(
-                                    text = "Cálculo",
+                                    text = stringResource(Res.string.copilot_math_badge),
                                     style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
                                     color = MiuixTheme.colorScheme.primary
                                 )
@@ -221,7 +221,7 @@ fun CopilotMathBlockComposable(
                                 modifier = Modifier.size(13.dp)
                             )
                             Text(
-                                text = "Cálculo",
+                                text = stringResource(Res.string.copilot_math_badge),
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.primary
                             )
