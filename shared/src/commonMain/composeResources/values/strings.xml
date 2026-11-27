@@ -665,6 +665,8 @@
     <string name="course_detail_empty_modules">No modules available for this course.</string>
     <string name="course_modules_screen_title">Modules</string>
     <string name="course_detail_view_all_modules">View all modules (%1$d)</string>
+    <string name="course_detail_modules_count">%1$d modules</string>
+    <string name="course_detail_modules_count_one">1 module</string>
     <string name="course_module_locked_status">Locked</string>
     <string name="course_module_unlocks_at">Unlocks on %1$s</string>
     <string name="assignment_submission_tab_upload">Upload file</string>
