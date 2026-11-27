@@ -69,7 +69,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -89,7 +91,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.model.Assignment
-import me.joxquin.notivas.di.AppModule
 import me.joxquin.notivas.domain.review.AssignmentPreReviewReport
 import me.joxquin.notivas.domain.review.CriterionEvaluation
 import me.joxquin.notivas.domain.review.ReviewMode
@@ -97,6 +98,7 @@ import me.joxquin.notivas.domain.review.ReviewOptions
 import me.joxquin.notivas.domain.review.ReviewProgressStep
 import me.joxquin.notivas.shared.resources.*
 import me.joxquin.notivas.ui.components.aura.monetAuraBackground
+import me.joxquin.notivas.ui.dashboard.draft.AssignmentPreReviewViewModel
 import me.joxquin.notivas.util.SelectedDocument
 import me.joxquin.notivas.util.rememberDocumentPicker
 import org.jetbrains.compose.resources.stringResource
@@ -136,44 +138,19 @@ fun AssignmentPreReviewSheet(
     backdrop: Backdrop? = null,
     onDismissRequest: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-    var options by remember { mutableStateOf(ReviewOptions()) }
-    var isLoading by remember { mutableStateOf(false) }
-    var progressStep by remember { mutableStateOf(ReviewProgressStep.IDLE) }
-    var progressMessage by remember { mutableStateOf("") }
-    var report by remember { mutableStateOf<AssignmentPreReviewReport?>(null) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val viewModel = remember { AssignmentPreReviewViewModel() }
+    val uiState by viewModel.uiState.collectAsState()
+    val isLoading = uiState.isLoading
+    val errorMessage = uiState.error?.let { it.message ?: stringResource(Res.string.review_error_generic) }
 
     val runAnalysis: () -> Unit = {
-        isLoading = true
-        errorMessage = null
-        progressStep = ReviewProgressStep.READING_RUBRIC
-        scope.launch {
-            val result = AppModule.assignmentReviewUseCase.reviewAssignment(
-                assignment = assignment,
-                selectedDocument = selectedDocument,
-                draftFileId = draftFileId,
-                textBody = textBody,
-                options = options,
-                onProgress = { step, msg ->
-                    progressStep = step
-                    progressMessage = msg
-                }
-            )
-            result.onSuccess {
-                report = it
-                isLoading = false
-            }.onFailure {
-                errorMessage = it.message ?: "Error al analizar la entrega"
-                isLoading = false
-            }
-        }
+        viewModel.startReview(assignment, selectedDocument, draftFileId, textBody)
     }
 
-    val onNewReview: () -> Unit = {
-        report = null
-        errorMessage = null
-        isLoading = false
+    DisposableEffect(viewModel, show) {
+        onDispose {
+            if (show) viewModel.resetReview()
+        }
     }
 
     var isSheetAnimationFinished by remember { mutableStateOf(false) }
@@ -185,9 +162,6 @@ fun AssignmentPreReviewSheet(
             isSheetAnimationFinished = true
         } else {
             isSheetAnimationFinished = false
-            report = null
-            errorMessage = null
-            isLoading = false
         }
     }
 
@@ -243,16 +217,16 @@ fun AssignmentPreReviewSheet(
             },
             content = {
                 PreReviewSheetContentMiuix(
-                    options = options,
-                    onOptionsChange = { options = it },
+                    options = uiState.options,
+                    onOptionsChange = viewModel::updateOptions,
                     isLoading = isLoading,
-                    progressStep = progressStep,
-                    progressMessage = progressMessage,
-                    report = report,
+                    progressStep = uiState.progressStep,
+                    progressMessage = uiState.progressMessage,
+                    report = uiState.report,
                     errorMessage = errorMessage,
                     onStartReview = runAnalysis,
                     onReanalyze = runAnalysis,
-                    onNewReview = onNewReview,
+                    onNewReview = viewModel::resetReview,
                     onClose = onDismissRequest
                 )
             }
@@ -279,16 +253,16 @@ fun AssignmentPreReviewSheet(
             modifier = sheetModifier
         ) {
             PreReviewSheetContentMaterial(
-                options = options,
-                onOptionsChange = { options = it },
+                options = uiState.options,
+                onOptionsChange = viewModel::updateOptions,
                 isLoading = isLoading,
-                progressStep = progressStep,
-                progressMessage = progressMessage,
-                report = report,
+                progressStep = uiState.progressStep,
+                progressMessage = uiState.progressMessage,
+                report = uiState.report,
                 errorMessage = errorMessage,
                 onStartReview = runAnalysis,
                 onReanalyze = runAnalysis,
-                onNewReview = onNewReview,
+                onNewReview = viewModel::resetReview,
                 onClose = onDismissRequest
             )
         }
