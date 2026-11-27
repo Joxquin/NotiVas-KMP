@@ -92,8 +92,10 @@ import me.joxquin.notivas.shared.resources.sync
 import me.joxquin.notivas.ui.ajustes.components.PairWebSessionDialog
 import me.joxquin.notivas.ui.ajustes.components.SettingsProfileHeroHeader
 import me.joxquin.notivas.ui.components.miuix.GlassConfirmDialog
+import me.joxquin.notivas.ui.components.miuix.CardItem
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.groupedCardItems
 import top.yukonga.miuix.kmp.glass.GlassIconButton
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
@@ -228,6 +230,7 @@ fun AjustesScreen(
         val scrollBehavior = MiuixScrollBehavior()
 
         top.yukonga.miuix.kmp.basic.Scaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,
@@ -294,77 +297,81 @@ fun AjustesScreen(
                         SmallTitle(text = stringResource(Res.string.settings_categories_section))
                     }
 
-                    item {
-                        MiuixCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp)
-                        ) {
-                            val appearanceSummary = when (uiState.themeStyle) {
-                                AppThemeStyle.MIUIX -> "HyperOS MIUIX"
-                                AppThemeStyle.MATERIAL -> "Material 3"
-                            } + " • " + when (uiState.appLanguage) {
-                                AppLanguage.SPANISH -> "Español"
-                                AppLanguage.ENGLISH -> "English"
-                                AppLanguage.SYSTEM -> "Sistema"
-                            }
-
-                            ArrowPreference(
-                                title = stringResource(Res.string.settings_category_appearance),
-                                summary = appearanceSummary,
-                                onClick = onNavigateToAppearance
-                            )
-
-                            val notifSummary = "${uiState.syncIntervalMinutes} min"
-                            ArrowPreference(
-                                title = stringResource(Res.string.settings_category_notifications),
-                                summary = notifSummary,
-                                onClick = onNavigateToNotifications
-                            )
-
-                            val copilotSummary = if (uiState.copilotEnabled) {
-                                when (uiState.copilotProvider) {
-                                    me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
-                                    me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
-                                }
-                            } else {
-                                "Desactivado"
-                            }
-                            ArrowPreference(
-                                title = stringResource(Res.string.settings_category_copilot),
-                                summary = copilotSummary,
-                                onClick = onNavigateToCopilot
-                            )
-
-                            val driveSummary = if (uiState.googleDriveConnected) {
-                                uiState.googleDriveEmail ?: "Conectado"
-                            } else {
-                                "Sin vincular"
-                            }
-                            ArrowPreference(
-                                title = stringResource(Res.string.settings_category_drive),
-                                summary = driveSummary,
-                                onClick = onNavigateToDrive
-                            )
-
-                            val tokenSummary = if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
-                                stringResource(Res.string.settings_token_summary_web)
-                            } else {
-                                stringResource(Res.string.settings_token_summary_token)
-                            }
-                            ArrowPreference(
-                                title = stringResource(Res.string.settings_token_title),
-                                summary = tokenSummary,
-                                onClick = onNavigateToToken
-                            )
-
-                            ArrowPreference(
-                                title = stringResource(Res.string.settings_category_about),
-                                summary = stringResource(Res.string.settings_category_about_desc),
-                                onClick = onNavigateToAbout
-                            )
-                        }
+                    val appearanceSummary = when (uiState.themeStyle) {
+                        AppThemeStyle.MIUIX -> "HyperOS MIUIX"
+                        AppThemeStyle.MATERIAL -> "Material 3"
+                    } + " • " + when (uiState.appLanguage) {
+                        AppLanguage.SPANISH -> "Español"
+                        AppLanguage.ENGLISH -> "English"
+                        AppLanguage.SYSTEM -> "Sistema"
                     }
+                    val notifSummary = "${uiState.syncIntervalMinutes} min"
+                    val copilotSummary = if (uiState.copilotEnabled) {
+                        when (uiState.copilotProvider) {
+                            me.joxquin.notivas.data.local.CopilotProvider.OPENROUTER -> "OpenRouter"
+                            me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO -> "Google AI Studio"
+                        }
+                    } else {
+                        "Desactivado"
+                    }
+                    val driveSummary = if (uiState.googleDriveConnected) {
+                        uiState.googleDriveEmail ?: "Conectado"
+                    } else {
+                        "Sin vincular"
+                    }
+
+                    groupedCardItems(
+                        keyPrefix = "settings_categories",
+                        items = listOf(
+                            CardItem("appearance") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.settings_category_appearance),
+                                    summary = appearanceSummary,
+                                    onClick = onNavigateToAppearance
+                                )
+                            },
+                            CardItem("notifications") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.settings_category_notifications),
+                                    summary = notifSummary,
+                                    onClick = onNavigateToNotifications
+                                )
+                            },
+                            CardItem("copilot") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.settings_category_copilot),
+                                    summary = copilotSummary,
+                                    onClick = onNavigateToCopilot
+                                )
+                            },
+                            CardItem("drive") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.settings_category_drive),
+                                    summary = driveSummary,
+                                    onClick = onNavigateToDrive
+                                )
+                            },
+                            CardItem("token") {
+                                val tokenSummary = if (uiState.authMode == me.joxquin.notivas.data.model.AuthMode.COOKIE_SESSION) {
+                                    stringResource(Res.string.settings_token_summary_web)
+                                } else {
+                                    stringResource(Res.string.settings_token_summary_token)
+                                }
+                                ArrowPreference(
+                                    title = stringResource(Res.string.settings_token_title),
+                                    summary = tokenSummary,
+                                    onClick = onNavigateToToken
+                                )
+                            },
+                            CardItem("about") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.settings_category_about),
+                                    summary = stringResource(Res.string.settings_category_about_desc),
+                                    onClick = onNavigateToAbout
+                                )
+                            },
+                        )
+                    )
                 }
 
                 VerticalScrollBar(

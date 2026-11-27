@@ -27,7 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
@@ -159,6 +162,7 @@ fun InicioMiuixContent(
             .background(MiuixTheme.colorScheme.surface)
     ) {
         top.yukonga.miuix.kmp.basic.Scaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,
@@ -169,13 +173,13 @@ fun InicioMiuixContent(
                         largeTitle = stringResource(viewModel.dynamicGreetingRes, studentFirstName),
                         subtitle = "",
                         isContentScrolled = contentUnderTopBar,
-                        contentModifier = Modifier.glassSearchBarTransition(isSearchExpanded, barAlpha = { searchBarAlpha.value }),
+                        contentModifier = Modifier.glassSearchBarTransition(isSearchExpanded, barAlpha = { 1f }),
                         titleAlpha = rememberGlassSearchTitleAlpha(
                             isSearchExpanded,
                             scrollBehavior.state.heightOffset == scrollBehavior.state.heightOffsetLimit
                         ),
                         scrollBehavior = scrollBehavior,
-                        backgroundAlpha = { searchBarAlpha.value },
+                        backgroundAlpha = { 1f },
                         navigationIcon = {
                             val onTargetPositioned = LocalSplashLogoTarget.current
                             val iconAlpha = if (isEntranceTriggered) {
@@ -263,7 +267,10 @@ fun InicioMiuixContent(
                     )
                 }
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { this.alpha = searchBarAlpha.value }
+                .then(if (isSearchExpanded) Modifier.clearAndSetSemantics { } else Modifier)
         ) { innerPadding ->
         val pagePadding = miuixPageContentPadding(
             innerPadding = innerPadding,
@@ -276,9 +283,17 @@ fun InicioMiuixContent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer { this.alpha = searchBarAlpha.value }
                 .background(MiuixTheme.colorScheme.surface)
                 .miuixBackdropModifier(backdrop)
+                .pointerInput(isSearchExpanded) {
+                    if (isSearchExpanded) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                awaitPointerEvent(PointerEventPass.Initial).changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+                }
         ) {
             val refreshTexts = listOf(
                 stringResource(Res.string.refresh_pulling),

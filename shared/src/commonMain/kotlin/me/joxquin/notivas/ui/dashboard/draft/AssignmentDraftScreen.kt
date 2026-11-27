@@ -228,6 +228,7 @@ fun AssignmentDraftScreen(
 
         Box(modifier = modifier.fillMaxSize()) {
             top.yukonga.miuix.kmp.basic.Scaffold(
+                popupHost = {},
                 topBar = {
                     MiuixBlurredBar(
                         backdrop = backdrop,

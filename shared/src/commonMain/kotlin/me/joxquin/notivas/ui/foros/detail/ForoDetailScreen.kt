@@ -26,7 +26,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,7 +51,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +71,15 @@ import me.joxquin.notivas.ui.foros.detail.components.ForoDetailRepliesSection
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
+import top.yukonga.miuix.kmp.glass.GlassIconButton
+import top.yukonga.miuix.kmp.glass.GlassPopupItem
+import top.yukonga.miuix.kmp.glass.GlassTopAppBarDefaults
+import top.yukonga.miuix.kmp.glass.GlassTransformPopup
+import top.yukonga.miuix.kmp.glass.glassPopupAnchor
+import top.yukonga.miuix.kmp.glass.glassPopupAnchorContent
+import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.glass.More
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -143,31 +161,62 @@ fun ForoDetailScreen(
     }
 
     val backdrop = if (themeStyle == AppThemeStyle.MIUIX) rememberMiuixBlurBackdrop() else null
+    val uriHandler = LocalUriHandler.current
+    val clipboardManager = LocalClipboardManager.current
+    val forumUrl = topic.htmlUrl?.takeIf { it.isNotBlank() }
+    val onOpenCanvas: () -> Unit = {
+        forumUrl?.let { url ->
+            me.joxquin.notivas.util.CanvasDeepLinkHandler.openCanvasUrl(url)
+        }
+    }
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         val scrollBehavior = MiuixScrollBehavior()
         val imeBottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+        val menuAnchor = rememberGlassPopupAnchor()
+        var showMenu by remember { mutableStateOf(false) }
 
-        top.yukonga.miuix.kmp.basic.Scaffold(
-            topBar = {
-                MiuixBlurredBar(
-                    backdrop = backdrop,
-                    scrollBehavior = scrollBehavior
-                ) {
-                    MiuixPageTopAppBar(
-                        title = stringResource(Res.string.foro_detail_title),
-                        subtitle = shortenCourseSubtitle(topic.courseName ?: "Canvas LMS"),
-                        scrollBehavior = scrollBehavior,
-                        navigationIcon = {
-                            BackNavigationIcon(onClick = onBack)
-                        }
-                    )
-                }
-            },
-            modifier = modifier
-                .fillMaxSize()
-                .imePadding()
-        ) { innerPadding ->
+        Box(modifier = modifier.fillMaxSize()) {
+            top.yukonga.miuix.kmp.basic.Scaffold(
+                popupHost = {},
+                topBar = {
+                    MiuixBlurredBar(
+                        backdrop = backdrop,
+                        scrollBehavior = scrollBehavior
+                    ) {
+                        MiuixPageTopAppBar(
+                            title = stringResource(Res.string.foro_detail_title),
+                            subtitle = shortenCourseSubtitle(topic.courseName ?: "Canvas LMS"),
+                            scrollBehavior = scrollBehavior,
+                            navigationIcon = {
+                                BackNavigationIcon(onClick = onBack)
+                            },
+                            actions = {
+                                if (forumUrl != null) {
+                                    GlassIconButton(
+                                        onClick = { showMenu = true },
+                                        backdrop = backdrop,
+                                        modifier = Modifier.glassPopupAnchor(
+                                            anchor = menuAnchor,
+                                            cornerRadius = GlassTopAppBarDefaults.ButtonSize / 2,
+                                        ),
+                                    ) {
+                                        top.yukonga.miuix.kmp.basic.Icon(
+                                            imageVector = MiuixIcons.Glass.More,
+                                            contentDescription = stringResource(Res.string.assignment_detail_tab_options),
+                                            modifier = Modifier.size(28.dp).glassPopupAnchorContent(menuAnchor),
+                                            tint = MiuixTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .imePadding()
+            ) { innerPadding ->
             val contentPadding = miuixPageContentPadding(
                 innerPadding = innerPadding,
                 extraBottom = if (imeBottom > 0.dp) 24.dp else 16.dp
@@ -281,6 +330,42 @@ fun ForoDetailScreen(
                 )
             }
         }
+
+            if (forumUrl != null) {
+                GlassTransformPopup(
+                    show = showMenu,
+                    onDismissRequest = { showMenu = false },
+                    anchor = menuAnchor,
+                    backdrop = backdrop,
+                    anchorContent = {
+                        top.yukonga.miuix.kmp.basic.Icon(
+                            imageVector = MiuixIcons.Glass.More,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MiuixTheme.colorScheme.onSurface,
+                        )
+                    },
+                    gap = 0.dp,
+                ) {
+                    GlassPopupItem(
+                        text = stringResource(Res.string.task_menu_copy_canvas_link),
+                        icon = Icons.Default.ContentCopy,
+                        onClick = {
+                            showMenu = false
+                            clipboardManager.setText(AnnotatedString(forumUrl))
+                        }
+                    )
+                    GlassPopupItem(
+                        text = stringResource(Res.string.task_menu_open_canvas),
+                        icon = Icons.Default.Language,
+                        onClick = {
+                            showMenu = false
+                            onOpenCanvas()
+                        }
+                    )
+                }
+            }
+        }
     } else {
         // Material Design 3
         val topAppBarContainerColor by animateColorAsState(
@@ -338,6 +423,53 @@ fun ForoDetailScreen(
                                 contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
+                        }
+                    },
+                    actions = {
+                        if (forumUrl != null) {
+                            var menuExpanded by remember { mutableStateOf(false) }
+
+                            Box {
+                                IconButton(onClick = { menuExpanded = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.MoreVert,
+                                        contentDescription = stringResource(Res.string.assignment_detail_tab_options),
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(Res.string.task_menu_copy_canvas_link)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            menuExpanded = false
+                                            clipboardManager.setText(AnnotatedString(forumUrl))
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(Res.string.task_menu_open_canvas)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.OpenInBrowser,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            menuExpanded = false
+                                            onOpenCanvas()
+                                        }
+                                    )
+                                }
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
