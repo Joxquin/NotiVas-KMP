@@ -72,6 +72,7 @@ fun AjustesCopilotScreen(
         val scrollBehavior = MiuixScrollBehavior()
 
         MiuixScaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,

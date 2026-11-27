@@ -144,6 +144,7 @@ fun AjustesLicensesScreen(
         val isWideScreen = LocalIsWideScreen.current
 
         MiuixScaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,

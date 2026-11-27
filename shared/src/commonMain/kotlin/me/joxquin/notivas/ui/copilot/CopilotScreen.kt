@@ -250,6 +250,7 @@ fun CopilotScreen(
             modifier = modifier.fillMaxSize()
         ) {
             top.yukonga.miuix.kmp.basic.Scaffold(
+                popupHost = {},
                 containerColor = Color.Transparent,
                 topBar = {
                     MiuixBlurredBar(

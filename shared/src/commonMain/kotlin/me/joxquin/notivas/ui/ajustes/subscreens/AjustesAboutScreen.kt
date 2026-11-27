@@ -55,15 +55,16 @@ import me.joxquin.notivas.shared.resources.about_repo_title
 import me.joxquin.notivas.shared.resources.settings_category_about
 import me.joxquin.notivas.ui.ajustes.components.AjustesAppInfoFooter
 import me.joxquin.notivas.ui.components.miuix.BackNavigationIcon
+import me.joxquin.notivas.ui.components.miuix.CardItem
 import me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar
 import me.joxquin.notivas.ui.components.miuix.MiuixPageTopAppBar
+import me.joxquin.notivas.ui.components.miuix.groupedCardItems
 import me.joxquin.notivas.ui.components.miuix.miuixBackdropModifier
 import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.util.AppVersion
 import org.jetbrains.compose.resources.stringResource
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
@@ -91,6 +92,7 @@ fun AjustesAboutScreen(
         val isWideScreen = me.joxquin.notivas.ui.util.LocalIsWideScreen.current
 
         MiuixScaffold(
+            popupHost = {},
             topBar = {
                 MiuixBlurredBar(
                     backdrop = backdrop,
@@ -127,42 +129,52 @@ fun AjustesAboutScreen(
                 ) {
                     item {
                         SmallTitle(text = stringResource(Res.string.settings_category_about))
-                        MiuixCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp)
-                        ) {
-                            ArrowPreference(
-                                title = "NotiVas",
-                                summary = "v$versionName ($versionCode) • " + stringResource(Res.string.about_app_description),
-                                onClick = {}
-                            )
-                            ArrowPreference(
-                                title = stringResource(Res.string.about_developer_title),
-                                summary = stringResource(Res.string.about_developer_name),
-                                onClick = {}
-                            )
-                            ArrowPreference(
-                                title = stringResource(Res.string.about_repo_title),
-                                summary = stringResource(Res.string.about_repo_subtitle),
-                                onClick = {
-                                    try {
-                                        uriHandler.openUri("https://github.com/Joxquin/NotiVas-KMP")
-                                    } catch (_: Exception) {}
-                                }
-                            )
-                            ArrowPreference(
-                                title = stringResource(Res.string.about_license_title),
-                                summary = stringResource(Res.string.about_license_name),
-                                onClick = onOpenLicenses
-                            )
-                            ArrowPreference(
-                                title = stringResource(Res.string.about_licenses_title),
-                                summary = stringResource(Res.string.about_licenses_summary),
-                                onClick = onOpenLicenses
-                            )
-                        }
                     }
+
+                    groupedCardItems(
+                        keyPrefix = "about",
+                        items = listOf(
+                            CardItem("version") {
+                                ArrowPreference(
+                                    title = "NotiVas",
+                                    summary = "v$versionName ($versionCode) • " + stringResource(Res.string.about_app_description),
+                                    onClick = {}
+                                )
+                            },
+                            CardItem("developer") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.about_developer_title),
+                                    summary = stringResource(Res.string.about_developer_name),
+                                    onClick = {}
+                                )
+                            },
+                            CardItem("repo") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.about_repo_title),
+                                    summary = stringResource(Res.string.about_repo_subtitle),
+                                    onClick = {
+                                        try {
+                                            uriHandler.openUri("https://github.com/Joxquin/NotiVas-KMP")
+                                        } catch (_: Exception) {}
+                                    }
+                                )
+                            },
+                            CardItem("license") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.about_license_title),
+                                    summary = stringResource(Res.string.about_license_name),
+                                    onClick = onOpenLicenses
+                                )
+                            },
+                            CardItem("licenses") {
+                                ArrowPreference(
+                                    title = stringResource(Res.string.about_licenses_title),
+                                    summary = stringResource(Res.string.about_licenses_summary),
+                                    onClick = onOpenLicenses
+                                )
+                            },
+                        )
+                    )
 
                     item {
                         Spacer(modifier = Modifier.height(16.dp))

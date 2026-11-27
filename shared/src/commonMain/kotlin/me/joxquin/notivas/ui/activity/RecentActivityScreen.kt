@@ -106,6 +106,7 @@ fun RecentActivityScreen(
         val scrollBehavior = top.yukonga.miuix.kmp.basic.MiuixScrollBehavior()
 
         top.yukonga.miuix.kmp.basic.Scaffold(
+            popupHost = {},
             topBar = {
                 me.joxquin.notivas.ui.components.miuix.MiuixBlurredBar(
                     backdrop = backdrop,
