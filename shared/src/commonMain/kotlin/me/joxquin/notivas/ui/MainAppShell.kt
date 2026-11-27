@@ -1,10 +1,15 @@
 package me.joxquin.notivas.ui
 
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.background
@@ -66,6 +71,11 @@ import me.joxquin.notivas.util.rememberFilePickerLauncher
 import me.joxquin.notivas.ui.components.UpdateDialog
 import me.joxquin.notivas.ui.components.BackHandler
 import me.joxquin.notivas.ui.components.miuix.FloatingNavigationBar
+import me.joxquin.notivas.ui.components.miuix.LocalAppPageInsets
+import me.joxquin.notivas.ui.components.miuix.LocalTopLayer
+import me.joxquin.notivas.ui.components.miuix.TopLayerHost
+import me.joxquin.notivas.ui.components.miuix.TopLayerState
+import me.joxquin.notivas.ui.components.miuix.rememberAppPageInsets
 import me.joxquin.notivas.ui.copilot.CopilotViewModel
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
 import me.joxquin.notivas.ui.dashboard.InicioScreen
@@ -424,17 +434,25 @@ fun MainAppShell(
             NavSwipeDirection.LeftToRight
         }
 
+        val topLayer = remember { TopLayerState() }
+        val pageInsets = rememberAppPageInsets(
+            startAlreadyReserved = isWideScreen,
+        )
+
         CompositionLocalProvider(
             LocalMiuixNavigator provides miuixNavigator,
             LocalMiuixSnackbarHostState provides miuixSnackbarHostState,
             LocalIsWideScreen provides isWideScreen,
+            LocalTopLayer provides topLayer,
+            LocalAppPageInsets provides pageInsets,
         ) {
             top.yukonga.miuix.kmp.basic.Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                 contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
             ) { _ ->
-                Row(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Row(modifier = Modifier.fillMaxSize()) {
                 if (isWideScreen) {
                     MiuixPersistentNavigationRail(
                         destinations = destinations,
@@ -465,6 +483,12 @@ fun MainAppShell(
                         effects = navDisplayEffects,
                     ) {
                 entry<MiuixRoute.Main> {
+                    val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
+                    val copilotUiState by copilotViewModel.uiState.collectAsState()
+                    val isDashboardSearchExpandingOrExpanded = currentDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
+                    val isCopilotHistoryVisible = currentDestination == MainDestination.Copilot && copilotUiState.isHistorySheetVisible
+                    val isFloatingBarVisible = !isDashboardSearchExpandingOrExpanded && !isCopilotHistoryVisible
+
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -487,7 +511,7 @@ fun MainAppShell(
                                         pagerState = mainPagerState.pagerState,
                                         flingBehavior = flingBehavior,
                                         mode = PagerInterceptionMode.CrossAxis,
-                                        enabled = true,
+                                        enabled = !isDashboardSearchExpandingOrExpanded && !isCopilotHistoryVisible,
                                     ),
                                 userScrollEnabled = false,
                                 pageNestedScrollConnection = PagerGestureNestedScrollConnection,
@@ -656,20 +680,14 @@ fun MainAppShell(
                             }
                         }
 
-                        val dashboardSearchStatus by dashboardViewModel.searchStatus.collectAsState()
-                        val copilotUiState by copilotViewModel.uiState.collectAsState()
-                        val isDashboardSearchExpandingOrExpanded = currentDestination == MainDestination.Inicio && dashboardSearchStatus.shouldExpand()
-                        val isCopilotHistoryVisible = currentDestination == MainDestination.Copilot && copilotUiState.isHistorySheetVisible
-                        val isFloatingBarVisible = !isDashboardSearchExpandingOrExpanded && !isCopilotHistoryVisible
-
                         // Capa 3: FloatingNavigationBar ("Liquid Glass")
                         if (!isWideScreen) {
-                            androidx.compose.animation.AnimatedVisibility(
+                            CapturedAnimatedVisibility(
                                 visible = isFloatingBarVisible,
-                                enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(200)) +
-                                        androidx.compose.animation.slideInVertically(animationSpec = androidx.compose.animation.core.tween(300)) { it },
-                                exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(150)) +
-                                        androidx.compose.animation.slideOutVertically(animationSpec = androidx.compose.animation.core.tween(250)) { it },
+                                enter = fadeIn(animationSpec = tween(200)) +
+                                        slideInVertically(animationSpec = tween(300)) { it },
+                                exit = fadeOut(animationSpec = tween(150)) +
+                                        slideOutVertically(animationSpec = tween(250)) { it },
                                 modifier = Modifier.align(Alignment.BottomCenter)
                             ) {
                                 FloatingNavigationBar(
@@ -1124,6 +1142,8 @@ fun MainAppShell(
             )
         }
     }
+    TopLayerHost(topLayer)
+}
 }
 }
 } else {
