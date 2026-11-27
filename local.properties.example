@@ -1,0 +1,14 @@
+# Copia este archivo como local.properties en la raíz del proyecto.
+# local.properties está en .gitignore: nunca se sube al repositorio.
+
+# Ruta del Android SDK en tu PC (Android Studio la escribe sola al abrir el proyecto).
+sdk.dir=C\:\\Users\\TU_USUARIO\\AppData\\Local\\Android\\Sdk
+
+# La app no lee API keys desde aquí. Cada estudiante pega su propia key de
+# Google AI Studio u OpenRouter en Ajustes > Asistente Copilot IA, y se guarda solo en su celular.
+#
+# Firma de release: el keystore y sus contraseñas van en secretos de GitHub
+# (RELEASE_KEYSTORE_BASE64, KEYSTORE_STORE_PASSWORD, KEYSTORE_KEY_PASSWORD,
+# KEYSTORE_KEY_ALIAS). Para firmar en local, exporta esas variables de entorno.
+#
+# Firebase: pide androidApp/google-services.json al dueño del proyecto (tampoco se sube).

@@ -78,7 +78,7 @@ fun CourseLearningRoadmapCard(
     else MaterialTheme.colorScheme.primary
 
     val successColor = if (isMiuix) MiuixTheme.colorScheme.primary
-    else Color(0xFF4CAF50)
+    else MaterialTheme.colorScheme.secondary
 
     val content = @Composable {
         Column(
@@ -107,7 +107,8 @@ fun CourseLearningRoadmapCard(
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "$totalModulesCount módulos",
+                            text = if (totalModulesCount == 1) stringResource(Res.string.course_detail_modules_count_one)
+                                   else stringResource(Res.string.course_detail_modules_count, totalModulesCount),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = primaryColor

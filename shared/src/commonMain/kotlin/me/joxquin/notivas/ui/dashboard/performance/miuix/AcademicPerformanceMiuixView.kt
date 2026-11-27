@@ -142,8 +142,8 @@ fun AcademicPerformanceMiuixView(
     var isMonthlyView by remember { mutableStateOf(false) }
 
     val primaryColor = MiuixTheme.colorScheme.primary
-    val completedColor = if (dynamicColorEnabled) primaryColor else Color(0xFF10B981)
-    val overdueColor = Color(0xFFE53935)
+    val completedColor = if (dynamicColorEnabled) primaryColor else MiuixTheme.colorScheme.primary
+    val overdueColor = MiuixTheme.colorScheme.error
     val pendingColor = MiuixTheme.colorScheme.surfaceContainerHigh
     val onSurfaceColor = MiuixTheme.colorScheme.onSurface
     val onVariantColor = MiuixTheme.colorScheme.onSurfaceVariantSummary
@@ -716,8 +716,8 @@ private fun MiuixDayBlockItem(
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = when (block.status) {
-                    DayTaskStatus.COMPLETED -> Color.White
-                    DayTaskStatus.OVERDUE -> Color.White
+                    DayTaskStatus.COMPLETED -> MiuixTheme.colorScheme.onPrimary
+                    DayTaskStatus.OVERDUE -> MiuixTheme.colorScheme.onError
                     DayTaskStatus.PENDING -> onSurfaceColor
                     DayTaskStatus.NONE -> MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.6f)
                 }

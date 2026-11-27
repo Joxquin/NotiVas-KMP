@@ -32,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -98,6 +97,10 @@ fun ForosCardItem(
     }
 
     val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+    val verifiedColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+    val errorColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error
+    val errorContainerColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.errorContainer
+    val onErrorContainerColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onErrorContainer
     val authorName = topic.author?.displayName ?: topic.userName ?: stringResource(Res.string.foros_author_default)
     val repliesCount = topic.discussionSubentryCount ?: 0
 
@@ -147,7 +150,7 @@ fun ForosCardItem(
                 if (isExpired) {
                     Surface(
                         shape = RoundedCornerShape(9999.dp),
-                        color = Color(0xFFE53935).copy(alpha = 0.15f)
+                        color = errorContainerColor.copy(alpha = 0.15f)
                     ) {
                         Text(
                             text = if (isGraded) stringResource(Res.string.foro_graded_closed) else stringResource(Res.string.foro_closed_expired),
@@ -155,14 +158,14 @@ fun ForosCardItem(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = Color(0xFFE53935),
+                            color = onErrorContainerColor,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
                 } else if (hasPoints) {
                     Surface(
                         shape = RoundedCornerShape(9999.dp),
-                        color = if (isUrgent) Color(0xFFE53935).copy(alpha = 0.15f) else primaryColor.copy(alpha = 0.15f)
+                        color = if (isUrgent) errorContainerColor.copy(alpha = 0.15f) else primaryColor.copy(alpha = 0.15f)
                     ) {
                         Text(
                             text = stringResource(Res.string.foro_points_graded, points?.toInt() ?: 0),
@@ -170,7 +173,7 @@ fun ForosCardItem(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = if (isUrgent) Color(0xFFE53935) else primaryColor,
+                            color = if (isUrgent) onErrorContainerColor else primaryColor,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
@@ -230,13 +233,13 @@ fun ForosCardItem(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF4CAF50).copy(alpha = 0.2f)),
+                                .background(verifiedColor.copy(alpha = 0.2f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Verified,
                                 contentDescription = null,
-                                tint = Color(0xFF4CAF50),
+                                tint = verifiedColor,
                                 modifier = Modifier.size(15.dp)
                             )
                         }
@@ -253,7 +256,7 @@ fun ForosCardItem(
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 ),
-                                color = Color(0xFF4CAF50)
+                                color = verifiedColor
                             )
                         }
                     }
@@ -273,13 +276,13 @@ fun ForosCardItem(
                     Icon(
                         imageVector = if (isUrgent) Icons.Default.Timer else Icons.Default.Schedule,
                         contentDescription = null,
-                        tint = if (isUrgent) Color(0xFFE53935) else primaryColor,
+                        tint = if (isUrgent) errorColor else primaryColor,
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
                         text = dueText,
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Medium),
-                        color = if (isUrgent) Color(0xFFE53935) else primaryColor
+                        color = if (isUrgent) errorColor else primaryColor
                     )
                 }
 
@@ -343,7 +346,7 @@ fun ForosCardItem(
                                 modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(if (isUrgent) Color(0xFFE53935) else primaryColor)
+                                .background(if (isUrgent) errorColor else primaryColor)
                             )
                             Text(
                                 text = stringResource(Res.string.foro_available_to_participate),

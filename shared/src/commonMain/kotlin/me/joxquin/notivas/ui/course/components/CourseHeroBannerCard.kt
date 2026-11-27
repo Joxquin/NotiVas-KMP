@@ -40,7 +40,6 @@ import top.yukonga.miuix.kmp.utils.PressFeedbackType
 fun CourseHeroBannerCard(
     course: Course?,
     departmentTag: String,
-    professorName: String,
     promedioFormatted: String,
     avancePercentage: Int,
     completedModulesCount: Int,

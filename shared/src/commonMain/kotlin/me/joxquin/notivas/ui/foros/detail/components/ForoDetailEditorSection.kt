@@ -50,7 +50,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -90,6 +89,7 @@ fun ForoDetailEditorSection(
     val isWordCountMet = wordCount >= 150
 
     val primaryColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
+    val successColor = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
     val onSurface = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
     val cardBg = if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainer
@@ -113,7 +113,7 @@ fun ForoDetailEditorSection(
 
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = if (isDraftSaved) Color(0xFF4CAF50).copy(alpha = 0.2f) else editorBg
+                color = if (isDraftSaved) successColor.copy(alpha = 0.2f) else editorBg
             ) {
                 Text(
                     text = if (isDraftSaved) {
@@ -125,7 +125,7 @@ fun ForoDetailEditorSection(
                         fontSize = 11.sp,
                         fontWeight = if (isDraftSaved) FontWeight.Bold else FontWeight.Normal
                     ),
-                    color = if (isDraftSaved) Color(0xFF4CAF50) else onSurfaceVariant,
+                    color = if (isDraftSaved) successColor else onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                 )
             }
@@ -316,7 +316,7 @@ fun ForoDetailEditorSection(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = if (isWordCountMet) Color(0xFF4CAF50) else onSurfaceVariant,
+                            tint = if (isWordCountMet) successColor else onSurfaceVariant,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
@@ -325,7 +325,7 @@ fun ForoDetailEditorSection(
                                 fontSize = 11.sp,
                                 fontWeight = if (isWordCountMet) FontWeight.Bold else FontWeight.Normal
                             ),
-                            color = if (isWordCountMet) Color(0xFF4CAF50) else onSurfaceVariant
+                            color = if (isWordCountMet) successColor else onSurfaceVariant
                         )
                     }
 

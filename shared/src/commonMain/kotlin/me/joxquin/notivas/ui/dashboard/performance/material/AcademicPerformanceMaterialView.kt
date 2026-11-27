@@ -133,8 +133,13 @@ fun AcademicPerformanceMaterialView(
     var isMonthlyView by remember { mutableStateOf(false) }
 
     val primaryColor = MaterialTheme.colorScheme.primary
-    val completedColor = if (dynamicColorEnabled) primaryColor else Color(0xFF10B981)
-    val overdueColor = Color(0xFFE53935)
+    val completedColor = if (dynamicColorEnabled) primaryColor else MaterialTheme.colorScheme.secondary
+    val completedContentColor = if (dynamicColorEnabled) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSecondary
+    }
+    val overdueColor = MaterialTheme.colorScheme.error
     val pendingColor = MaterialTheme.colorScheme.surfaceContainerHighest
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     val onVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -255,6 +260,7 @@ fun AcademicPerformanceMaterialView(
                     weekOffset = weekOffset,
                     primaryColor = primaryColor,
                     completedColor = completedColor,
+                    completedContentColor = completedContentColor,
                     overdueColor = overdueColor,
                     pendingColor = pendingColor,
                     onSurfaceColor = onSurfaceColor,
@@ -490,6 +496,7 @@ private fun MaterialHeatmapCard(
     weekOffset: Int,
     primaryColor: Color,
     completedColor: Color,
+    completedContentColor: Color,
     overdueColor: Color,
     pendingColor: Color,
     onSurfaceColor: Color,
@@ -586,6 +593,7 @@ private fun MaterialHeatmapCard(
                             isSelected = isSelected,
                             primaryColor = primaryColor,
                             completedColor = completedColor,
+                            completedContentColor = completedContentColor,
                             overdueColor = overdueColor,
                             pendingColor = pendingColor,
                             outlineColor = outlineColor,
@@ -628,6 +636,7 @@ private fun MaterialHeatmapCard(
                                     isSelected = isSelected,
                                     primaryColor = primaryColor,
                                     completedColor = completedColor,
+                                    completedContentColor = completedContentColor,
                                     overdueColor = overdueColor,
                                     pendingColor = pendingColor,
                                     outlineColor = outlineColor,
@@ -665,6 +674,7 @@ private fun MaterialDayBlockItem(
     isSelected: Boolean,
     primaryColor: Color,
     completedColor: Color,
+    completedContentColor: Color,
     overdueColor: Color,
     pendingColor: Color,
     outlineColor: Color,
@@ -715,8 +725,8 @@ private fun MaterialDayBlockItem(
                 text = block.dayNumber.toString(),
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                 color = when (block.status) {
-                    DayTaskStatus.COMPLETED -> Color.White
-                    DayTaskStatus.OVERDUE -> Color.White
+                    DayTaskStatus.COMPLETED -> completedContentColor
+                    DayTaskStatus.OVERDUE -> MaterialTheme.colorScheme.onError
                     DayTaskStatus.PENDING -> onSurfaceColor
                     DayTaskStatus.NONE -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 }

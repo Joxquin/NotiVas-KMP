@@ -354,8 +354,9 @@ private fun PerformanceDayBlocksRow(
     isMiuix: Boolean
 ) {
     val dynamicColorEnabled by AppModule.preferencesManager.dynamicColorEnabled.collectAsState(initial = true)
-    val completedColor = if (dynamicColorEnabled) primaryColor else Color(0xFF10B981)
-    val overdueColor = Color(0xFFE53935)
+    val successColor = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+    val completedColor = if (dynamicColorEnabled) primaryColor else successColor
+    val overdueColor = if (isMiuix) MiuixTheme.colorScheme.error else MaterialTheme.colorScheme.error
     val pendingColor = if (isMiuix) MiuixTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerHighest
 
     val blocks = remember(weeklyDayBlocks) {

@@ -149,7 +149,7 @@ fun CopilotEmptyHeroSection(
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF34D399))
+                                .background(if (themeStyle == AppThemeStyle.MIUIX) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
                         )
                         Text(
                             text = stringResource(Res.string.copilot_courses_synced, coursesCount),

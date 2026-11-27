@@ -52,30 +52,32 @@ fun CopilotQuickSuggestionsSection(
     themeStyle: AppThemeStyle = AppThemeStyle.MATERIAL,
     modifier: Modifier = Modifier
 ) {
+    val isMiuix = themeStyle == AppThemeStyle.MIUIX
     val suggestions = listOf(
         SuggestionItem(
             icon = Icons.Default.CalendarMonth,
             text = stringResource(Res.string.copilot_suggestion_urgent_q),
-            iconTint = Color(0xFF3482FF)
+            iconTint = if (isMiuix) MiuixTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
         ),
         SuggestionItem(
             icon = Icons.AutoMirrored.Filled.Assignment,
             text = stringResource(Res.string.copilot_suggestion_rubrics_q),
-            iconTint = Color(0xFFA855F7)
+            iconTint = if (isMiuix) MiuixTheme.colorScheme.onTertiaryContainer
+            else MaterialTheme.colorScheme.secondary
         ),
         SuggestionItem(
             icon = Icons.Default.Calculate,
             text = stringResource(Res.string.copilot_suggestion_final_exam_q),
-            iconTint = Color(0xFFFFB74D)
+            iconTint = if (isMiuix) MiuixTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
         ),
         SuggestionItem(
             icon = Icons.Default.Search,
             text = "Buscar artículos científicos y tesis en la web sobre un tema",
-            iconTint = Color(0xFF10B981)
+            iconTint = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
         )
     )
 
-    if (themeStyle == AppThemeStyle.MIUIX) {
+    if (isMiuix) {
         Column(
             modifier = modifier
                 .fillMaxWidth()

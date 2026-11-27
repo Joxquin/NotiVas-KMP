@@ -392,7 +392,7 @@ fun CopilotMessageBubble(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = Color(0xFF10B981),
+                                tint = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.size(15.dp)
                             )
                             Text(

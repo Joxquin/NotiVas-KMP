@@ -62,12 +62,16 @@ android {
             }
         }
         create("release") {
+            // Release passwords come only from the environment (GitHub secrets in CI).
+            // Without them the release build falls back to the debug signing config below.
             val keystoreFile = file("release.keystore")
-            if (keystoreFile.exists()) {
+            val releaseStorePassword = System.getenv("KEYSTORE_STORE_PASSWORD")
+            val releaseKeyPassword = System.getenv("KEYSTORE_KEY_PASSWORD")
+            if (keystoreFile.exists() && !releaseStorePassword.isNullOrBlank() && !releaseKeyPassword.isNullOrBlank()) {
                 storeFile = keystoreFile
-                storePassword = System.getenv("KEYSTORE_STORE_PASSWORD") ?: "notivasrelease"
-                keyAlias = System.getenv("KEYSTORE_KEY_ALIAS") ?: "releaseKey"
-                keyPassword = System.getenv("KEYSTORE_KEY_PASSWORD") ?: "notivasrelease"
+                storePassword = releaseStorePassword
+                keyAlias = System.getenv("KEYSTORE_KEY_ALIAS")?.takeIf { it.isNotBlank() } ?: "releaseKey"
+                keyPassword = releaseKeyPassword
             }
         }
     }
@@ -94,7 +98,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.findByName("release")?.takeIf { file("release.keystore").exists() }
+            signingConfig = signingConfigs.findByName("release")?.takeIf { it.storeFile != null }
                 ?: signingConfigs.getByName("debug")
         }
     }

@@ -293,7 +293,7 @@ fun AssignmentQuickSubmenuSheet(
                                         Icon(
                                             imageVector = Icons.Default.Rule,
                                             contentDescription = null,
-                                            tint = Color(0xFFFFB74D),
+                                            tint = MiuixTheme.colorScheme.secondary,
                                             modifier = Modifier.size(13.dp)
                                         )
                                         Text(
@@ -602,7 +602,7 @@ fun AssignmentQuickSubmenuSheet(
                                         Icon(
                                             imageVector = Icons.Default.Rule,
                                             contentDescription = null,
-                                            tint = Color(0xFFFFB74D),
+                                            tint = MaterialTheme.colorScheme.tertiary,
                                             modifier = Modifier.size(13.dp)
                                         )
                                         Text(
