@@ -939,6 +939,7 @@ fun MainAppShell(
                         onNavigateToCopilot = { prompt ->
                             handleMiuixBack()
                             mainPagerState.animateToPage(2)
+                            copilotViewModel.startNewSession()
                             copilotViewModel.sendMessage(prompt)
                         },
                         onNavigateToAnnouncements = {
@@ -1678,6 +1679,7 @@ fun MainAppShell(
                         onNavigateToCopilot = { prompt ->
                             handleMaterialBack()
                             materialDestination = MainDestination.Copilot
+                            copilotViewModel.startNewSession()
                             copilotViewModel.sendMessage(prompt)
                         },
                         onNavigateToAnnouncements = {

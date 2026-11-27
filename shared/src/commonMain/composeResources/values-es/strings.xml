@@ -970,4 +970,12 @@
     <string name="copilot_model_label_gemini_31_pro_preview">Gemini 3.1 Pro</string>
     <string name="copilot_model_analysis_gemini_compatible">100% Compatible: Modelo Gemini oficial de Google AI Studio con soporte nativo de visión, documentos y 1M+ tokens de contexto.</string>
     <string name="copilot_model_analysis_custom_compatible">Modelo personalizado configurado para Google AI Studio. Asegúrate de que el endpoint sea compatible.</string>
+    <string name="course_copilot_card_title">Pregúntale al Copiloto</string>
+    <string name="course_copilot_card_subtitle">Responde con tus notas y tareas reales de este curso.</string>
+    <string name="course_copilot_chip_status">¿Cómo voy?</string>
+    <string name="course_copilot_chip_needed">¿Cuánto necesito para aprobar?</string>
+    <string name="course_copilot_chip_pending">¿Qué tareas me faltan?</string>
+    <string name="course_copilot_prompt_status">¿Cómo voy en %1$s? Dame mi promedio actual y mi estado.</string>
+    <string name="course_copilot_prompt_needed">¿Cuánto necesito sacar en lo que falta de %1$s para aprobar?</string>
+    <string name="course_copilot_prompt_pending">¿Qué tareas tengo pendientes en %1$s?</string>
 </resources>

@@ -47,6 +47,7 @@ import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import me.joxquin.notivas.ui.components.miuix.shortenCourseSubtitle
+import me.joxquin.notivas.ui.course.components.CourseCopilotPromptCard
 import me.joxquin.notivas.ui.course.components.CourseHeroBannerCard
 import me.joxquin.notivas.ui.course.components.CourseLearningRoadmapCard
 import org.jetbrains.compose.resources.stringResource
@@ -154,7 +155,16 @@ fun CourseDetailScreen(
                                 )
                             }
 
-                            // 2. Ruta de Aprendizaje (Tarjeta única interactiva con semana activa incrustada)
+                            // 2. Preguntas rápidas al Copiloto sobre este curso
+                            item {
+                                CourseCopilotPromptCard(
+                                    courseName = uiState.course?.name.orEmpty(),
+                                    themeStyle = AppThemeStyle.MIUIX,
+                                    onAsk = onNavigateToCopilot
+                                )
+                            }
+
+                            // 3. Ruta de Aprendizaje (Tarjeta única interactiva con semana activa incrustada)
                             item {
                                 CourseLearningRoadmapCard(
                                     activeModule = uiState.activeModule ?: uiState.modules.firstOrNull(),
@@ -255,7 +265,16 @@ fun CourseDetailScreen(
                             )
                         }
 
-                        // 2. Ruta de Aprendizaje (Tarjeta única interactiva con semana activa incrustada)
+                        // 2. Preguntas rápidas al Copiloto sobre este curso
+                        item {
+                            CourseCopilotPromptCard(
+                                courseName = uiState.course?.name.orEmpty(),
+                                themeStyle = AppThemeStyle.MATERIAL,
+                                onAsk = onNavigateToCopilot
+                            )
+                        }
+
+                        // 3. Ruta de Aprendizaje (Tarjeta única interactiva con semana activa incrustada)
                         item {
                             CourseLearningRoadmapCard(
                                 activeModule = uiState.activeModule ?: uiState.modules.firstOrNull(),
