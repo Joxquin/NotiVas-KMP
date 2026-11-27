@@ -10,9 +10,11 @@ La aplicación opera bajo dos paradigmas de diseño visual con arquitecturas de 
 
 ### A. HyperOS MIUIX (`AppThemeStyle.MIUIX`)
 En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implementación de referencia oficial de `compose-miuix-ui` (`miuix/example`):
-0. **Scaffold Raíz Transparente (`MiuixPopupHost`):**
+0. **Scaffold Raíz Transparente (`MiuixPopupHost`, `TopLayerHost`, `LocalAppPageInsets`):**
    - El árbol principal de navegación debe estar envuelto en un `top.yukonga.miuix.kmp.basic.Scaffold(containerColor = Color.Transparent, contentWindowInsets = WindowInsets(0))`.
-   - Este Scaffold raíz provee `LocalRootDialogStates` y aloja `popupHost = { MiuixPopupHost() }`. Sin este contenedor raíz, los componentes de superposición (`GlassBottomSheet`, `OverlayBottomSheet`, `OverlayDialog`) que utilizan `renderInRootScaffold = true` no pueden renderizarse en pantalla.
+   - Este Scaffold raíz provee `LocalRootDialogStates`, aloja el único `MiuixPopupHost()` de la app y expone `LocalTopLayer` (con `TopLayerHost` sobre `NavDisplay`) y `LocalAppPageInsets`.
+   - **Obligatorio en Scaffolds hijos:** Toda pantalla secundaria o pestaña con su propio `Scaffold` de MIUIX debe pasar **`popupHost = {}`** para evitar hosts anidados que recorten `GlassBottomSheet`, `OverlayBottomSheet` o `OverlayDialog` dentro de `NavDisplay`.
+   - **Overlays sobre Pager / NavDisplay (`TopLayer`):** Los overlays a pantalla completa (como `GlassSearchOverlay`) deben elevarse mediante `TopLayer { ... }` para renderizarse por encima de `HorizontalPager`, `FloatingNavigationBar` y `NavDisplay`, bloqueando además el input subyacente.
 
 1. **Host Principal (`NavDisplay` con `NavTransitions.MiuixDefault`):**
    - Gobernado por `NavBackStack` y `MiuixRoute`.
@@ -28,10 +30,12 @@ En MIUIX se utiliza la arquitectura oficial de `miuix-nav` basada en la implemen
 3. **Pantallas Secundarias Modulares (`Screen`):**
    - Cada pantalla secundaria (`RecentActivityScreen`, `ScheduleScreen`, `AssignmentDraftScreen`, `TaskHistoryArchiveScreen`, `ForoDetailScreen`, etc.) es un destino registrado en `NavDisplay`.
    - Cada pantalla secundaria implementa su propio `Scaffold` modular de MIUIX con:
+     - `popupHost = {}` para delegar todos los popups/sheets al `MiuixPopupHost` raíz.
      - `MiuixBlurredBar` con desenfoque (`rememberMiuixBlurBackdrop`).
-     - `MiuixPageTopAppBar` con su propio título, `BackNavigationIcon(onClick = onBack)` y acciones contextuales.
+     - `MiuixPageTopAppBar` con su propio título, `BackNavigationIcon(onClick = onBack)` y acciones contextuales (aplica automáticamente `appPageTopBarInsets()` de `AppPageInsets`).
      - Barra de desplazamiento háptica nativa `top.yukonga.miuix.kmp.basic.VerticalScrollBar`.
      - Modificadores de scroll overscroll `miuixPageScrollModifiers` y padding `miuixPageContentPadding` de `MiuixPageUtils.kt`.
+     - Para listas de preferencias agrupadas en `LazyColumn`, preferir `groupedCardItems` (`GroupedCardItems.kt`) en lugar de un `MiuixCard` monolítico dentro de un único `item`.
 
 4. **Navegación Reactiva e Idempotente (`MiuixNavigator`):**
    - Acceso en cualquier punto del árbol de composición vía `LocalMiuixNavigator.current`.
@@ -100,8 +104,8 @@ Card(
 }
 ```
 
-### 2. Campos de Búsqueda y Entrada (`top.yukonga.miuix.kmp.basic.TextField` vs `InputField`)
-- **Campos de formulario y diálogo:** Utilizar `TextField` nativo con título/etiqueta flotante (`label = "..."`), basado en el patrón `TextField with title` del módulo de ejemplo oficial de `compose-miuix-ui`.
+### 2. Campos de Búsqueda y Entrada (`TextField`, `MiuixGlassTextField` vs `GlassSearchOverlay`)
+- **Campos de formulario y diálogo:** Utilizar `TextField` nativo con título/etiqueta flotante (`label = "..."`) o `MiuixGlassTextField` (`GlassTextField` basado en `rememberTextFieldState()`) en superficies Glass de Miuix `0.9.5-rc01`.
   ```kotlin
   val fieldColors = if (themeStyle == AppThemeStyle.MIUIX) {
       TextFieldDefaults.textFieldColors()
@@ -122,7 +126,7 @@ Card(
   )
   ```
   *Nota sobre parámetros de `TextFieldDefaults.textFieldColors` en MIUIX:* solo acepta `backgroundColor`, `labelColor` y `borderColor`. No usar `color`, `textColor` ni `cursorColor`.
-- **Búsqueda exclusivamente:** Reservar `InputField` únicamente para barras de búsqueda (como en el overlay de búsqueda del Dashboard). No utilizar `InputField` para formularios, creación o edición de entidades.
+- **Búsqueda exclusivamente:** Utilizar `top.yukonga.miuix.kmp.glass.GlassSearchOverlay` (elevado en `TopLayer`) o `InputField` únicamente para barras de búsqueda. No utilizar `InputField` para formularios, creación o edición de entidades.
 
 ### 3. Títulos de Sección (`top.yukonga.miuix.kmp.basic.SmallTitle`)
 - Para agrupar listas o separar secciones de tarjetas bento, utilizar:
@@ -161,7 +165,9 @@ Card(
   - Utilizar el componente oficial HyperOS Liquid Glass `top.yukonga.miuix.kmp.glass.GlassBottomSheet`.
   - Debe recibir el fondo difuminado en tiempo real (`backdrop: Backdrop?`) provisto por la pantalla o `rememberMiuixBlurBackdrop()`.
   - El contenedor hijo scrollable debe incorporar `.navigationBarsPadding()` para desplazar con holgura los márgenes del sistema.
-  - **Botones de acción y cierre en cabecera de BottomSheet (Prohibido GlassIconButton en Sheets):** Los iconos de cierre (`startAction`) o de acción contextual (`endAction`) dentro de `GlassBottomSheet` deben usar exclusivamente `top.yukonga.miuix.kmp.basic.IconButton` (sin fondo ni contenedor de cápsula, `backgroundColor = Color.Unspecified`). El componente `GlassIconButton` (cápsula circular con sombra y desenfoque) está estrictamente reservado para la barra superior (`TopAppBar`) y la barra flotante (`FloatingNavigationBar`). Nunca debe utilizarse en BottomSheets ni diálogos emergentes.
+  - **Botones de acción y cierre en cabecera de BottomSheet:**
+    - En `GlassBottomSheet` con `progressiveBlur = true`, usar `GlassIconButton` con `MiuixIcons.Glass.*` en `startAction` / `endAction` para heredar el material, el backdrop y la animación del header (patrón `GlassBottomSheetDemo` oficial de Miuix `0.9.5-rc01`).
+    - En `WindowBottomSheet` y `ModalBottomSheet` (o diálogos estándar), usar `top.yukonga.miuix.kmp.basic.IconButton` sin fondo de cápsula (`backgroundColor = Color.Unspecified`).
   - El botón de cierre en `startAction` utiliza `val dismissState = LocalDismissState.current` y `dismissState?.invoke()`.
   - `GlassBottomSheet` maneja sus propios márgenes laterales internos oficiales (`GlassBottomSheetDefaults.InsideMargin = DpSize(12.dp, 0.dp)`).
 - **Material Design 3 (`WindowBottomSheet` o `ModalBottomSheet`):**
@@ -321,7 +327,8 @@ Compose Multiplatform procesa los recursos de strings mediante un motor propio y
 10. **¿Se eliminaron los colores hexadecimales estáticos?** Usar exclusivamente `MiuixTheme.colorScheme.*`.
 11. **¿Paquetes de materiales e imports correctos?** Importar `GlassShadows`, `GlassDefaults`, `RuntimeShader` e `isRuntimeShaderSupported` desde `top.yukonga.miuix.kmp.material.*` (no desde `.glass` ni `.blur`).
 12. **¿Regla de emojis cumplida?** Cero emojis en código, textos, logs o mensajes de commit.
-13. **¿Iconos en BottomSheet sin contenedor?** En `GlassBottomSheet` con `progressiveBlur = true`, usar `GlassIconButton` con `MiuixIcons.Glass.*` en `startAction`/`endAction` para heredar el material, el backdrop y la animación del header, como en el ejemplo oficial de Miuix 0.9.5-rc01. En `WindowBottomSheet` y `ModalBottomSheet`, usar `IconButton` de `top.yukonga.miuix.kmp.basic`.
+13. **¿Iconos en BottomSheet acordes al tipo de Sheet?** En `GlassBottomSheet` con `progressiveBlur = true`, usar `GlassIconButton` con `MiuixIcons.Glass.*` en `startAction`/`endAction` para heredar el material, el backdrop y la animación del header, como en el ejemplo oficial de Miuix `0.9.5-rc01`. En `WindowBottomSheet` y `ModalBottomSheet`, usar `IconButton` de `top.yukonga.miuix.kmp.basic`.
+14. **¿`popupHost = {}` y `TopLayer` aplicados?** Todo `Scaffold` hijo en MIUIX debe pasar `popupHost = {}`, y cualquier overlay a pantalla completa sobre el `HorizontalPager` debe elevarse con `TopLayer`.
 
 <!-- graphify-rules-start (managed by `graphify init`) -->
 ## Use Graphify before grep
