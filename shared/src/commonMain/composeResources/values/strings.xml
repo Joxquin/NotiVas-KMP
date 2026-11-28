@@ -1046,4 +1046,19 @@
     <string name="deadline_radar_earlier">Moved earlier from %1$s to %2$s</string>
     <string name="deadline_radar_later">Moved later from %1$s to %2$s</string>
     <string name="deadline_short_date_time">%2$d/%1$d at %3$s</string>
+    <string name="team_checklist_title">Team assignment</string>
+    <string name="team_checklist_intro">Turn the instructions into steps and agree on who does what.</string>
+    <string name="team_checklist_open">Open checklist</string>
+    <string name="team_checklist_task">Task</string>
+    <string name="team_checklist_owner">Owner</string>
+    <string name="team_checklist_date">Agreed date</string>
+    <string name="team_checklist_done">Done</string>
+    <string name="team_checklist_remove">Remove step</string>
+    <string name="team_checklist_add">Add step</string>
+    <string name="team_checklist_collapse">Collapse</string>
+    <string name="team_checklist_share_heading">Team checklist for %1$s</string>
+    <string name="team_checklist_preview">Share preview</string>
+    <string name="team_checklist_share">Share</string>
+    <string name="team_checklist_copy">Copy checklist</string>
+    <string name="team_checklist_copied">Checklist copied</string>
 </resources>

@@ -1046,4 +1046,19 @@
     <string name="deadline_radar_earlier">Se adelantó del %1$s al %2$s</string>
     <string name="deadline_radar_later">Se postergó del %1$s al %2$s</string>
     <string name="deadline_short_date_time">%1$d/%2$d a las %3$s</string>
+    <string name="team_checklist_title">Entrega en equipo</string>
+    <string name="team_checklist_intro">Convierte la consigna en pasos y acuerda quién se encarga de cada uno.</string>
+    <string name="team_checklist_open">Abrir checklist</string>
+    <string name="team_checklist_task">Tarea</string>
+    <string name="team_checklist_owner">Responsable</string>
+    <string name="team_checklist_date">Fecha acordada</string>
+    <string name="team_checklist_done">Completada</string>
+    <string name="team_checklist_remove">Quitar paso</string>
+    <string name="team_checklist_add">Agregar paso</string>
+    <string name="team_checklist_collapse">Contraer</string>
+    <string name="team_checklist_share_heading">Checklist de equipo para %1$s</string>
+    <string name="team_checklist_preview">Vista previa</string>
+    <string name="team_checklist_share">Compartir</string>
+    <string name="team_checklist_copy">Copiar checklist</string>
+    <string name="team_checklist_copied">Checklist copiada</string>
 </resources>
