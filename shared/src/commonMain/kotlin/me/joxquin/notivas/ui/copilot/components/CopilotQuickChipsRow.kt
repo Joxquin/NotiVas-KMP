@@ -46,30 +46,32 @@ fun CopilotQuickChipsRow(
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
+    val isMiuix = themeStyle == AppThemeStyle.MIUIX
     val chips = listOf(
         QuickChipItem(
             label = "Buscar en la web",
             prompt = "Busca en la web fuentes académicas y artículos actualizados sobre este tema para mi informe.",
             icon = Icons.Default.Search,
-            iconTint = Color(0xFF10B981)
+            iconTint = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
         ),
         QuickChipItem(
             label = "Buscar tesis / papers",
             prompt = "Busca tesis universitarias y papers científicos relevantes en PDF sobre este tema con enlaces de referencia.",
             icon = Icons.AutoMirrored.Filled.MenuBook,
-            iconTint = Color(0xFF3B82F6)
+            iconTint = if (isMiuix) MiuixTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
         ),
         QuickChipItem(
             label = "Estructurar informe",
             prompt = "Sintetiza y estructura estos puntos clave en formato de informe académico universitario (introducción, desarrollo, metodología y conclusiones).",
             icon = Icons.Default.AutoAwesome,
-            iconTint = Color(0xFFA855F7)
+            iconTint = if (isMiuix) MiuixTheme.colorScheme.onTertiaryContainer
+            else MaterialTheme.colorScheme.secondary
         ),
         QuickChipItem(
             label = "Explicar paso a paso",
             prompt = "Explícame detalladamente paso a paso los conceptos y procedimientos teóricos y prácticos de este tema.",
             icon = Icons.Default.Psychology,
-            iconTint = Color(0xFFF59E0B)
+            iconTint = if (isMiuix) MiuixTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
         )
     )
 
@@ -84,7 +86,7 @@ fun CopilotQuickChipsRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         chips.forEach { chip ->
-            if (themeStyle == AppThemeStyle.MIUIX) {
+            if (isMiuix) {
                 Box(
                     modifier = Modifier
                         .squircleSurface(

@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -92,6 +91,11 @@ fun ForoDetailHeroCard(
     val authorName = topic.author?.displayName ?: topic.userName ?: defaultAuthor
 
     if (themeStyle == AppThemeStyle.MIUIX) {
+        val dueColor = when {
+            isExpired -> MiuixTheme.colorScheme.error
+            isUrgent -> MiuixTheme.colorScheme.secondary
+            else -> MiuixTheme.colorScheme.onSurfaceVariantSummary
+        }
         Card(
             shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(containerColor = MiuixTheme.colorScheme.surfaceContainer),
@@ -208,7 +212,7 @@ fun ForoDetailHeroCard(
                                 Icon(
                                     imageVector = Icons.Default.Schedule,
                                     contentDescription = null,
-                                    tint = if (isExpired) Color(0xFFE53935) else if (isUrgent) Color(0xFFFFA000) else MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                    tint = dueColor,
                                     modifier = Modifier.size(12.dp)
                                 )
                                 Text(
@@ -217,7 +221,7 @@ fun ForoDetailHeroCard(
                                         fontSize = 11.sp,
                                         fontWeight = if (isExpired || isUrgent) FontWeight.Bold else FontWeight.Normal
                                     ),
-                                    color = if (isExpired) Color(0xFFE53935) else if (isUrgent) Color(0xFFFFA000) else MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                    color = dueColor
                                 )
                             }
                         }
@@ -227,6 +231,11 @@ fun ForoDetailHeroCard(
         }
     } else {
         // Material Design 3
+        val dueColor = when {
+            isExpired -> MaterialTheme.colorScheme.error
+            isUrgent -> MaterialTheme.colorScheme.tertiary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
         Card(
             modifier = modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -340,7 +349,7 @@ fun ForoDetailHeroCard(
                                 Icon(
                                     imageVector = Icons.Default.Schedule,
                                     contentDescription = null,
-                                    tint = if (isExpired) Color(0xFFE53935) else if (isUrgent) Color(0xFFFFA000) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = dueColor,
                                     modifier = Modifier.size(12.dp)
                                 )
                                 Text(
@@ -349,7 +358,7 @@ fun ForoDetailHeroCard(
                                         fontSize = 11.sp,
                                         fontWeight = if (isExpired || isUrgent) FontWeight.Bold else FontWeight.Normal
                                     ),
-                                    color = if (isExpired) Color(0xFFE53935) else if (isUrgent) Color(0xFFFFA000) else MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = dueColor
                                 )
                             }
                         }

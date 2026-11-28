@@ -155,7 +155,7 @@ fun GreetingSection(
 
         val (statusText, statusColor) = when (syncStatus) {
             SyncStatus.SYNCING -> stringResource(Res.string.sync_status_syncing) to MaterialTheme.colorScheme.tertiary
-            SyncStatus.SYNCED -> stringResource(Res.string.sync_status_synced) to Color(0xFF4CAF50)
+            SyncStatus.SYNCED -> stringResource(Res.string.sync_status_synced) to MaterialTheme.colorScheme.secondary
             SyncStatus.FAILED -> stringResource(Res.string.sync_status_offline) to MaterialTheme.colorScheme.error
             SyncStatus.SESSION_EXPIRED -> stringResource(Res.string.sync_status_session_expired) to MaterialTheme.colorScheme.error
         }

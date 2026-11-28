@@ -145,7 +145,6 @@ fun CourseDetailScreen(
                                 CourseHeroBannerCard(
                                     course = uiState.course,
                                     departmentTag = uiState.departmentTag,
-                                    professorName = uiState.professorName,
                                     promedioFormatted = uiState.promedioFormatted,
                                     avancePercentage = uiState.avancePercentage,
                                     completedModulesCount = uiState.completedModulesCount,
@@ -246,7 +245,6 @@ fun CourseDetailScreen(
                             CourseHeroBannerCard(
                                 course = uiState.course,
                                 departmentTag = uiState.departmentTag,
-                                professorName = uiState.professorName,
                                 promedioFormatted = uiState.promedioFormatted,
                                 avancePercentage = uiState.avancePercentage,
                                 completedModulesCount = uiState.completedModulesCount,

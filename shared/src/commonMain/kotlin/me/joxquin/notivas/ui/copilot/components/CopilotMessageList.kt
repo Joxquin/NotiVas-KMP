@@ -44,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import me.joxquin.notivas.data.local.AppThemeStyle
@@ -252,7 +251,11 @@ fun CopilotActivityStatus(
     themeStyle: AppThemeStyle,
     modifier: Modifier = Modifier
 ) {
-    val sparkleColor = Color(0xFFA855F7)
+    val sparkleColor = if (themeStyle == AppThemeStyle.MIUIX) {
+        MiuixTheme.colorScheme.onTertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.secondary
+    }
     val textColor = if (themeStyle == AppThemeStyle.MIUIX) {
         MiuixTheme.colorScheme.onSurfaceSecondary
     } else {
