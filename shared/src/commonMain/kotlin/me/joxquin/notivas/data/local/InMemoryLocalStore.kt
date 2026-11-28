@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import me.joxquin.notivas.data.local.db.NotivasDatabase
 import me.joxquin.notivas.data.local.db.createRoomDatabase
+import me.joxquin.notivas.data.local.db.entities.ActivityLogEntity
 import me.joxquin.notivas.data.local.db.entities.AssignmentEntity
 import me.joxquin.notivas.data.local.db.entities.CopilotMessageEntity
 import me.joxquin.notivas.data.local.db.entities.CopilotSessionEntity
@@ -21,6 +24,8 @@ import me.joxquin.notivas.data.local.db.entities.PlannerItemEntity
 import me.joxquin.notivas.data.local.db.entities.SimulationGroupEntity
 import me.joxquin.notivas.data.local.db.entities.SimulationItemEntity
 import me.joxquin.notivas.data.model.Assignment
+import me.joxquin.notivas.domain.sync.DeadlineRadarEntry
+import me.joxquin.notivas.domain.sync.detectAssignmentDeadlineChanges
 import me.joxquin.notivas.data.model.CopilotMessage
 import me.joxquin.notivas.data.model.CopilotSession
 import me.joxquin.notivas.data.model.Course
@@ -106,24 +111,22 @@ class InMemoryLocalStore(
         }
     }
 
-    fun syncCourses(activeCourses: List<Course>) {
-        scope.launch {
-            if (activeCourses.isEmpty()) return@launch
-            // Canvas no conoce semanas ni nota mínima: conservar las que el usuario configuró.
-            val existing = database.courseDao().getAll().associateBy { it.id }
-            database.courseDao().upsert(activeCourses.map { course ->
-                val local = existing[course.id]
-                CourseEntity.fromDomain(
-                    if (local == null) course
-                    else course.copy(
-                        totalWeeks = local.totalWeeks,
-                        passingGrade = local.passingGrade,
-                        imageUrl = local.imageUrl?.takeIf { it.isNotBlank() } ?: course.imageUrl
-                    )
+    suspend fun syncCourses(activeCourses: List<Course>) {
+        if (activeCourses.isEmpty()) return
+        // Canvas no conoce las semanas ni la nota mínima configuradas por el estudiante.
+        val existing = database.courseDao().getAll().associateBy { it.id }
+        database.courseDao().upsert(activeCourses.map { course ->
+            val local = existing[course.id]
+            CourseEntity.fromDomain(
+                if (local == null) course
+                else course.copy(
+                    totalWeeks = local.totalWeeks,
+                    passingGrade = local.passingGrade,
+                    imageUrl = local.imageUrl?.takeIf { it.isNotBlank() } ?: course.imageUrl
                 )
-            })
-            database.courseDao().deleteNotIn(activeCourses.map { it.id })
-        }
+            )
+        })
+        database.courseDao().deleteNotIn(activeCourses.map { it.id })
     }
 
     fun deleteCourses() {
@@ -159,27 +162,56 @@ class InMemoryLocalStore(
         return database.assignmentDao().getById(id)?.toDomain()
     }
 
-    fun insertAssignments(items: List<Assignment>) {
-        scope.launch {
-            val existingList = database.assignmentDao().getAll()
-            val existingMap = existingList.associateBy { it.id }
+    private val assignmentWriteMutex = Mutex()
 
-            val entitiesToUpsert = items.map { item ->
-                val baseEntity = AssignmentEntity.fromDomain(item)
-                val existing = existingMap[item.id]
-                if (existing != null) {
-                    baseEntity.copy(
-                        notificationSent = existing.notificationSent || item.notificationSent,
-                        notified24h = existing.notified24h || item.notified24h,
-                        notified3h = existing.notified3h || item.notified3h,
-                        notified30m = existing.notified30m || item.notified30m
-                    )
-                } else {
-                    baseEntity
-                }
-            }
-            database.assignmentDao().upsert(entitiesToUpsert)
+    fun insertAssignments(items: List<Assignment>) {
+        scope.launch { saveAssignments(items) }
+    }
+
+    suspend fun saveAssignments(
+        items: List<Assignment>,
+        reliableDeadlineIds: Set<Long>? = null,
+        recordDeadlineChanges: Boolean = false,
+        courseNames: Map<Long, String> = emptyMap()
+    ): Set<Long> = assignmentWriteMutex.withLock {
+        val assignmentDao = database.assignmentDao()
+        val existingList = assignmentDao.getAll()
+        val existingMap = existingList.associateBy { it.id }
+        val entitiesToUpsert = items.map { item ->
+            val baseEntity = AssignmentEntity.fromDomain(item)
+            val existing = existingMap[item.id]
+            if (existing != null) {
+                val isPartialSnapshot = reliableDeadlineIds != null && item.id !in reliableDeadlineIds
+                baseEntity.copy(
+                    dueAt = if (isPartialSnapshot) existing.dueAt else baseEntity.dueAt,
+                    lockAt = if (isPartialSnapshot) existing.lockAt else baseEntity.lockAt,
+                    notificationSent = existing.notificationSent || item.notificationSent,
+                    notified24h = existing.notified24h || item.notified24h,
+                    notified3h = existing.notified3h || item.notified3h,
+                    notified30m = existing.notified30m || item.notified30m
+                )
+            } else baseEntity
         }
+        val observed = if (recordDeadlineChanges && reliableDeadlineIds != null) {
+            items.filter { it.id in reliableDeadlineIds }
+        } else emptyList()
+        val logs = if (observed.isEmpty()) emptyList() else {
+            val timestamp = DateTimeUtil.nowEpochMillis()
+            detectAssignmentDeadlineChanges(existingList.map { it.toDomain() }, observed).map { change ->
+                ActivityLogEntity(
+                    type = DeadlineRadarEntry.ACTIVITY_TYPE,
+                    title = change.assignment.name,
+                    description = change.previous.toString(),
+                    extraInfo = change.current.toString(),
+                    timestamp = timestamp,
+                    courseName = courseNames[change.assignment.courseId],
+                    targetId = change.assignment.id
+                )
+            }
+        }
+        if (logs.isEmpty()) assignmentDao.upsert(entitiesToUpsert)
+        else assignmentDao.upsertWithDeadlineChanges(entitiesToUpsert, logs)
+        existingMap.keys
     }
 
     fun updateNotificationSent(id: Long, sent: Boolean) {
@@ -267,7 +299,7 @@ class InMemoryLocalStore(
     }
 
     suspend fun countActivityLogs(): Int =
-        database.activityLogDao().count()
+        database.activityLogDao().count(excludedType = DeadlineRadarEntry.ACTIVITY_TYPE)
 
     suspend fun clearActivityLogs() {
         database.activityLogDao().deleteAll()

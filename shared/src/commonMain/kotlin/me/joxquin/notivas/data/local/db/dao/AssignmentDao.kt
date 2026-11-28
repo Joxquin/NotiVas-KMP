@@ -1,9 +1,12 @@
 package me.joxquin.notivas.data.local.db.dao
 
 import androidx.room3.Dao
+import androidx.room3.Insert
 import androidx.room3.Query
+import androidx.room3.Transaction
 import androidx.room3.Upsert
 import kotlinx.coroutines.flow.Flow
+import me.joxquin.notivas.data.local.db.entities.ActivityLogEntity
 import me.joxquin.notivas.data.local.db.entities.AssignmentEntity
 
 @Dao
@@ -28,6 +31,15 @@ interface AssignmentDao {
 
     @Upsert
     suspend fun upsert(assignment: AssignmentEntity)
+
+    @Insert
+    suspend fun insertDeadlineChanges(logs: List<ActivityLogEntity>)
+
+    @Transaction
+    suspend fun upsertWithDeadlineChanges(assignments: List<AssignmentEntity>, logs: List<ActivityLogEntity>) {
+        upsert(assignments)
+        insertDeadlineChanges(logs)
+    }
 
     @Query("UPDATE assignments SET notified_24h = :notif24h, notified_3h = :notif3h, notified_30m = :notif30m WHERE id = :id")
     suspend fun updateNotificationFlags(id: Long, notif24h: Boolean, notif3h: Boolean, notif30m: Boolean)

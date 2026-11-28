@@ -1030,4 +1030,20 @@
     <string name="course_copilot_prompt_status">¿Cómo voy en %1$s? Dame mi promedio actual y mi estado.</string>
     <string name="course_copilot_prompt_needed">¿Cuánto necesito sacar en lo que falta de %1$s para aprobar?</string>
     <string name="course_copilot_prompt_pending">¿Qué tareas tengo pendientes en %1$s?</string>
+    <string name="study_plan_title">Modo Rescate</string>
+    <string name="study_plan_subtitle">Organiza tus próximas entregas según el tiempo que tienes.</string>
+    <string name="study_plan_available_time">¿Cuánto tiempo tienes?</string>
+    <string name="study_plan_minutes">%1$d min</string>
+    <string name="study_plan_summary">%1$d de %2$d min en el plan</string>
+    <string name="study_plan_no_fit">Ninguna entrega cabe en el tiempo disponible.</string>
+    <string name="study_plan_deadline">Plazo %1$d/%2$d a las %3$s</string>
+    <string name="study_plan_scheduled">En el plan</string>
+    <string name="study_plan_unscheduled">Fuera del plan</string>
+    <string name="study_plan_decrease_estimate">Reducir tiempo estimado para %1$s</string>
+    <string name="study_plan_increase_estimate">Aumentar tiempo estimado para %1$s</string>
+    <string name="study_plan_grade_improvement">+%1$s al promedio proyectado si pasas de 11 a 16 en esta entrega.</string>
+    <string name="deadline_radar_title">Radar de cambios</string>
+    <string name="deadline_radar_earlier">Se adelantó del %1$s al %2$s</string>
+    <string name="deadline_radar_later">Se postergó del %1$s al %2$s</string>
+    <string name="deadline_short_date_time">%1$d/%2$d a las %3$s</string>
 </resources>

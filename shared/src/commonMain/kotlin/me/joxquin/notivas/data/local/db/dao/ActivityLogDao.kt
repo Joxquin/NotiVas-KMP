@@ -27,6 +27,6 @@ interface ActivityLogDao {
     @Query("DELETE FROM activity_logs")
     suspend fun deleteAll()
 
-    @Query("SELECT COUNT(*) FROM activity_logs")
-    suspend fun count(): Int
+    @Query("SELECT COUNT(*) FROM activity_logs WHERE type != :excludedType")
+    suspend fun count(excludedType: String = ""): Int
 }

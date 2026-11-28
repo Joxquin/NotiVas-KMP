@@ -9,6 +9,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.joxquin.notivas.data.local.InMemoryLocalStore
@@ -25,6 +26,8 @@ import me.joxquin.notivas.data.model.SubmissionDetails
 import me.joxquin.notivas.data.model.UserProfile
 import me.joxquin.notivas.data.remote.AccessTokenPolicy
 import me.joxquin.notivas.data.remote.CanvasApiService
+import me.joxquin.notivas.domain.sync.DeadlineRadarEntry
+import me.joxquin.notivas.domain.sync.parseDeadline
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -42,6 +45,7 @@ class CanvasRepository(
 ) {
     // Evita que la app abierta y el worker de fondo pidan dos tokens nuevos a la vez.
     private val tokenRenewalMutex = Mutex()
+    private val canvasSyncMutex = Mutex()
 
     // Último refresco remoto del perfil (ver getProfile).
     private var lastProfileRefreshAt = 0L
@@ -539,7 +543,9 @@ class CanvasRepository(
         candidates.distinctBy { it.title.lowercase() }
     }
 
-    suspend fun fetchAndSaveData() = withContext(AppDispatchers.IO) {
+    suspend fun fetchAndSaveData() = canvasSyncMutex.withLock { fetchAndPersistCanvasData() }
+
+    private suspend fun fetchAndPersistCanvasData() = withContext(AppDispatchers.IO) {
         val token = getAuthToken() ?: return@withContext
         val baseUrl = preferencesManager.universityUrl.first() ?: return@withContext
 
@@ -673,9 +679,13 @@ class CanvasRepository(
             val remainingMissing = missingMap.values.filter { m -> currentAssignmentsList.none { it.id == m.id } }
             val combinedAssignments = currentWithMissing + remainingMissing
 
-            val existingLocalAssignmentIds = localStore.getAssignmentList().map { it.id }.toSet()
-
-            localStore.insertAssignments(combinedAssignments)
+            val hasCompletedInitialSync = preferencesManager.hasCompletedInitialSync.first()
+            val existingLocalAssignmentIds = localStore.saveAssignments(
+                items = combinedAssignments,
+                reliableDeadlineIds = currentAssignmentsList.map { it.id }.toSet(),
+                recordDeadlineChanges = hasCompletedInitialSync,
+                courseNames = allCoursesList.associate { it.id to it.name }
+            )
             preferencesManager.setSessionExpired(false)
 
             // Detección de nuevos contenidos publicados/abiertos (Tareas, Exámenes, Foros)
@@ -686,7 +696,6 @@ class CanvasRepository(
                     emptyList()
                 }
 
-                val hasCompletedInitialSync = preferencesManager.hasCompletedInitialSync.first()
                 val persistedKnownAssignmentIds = preferencesManager.knownAssignmentIds.first()
                 // Combinar los IDs persistidos con los que ya existian localmente en SQLite
                 val knownAssignmentIds = persistedKnownAssignmentIds + existingLocalAssignmentIds
@@ -1406,7 +1415,17 @@ class CanvasRepository(
 
     // ─── Actividad Reciente ─────────────────────────────────────────────────
     fun observeActivityLogs(): Flow<List<me.joxquin.notivas.data.local.db.entities.ActivityLogEntity>> =
-        localStore.observeActivityLogs()
+        localStore.observeActivityLogs().map { logs -> logs.filterNot { it.type == DeadlineRadarEntry.ACTIVITY_TYPE } }
+
+    fun observeDeadlineChanges(): Flow<List<DeadlineRadarEntry>> =
+        localStore.observeActivityLogsByType(DeadlineRadarEntry.ACTIVITY_TYPE).map { logs ->
+            logs.asSequence().mapNotNull { log ->
+                val assignmentId = log.targetId ?: return@mapNotNull null
+                val previous = parseDeadline(log.description) ?: return@mapNotNull null
+                val current = parseDeadline(log.extraInfo) ?: return@mapNotNull null
+                DeadlineRadarEntry(log.id, assignmentId, log.title, log.courseName, previous, current)
+            }.take(5).toList()
+        }
 
     suspend fun logActivity(
         type: String,
