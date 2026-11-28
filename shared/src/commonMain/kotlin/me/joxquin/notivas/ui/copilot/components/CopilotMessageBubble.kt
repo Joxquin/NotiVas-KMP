@@ -87,6 +87,8 @@ import me.joxquin.notivas.data.model.Course
 import me.joxquin.notivas.util.DateTimeUtil
 import me.joxquin.notivas.util.MathFormatter
 import me.joxquin.notivas.util.PlatformShareHandler
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 private val CARD_TAG_REGEX = Regex("""(?:\s*[-•*]?\s*)?::card\[(.*?)\]::\s*""")
 private val CARD_PROP_REGEX = Regex("""(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^,\s\]]+))""")
@@ -229,7 +231,7 @@ fun CopilotMessageBubble(
                                     ) {
                                         Icon(
                                             imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                            contentDescription = "Copiar mensaje",
+                                            contentDescription = stringResource(Res.string.cd_copy_message),
                                             tint = MiuixTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
                                             modifier = Modifier.size(12.dp)
                                         )
@@ -297,7 +299,7 @@ fun CopilotMessageBubble(
                                     ) {
                                         Icon(
                                             imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                            contentDescription = "Copiar mensaje",
+                                            contentDescription = stringResource(Res.string.cd_copy_message),
                                             tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
                                             modifier = Modifier.size(12.dp)
                                         )
@@ -466,7 +468,7 @@ fun CopilotMessageBubble(
                         // Botón Compartir
                         CopilotActionButton(
                             icon = Icons.Default.Share,
-                            label = "Compartir",
+                            label = stringResource(Res.string.copilot_share),
                             themeStyle = themeStyle,
                             onClick = {
                                 if (onShare != null) {
@@ -481,7 +483,7 @@ fun CopilotMessageBubble(
                         if (onRegenerate != null) {
                             CopilotActionButton(
                                 icon = Icons.Default.Refresh,
-                                label = "Regenerar",
+                                label = stringResource(Res.string.copilot_regenerate),
                                 themeStyle = themeStyle,
                                 onClick = onRegenerate
                             )
@@ -491,7 +493,7 @@ fun CopilotMessageBubble(
                     // 5. Descargo de responsabilidad sutil (Disclaimer)
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "NotiVas Copilot es una IA y puede cometer errores.",
+                        text = stringResource(Res.string.copilot_disclaimer),
                         style = if (themeStyle == AppThemeStyle.MIUIX) {
                             MiuixTheme.textStyles.footnote2.copy(fontSize = 11.5.sp)
                         } else {
@@ -1150,7 +1152,7 @@ fun CopilotSourcesAccordion(
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
-                        text = "Fuentes de Canvas LMS (${sources.size})",
+                        text = stringResource(Res.string.copilot_sources_canvas_format, sources.size),
                         style = MiuixTheme.textStyles.footnote2.copy(fontWeight = FontWeight.Bold),
                         color = MiuixTheme.colorScheme.primary
                     )
@@ -1225,7 +1227,7 @@ fun CopilotSourcesAccordion(
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "Fuentes consultadas (${sources.size})",
+                            text = stringResource(Res.string.copilot_sources_consulted_format, sources.size),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary
                         )

@@ -183,7 +183,7 @@ fun ForoDetailHeroCard(
                             )
                             Icon(
                                 imageVector = Icons.Default.Verified,
-                                contentDescription = "Verificado",
+                                contentDescription = stringResource(Res.string.cd_verified),
                                 tint = MiuixTheme.colorScheme.primary,
                                 modifier = Modifier.size(14.dp)
                             )
@@ -320,7 +320,7 @@ fun ForoDetailHeroCard(
                             )
                             Icon(
                                 imageVector = Icons.Default.Verified,
-                                contentDescription = "Verificado",
+                                contentDescription = stringResource(Res.string.cd_verified),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(14.dp)
                             )

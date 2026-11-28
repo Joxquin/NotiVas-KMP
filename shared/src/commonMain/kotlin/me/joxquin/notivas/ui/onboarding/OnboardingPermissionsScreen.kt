@@ -95,6 +95,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun OnboardingPermissionsScreen(
@@ -270,7 +271,7 @@ fun OnboardingPermissionsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                            contentDescription = "Informacion sobre permisos",
+                            contentDescription = stringResource(Res.string.cd_permissions_info),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -514,14 +515,14 @@ private fun ExpressivePermissionRow(
             if (isGranted) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Concedido",
+                    contentDescription = stringResource(Res.string.cd_granted),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             } else {
                 Icon(
                     imageVector = Icons.Outlined.ChevronRight,
-                    contentDescription = "Configurar",
+                    contentDescription = stringResource(Res.string.cd_configure),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.size(20.dp)
                 )

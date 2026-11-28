@@ -42,6 +42,8 @@ import me.joxquin.notivas.ui.components.brand.NotiVasOutlineLogo
 import me.joxquin.notivas.ui.splash.LocalSplashLogoTarget
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,7 +111,7 @@ fun InicioTopAppBar(
                 IconButton(onClick = onNavigateToSchedule) {
                     Icon(
                         imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = "Agenda",
+                        contentDescription = stringResource(Res.string.cd_schedule),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(22.dp)
                     )
@@ -117,7 +119,7 @@ fun InicioTopAppBar(
                 IconButton(onClick = onNavigateToActivity) {
                     Icon(
                         imageVector = Icons.Filled.History,
-                        contentDescription = "Actividad Reciente",
+                        contentDescription = stringResource(Res.string.recent_activity_title),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(22.dp)
                     )

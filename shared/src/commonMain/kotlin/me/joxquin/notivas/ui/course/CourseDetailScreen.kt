@@ -103,7 +103,7 @@ fun CourseDetailScreen(
                             ) {
                                 top.yukonga.miuix.kmp.basic.Icon(
                                     imageVector = MiuixIcons.Refresh,
-                                    contentDescription = "Refrescar",
+                                    contentDescription = stringResource(Res.string.cd_refresh),
                                     tint = MiuixTheme.colorScheme.onBackground
                                 )
                             }
@@ -209,7 +209,7 @@ fun CourseDetailScreen(
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
+                                contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -218,7 +218,7 @@ fun CourseDetailScreen(
                         IconButton(onClick = { viewModel.loadCourseDetail(isRefresh = true) }) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Refrescar",
+                                contentDescription = stringResource(Res.string.cd_refresh),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }

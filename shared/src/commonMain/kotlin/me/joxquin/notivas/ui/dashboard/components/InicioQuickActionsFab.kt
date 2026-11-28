@@ -34,6 +34,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun InicioQuickActionsFab(
@@ -142,7 +144,7 @@ fun InicioQuickActionsFab(
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Acciones rápidas",
+                contentDescription = stringResource(Res.string.cd_quick_actions),
                 modifier = Modifier
                     .size(28.dp)
                     .rotate(fabRotation),

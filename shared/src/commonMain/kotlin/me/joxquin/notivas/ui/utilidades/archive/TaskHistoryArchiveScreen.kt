@@ -136,6 +136,7 @@ import me.joxquin.notivas.ui.components.miuix.miuixPageContentPadding
 import me.joxquin.notivas.ui.components.miuix.miuixPageScrollModifiers
 import me.joxquin.notivas.ui.components.miuix.rememberMiuixBlurBackdrop
 import androidx.compose.foundation.layout.fillMaxHeight
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -343,7 +344,7 @@ fun TaskHistoryArchiveScreen(
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
+                                contentDescription = stringResource(Res.string.back),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }

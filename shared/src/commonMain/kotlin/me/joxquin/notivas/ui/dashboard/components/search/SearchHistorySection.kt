@@ -56,6 +56,7 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import me.joxquin.notivas.shared.resources.*
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -315,7 +316,7 @@ private fun SearchChip(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Eliminar",
+                    contentDescription = stringResource(Res.string.delete),
                     tint = variantColor,
                     modifier = Modifier.size(12.dp)
                 )

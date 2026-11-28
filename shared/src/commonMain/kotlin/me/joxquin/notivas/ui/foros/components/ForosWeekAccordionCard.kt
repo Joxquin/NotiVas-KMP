@@ -72,7 +72,7 @@ fun ForosWeekAccordionCard(
                 if (group.isCompleted) {
                     Icon(
                         imageVector = Icons.Filled.Check,
-                        contentDescription = "Completado",
+                        contentDescription = stringResource(Res.string.cd_completed),
                         tint = successColor,
                         modifier = Modifier.size(20.dp)
                     )

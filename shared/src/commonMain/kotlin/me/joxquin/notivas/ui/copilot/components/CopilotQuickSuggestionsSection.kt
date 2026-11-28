@@ -72,7 +72,7 @@ fun CopilotQuickSuggestionsSection(
         ),
         SuggestionItem(
             icon = Icons.Default.Search,
-            text = "Buscar artículos científicos y tesis en la web sobre un tema",
+            text = stringResource(Res.string.copilot_suggestion_research_q),
             iconTint = if (isMiuix) MiuixTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
         )
     )

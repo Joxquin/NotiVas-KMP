@@ -53,6 +53,7 @@ import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.glass.GlassDropdownPreference
+import me.joxquin.notivas.shared.resources.*
 
 @Composable
 fun LanguageSettingsSection(
@@ -165,7 +166,7 @@ fun LanguageSettingsSection(
                                 if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Seleccionado",
+                                        contentDescription = stringResource(Res.string.selected),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(20.dp)
                                     )

@@ -49,6 +49,8 @@ import me.joxquin.notivas.util.MathFormatter
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * Componente visual para renderizar fórmulas y cálculos matemáticos en su propio párrafo o bloque
@@ -119,12 +121,12 @@ fun CopilotMathBlockComposable(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Functions,
-                                    contentDescription = "Fórmula",
+                                    contentDescription = stringResource(Res.string.cd_formula),
                                     tint = MiuixTheme.colorScheme.primary,
                                     modifier = Modifier.size(13.dp)
                                 )
                                 Text(
-                                    text = "Cálculo",
+                                    text = stringResource(Res.string.copilot_math_badge),
                                     style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
                                     color = MiuixTheme.colorScheme.primary
                                 )
@@ -152,7 +154,7 @@ fun CopilotMathBlockComposable(
                         ) {
                             Icon(
                                 imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                contentDescription = "Copiar fórmula",
+                                contentDescription = stringResource(Res.string.cd_copy_formula),
                                 tint = if (copied) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                 modifier = Modifier.size(12.dp)
                             )
@@ -214,12 +216,12 @@ fun CopilotMathBlockComposable(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Functions,
-                                contentDescription = "Fórmula",
+                                contentDescription = stringResource(Res.string.cd_formula),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(13.dp)
                             )
                             Text(
-                                text = "Cálculo",
+                                text = stringResource(Res.string.copilot_math_badge),
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -240,7 +242,7 @@ fun CopilotMathBlockComposable(
                         ) {
                             Icon(
                                 imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                                contentDescription = "Copiar fórmula",
+                                contentDescription = stringResource(Res.string.cd_copy_formula),
                                 tint = if (copied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(12.dp)
                             )

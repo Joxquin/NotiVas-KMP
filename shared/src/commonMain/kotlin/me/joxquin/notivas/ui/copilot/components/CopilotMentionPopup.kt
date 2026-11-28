@@ -58,6 +58,8 @@ import me.joxquin.notivas.ui.copilot.MentionStep
 import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import org.jetbrains.compose.resources.stringResource
+import me.joxquin.notivas.shared.resources.*
 
 /**
  * Componente flotante de autocompletado para menciones con '@'.
@@ -124,7 +126,7 @@ fun CopilotMentionPopup(
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Atrás",
+                                        contentDescription = stringResource(Res.string.back),
                                         tint = MiuixTheme.colorScheme.primary,
                                         modifier = Modifier.size(16.dp)
                                     )
@@ -152,7 +154,7 @@ fun CopilotMentionPopup(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Cerrar",
+                                contentDescription = stringResource(Res.string.close),
                                 tint = MiuixTheme.colorScheme.onSurfaceSecondary,
                                 modifier = Modifier.size(14.dp)
                             )
@@ -213,7 +215,7 @@ fun CopilotMentionPopup(
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Atrás",
+                                        contentDescription = stringResource(Res.string.back),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(18.dp)
                                     )
@@ -235,7 +237,7 @@ fun CopilotMentionPopup(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Cerrar",
+                                contentDescription = stringResource(Res.string.close),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(16.dp)
                             )
