@@ -27,6 +27,8 @@ import me.joxquin.notivas.ui.animation.staggeredEntrance
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import me.joxquin.notivas.ui.dashboard.components.CoursesMatrixSection
+import me.joxquin.notivas.ui.dashboard.components.DashboardDeadlineRadarCard
+import me.joxquin.notivas.ui.dashboard.components.DashboardStudyPlanCard
 import me.joxquin.notivas.ui.dashboard.components.MaterialCourseHeader
 import me.joxquin.notivas.ui.dashboard.components.MaterialCourseRowItem
 import me.joxquin.notivas.ui.dashboard.components.GreetingSection
@@ -95,6 +97,8 @@ fun InicioScreen(
     val courses by viewModel.courses.collectAsState()
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
     val allAssignments by viewModel.allAssignmentsUi.collectAsState()
+    val studyPlan by viewModel.studyPlan.collectAsState()
+    val deadlineRadar by viewModel.deadlineRadar.collectAsState()
     val courseStats by viewModel.courseStats.collectAsState()
     val weeklyDayBlocks by viewModel.weeklyDayBlocks.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
@@ -286,6 +290,30 @@ fun InicioScreen(
                                 }
                             },
                             themeStyle = AppThemeStyle.MATERIAL
+                        )
+                    }
+                }
+
+                if (deadlineRadar.isNotEmpty()) {
+                    item(key = "deadline_radar") {
+                        DashboardDeadlineRadarCard(
+                            changes = deadlineRadar,
+                            themeStyle = AppThemeStyle.MATERIAL,
+                            onAssignmentClick = { onOpenAssignmentDraft?.invoke(it) }
+                        )
+                    }
+                }
+
+                if (studyPlan.tasks.isNotEmpty()) {
+                    item(key = "study_plan") {
+                        DashboardStudyPlanCard(
+                            state = studyPlan,
+                            themeStyle = AppThemeStyle.MATERIAL,
+                            onAvailableMinutesChange = viewModel::setStudyPlanAvailableMinutes,
+                            onEstimatedMinutesChange = viewModel::setStudyPlanEstimatedMinutes,
+                            onTaskClick = { task ->
+                                onOpenAssignmentDraft?.invoke(AssignmentUiModel(task.assignment, task.courseName))
+                            }
                         )
                     }
                 }

@@ -45,7 +45,10 @@ import top.yukonga.miuix.kmp.icon.extended.Weeks
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import me.joxquin.notivas.ui.animation.staggeredEntrance
+import me.joxquin.notivas.ui.dashboard.AssignmentUiModel
 import me.joxquin.notivas.ui.dashboard.DashboardViewModel
+import me.joxquin.notivas.ui.dashboard.components.DashboardDeadlineRadarCard
+import me.joxquin.notivas.ui.dashboard.components.DashboardStudyPlanCard
 import me.joxquin.notivas.ui.dashboard.components.QuickReloginSheet
 import me.joxquin.notivas.ui.dashboard.components.SessionExpiredBanner
 import me.joxquin.notivas.ui.dashboard.components.formatTokenExpiryDate
@@ -115,6 +118,8 @@ fun InicioMiuixContent(
     val courses by viewModel.courses.collectAsState()
     val urgentAssignments by viewModel.urgentAssignments.collectAsState()
     val allAssignments by viewModel.allAssignmentsUi.collectAsState()
+    val studyPlan by viewModel.studyPlan.collectAsState()
+    val deadlineRadar by viewModel.deadlineRadar.collectAsState()
     val courseStats by viewModel.courseStats.collectAsState()
     val weeklyDayBlocks by viewModel.weeklyDayBlocks.collectAsState()
     val unconfiguredBannerState by viewModel.unconfiguredBannerState.collectAsState()
@@ -366,6 +371,32 @@ fun InicioMiuixContent(
                                         }
                                     },
                                     themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX
+                                )
+                            }
+                        }
+
+                        if (deadlineRadar.isNotEmpty()) {
+                            item(key = "deadline_radar") {
+                                DashboardDeadlineRadarCard(
+                                    changes = deadlineRadar,
+                                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                                    onAssignmentClick = { onOpenAssignmentDraft?.invoke(it) },
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
+                        }
+
+                        if (studyPlan.tasks.isNotEmpty()) {
+                            item(key = "study_plan") {
+                                DashboardStudyPlanCard(
+                                    state = studyPlan,
+                                    themeStyle = me.joxquin.notivas.data.local.AppThemeStyle.MIUIX,
+                                    onAvailableMinutesChange = viewModel::setStudyPlanAvailableMinutes,
+                                    onEstimatedMinutesChange = viewModel::setStudyPlanEstimatedMinutes,
+                                    onTaskClick = { task ->
+                                        onOpenAssignmentDraft?.invoke(AssignmentUiModel(task.assignment, task.courseName))
+                                    },
+                                    modifier = Modifier.padding(horizontal = 16.dp)
                                 )
                             }
                         }

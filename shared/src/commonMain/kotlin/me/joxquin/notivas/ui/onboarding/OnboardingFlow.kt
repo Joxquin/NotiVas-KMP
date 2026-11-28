@@ -49,7 +49,8 @@ sealed interface OnboardingRoute : NavKey {
 fun OnboardingFlow(
     viewModel: OnboardingViewModel,
     onComplete: () -> Unit,
-    themeStyle: me.joxquin.notivas.data.local.AppThemeStyle = me.joxquin.notivas.di.AppModule.preferencesManager.getThemeStyle()
+    themeStyle: me.joxquin.notivas.data.local.AppThemeStyle = me.joxquin.notivas.di.AppModule.preferencesManager.getThemeStyle(),
+    onTryDemo: (() -> Unit)? = null
 ) {
     val universityUrl by viewModel.universityUrl.collectAsState(initial = "https://tecsup.instructure.com")
     val accessToken by viewModel.accessToken.collectAsState(initial = "")
@@ -146,6 +147,7 @@ fun OnboardingFlow(
             OnboardingWelcomeDomainScreen(
                 currentUrl = universityUrl,
                 currentToken = accessToken,
+                onTryDemo = onTryDemo,
                 onContinue = { url ->
                     viewModel.updateUniversityUrl(url)
                     onboardingNavigator.push(OnboardingRoute.WebLogin)

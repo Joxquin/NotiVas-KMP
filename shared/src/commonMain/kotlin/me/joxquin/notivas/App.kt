@@ -21,12 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import me.joxquin.notivas.data.local.AppLanguage
+import me.joxquin.notivas.data.local.AppThemeStyle
 import me.joxquin.notivas.data.local.InMemoryLocalStore
 import me.joxquin.notivas.data.local.PreferencesManager
 import me.joxquin.notivas.data.remote.CanvasApiService
 import me.joxquin.notivas.data.remote.KtorHttpClientProvider
 import me.joxquin.notivas.data.repository.CanvasRepository
 import me.joxquin.notivas.ui.components.brand.NotiVasBrandLogo
+import me.joxquin.notivas.ui.demo.SemesterDemoScreen
 import me.joxquin.notivas.ui.onboarding.OnboardingFlow
 import me.joxquin.notivas.ui.onboarding.OnboardingViewModel
 import me.joxquin.notivas.ui.splash.AppStartupSplash
@@ -35,7 +38,20 @@ import me.joxquin.notivas.ui.theme.AppTheme
 import me.joxquin.notivas.util.ProvideAppLocale
 
 @Composable
-fun App() {
+fun App(startInDemo: Boolean = false) {
+    var demoOpen by rememberSaveable { mutableStateOf(startInDemo) }
+    var demoTheme by rememberSaveable { mutableStateOf(AppThemeStyle.MATERIAL.name) }
+    var demoLanguage by rememberSaveable { mutableStateOf(AppLanguage.SYSTEM.name) }
+    if (demoOpen) {
+        val selectedTheme = AppThemeStyle.valueOf(demoTheme)
+        ProvideAppLocale(language = AppLanguage.valueOf(demoLanguage)) {
+            AppTheme(themeStyle = selectedTheme) {
+                SemesterDemoScreen(themeStyle = selectedTheme, onExit = { demoOpen = false })
+            }
+        }
+        return
+    }
+
     // Contenedor compartido de dependencias de la aplicación
     val preferencesManager = remember { me.joxquin.notivas.di.AppModule.preferencesManager }
     val localStore = remember { me.joxquin.notivas.di.AppModule.localStore }
@@ -130,6 +146,11 @@ fun App() {
                                 androidx.compose.runtime.key(completed) {
                                     OnboardingFlow(
                                         viewModel = onboardingViewModel,
+                                        onTryDemo = {
+                                            demoTheme = effectiveThemeStyle.name
+                                            demoLanguage = appLanguage.name
+                                            demoOpen = true
+                                        },
                                         onComplete = {
                                             onboardingViewModel.finishOnboarding()
                                         },

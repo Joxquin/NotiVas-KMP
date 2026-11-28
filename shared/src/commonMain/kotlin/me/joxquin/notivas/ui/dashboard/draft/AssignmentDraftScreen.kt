@@ -67,6 +67,7 @@ import me.joxquin.notivas.ui.dashboard.draft.components.AssignmentQuizCard
 import me.joxquin.notivas.ui.dashboard.draft.components.ConsignaHeaderTitle
 import me.joxquin.notivas.ui.dashboard.draft.components.ConsignaSectionItem
 import me.joxquin.notivas.ui.dashboard.draft.components.parseConsignaSections
+import me.joxquin.notivas.ui.dashboard.draft.components.TeamChecklistCard
 
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftStatusCard
 import me.joxquin.notivas.ui.dashboard.components.draft.DraftSyncInfo
@@ -354,6 +355,12 @@ fun AssignmentDraftScreen(
                         }
                     }
 
+                    if (!assignment.isQuiz) {
+                        item(key = "team_checklist") {
+                            TeamChecklistCard(assignment, consignaSections, baseUrl, themeStyle)
+                        }
+                    }
+
                     // Botones de Acción (Guardar para después)
                     item(key = "task_actions") {
                         AssignmentBottomActionBar(
@@ -613,6 +620,12 @@ fun AssignmentDraftScreen(
                                 fontSize = 13.sp
                             )
                         }
+                    }
+                }
+
+                if (!assignment.isQuiz) {
+                    item(key = "team_checklist") {
+                        TeamChecklistCard(assignment, consignaSections, baseUrl, themeStyle)
                     }
                 }
 

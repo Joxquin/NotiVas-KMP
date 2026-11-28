@@ -13,9 +13,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -34,8 +36,11 @@ import me.joxquin.notivas.data.repository.CanvasRepository
 import me.joxquin.notivas.data.repository.SimulationRepository
 import me.joxquin.notivas.di.AppModule
 import me.joxquin.notivas.domain.usecase.AcademicCalculatorUseCase
+import me.joxquin.notivas.domain.usecase.BuildStudyPlanUseCase
+import me.joxquin.notivas.domain.usecase.StudyPlanGradeScenario
 import me.joxquin.notivas.util.DateComponents
 import me.joxquin.notivas.util.DateTimeUtil
+import kotlin.time.Instant
 
 enum class SyncStatus {
     SYNCING,
@@ -805,6 +810,45 @@ class DashboardViewModel(
                 AssignmentUiModel(assignment, course?.name ?: "Curso")
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val buildStudyPlan = BuildStudyPlanUseCase()
+    private val studyPlanGradeScenario = StudyPlanGradeScenario(academicCalculatorUseCase)
+    private val studyPlanAvailableMinutes = MutableStateFlow(60)
+    private val studyPlanEstimatedMinutes = MutableStateFlow<Map<Long, Int>>(emptyMap())
+    private val studyPlanGradeInputs = combine(courses, simulationRepository.observeAllGroupsWithItems()) { courses, groups ->
+        courses.associateBy { it.id } to groups.groupBy { it.group.courseId }
+    }
+    private val studyPlanRefresh = flow {
+        while (true) {
+            emit(Unit)
+            delay(30_000)
+        }
+    }
+
+    val studyPlan: StateFlow<StudyPlanUiState> =
+        combine(
+            allAssignmentsUi, studyPlanAvailableMinutes, studyPlanEstimatedMinutes,
+            studyPlanRefresh, studyPlanGradeInputs
+        ) { assignments, availableMinutes, estimates, _, (coursesById, groupsByCourse) ->
+            val now = Instant.fromEpochMilliseconds(DateTimeUtil.nowEpochMillis())
+            buildStudyPlan.uiState(assignments, estimates, availableMinutes, now) { assignment ->
+                val course = coursesById[assignment.courseId]
+                course?.let { studyPlanGradeScenario.improvement(it, groupsByCourse[it.id].orEmpty(), assignment.id) }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StudyPlanUiState())
+
+    val deadlineRadar: StateFlow<List<DeadlineRadarUiItem>> =
+        combine(repository.observeDeadlineChanges(), allAssignmentsUi) { changes, assignments ->
+            changes.map { entry -> DeadlineRadarUiItem(entry, assignments.firstOrNull { it.assignment.id == entry.assignmentId }) }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun setStudyPlanAvailableMinutes(minutes: Int) {
+        studyPlanAvailableMinutes.value = minutes
+    }
+
+    fun setStudyPlanEstimatedMinutes(assignmentId: Long, minutes: Int) {
+        studyPlanEstimatedMinutes.update { it + (assignmentId to minutes) }
+    }
 
     // Entregas urgentes: hoy y mañana (en tiempo local)
     val urgentAssignments: StateFlow<List<AssignmentUiModel>> =
