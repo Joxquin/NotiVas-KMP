@@ -21,6 +21,15 @@ Está hecha con Kotlin Multiplatform y Compose Multiplatform. Android es la plat
 | Copiloto IA | Chat que consulta tus notas y tareas con herramientas propias (ver abajo). |
 | Ajustes | Tema Material 3 o MIUIX, colores dinámicos (Monet), idioma, notificaciones, token de Canvas y API key de la IA. |
 
+## Semestre de prueba
+
+En la pantalla de bienvenida, toca **Probar un semestre sin cuenta**. La demo usa tareas y notas ficticias. En la versión web, añade `?demo=1` a la dirección de NotiVas para entrar directamente.
+
+1. Abre **Modo Rescate** y elige 30, 60 o 90 minutos. Ajusta la duración de cada pendiente para ver cuáles puedes terminar antes de su plazo.
+2. Toca **Adelantar la entrega de Redes**. El **Radar de cambios** muestra el plazo anterior y el nuevo, y el plan se recalcula.
+3. En **Simular una nota**, cambia la nota del informe para ver cómo varía el promedio proyectado.
+4. Toca el **Informe de Redes** y abre **Entrega en equipo**. Edita los pasos de la consigna, asigna responsables y fechas, y revisa el texto antes de compartirlo.
+
 ## Arquitectura
 
 La app sigue MVVM con flujo de datos en una sola dirección (UDF): la pantalla dibuja el estado que le da su ViewModel y le avisa de cada acción; el ViewModel pide los datos a repositorios y casos de uso, y publica un nuevo estado.

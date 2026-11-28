@@ -85,6 +85,7 @@ import me.joxquin.notivas.shared.resources.onboarding_domain_input_placeholder
 import me.joxquin.notivas.shared.resources.onboarding_domain_quick_suggestions
 import me.joxquin.notivas.shared.resources.onboarding_welcome_subtitle
 import me.joxquin.notivas.shared.resources.onboarding_welcome_title
+import me.joxquin.notivas.shared.resources.semester_demo_open
 import me.joxquin.notivas.shared.resources.student_auth_mode_token
 import me.joxquin.notivas.ui.components.aura.MonetAuraBackground
 import me.joxquin.notivas.ui.components.brand.NotiVasBrandLogo
@@ -103,7 +104,8 @@ fun OnboardingWelcomeDomainScreen(
     currentToken: String = "",
     onContinue: (String) -> Unit,
     onContinueWithToken: ((url: String, token: String) -> Unit)? = null,
-    onUseManualToken: (() -> Unit)? = null
+    onUseManualToken: (() -> Unit)? = null,
+    onTryDemo: (() -> Unit)? = null
 ) {
     var animationStarted by remember { mutableStateOf(false) }
 
@@ -624,6 +626,11 @@ fun OnboardingWelcomeDomainScreen(
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
+                        }
+                        if (onTryDemo != null) {
+                            androidx.compose.material3.TextButton(onClick = onTryDemo) {
+                                Text(stringResource(Res.string.semester_demo_open))
+                            }
                         }
                     }
                 }

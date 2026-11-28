@@ -1061,4 +1061,22 @@
     <string name="team_checklist_share">Share</string>
     <string name="team_checklist_copy">Copy checklist</string>
     <string name="team_checklist_copied">Checklist copied</string>
+    <string name="semester_demo_open">Try a sample semester</string>
+    <string name="semester_demo_title">Sample semester</string>
+    <string name="semester_demo_intro">These are sample assignments. Change a deadline, plan the time you have, and try a grade.</string>
+    <string name="semester_demo_networks">Networks</string>
+    <string name="semester_demo_development">Software development</string>
+    <string name="semester_demo_report">Network lab report</string>
+    <string name="semester_demo_summary">Module summary</string>
+    <string name="semester_demo_lab">Programming lab</string>
+    <string name="semester_demo_move_date">Move the network report deadline earlier</string>
+    <string name="semester_demo_reset_date">Restore the original deadline</string>
+    <string name="semester_demo_grade_title">Try a grade</string>
+    <string name="semester_demo_grade_input">Estimated report grade %1$d/20</string>
+    <string name="semester_demo_grade_result">Projected course grade %1$s/20</string>
+    <string name="semester_demo_grade_lower">Lower grade</string>
+    <string name="semester_demo_grade_raise">Raise grade</string>
+    <string name="semester_demo_step_outline">Draft the outline and diagram</string>
+    <string name="semester_demo_step_evidence">Add the test results</string>
+    <string name="semester_demo_step_review">Review the rubric and upload the PDF</string>
 </resources>
