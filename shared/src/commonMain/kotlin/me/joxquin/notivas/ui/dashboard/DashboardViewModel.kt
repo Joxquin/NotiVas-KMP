@@ -720,8 +720,11 @@ class DashboardViewModel(
             val fileId = currentDraft?.driveFileId?.takeIf { it.isNotBlank() }
                 ?: extractDriveFileIdFromUrl(driveUrl)
 
+            println("[DashboardViewModel] submitDraftToCanvas: assignment=${assignment.id}, fileId=$fileId, format=${exportFormat.displayName}")
+
             if (fileId.isNullOrBlank()) {
                 val errorMsg = "No se encontró el archivo del borrador en Google Drive."
+                println("[DashboardViewModel] submitDraftToCanvas error: $errorMsg")
                 _uiEffect.tryEmit(UiEffect.ShowToast(errorMsg))
                 onError(errorMsg)
                 return@launch
@@ -733,10 +736,13 @@ class DashboardViewModel(
             )
             if (exportedBytes == null || exportedBytes.isEmpty()) {
                 val errorMsg = "No se pudo convertir el borrador a ${exportFormat.displayName}."
+                println("[DashboardViewModel] submitDraftToCanvas error: $errorMsg")
                 _uiEffect.tryEmit(UiEffect.ShowToast(errorMsg))
                 onError(errorMsg)
                 return@launch
             }
+
+            println("[DashboardViewModel] submitDraftToCanvas: exportados ${exportedBytes.size} bytes, subiendo a Canvas...")
 
             val baseFileName = assignment.name
                 .replace(Regex("""[^\p{L}\p{N}._\- ]"""), "")

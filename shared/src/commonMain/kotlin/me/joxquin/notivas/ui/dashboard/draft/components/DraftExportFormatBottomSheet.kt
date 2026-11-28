@@ -110,8 +110,6 @@ fun DraftExportFormatBottomSheet(
         }
     }
 
-    var pendingConfirm by remember { mutableStateOf<DraftExportFormat?>(null) }
-
     val sheetBody: @Composable (dismissAction: () -> Unit) -> Unit = { dismissAction ->
         Column(
             modifier = Modifier
@@ -182,7 +180,6 @@ fun DraftExportFormatBottomSheet(
             ) {
                 GlassDialogButton(
                     onClick = {
-                        pendingConfirm = null
                         dismissAction()
                     },
                     modifier = Modifier.weight(1f),
@@ -202,8 +199,8 @@ fun DraftExportFormatBottomSheet(
                     onClick = {
                         val format = selectedFormat ?: return@GlassDialogButton
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        pendingConfirm = format
                         dismissAction()
+                        onConfirmExport(format)
                     },
                     enabled = selectedFormat != null,
                     modifier = Modifier.weight(1f),
@@ -218,14 +215,6 @@ fun DraftExportFormatBottomSheet(
         }
     }
 
-    val onFinishDismiss: () -> Unit = {
-        val chosen = pendingConfirm
-        pendingConfirm = null
-        if (chosen != null) {
-            onConfirmExport(chosen)
-        }
-    }
-
     if (themeStyle == AppThemeStyle.MIUIX) {
         GlassBottomSheet(
             title = stringResource(Res.string.draft_export_sheet_title),
@@ -234,12 +223,10 @@ fun DraftExportFormatBottomSheet(
             backdrop = backdrop,
             progressiveBlur = true,
             insideMargin = GlassBottomSheetDefaults.InsideMargin,
-            onDismissFinished = onFinishDismiss,
             startAction = {
                 val dismissState = LocalDismissState.current
                 GlassSheetHeaderAction(
                     onClick = {
-                        pendingConfirm = null
                         dismissState?.invoke() ?: onDismissRequest()
                     },
                     imageVector = MiuixIcons.Glass.Close,
@@ -259,7 +246,6 @@ fun DraftExportFormatBottomSheet(
             title = stringResource(Res.string.draft_export_sheet_title),
             show = show,
             onDismissRequest = onDismissRequest,
-            onDismissFinished = onFinishDismiss,
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow,
             dragHandleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         ) {
