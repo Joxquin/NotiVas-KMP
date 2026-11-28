@@ -156,6 +156,8 @@
     <string name="copilot_provider_dialog_desc">Elige el servicio de inferencia para procesar tus consultas académicas:</string>
     <string name="google_ai_studio_api_key_title">Clave de API Google AI Studio</string>
     <string name="google_ai_studio_api_key_desc_not_set">Sin configurar (requerido)</string>
+    <string name="ai_key_builtin_desc">Incluida en NotiVas (opcional: pon la tuya)</string>
+    <string name="ai_key_optional_desc">Opcional</string>
     <string name="google_ai_studio_api_key_dialog_title">Clave de API Google AI Studio</string>
     <string name="google_ai_studio_api_key_dialog_desc">Ingresa tu clave de Gemini de Google AI Studio (aistudio.google.com) para inferencia gratuita ilimitada:</string>
     <string name="google_ai_studio_api_key_placeholder">AIzaSy...</string>

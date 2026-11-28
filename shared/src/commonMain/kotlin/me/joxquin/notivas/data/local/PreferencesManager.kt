@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import me.joxquin.notivas.util.AppDispatchers
@@ -146,6 +147,11 @@ class PreferencesManager(
     private val _googleAiStudioModel = MutableStateFlow("gemini-3.5-flash-lite")
     val googleAiStudioModel: Flow<String> = _googleAiStudioModel.asStateFlow()
     fun getGoogleAiStudioModel(): String = _googleAiStudioModel.value
+
+    /** Proveedor y key que de verdad usa la IA: la key del estudiante o, si no puso ninguna, la incluida. */
+    val aiCredentials: Flow<AiCredentials> = combine(_copilotProvider, _googleAiStudioApiKey, _openRouterApiKey) { provider, googleKey, openRouterKey ->
+        resolveAiCredentials(provider, googleKey, openRouterKey, BuiltInAi.googleAiStudioKey)
+    }
 
     private val _copilotEnabled = MutableStateFlow(true)
     val copilotEnabled: Flow<Boolean> = _copilotEnabled.asStateFlow()

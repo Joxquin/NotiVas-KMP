@@ -114,6 +114,8 @@ import me.joxquin.notivas.shared.resources.copilot_model_analysis_gemini_compati
 import me.joxquin.notivas.shared.resources.copilot_model_analysis_custom_compatible
 import me.joxquin.notivas.shared.resources.google_ai_studio_api_key_title
 import me.joxquin.notivas.shared.resources.google_ai_studio_api_key_desc_not_set
+import me.joxquin.notivas.shared.resources.ai_key_builtin_desc
+import me.joxquin.notivas.shared.resources.ai_key_optional_desc
 import me.joxquin.notivas.shared.resources.google_ai_studio_api_key_dialog_title
 import me.joxquin.notivas.shared.resources.google_ai_studio_api_key_dialog_desc
 import me.joxquin.notivas.shared.resources.google_ai_studio_api_key_placeholder
@@ -183,8 +185,14 @@ fun CopilotSettingsSection(
         googleAiStudioModels.find { it.first == googleAiStudioModel }?.second ?: googleAiStudioModel
     }
 
-    val notConfiguredLabel = stringResource(Res.string.openrouter_api_key_desc_not_set)
-    val notConfiguredGoogleLabel = stringResource(Res.string.google_ai_studio_api_key_desc_not_set)
+    // Con la IA incluida en la app, la key propia es opcional.
+    val builtInAi = me.joxquin.notivas.data.local.BuiltInAi.isAvailable
+    val notConfiguredLabel = stringResource(
+        if (builtInAi) Res.string.ai_key_optional_desc else Res.string.openrouter_api_key_desc_not_set
+    )
+    val notConfiguredGoogleLabel = stringResource(
+        if (builtInAi) Res.string.ai_key_builtin_desc else Res.string.google_ai_studio_api_key_desc_not_set
+    )
 
     if (themeStyle == AppThemeStyle.MIUIX) {
         GlassProviderPickerDialog(

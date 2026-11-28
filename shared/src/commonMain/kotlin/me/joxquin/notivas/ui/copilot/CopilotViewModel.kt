@@ -174,19 +174,19 @@ class CopilotViewModel(
             val customInstructions = args[6] as String
             val error = args[7] as String?
 
-            val hasKey = if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
-                !googleAiKey.isNullOrBlank()
-            } else {
-                !openRouterKey.isNullOrBlank()
-            }
+            // La key del estudiante manda; si no puso ninguna, se usa la IA incluida en la app.
+            val credentials = me.joxquin.notivas.data.local.resolveAiCredentials(
+                provider, googleAiKey, openRouterKey, me.joxquin.notivas.data.local.BuiltInAi.googleAiStudioKey
+            )
+            val hasKey = !credentials.apiKey.isNullOrBlank()
 
-            val currentModel = if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
+            val currentModel = if (credentials.provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
                 googleAiModel
             } else {
                 openRouterModel
             }
 
-            Tuple6(enabled, hasKey, currentModel, error, provider, customInstructions)
+            Tuple6(enabled, hasKey, currentModel, error, credentials.provider, customInstructions)
         },
         combine(
             _isMentionPopupVisible,

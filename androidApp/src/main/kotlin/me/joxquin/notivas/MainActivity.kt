@@ -27,6 +27,8 @@ import me.joxquin.notivas.ui.navigation.NotificationNavTarget
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // IA incluida: key del build (secreto NOTIVAS_AI_KEY); vacía = el estudiante pone la suya.
+        me.joxquin.notivas.data.local.BuiltInAi.install(BuildConfig.NOTIVAS_AI_KEY)
         val splashScreen = installSplashScreen()
         me.joxquin.notivas.data.local.FileStorageProvider.init(this)
         splashScreen.setKeepOnScreenCondition {

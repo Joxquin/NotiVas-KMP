@@ -84,20 +84,21 @@ class AssignmentReviewUseCase(
 
             // 4. Preparación de IA y Evaluación
             onProgress(ReviewProgressStep.EVALUATING, "Evaluando criterios y alineación académica...")
-            val provider = preferencesManager.copilotProvider.first()
+            val credentials = preferencesManager.aiCredentials.first()
+            val provider = credentials.provider
             val apiKey: String?
             val model: String
             val customBaseUrl: String?
 
             if (provider == CopilotProvider.GOOGLE_AI_STUDIO) {
-                apiKey = preferencesManager.googleAiStudioApiKey.first()
+                apiKey = credentials.apiKey
                 if (apiKey.isNullOrBlank()) {
                     return@withContext Result.failure(IllegalStateException("Google AI Studio API Key no configurada. Configúrala en Ajustes Copilot."))
                 }
                 model = preferencesManager.googleAiStudioModel.first()
                 customBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai"
             } else {
-                apiKey = preferencesManager.openRouterApiKey.first()
+                apiKey = credentials.apiKey
                 if (apiKey.isNullOrBlank()) {
                     return@withContext Result.failure(IllegalStateException("OpenRouter API Key no configurada. Configúrala en Ajustes Copilot."))
                 }
