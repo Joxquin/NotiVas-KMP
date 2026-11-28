@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -51,7 +52,7 @@ android {
         // estudiante pone su propia key en Ajustes, como antes.
         val notivasAiKey = (System.getenv("NOTIVAS_AI_KEY")
             ?: rootProject.file("local.properties").takeIf { it.isFile }?.let { file ->
-                java.util.Properties().apply { file.inputStream().use { load(it) } }.getProperty("notivas.aiKey")
+                Properties().apply { file.inputStream().use { load(it) } }.getProperty("notivas.aiKey")
             })?.trim().orEmpty()
         require(notivasAiKey.all { it.isLetterOrDigit() || it in "._-" }) { "NOTIVAS_AI_KEY has unexpected characters" }
         buildConfigField("String", "NOTIVAS_AI_KEY", "\"$notivasAiKey\"")
