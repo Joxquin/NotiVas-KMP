@@ -138,9 +138,9 @@ fun App() {
                                 }
                             } else {
                                 Box(modifier = Modifier.fillMaxSize()) {
-                                    // Los promedios que suben esperan a que termine la animación de arranque.
+                                    // Los promedios que suben y las listas escalonadas esperan a que termine la animación de arranque.
                                     CompositionLocalProvider(
-                                        me.joxquin.notivas.ui.components.LocalCountUpReady provides hasStartupSplashRun
+                                        me.joxquin.notivas.ui.components.LocalEntranceAnimationsReady provides hasStartupSplashRun
                                     ) {
                                         me.joxquin.notivas.ui.MainAppShell(
                                             canvasRepository = canvasRepository,
