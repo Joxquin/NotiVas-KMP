@@ -70,12 +70,12 @@ El Copiloto usa la API de chat de Google AI Studio (Gemini) u OpenRouter con lla
 - `calculate_needed_grade`: cuánto necesitas en lo que falta para aprobar o llegar a una meta.
 - Herramientas de Canvas para tareas, módulos, detalles y comentarios del docente.
 
-Cada estudiante pega su propia API key en Ajustes. La key se queda en su celular. Si el proveedor está saturado (503) o limita las peticiones (429), la app reintenta y muestra un mensaje claro en lugar del error crudo.
+La app trae una IA incluida: al compilar toma una key de Gemini del secreto `NOTIVAS_AI_KEY` de GitHub Actions, así el Copiloto funciona sin configurar nada. Cada estudiante puede poner su propia key en Ajustes; la suya tiene prioridad y se queda en su celular. Si el proveedor está saturado (503) o limita las peticiones (429), la app reintenta y muestra un mensaje claro en lugar del error crudo.
 
 ## Seguridad
 
 - El repositorio no contiene llaves, tokens ni archivos de configuración privados. `local.properties`, `google-services.json` y los keystores están en `.gitignore`.
-- La firma de release toma el keystore y sus contraseñas de los secretos de GitHub Actions.
+- La firma de release toma el keystore y sus contraseñas de los secretos de GitHub Actions, y la key de la IA incluida llega igual, del secreto `NOTIVAS_AI_KEY` al compilar.
 - El token de Canvas se renueva solo antes de vencer y los registros (logs) no imprimen datos del estudiante.
 
 ## Tecnologías
