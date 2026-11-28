@@ -5,6 +5,9 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -50,12 +53,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -135,32 +141,29 @@ fun CopilotMessageBubble(
     var copied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    // Animación progresiva suave para respuestas recién emitidas por el asistente
-    var revealedLength by remember(message.id) {
-        mutableStateOf(if (animateReveal && !isUser) 0 else message.text.length)
+    // El Markdown se procesa una sola vez. En una respuesta nueva del asistente los bloques aparecen
+    // uno tras otro con un fundido; antes se volvía a procesar todo el texto cada 18 ms y, mientras
+    // tanto, la pantalla perdía toques (por ejemplo en "Nuevo chat").
+    val blocks = remember(message.text, knownAssignments, knownDiscussions, courses) {
+        parseMessageBlocks(message.text, knownAssignments, knownDiscussions, courses)
     }
+    val revealBlocks = animateReveal && !isUser
+    var revealedBlockCount by remember(message.id) {
+        mutableStateOf(if (revealBlocks) 0 else Int.MAX_VALUE)
+    }
+    val currentBlockCount by rememberUpdatedState(blocks.size)
 
     LaunchedEffect(message.id, message.text, animateReveal) {
-        if (animateReveal && !isUser && revealedLength < message.text.length) {
-            val totalChars = message.text.length
-            val step = (totalChars / 25).coerceIn(3, 22)
-            while (revealedLength < totalChars) {
-                delay(18)
-                revealedLength = (revealedLength + step).coerceAtMost(totalChars)
+        if (revealBlocks) {
+            while (revealedBlockCount < currentBlockCount) {
+                revealedBlockCount += 1
+                delay(REVEAL_BLOCK_STEP_MS)
             }
-            onAnimationFinished?.invoke(message.id)
-        } else {
-            revealedLength = message.text.length
-            onAnimationFinished?.invoke(message.id)
         }
+        revealedBlockCount = Int.MAX_VALUE
+        onAnimationFinished?.invoke(message.id)
     }
-
-    val displayedText = remember(message.text, revealedLength) {
-        if (revealedLength >= message.text.length) message.text else message.text.take(revealedLength)
-    }
-    val blocks = remember(displayedText, knownAssignments, knownDiscussions, courses) {
-        parseMessageBlocks(displayedText, knownAssignments, knownDiscussions, courses)
-    }
+    val isFullyRevealed = revealedBlockCount >= blocks.size
 
     val onCopyClick: () -> Unit = {
         clipboardManager.setText(AnnotatedString(message.text))
@@ -326,7 +329,8 @@ fun CopilotMessageBubble(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    blocks.forEach { block ->
+                    blocks.forEachIndexed { index, block ->
+                        if (index < revealedBlockCount) Box(modifier = Modifier.revealEntrance(animate = revealBlocks)) {
                         when (block) {
                             is CopilotContentBlock.TextBlock -> {
                                 Text(
@@ -367,6 +371,7 @@ fun CopilotMessageBubble(
                                     themeStyle = themeStyle
                                 )
                             }
+                        }
                         }
                     }
                 }
@@ -440,7 +445,7 @@ fun CopilotMessageBubble(
             // 4. Barra de Acciones debajo del mensaje (Copiar, Compartir, Regenerar) y Disclaimer
             // Revelación fluida una vez que el texto termina de fluir
             AnimatedVisibility(
-                visible = revealedLength >= message.text.length,
+                visible = isFullyRevealed,
                 enter = fadeIn() + expandVertically()
             ) {
                 Column {
@@ -722,6 +727,30 @@ fun CopilotTableComposable(
                 }
             }
         }
+    }
+}
+
+private const val REVEAL_BLOCK_STEP_MS = 90L
+private const val REVEAL_FADE_MS = 260
+
+/**
+ * Fundido con un leve ascenso para cada bloque de una respuesta nueva. Solo cambia la capa gráfica,
+ * así que no recompone el texto. El efecto no depende de [animate] para que, si la animación de la
+ * burbuja termina antes que el fundido, el bloque no quede a medio aparecer.
+ */
+@Composable
+private fun Modifier.revealEntrance(animate: Boolean): Modifier {
+    val progress = remember { Animatable(if (animate) 0f else 1f) }
+    LaunchedEffect(progress) {
+        if (progress.value < 1f) {
+            progress.animateTo(1f, tween(REVEAL_FADE_MS, easing = FastOutSlowInEasing))
+        }
+    }
+    val risePx = with(LocalDensity.current) { 8.dp.toPx() }
+    return this.graphicsLayer {
+        val p = progress.value
+        alpha = p
+        translationY = (1f - p) * risePx
     }
 }
 
