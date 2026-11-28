@@ -891,6 +891,7 @@
     <string name="review_action_close">Got it</string>
     <string name="review_error_no_ai_key">Configure your API Key in Copilot Settings to use AI review.</string>
     <string name="review_error_failed">Failed to complete review: %1$s</string>
+    <string name="review_error_generic">Could not analyze the submission</string>
     <string name="review_strengths_title">Identified Strengths</string>
     <string name="review_improvements_title">Improvement Recommendations</string>
     <string name="review_module_alignment_title">Module Readings Alignment</string>

@@ -42,6 +42,7 @@ import top.yukonga.miuix.kmp.icon.extended.Weeks
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
@@ -66,7 +67,6 @@ import me.joxquin.notivas.data.repository.CanvasRepository
 import me.joxquin.notivas.data.repository.CopilotChatRepository
 import me.joxquin.notivas.data.repository.CopilotRepository
 import me.joxquin.notivas.data.model.UpdateInfo
-import me.joxquin.notivas.data.repository.UpdateRepository
 import me.joxquin.notivas.util.rememberFilePickerLauncher
 import me.joxquin.notivas.ui.components.UpdateDialog
 import me.joxquin.notivas.ui.components.BackHandler
@@ -260,19 +260,16 @@ fun MainAppShell(
         me.joxquin.notivas.ui.activity.ActivityViewModel(canvasRepository)
     }
 
-    val updateRepository = remember { UpdateRepository() }
-    var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    val mainShellViewModel = remember { MainShellViewModel(canvasRepository) }
+    DisposableEffect(mainShellViewModel) {
+        onDispose { mainShellViewModel.cancelUpdateCheck() }
+    }
+    val activeUpdateInfo by mainShellViewModel.updateInfo.collectAsState()
     // Retener el último dato para que GlassDialog pueda completar su animación de salida.
     var lastUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
     if (activeUpdateInfo != null) lastUpdateInfo = activeUpdateInfo
 
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    LaunchedEffect(Unit) {
-        val info = updateRepository.checkForUpdates()
-        if (info.isUpdateAvailable) {
-            activeUpdateInfo = info
-        }
-    }
 
     var toastMessage by remember { mutableStateOf<String?>(null) }
     val miuixSnackbarHostState = remember { SnackbarHostState() }
@@ -342,7 +339,7 @@ fun MainAppShell(
         when (target) {
             is NotificationNavTarget.Assignment -> {
                 coroutineScope.launch {
-                    val assignment = canvasRepository.getAssignment(target.assignmentId)
+                    val assignment = mainShellViewModel.resolveAssignment(target.assignmentId)
                     val courseName = target.courseName
                         ?: assignment?.courseId?.let { cId -> notasViewModel.uiState.value.courses.find { it.id == cId }?.name }
                         ?: "Curso"
@@ -624,7 +621,7 @@ fun MainAppShell(
                                             onOpenAssignmentDraft = { assignmentId, courseName ->
                                                 coroutineScope.launch {
                                                     val assignmentUi = dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == assignmentId }
-                                                        ?: canvasRepository.getAssignment(assignmentId)?.let {
+                                                        ?: mainShellViewModel.resolveAssignment(assignmentId)?.let {
                                                             me.joxquin.notivas.ui.dashboard.AssignmentUiModel(it, courseName)
                                                         }
                                                     if (assignmentUi != null) {
@@ -757,7 +754,7 @@ fun MainAppShell(
                         onBack = { handleMiuixBack() },
                         onNavigateToAssignment = { assignmentId: Long ->
                             coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                val assignment = mainShellViewModel.resolveAssignment(assignmentId)
                                 if (assignment != null) {
                                     val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
                                     val assignmentUi = AssignmentUiModel(
@@ -906,7 +903,7 @@ fun MainAppShell(
                         onBack = { handleMiuixBack() },
                         onNavigateToAssignmentDraft = { assignmentId, courseName ->
                             coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                val assignment = mainShellViewModel.resolveAssignment(assignmentId)
                                 if (assignment != null) {
                                     val assignmentUi = AssignmentUiModel(assignment, courseName)
                                     dashboardViewModel.openDraft(assignmentUi)
@@ -921,7 +918,7 @@ fun MainAppShell(
                                 miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
                             } else {
                                 coroutineScope.launch {
-                                    val fetched = canvasRepository.getDiscussionTopic(route.courseId, topicId)
+                                    val fetched = mainShellViewModel.resolveDiscussionTopic(route.courseId, topicId)
                                     if (fetched != null) {
                                         forosViewModel.selectDiscussion(fetched)
                                         miuixNavigator.push(MiuixRoute.ForoDetail(fetched.id))
@@ -968,7 +965,7 @@ fun MainAppShell(
                         onBack = { handleMiuixBack() },
                         onNavigateToAssignmentDraft = { assignmentId, courseName ->
                             coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                val assignment = mainShellViewModel.resolveAssignment(assignmentId)
                                 if (assignment != null) {
                                     val assignmentUi = AssignmentUiModel(assignment, courseName)
                                     dashboardViewModel.openDraft(assignmentUi)
@@ -983,7 +980,7 @@ fun MainAppShell(
                                 miuixNavigator.push(MiuixRoute.ForoDetail(topic.id))
                             } else {
                                 coroutineScope.launch {
-                                    val fetched = canvasRepository.getDiscussionTopic(route.courseId, topicId)
+                                    val fetched = mainShellViewModel.resolveDiscussionTopic(route.courseId, topicId)
                                     if (fetched != null) {
                                         forosViewModel.selectDiscussion(fetched)
                                         miuixNavigator.push(MiuixRoute.ForoDetail(fetched.id))
@@ -1006,14 +1003,14 @@ fun MainAppShell(
                         onBack = { handleMiuixBack() },
                         onNavigateToCourseProgreso = { courseId ->
                             coroutineScope.launch {
-                                val course = canvasRepository.getCourse(courseId)
+                                val course = mainShellViewModel.resolveCourse(courseId)
                                 if (course != null) notasViewModel.selectCourse(course)
                                 miuixNavigator.push(MiuixRoute.CourseProgreso(courseId))
                             }
                         },
                         onNavigateToAssignmentDraft = { assignmentId, courseName ->
                             coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                val assignment = mainShellViewModel.resolveAssignment(assignmentId)
                                 if (assignment != null) {
                                     val assignmentUi = AssignmentUiModel(assignment, courseName)
                                     dashboardViewModel.openDraft(assignmentUi)
@@ -1394,7 +1391,7 @@ fun MainAppShell(
                                             onOpenAssignmentDraft = { assignmentId, courseName ->
                                                 coroutineScope.launch {
                                                     val assignmentUi = dashboardViewModel.allAssignmentsUi.value.find { it.assignment.id == assignmentId }
-                                                        ?: canvasRepository.getAssignment(assignmentId)?.let {
+                                                        ?: mainShellViewModel.resolveAssignment(assignmentId)?.let {
                                                             me.joxquin.notivas.ui.dashboard.AssignmentUiModel(it, courseName)
                                                         }
                                                     if (assignmentUi != null) {
@@ -1496,7 +1493,7 @@ fun MainAppShell(
                         onBack = { handleMaterialBack() },
                         onNavigateToAssignment = { assignmentId: Long ->
                             coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                val assignment = mainShellViewModel.resolveAssignment(assignmentId)
                                 if (assignment != null) {
                                     val courseName = notasViewModel.uiState.value.courses.find { it.id == assignment.courseId }?.name ?: "Curso"
                                     val assignmentUi = AssignmentUiModel(
@@ -1645,7 +1642,7 @@ fun MainAppShell(
                         onBack = { handleMaterialBack() },
                         onNavigateToAssignmentDraft = { assignmentId, courseName ->
                             coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                val assignment = mainShellViewModel.resolveAssignment(assignmentId)
                                 if (assignment != null) {
                                     val assignmentUi = AssignmentUiModel(assignment, courseName)
                                     dashboardViewModel.openDraft(assignmentUi)
@@ -1660,7 +1657,7 @@ fun MainAppShell(
                                 materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
                             } else {
                                 coroutineScope.launch {
-                                    val fetched = canvasRepository.getDiscussionTopic(route.courseId, topicId)
+                                    val fetched = mainShellViewModel.resolveDiscussionTopic(route.courseId, topicId)
                                     if (fetched != null) {
                                         forosViewModel.selectDiscussion(fetched)
                                         materialNavigator.push(MiuixRoute.ForoDetail(fetched.id))
@@ -1707,7 +1704,7 @@ fun MainAppShell(
                         onBack = { handleMaterialBack() },
                         onNavigateToAssignmentDraft = { assignmentId, courseName ->
                             coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                val assignment = mainShellViewModel.resolveAssignment(assignmentId)
                                 if (assignment != null) {
                                     val assignmentUi = AssignmentUiModel(assignment, courseName)
                                     dashboardViewModel.openDraft(assignmentUi)
@@ -1722,7 +1719,7 @@ fun MainAppShell(
                                 materialNavigator.push(MiuixRoute.ForoDetail(topic.id))
                             } else {
                                 coroutineScope.launch {
-                                    val fetched = canvasRepository.getDiscussionTopic(route.courseId, topicId)
+                                    val fetched = mainShellViewModel.resolveDiscussionTopic(route.courseId, topicId)
                                     if (fetched != null) {
                                         forosViewModel.selectDiscussion(fetched)
                                         materialNavigator.push(MiuixRoute.ForoDetail(fetched.id))
@@ -1745,14 +1742,14 @@ fun MainAppShell(
                         onBack = { handleMaterialBack() },
                         onNavigateToCourseProgreso = { courseId ->
                             coroutineScope.launch {
-                                val course = canvasRepository.getCourse(courseId)
+                                val course = mainShellViewModel.resolveCourse(courseId)
                                 if (course != null) notasViewModel.selectCourse(course)
                                 materialNavigator.push(MiuixRoute.CourseProgreso(courseId))
                             }
                         },
                         onNavigateToAssignmentDraft = { assignmentId, courseName ->
                             coroutineScope.launch {
-                                val assignment = canvasRepository.getAssignment(assignmentId)
+                                val assignment = mainShellViewModel.resolveAssignment(assignmentId)
                                 if (assignment != null) {
                                     val assignmentUi = AssignmentUiModel(assignment, courseName)
                                     dashboardViewModel.openDraft(assignmentUi)
@@ -1890,7 +1887,7 @@ fun MainAppShell(
             themeStyle = themeStyle,
             backdrop = contentBackdrop,
             show = activeUpdateInfo != null && info.isUpdateAvailable,
-            onDismiss = { activeUpdateInfo = null }
+            onDismiss = mainShellViewModel::dismissUpdate
         )
     }
 
