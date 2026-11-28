@@ -45,6 +45,16 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 8
         versionName = "1.6.0"
+
+        // IA incluida: la key llega al compilar desde el secreto NOTIVAS_AI_KEY (CI) o
+        // notivas.aiKey en local.properties. Nunca va en el repositorio; vacía = cada
+        // estudiante pone su propia key en Ajustes, como antes.
+        val notivasAiKey = (System.getenv("NOTIVAS_AI_KEY")
+            ?: rootProject.file("local.properties").takeIf { it.isFile }?.let { file ->
+                java.util.Properties().apply { file.inputStream().use { load(it) } }.getProperty("notivas.aiKey")
+            })?.trim().orEmpty()
+        require(notivasAiKey.all { it.isLetterOrDigit() || it in "._-" }) { "NOTIVAS_AI_KEY has unexpected characters" }
+        buildConfigField("String", "NOTIVAS_AI_KEY", "\"$notivasAiKey\"")
     }
     packaging {
         resources {
@@ -108,5 +118,6 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }

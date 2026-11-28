@@ -193,6 +193,7 @@ jobs:
           KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}
           KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
           KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
+          NOTIVAS_AI_KEY: ${{ secrets.NOTIVAS_AI_KEY }}
         run: ./gradlew :androidApp:assembleRelease --stacktrace
 
       - name: Filter arm64 and universal APKs

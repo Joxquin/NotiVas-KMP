@@ -72,20 +72,21 @@ class CopilotRepository(
         onStatusUpdate: (String?) -> Unit = {}
     ): Result<CopilotResult> {
         onStatusUpdate(null)
-        val provider = preferencesManager.copilotProvider.first()
+        val credentials = preferencesManager.aiCredentials.first()
+        val provider = credentials.provider
         val apiKey: String?
         val model: String
         val customBaseUrl: String?
 
         if (provider == me.joxquin.notivas.data.local.CopilotProvider.GOOGLE_AI_STUDIO) {
-            apiKey = preferencesManager.googleAiStudioApiKey.first()
+            apiKey = credentials.apiKey
             if (apiKey.isNullOrBlank()) {
                 return Result.failure(IllegalStateException("Google AI Studio API Key no configurada. Ve a Ajustes para agregarla."))
             }
             model = preferencesManager.googleAiStudioModel.first()
             customBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai"
         } else {
-            apiKey = preferencesManager.openRouterApiKey.first()
+            apiKey = credentials.apiKey
             if (apiKey.isNullOrBlank()) {
                 return Result.failure(IllegalStateException("OpenRouter API Key no configurada. Ve a Ajustes para agregarla."))
             }

@@ -156,6 +156,8 @@
     <string name="copilot_provider_dialog_desc">Choose the inference service to process your academic queries:</string>
     <string name="google_ai_studio_api_key_title">Google AI Studio API Key</string>
     <string name="google_ai_studio_api_key_desc_not_set">Not configured (required)</string>
+    <string name="ai_key_builtin_desc">Included in NotiVas (optional: add your own)</string>
+    <string name="ai_key_optional_desc">Optional</string>
     <string name="google_ai_studio_api_key_dialog_title">Google AI Studio API Key</string>
     <string name="google_ai_studio_api_key_dialog_desc">Enter your Google AI Studio Gemini key (aistudio.google.com) for free inference:</string>
     <string name="google_ai_studio_api_key_placeholder">AIzaSy...</string>

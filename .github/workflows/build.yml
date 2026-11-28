@@ -85,6 +85,7 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+          NOTIVAS_AI_KEY: ${{ secrets.NOTIVAS_AI_KEY }}
         run: ./gradlew :androidApp:assembleDebug --stacktrace
 
       - name: Upload Android APK
